@@ -1,0 +1,173 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using DailyRoutines.Abstracts;
+using DailyRoutines.Helpers;
+using DailyRoutines.Infos;
+using DailyRoutines.Managers;
+using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using Lumina.Excel.GeneratedSheets;
+using TinyPinyin;
+
+namespace DailyRoutines.Modules;
+
+public class BaitSwitchCommand : DailyModuleBase
+{
+    public override ModuleInfo Info => new()
+    {
+        Title = GetLoc("BaitSwitchCommandTitle"),
+        Description = GetLoc("BaitSwitchCommandDescription"),
+        Category = ModuleCategories.System,
+    };
+
+    private static readonly Dictionary<uint, (string NameLower, string NamePinyin)> Baits;
+    private static readonly Dictionary<uint, (string NameLower, string NamePinyin)> Fishes;
+    private const string Command = "bait";
+
+    static BaitSwitchCommand()
+    {
+        Baits = LuminaCache.Get<Item>()
+                           .Where(x => x.FilterGroup is 17 && !string.IsNullOrWhiteSpace(x.Name.RawString))
+                           .ToDictionary(x => x.RowId, x => (x.Name.RawString.ToLower(),
+                                                                PinyinHelper.GetPinyin(x.Name.RawString, "")));
+
+        Fishes = LuminaCache.Get<Item>()
+                            .Where(x => x.FilterGroup is 16 && !string.IsNullOrWhiteSpace(x.Name.RawString))
+                            .ToDictionary(x => x.RowId, x => (x.Name.RawString.ToLower(),
+                                                                 PinyinHelper.GetPinyin(x.Name.RawString, "")));
+    }
+
+    public override void Init()
+    {
+        CommandManager.AddSubCommand(
+            Command, new(OnCommand) { HelpMessage = GetLoc("BaitSwitchCommand-CommandHelp") });
+    }
+
+    public override void ConfigUI()
+    {
+        ImGui.TextWrapped(GetLoc("BaitSwitchCommand-CommandHelpDetailed"));
+    }
+
+    public static void OnCommand(string command, string arguments)
+    {
+        arguments = arguments.Trim();
+        if (string.IsNullOrWhiteSpace(arguments)) return;
+        if (!uint.TryParse(arguments, out var itemID))
+            SwitchBaitByName(arguments);
+        else 
+            SwitchBaitByID(itemID);
+    }
+
+    private static void SwitchBaitByName(string itemName)
+    {
+        itemName = itemName.ToLower();
+
+        var resultBait = TryFindItemByName(Baits, itemName, out var itemID);
+        var resultFish = false;
+        if (!resultBait)
+            resultFish = TryFindItemByName(Fishes, itemName, out itemID);
+
+        // 要么都没找到 要么都找到了
+        if (resultBait == resultFish)
+        {
+            ChatError(GetLoc("BaitSwitchCommand-Notice-NoMatchBait", itemName));
+            return;
+        }
+
+        SwitchBaitByID(itemID);
+    }
+
+    private static void SwitchBaitByID(uint itemID)
+    {
+        if (!IsAbleToSwitch(itemID, out var isBait, out var swimBaitIndex)) return;
+        SwitchBait(itemID, isBait, swimBaitIndex);
+    }
+
+    private static void SwitchBait(uint itemID, bool isBait, int swimBaitIndex = -1)
+    {
+        if (isBait)
+            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 4, (int)itemID);
+        else if (swimBaitIndex != -1)
+            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 25, swimBaitIndex);
+    }
+
+    private static bool TryFindItemByName(
+        Dictionary<uint, (string NameLower, string NamePinyin)> source, string itemName, out uint item)
+    {
+        item = source
+               .FirstOrDefault(x => x.Value.NameLower.Equals(itemName, StringComparison.OrdinalIgnoreCase) ||
+                                    x.Value.NamePinyin.Equals(itemName, StringComparison.OrdinalIgnoreCase)).Key;
+        
+        if (item == default)
+        {
+            var matchingItems = source
+                                .Where(x => x.Value.NameLower.Contains(itemName, StringComparison.OrdinalIgnoreCase) ||
+                                            (DService.ClientState.ClientLanguage == (ClientLanguage)4 &&
+                                             x.Value.NamePinyin.Contains(itemName, StringComparison.OrdinalIgnoreCase)))
+                                .OrderBy(x => x.Value.NameLower)
+                                .ToList();
+
+            item = matchingItems.FirstOrDefault().Key;
+        }
+
+        return item != default;
+    }
+
+    private static unsafe bool IsAbleToSwitch(uint itemID, out bool isBait, out int swimBaitIndex)
+    {
+        isBait = true;
+        swimBaitIndex = -1;
+
+        if (itemID == 0 || (!Baits.ContainsKey(itemID) && !Fishes.ContainsKey(itemID)))
+        {
+            ChatError(GetLoc("BaitSwitchCommand-Notice-NoMatchBait", itemID));
+            return false;
+        }
+
+        var itemName = LuminaCache.GetRow<Item>(itemID).Name.RawString;
+
+        if (Baits.ContainsKey(itemID))
+        {
+            if (InventoryManager.Instance()->GetInventoryItemCount(itemID) <= 0)
+            {
+                ChatError(GetLoc("BaitSwitchCommand-Notice-NoBait", itemName));
+                return false;
+            }
+        }
+        else
+        {
+            isBait = false;
+            var info = GetSwimBaitInfo();
+            swimBaitIndex = info.IndexOf(itemID);
+            if (swimBaitIndex == -1)
+            {
+                ChatError(GetLoc("BaitSwitchCommand-Notice-NoBait", itemName));
+                return false;
+            }
+        }
+
+        if (DService.Condition[ConditionFlag.Fishing])
+        {
+            ChatError(GetLoc("BaitSwitchCommand-Notice-FishingNow"));
+            return false;
+        }
+
+        return true;
+    }
+
+    private static unsafe List<uint> GetSwimBaitInfo()
+    {
+        var handler = EventFramework.Instance()->GetEventHandlerById(0x150001u);
+        var itemArray = (uint*)((byte*)handler + 568);
+
+        return [itemArray[0], itemArray[1], itemArray[2]];
+    }
+
+    public override void Uninit()
+    {
+        CommandManager.RemoveSubCommand(Command);
+    }
+}

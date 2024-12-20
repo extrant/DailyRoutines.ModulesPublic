@@ -92,6 +92,10 @@
             <HintPath>$(BaseOutputPath)\$(Configuration)\DailyRoutines.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="DailyRoutines.Modules">
+            <HintPath>$(BaseOutputPath)\$(Configuration)\DailyRoutines.Modules.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
         <Reference Include="TinyPinyin">
             <HintPath>$(BaseOutputPath)\$(Configuration)\TinyPinyin.dll</HintPath>
             <Private>false</Private>
@@ -108,6 +112,12 @@
             <HintPath>$(BaseOutputPath)\$(Configuration)\EdgeTTS.dll</HintPath>
             <Private>false</Private>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove=".editorconfig" />
+      <None Remove=".gitattributes" />
+      <None Remove=".gitignore" />
     </ItemGroup>
 
 </Project>
