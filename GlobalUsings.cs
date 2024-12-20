@@ -1,0 +1,16 @@
+﻿global using static DailyRoutines.Infos.Widgets;
+global using static OmenTools.Helpers.HelpersOm;
+global using static DailyRoutines.Infos.Extensions;
+global using static OmenTools.Infos.InfosOm;
+global using static OmenTools.Helpers.ThrottlerHelper;
+global using static DailyRoutines.Managers.Configuration;
+global using static DailyRoutines.Managers.LanguageManagerExtensions;
+global using static DailyRoutines.Helpers.NotifyHelper;
+global using OmenTools.Infos;
+global using OmenTools.ImGuiOm;
+global using OmenTools.Helpers;
+global using OmenTools;
+global using ImGuiNET;
+global using ImPlotNET;
+global using Lang = DailyRoutines.Managers.LanguageManager;
+global using Dalamud.Game;
