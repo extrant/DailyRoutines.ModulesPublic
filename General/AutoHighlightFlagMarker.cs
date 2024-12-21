@@ -20,7 +20,7 @@ public unsafe class AutoHighlightFlagMarker : DailyModuleBase
         Title = GetLoc("AutoHighlightFlagMarkerTitle"),
         Description = GetLoc("AutoHighlightFlagMarkerDescription"),
         Category = ModuleCategories.General,
-        ModulesConflict = [typeof(MultiTargetTracker)],
+        ModulesConflict = ["MultiTargetTracker"],
     };
 
     private static readonly CompSig SetFlagMarkerSig = new("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 4B 10 48 85 C9");

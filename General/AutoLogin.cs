@@ -25,7 +25,7 @@ public unsafe class AutoLogin : DailyModuleBase
         Title = GetLoc("AutoLoginTitle"),
         Description = GetLoc("AutoLoginDescription"),
         Category = ModuleCategories.General,
-        ModulesRecommend = [typeof(AutoSkipLogo)]
+        ModulesRecommend = ["AutoSkipLogo"]
     };
 
     private static readonly Dictionary<BehaviourMode, string> BehaviourModeLoc = new()

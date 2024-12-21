@@ -33,7 +33,7 @@ public class MultiTargetTracker : DailyModuleBase
         Description     = GetLoc("MultiTargetTrackerDescription"),
         Category        = ModuleCategories.General,
         Author          = ["KirisameVanilla"],
-        ModulesConflict = [typeof(AutoHighlightFlagMarker)],
+        ModulesConflict = ["AutoHighlightFlagMarker"],
     };
 
     private class Config : ModuleConfiguration
