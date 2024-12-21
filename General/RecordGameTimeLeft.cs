@@ -10,6 +10,8 @@ using DailyRoutines.Managers;
 using Dalamud.Game.Gui.Dtr;
 using ImGuiNET;
 using DailyRoutines.Helpers;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 
 namespace DailyRoutines.Modules;
 
@@ -22,7 +24,7 @@ public class RecordGameTimeLeft : DailyModuleBase
         Description = GetLoc("RecordGameTimeLeftDesc"),
         */ // Placeholder until localization is added
         Title = "记录剩余点卡时间",
-        Description = "登陆时自动记录剩余点卡，可选在服务器信息栏显示到期时间。月卡请勿启用。",
+        Description = "登陆时自动记录剩余点卡，可选在服务器信息栏显示到期时间。",
         Category = ModuleCategories.General,
         Author = ["Due"]
     };
@@ -37,6 +39,8 @@ public class RecordGameTimeLeft : DailyModuleBase
         Entry = DService.DtrBar.Get("DailyRoutines-GameTimeLeft");
         Entry.Shown = false;
 
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_CharaSelectRemain", OnLobby);
+
         CommandManager.AddCommand(Command, new(OnCommand)
         {
             HelpMessage = "开启/关闭 服务器栏显示",
@@ -50,13 +54,20 @@ public class RecordGameTimeLeft : DailyModuleBase
 
         ImGui.Text("仅供参考，实际时间会有分钟级误差。");
 
-        if (ModuleConfig.timeTill != null)
+        if (ModuleConfig.hasMonthly)
         {
-            ImGui.Text($"上次记录时间： {ModuleConfig.lastSuccessRecord}。 时间至： {ModuleConfig.timeTill}");
+            ImGui.Text("已购买月卡，无法获取剩余时间。");
         }
         else
         {
-            ImGui.Text("暂无数据。请重新登录游戏。");
+            if (ModuleConfig.timeTill != null)
+            {
+                ImGui.Text($"上次记录时间： {ModuleConfig.lastSuccessRecord}。 时间至： {ModuleConfig.timeTill}");
+            }
+            else
+            {
+                ImGui.Text("暂无数据。请重新登录游戏。");
+            }
         }
 
         ImGui.Spacing();
@@ -80,6 +91,7 @@ public class RecordGameTimeLeft : DailyModuleBase
     {
         Entry?.Remove();
 
+        DService.AddonLifecycle.UnregisterListener(OnLobby);
         FrameworkManager.Unregister(OnUpdate);
 
         base.Uninit();
@@ -102,7 +114,7 @@ public class RecordGameTimeLeft : DailyModuleBase
         }
     }
 
-    private unsafe void OnUpdate(IFramework framework)
+    private unsafe void OnLobby(AddonEvent eventType, AddonArgs? args)
     {
         if (DService.ClientState.IsLoggedIn == false)
         {
@@ -117,10 +129,18 @@ public class RecordGameTimeLeft : DailyModuleBase
                 }
                 try
                 {
-                    ModuleConfig.timeLeft = getTime(*(AgentLobby.Instance()->LobbyData.LobbyUIClient.SubscriptionInfo));
+                    var info = AgentLobby.Instance()->LobbyData.LobbyUIClient.SubscriptionInfo;
+                    if (info->DaysRemaining != 0)
+                    {
+                        ModuleConfig.hasMonthly = true;
+                        ModuleConfig.Save(this);
+                        return;
+                    }
+                    ModuleConfig.timeLeft = getTime(*(info));
                     ModuleConfig.timeTill = DateTime.Now.AddSeconds(int.Parse(ModuleConfig.timeLeft)).ToString();
                     ModuleConfig.lastSuccessRecord = DateTime.Now.ToString();
                     ModuleConfig.Save(this);
+                    return;
                 }
                 catch (Exception)
                 {
@@ -128,7 +148,10 @@ public class RecordGameTimeLeft : DailyModuleBase
                 }
             }
         }
+    }
 
+    private unsafe void OnUpdate(IFramework framework)
+    {
         if (ModuleConfig.showOnDTR)
         {
             if (ModuleConfig.timeTill != null)
@@ -145,7 +168,6 @@ public class RecordGameTimeLeft : DailyModuleBase
         {
             Entry.Shown = false;
         }
-
     }
 
     private static string getTime(LobbySubscriptionInfo str)
@@ -179,6 +201,7 @@ public class RecordGameTimeLeft : DailyModuleBase
         public bool showOnDTR { get; set; } = false;
         public string? timeLeft { get; set; } = null;
         public string? timeTill { get; set; } = null;
+        public bool hasMonthly { get; set; } = false;
     }
 
     private void ResetConfig()
@@ -187,6 +210,7 @@ public class RecordGameTimeLeft : DailyModuleBase
         ModuleConfig.showOnDTR = false;
         ModuleConfig.timeLeft = null;
         ModuleConfig.timeTill = null;
+        ModuleConfig.hasMonthly = false;
         ModuleConfig.Save(this);
     }
 }
