@@ -15,7 +15,7 @@ public class AutoPeloton : DailyModuleBase
         Title       = GetLoc("AutoPelotonTitle"),       // "自动释放速行"
         Description = GetLoc("AutoPelotonDescription"), // "使用远敏职业时，自动尝试释放速行"
         Category    = ModuleCategories.Action,
-        Author      = ["N/A"]
+        Author      = ["yamiYori"]
     };
     
     // 诗人 机工 舞者
