@@ -19,12 +19,8 @@ public class RecordGameTimeLeft : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        /*
         Title = GetLoc("RecordGameTimeLeft"),
         Description = GetLoc("RecordGameTimeLeftDesc"),
-        */ // Placeholder until localization is added
-        Title = "记录剩余点卡时间",
-        Description = "登陆时自动记录剩余点卡，可选在服务器信息栏显示到期时间。",
         Category = ModuleCategories.General,
         Author = ["Due"]
     };
@@ -43,37 +39,39 @@ public class RecordGameTimeLeft : DailyModuleBase
 
         CommandManager.AddCommand(Command, new(OnCommand)
         {
-            HelpMessage = "开启/关闭 服务器栏显示",
+            HelpMessage = GetLoc("RecordGameTimeLeft-CommandHelp"),
         });
 
         FrameworkManager.Register(false, OnUpdate);
     }
 
+    public override ModulePermission Permission => new() { CNOnly = true };
+
     public override void ConfigUI()
     {
 
-        ImGui.Text("仅供参考，实际时间会有分钟级误差。");
+        ImGui.Text(GetLoc("RecordGameTimeLeft-ReferOnly"));
 
         if (ModuleConfig.hasMonthly)
         {
-            ImGui.Text("已购买月卡，无法获取剩余时间。");
+            ImGui.Text(GetLoc("RecordGameTimeLeft-MonthSubscribe"));
         }
         else
         {
             if (ModuleConfig.timeTill != null)
             {
-                ImGui.Text($"上次记录时间： {ModuleConfig.lastSuccessRecord}。 时间至： {ModuleConfig.timeTill}");
+                ImGui.Text($"{GetLoc("RecordGameTimeLeft-LastRecordTime")}{ModuleConfig.lastSuccessRecord}。 {GetLoc("RecordGameTimeLeft-TimeTill")} {ModuleConfig.timeTill}");
             }
             else
             {
-                ImGui.Text("暂无数据。请重新登录游戏。");
+                ImGui.Text(GetLoc("RecordGameTimeLeft-NoData"));
             }
         }
 
         ImGui.Spacing();
 
         var showOnDTR = ModuleConfig.showOnDTR;
-        if (ImGui.Checkbox("在信息栏显示", ref showOnDTR))
+        if (ImGui.Checkbox(GetLoc("RecordGameTimeLeft-DisplayOnBar"), ref showOnDTR))
         {
             ModuleConfig.showOnDTR = showOnDTR;
             ModuleConfig.Save(this);
@@ -81,7 +79,7 @@ public class RecordGameTimeLeft : DailyModuleBase
 
         ImGui.Spacing();
 
-        if (ImGui.Button("重置记录##TL_Reset"))
+        if (ImGui.Button($"{GetLoc("RecordGameTimeLeft-Reset")}##TL_Reset"))
         {
             ResetConfig();
         }
@@ -105,11 +103,11 @@ public class RecordGameTimeLeft : DailyModuleBase
             ModuleConfig.Save(this);
             if (ModuleConfig.showOnDTR)
             {
-                NotifyHelper.Chat("已开启信息栏显示");
+                NotifyHelper.Chat(GetLoc("RecordGameTimeLeft-DisplayOn"));
             }
             else
             {
-                NotifyHelper.Chat("已关闭信息栏显示");
+                NotifyHelper.Chat(GetLoc("RecordGameTimeLeft-DisplayOff"));
             }
         }
     }
@@ -156,7 +154,7 @@ public class RecordGameTimeLeft : DailyModuleBase
         {
             if (ModuleConfig.timeTill != null)
             {
-                Entry.Text = $"点卡到: {DateTime.Parse(ModuleConfig.timeTill):MM-dd HH:mm}";
+                Entry.Text = $"{GetLoc("RecordGameTimeLeft-TimeTill")} {DateTime.Parse(ModuleConfig.timeTill):MM-dd HH:mm}";
                 Entry.Shown = true;
             }
             else
