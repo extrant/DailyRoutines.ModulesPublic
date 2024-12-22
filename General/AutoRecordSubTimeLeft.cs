@@ -1,13 +1,10 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.Dtr;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace DailyRoutines.Modules;
