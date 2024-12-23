@@ -11,7 +11,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.GeneratedSheets;
 using Vector3 = System.Numerics.Vector3;
 
-namespace DailyRoutines.ModuleTemplate;
+namespace DailyRoutines.Modules;
 
 public class FixedPetPosition : DailyModuleBase
 {
@@ -23,7 +23,7 @@ public class FixedPetPosition : DailyModuleBase
         Author = ["Wotou"],
         Title = GetLoc("FixedPetPositionTitle"),
         Description = GetLoc("FixedPetPositionDescription"),
-        Category = ModuleCategories.Action
+        Category = ModuleCategories.Combat
     };
 
     public override void Init()
@@ -103,7 +103,7 @@ public class FixedPetPosition : DailyModuleBase
             ModuleConfig.PositionSchedules[0].Add(new PositionSchedule
             {
                 Enabled = true,
-                TerritoryId = 0,
+                ZoneID = 0,
                 TimeInSeconds = 0,
                 PosX = 0f,
                 PosZ = 0f
@@ -142,8 +142,7 @@ public class FixedPetPosition : DailyModuleBase
                 // 0) 启用 CheckBox
                 ImGui.TableNextColumn();
                 var enabled = schedule.Enabled;
-                if (ImGui.Checkbox($"##Enable_{territoryKey}_{i}", ref enabled)
-                    && ImGui.IsItemDeactivatedAfterEdit())
+                if (ImGui.Checkbox($"##Enable_{territoryKey}_{i}", ref enabled))
                 {
                     if (enabled != schedule.Enabled)
                     {
@@ -156,13 +155,13 @@ public class FixedPetPosition : DailyModuleBase
 
                 // 1) TerritoryId (区域ID)
                 ImGui.TableNextColumn();
-                var editingTerritoryId = schedule.TerritoryId;
-                if (ImGui.InputInt($"##TerritoryId_{territoryKey}_{i}", ref editingTerritoryId, 0, 0)
-                    && ImGui.IsItemDeactivatedAfterEdit())
+                var editingTerritoryId = schedule.ZoneID;
+                ImGuiOm.InputUInt($"##TerritoryId_{territoryKey}_{i}", ref editingTerritoryId, 0, 0);
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     // 只有在输入完毕后再写回
                     editingTerritoryId = Math.Max(0, editingTerritoryId);
-                    if (editingTerritoryId != schedule.TerritoryId)
+                    if (editingTerritoryId != schedule.ZoneID)
                     {
                         // 如果 TerritoryId 改了，需要把这条 schedule 移动到新的 key
                         // 1. 从旧列表移除
@@ -170,13 +169,13 @@ public class FixedPetPosition : DailyModuleBase
                         i--;
 
                         // 2. 放到新 key 下 (如果不存在就新建)
-                        if (!ModuleConfig.PositionSchedules.ContainsKey(editingTerritoryId))
+                        if (!ModuleConfig.PositionSchedules.ContainsKey((uint)editingTerritoryId))
                             ModuleConfig.PositionSchedules[editingTerritoryId] = new List<PositionSchedule>();
 
                         ModuleConfig.PositionSchedules[editingTerritoryId].Add(new PositionSchedule
                         {
                             Enabled = schedule.Enabled,
-                            TerritoryId = editingTerritoryId,
+                            ZoneID = editingTerritoryId,
                             TimeInSeconds = schedule.TimeInSeconds,
                             PosX = schedule.PosX,
                             PosZ = schedule.PosZ
@@ -193,8 +192,8 @@ public class FixedPetPosition : DailyModuleBase
                 ImGui.TableNextColumn();
                 {
                     var remark = schedule.Remark;
-                    if (ImGui.InputText($"##Remark_{territoryKey}_{i}", ref remark, 30)
-                        && ImGui.IsItemDeactivatedAfterEdit())
+                    ImGui.InputText($"##Remark_{territoryKey}_{i}", ref remark, 256);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
                     {
                         if (remark != schedule.Remark)
                         {
@@ -209,8 +208,8 @@ public class FixedPetPosition : DailyModuleBase
                 // 3) TimeInSeconds
                 ImGui.TableNextColumn();
                 var timeInSeconds = schedule.TimeInSeconds;
-                if (ImGui.InputInt($"##Time_{territoryKey}_{i}", ref timeInSeconds, 0, 0)
-                    && ImGui.IsItemDeactivatedAfterEdit())
+                ImGui.InputInt($"##Time_{territoryKey}_{i}", ref timeInSeconds, 0, 0);
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     timeInSeconds = Math.Max(0, timeInSeconds);
                     if (timeInSeconds != schedule.TimeInSeconds)
@@ -225,8 +224,8 @@ public class FixedPetPosition : DailyModuleBase
                 // 4) PosX
                 ImGui.TableNextColumn();
                 var posX = schedule.PosX;
-                if (ImGui.InputFloat($"##PosX_{territoryKey}_{i}", ref posX, 0f, 0f, "%.3f")
-                    && ImGui.IsItemDeactivatedAfterEdit())
+                ImGui.InputFloat($"##PosX_{territoryKey}_{i}", ref posX, 0f, 0f, "%.3f");
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     // 简单判断浮点数变化
                     if (MathF.Abs(posX - schedule.PosX) > 0.0001f)
@@ -241,8 +240,8 @@ public class FixedPetPosition : DailyModuleBase
                 // 5) PosZ
                 ImGui.TableNextColumn();
                 var posZ = schedule.PosZ;
-                if (ImGui.InputFloat($"##PosZ_{territoryKey}_{i}", ref posZ, 0f, 0f, "%.3f")
-                    && ImGui.IsItemDeactivatedAfterEdit())
+                ImGui.InputFloat($"##PosZ_{territoryKey}_{i}", ref posZ, 0f, 0f, "%.3f");
+                if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     if (MathF.Abs(posZ - schedule.PosZ) > 0.0001f)
                     {
@@ -307,8 +306,8 @@ public class FixedPetPosition : DailyModuleBase
             return;
 
         // 获取当前区域
-        var territoryId = (int)DService.ClientState.TerritoryType;
-        if (!ModuleConfig.PositionSchedules.TryGetValue(territoryId, out var schedulesForThisDuty))
+        var zoneID = DService.ClientState.TerritoryType;
+        if (!ModuleConfig.PositionSchedules.TryGetValue(zoneID, out var schedulesForThisDuty))
             return;
 
         // 只选启用的
@@ -400,16 +399,16 @@ public class FixedPetPosition : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         // Key: TerritoryId(区域ID) → Value: 多条调度
-        public readonly Dictionary<int, List<PositionSchedule>> PositionSchedules = new();
+        public readonly Dictionary<uint, List<PositionSchedule>> PositionSchedules = new();
     }
 
     public class PositionSchedule
     {
-        public bool Enabled { get; set; } = true;           // 是否启用
-        public int TerritoryId { get; set; }                // 区域 ID
-        public string Remark { get; set; } = string.Empty;  // 备注
-        public int TimeInSeconds { get; set; }              // 战斗开始后的时间点 (秒)
-        public float PosX { get; set; }                     // X 坐标
-        public float PosZ { get; set; }                     // Z 坐标
+        public bool   Enabled       { get; set; } = true;         // 是否启用
+        public uint   ZoneID        { get; set; }                 // 区域 ID
+        public string Remark        { get; set; } = string.Empty; // 备注
+        public int    TimeInSeconds { get; set; }                 // 战斗开始后的时间点 (秒)
+        public float  PosX          { get; set; }                 // X 坐标
+        public float  PosZ          { get; set; }                 // Z 坐标
     }
 }
