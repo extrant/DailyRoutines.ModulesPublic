@@ -55,21 +55,25 @@ public class FixedPetPosition : DailyModuleBase
         var regionIdText = GetLoc("Zone") + " ID"; // “区域 ID”
         var regionIdWidth = ImGui.CalcTextSize(regionIdText).X
                             + (ImGui.GetStyle().FramePadding.X * 4);
+        
+        var remarkText = GetLoc("Note"); // “备注”
+        var remarkWidth = ImGui.CalcTextSize(remarkText).X 
+                          + (ImGui.GetStyle().FramePadding.X * 6);
 
         var delayText = GetLoc("FixedPetPosition-Delay"); // “进入战斗后生效(秒)”
         var delayWidth = ImGui.CalcTextSize(delayText).X
-                         + (ImGui.GetStyle().FramePadding.X * 4);
+                         + (ImGui.GetStyle().FramePadding.X * 6);
 
         var xPosText = GetLoc("Position") + "-X"; // “X 坐标”
         var xPosWidth = ImGui.CalcTextSize(xPosText).X
-                        + (ImGui.GetStyle().FramePadding.X * 4);
+                        + (ImGui.GetStyle().FramePadding.X * 5);
 
         var yPosText = GetLoc("Position") + "-Y"; // “Y 坐标”
         var yPosWidth = ImGui.CalcTextSize(yPosText).X
-                        + (ImGui.GetStyle().FramePadding.X * 4);
+                        + (ImGui.GetStyle().FramePadding.X * 5);
 
         // 绘制表格
-        using var table = ImRaii.Table("PositionSchedulesTable", 6,
+        using var table = ImRaii.Table("PositionSchedulesTable", 7,
                                        ImGuiTableFlags.Borders
                                        | ImGuiTableFlags.RowBg
                                        | ImGuiTableFlags.Resizable,
@@ -80,6 +84,7 @@ public class FixedPetPosition : DailyModuleBase
         // 设置每列宽度
         ImGui.TableSetupColumn(addColText, ImGuiTableColumnFlags.WidthFixed, addColWidth);
         ImGui.TableSetupColumn(regionIdText, ImGuiTableColumnFlags.WidthFixed, regionIdWidth);
+        ImGui.TableSetupColumn(remarkText, ImGuiTableColumnFlags.WidthFixed, remarkWidth);
         ImGui.TableSetupColumn(delayText, ImGuiTableColumnFlags.WidthFixed, delayWidth);
         ImGui.TableSetupColumn(xPosText, ImGuiTableColumnFlags.WidthFixed, xPosWidth);
         ImGui.TableSetupColumn(yPosText, ImGuiTableColumnFlags.WidthFixed, yPosWidth);
@@ -112,6 +117,8 @@ public class FixedPetPosition : DailyModuleBase
         // (2) 其余表头
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(regionIdText);
+        ImGui.TableNextColumn();
+        ImGui.TextUnformatted(remarkText);
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(delayText);
         ImGui.TableNextColumn();
@@ -182,7 +189,24 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 2) TimeInSeconds
+                // 2) 备注
+                ImGui.TableNextColumn();
+                {
+                    var remark = schedule.Remark;
+                    if (ImGui.InputText($"##Remark_{territoryKey}_{i}", ref remark, 30)
+                        && ImGui.IsItemDeactivatedAfterEdit())
+                    {
+                        if (remark != schedule.Remark)
+                        {
+                            schedule.Remark = remark;
+                            SaveConfig(ModuleConfig);
+                            TaskHelper.Abort();
+                            TaskHelper.Enqueue(SchedulePetMovements);
+                        }
+                    }
+                }
+                
+                // 3) TimeInSeconds
                 ImGui.TableNextColumn();
                 var timeInSeconds = schedule.TimeInSeconds;
                 if (ImGui.InputInt($"##Time_{territoryKey}_{i}", ref timeInSeconds, 0, 0)
@@ -198,7 +222,7 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 3) PosX
+                // 4) PosX
                 ImGui.TableNextColumn();
                 var posX = schedule.PosX;
                 if (ImGui.InputFloat($"##PosX_{territoryKey}_{i}", ref posX, 0f, 0f, "%.3f")
@@ -214,7 +238,7 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 4) PosZ
+                // 5) PosZ
                 ImGui.TableNextColumn();
                 var posZ = schedule.PosZ;
                 if (ImGui.InputFloat($"##PosZ_{territoryKey}_{i}", ref posZ, 0f, 0f, "%.3f")
@@ -229,7 +253,7 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 5) 操作（删除）
+                // 6) 操作（删除）
                 ImGui.TableNextColumn();
                 if (ImGui.Button($"{GetLoc("Delete")}##Schedule_{territoryKey}_{i}"))
                 {
@@ -381,10 +405,11 @@ public class FixedPetPosition : DailyModuleBase
 
     public class PositionSchedule
     {
-        public bool Enabled { get; set; } = true; // 是否启用
-        public int TerritoryId { get; set; }      // 区域 ID (原 DutyId)
-        public int TimeInSeconds { get; set; }    // 战斗开始后的时间点 (秒)
-        public float PosX { get; set; }           // X 坐标
-        public float PosZ { get; set; }           // Z 坐标
+        public bool Enabled { get; set; } = true;           // 是否启用
+        public int TerritoryId { get; set; }                // 区域 ID
+        public string Remark { get; set; } = string.Empty;  // 备注
+        public int TimeInSeconds { get; set; }              // 战斗开始后的时间点 (秒)
+        public float PosX { get; set; }                     // X 坐标
+        public float PosZ { get; set; }                     // Z 坐标
     }
 }
