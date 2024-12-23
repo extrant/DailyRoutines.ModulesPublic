@@ -40,7 +40,7 @@ public class ASTHelper : DailyModuleBase
     private static uint RangeCandidateId = UnspecificTargetId;
 
     // debug mode
-    private const bool DEBUG = true;
+    private const bool DEBUG = false;
 
     // HttpClient for fetching FFLogs (auto play card advance mode)
     private static readonly HttpClient Client = new();
@@ -64,6 +64,7 @@ public class ASTHelper : DailyModuleBase
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("ASTHelper-AutoPlayCard-Title"));
         ImGui.Text(GetLoc("ASTHelper-AutoPlayCard-Description"));
+        ImGui.Spacing();
         if (ImGui.RadioButton(GetLoc("ASTHelper-AutoPlayCard-Disabled"), ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
         {
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Disable;
@@ -120,6 +121,7 @@ public class ASTHelper : DailyModuleBase
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("ASTHelper-EasyHeal-Title"));
         ImGui.Text(GetLoc("ASTHelper-EasyHeal-Description"));
+        ImGui.Spacing();
 
         if (ImGui.RadioButton(GetLoc("ASTHelper-EasyHeal-Disabled"), ModuleConfig.EasyHeal == EasyHealStatus.Disable))
         {
@@ -140,11 +142,12 @@ public class ASTHelper : DailyModuleBase
             ImGui.Spacing();
             ImGui.AlignTextToFramePadding();
             ImGui.Text(GetLoc("ASTHelper-EasyHeal-HealThreshold"));
+            ImGui.Spacing();
             if (ImGui.SliderFloat("##HealThreshold", ref ModuleConfig.NeedHealThreshold, 0.0f, 1.2f, "%.2f"))
                 SaveConfig(ModuleConfig);
 
             // all time heal warning
-            if (ModuleConfig.NeedHealThreshold > 1f)
+            if (ModuleConfig.NeedHealThreshold > 0.95f)
             {
                 ImGui.Spacing();
                 ImGui.AlignTextToFramePadding();
