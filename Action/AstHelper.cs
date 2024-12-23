@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Numerics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
 using DailyRoutines.Abstracts;
@@ -14,6 +12,7 @@ using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
+using Newtonsoft.Json;
 using OmenTools;
 using OmenTools.Helpers;
 using OmenTools.Infos;
@@ -26,8 +25,8 @@ public class ASTHelper : DailyModuleBase
     public override ModuleInfo Info => new()
     {
         Author = ["HaKu"],
-        Title = GetLoc("ASTHelper-Title"),
-        Description = GetLoc("ASTHelper-Description"),
+        Title = GetLoc("ASTHelperTitle"),
+        Description = GetLoc("ASTHelperDescription"),
         Category = ModuleCategories.Action
     };
 
@@ -65,22 +64,22 @@ public class ASTHelper : DailyModuleBase
     {
         // auto play card
         ImGui.AlignTextToFramePadding();
-        ImGui.Text(GetLoc("ASTHelper-AutoPlayCard-Title"));
-        ImGui.Text(GetLoc("ASTHelper-AutoPlayCard-Description"));
+        ImGui.Text(GetLoc("ASTHelper-AutoPlayCardTitle"));
+        ImGui.Text(GetLoc("ASTHelper-AutoPlayCardDescription"));
         ImGui.Spacing();
-        if (ImGui.RadioButton(GetLoc("ASTHelper-AutoPlayCard-Disabled"), ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
+        if (ImGui.RadioButton($"{GetLoc("Off")} ({GetLoc("ASTHelper-AutoPlayCard-OffDescription")})", ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
         {
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Disable;
             SaveConfig(ModuleConfig);
         }
 
-        if (ImGui.RadioButton(GetLoc("ASTHelper-AutoPlayCard-Default"), ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Default))
+        if (ImGui.RadioButton($"{GetLoc("Common")} ({GetLoc("ASTHelper-AutoPlayCard-CommonDescription")})", ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Default))
         {
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
             SaveConfig(ModuleConfig);
         }
 
-        if (ImGui.RadioButton(GetLoc("ASTHelper-AutoPlayCard-Advance"), ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance))
+        if (ImGui.RadioButton($"{GetLoc("Advance")} ({GetLoc("ASTHelper-AutoPlayCard-AdvanceDescription")})", ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance))
         {
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Advance;
             SaveConfig(ModuleConfig);
@@ -122,18 +121,17 @@ public class ASTHelper : DailyModuleBase
         // easy heal
         ImGui.NewLine();
         ImGui.AlignTextToFramePadding();
-        ImGui.Text(GetLoc("ASTHelper-EasyHeal-Title"));
-        ImGui.Text(GetLoc("ASTHelper-EasyHeal-Description"));
+        ImGui.Text(GetLoc("ASTHelper-EasyHealTitle"));
+        ImGui.Text(GetLoc("ASTHelper-EasyHealDescription"));
         ImGui.Spacing();
 
-        if (ImGui.RadioButton(GetLoc("ASTHelper-EasyHeal-Disabled"), ModuleConfig.EasyHeal == EasyHealStatus.Disable))
+        if (ImGui.RadioButton($"{GetLoc("Off")} ({GetLoc("ASTHelper-EasyHeal-OffDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Disable))
         {
             ModuleConfig.EasyHeal = EasyHealStatus.Disable;
             SaveConfig(ModuleConfig);
         }
 
-        ImGui.SameLine();
-        if (ImGui.RadioButton(GetLoc("ASTHelper-EasyHeal-Enabled"), ModuleConfig.EasyHeal == EasyHealStatus.Enable))
+        if (ImGui.RadioButton($"{GetLoc("On")} ({GetLoc("ASTHelper-EasyHeal-OnDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Enable))
         {
             ModuleConfig.EasyHeal = EasyHealStatus.Enable;
             SaveConfig(ModuleConfig);
@@ -146,11 +144,11 @@ public class ASTHelper : DailyModuleBase
             ImGui.AlignTextToFramePadding();
             ImGui.Text(GetLoc("ASTHelper-EasyHeal-HealThreshold"));
             ImGui.Spacing();
-            if (ImGui.SliderFloat("##HealThreshold", ref ModuleConfig.NeedHealThreshold, 0.0f, 1.2f, "%.2f"))
+            if (ImGui.SliderFloat("##HealThreshold", ref ModuleConfig.NeedHealThreshold, 0.0f, 1.0f, "%.2f"))
                 SaveConfig(ModuleConfig);
 
             // all time heal warning
-            if (ModuleConfig.NeedHealThreshold > 0.95f)
+            if (ModuleConfig.NeedHealThreshold > 0.92f)
             {
                 ImGui.Spacing();
                 ImGui.AlignTextToFramePadding();
@@ -164,9 +162,14 @@ public class ASTHelper : DailyModuleBase
             ImGui.NewLine();
             ImGui.AlignTextToFramePadding();
             ImGui.Text("Debug Tools:");
-            ImGui.SameLine();
+
+            ImGui.Spacing();
             if (ImGui.Button("Fetch Candidate Manually"))
                 OnZoneChanged(1234);
+
+            ImGui.Spacing();
+            if (ImGui.Button("Fetch Sever Region"))
+                NotifyHelper.Chat(GetRegion());
         }
     }
 
@@ -342,14 +345,14 @@ public class ASTHelper : DailyModuleBase
         if (MeleeCandidateId == UnspecificTargetId)
         {
             MeleeCandidateId = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 2, partyList.First()).ObjectId;
-            selectedMeleeReason = GetLoc("ASTHelper-AutoPlayCard-Message-FallFirst");
+            selectedMeleeReason = $"{GetLoc("Fallback")} {GetLoc("ASTHelper-AutoPlayCard-Message-FallFirstDescription")}";
         }
 
         // range fallback: if no candidate found, select the last range or last party member.
         if (RangeCandidateId == UnspecificTargetId)
         {
             RangeCandidateId = partyList.LastOrDefault(m => m.ClassJob.GameData.Role == 3, partyList.Last()).ObjectId;
-            selectedRangeReason = GetLoc("ASTHelper-AutoPlayCard-Message-FallLast");
+            selectedRangeReason = $"{GetLoc("Fallback")} {GetLoc("ASTHelper-AutoPlayCard-Message-FallLastDescription")}";
         }
 
         // notify candidates
@@ -371,7 +374,7 @@ public class ASTHelper : DailyModuleBase
         {
             var ratio = member.CurrentHP / (float)member.MaxHP;
             if (DEBUG) NotifyHelper.Chat($"{member.Name} | {ratio:0.00} | {ModuleConfig.NeedHealThreshold}");
-            if (ratio < lowRatio && ratio < ModuleConfig.NeedHealThreshold)
+            if (ratio < lowRatio && ratio <= ModuleConfig.NeedHealThreshold)
             {
                 lowRatio = ratio;
                 needHealId = member.ObjectId;
@@ -416,12 +419,25 @@ public class ASTHelper : DailyModuleBase
         }
     }
 
+    private static string GetRegion()
+    {
+        return DService.ClientState.LocalPlayer.CurrentWorld.GameData.DataCenter.Value.Region switch
+        {
+            1 => "JP",
+            2 => "NA",
+            3 => "EU",
+            4 => "OC",
+            5 => "CN",
+            _ => string.Empty,
+        };
+    }
+
     private static async Task<LogsRecord?> FetchBestLogsRecord(ushort zone, IPartyMember member)
     {
         // get character info
         var charaName = member.Name;
         var serverSlug = member.World.GameData.Name;
-        var region = "CN"; // cn client
+        var region = GetRegion();
         var job = member.ClassJob.GameData.NameEnglish;
 
         // fetch record
@@ -435,7 +451,7 @@ public class ASTHelper : DailyModuleBase
 
             // contains all ultimates and current savage in current patch
             var response = await Client.GetStringAsync($"{uri}?{query}");
-            var records = JsonSerializer.Deserialize<LogsRecord[]>(response);
+            var records = JsonConvert.DeserializeObject<LogsRecord[]>(response);
             if (records == null || records.Length == 0) return null;
 
             // find best record
@@ -504,15 +520,15 @@ public class ASTHelper : DailyModuleBase
     public class LogsRecord
     {
         // job english name
-        [JsonPropertyName("spec")]
+        [JsonProperty("spec")]
         public string JobName { get; set; }
 
         // record difficulty
-        [JsonPropertyName("difficulty")]
+        [JsonProperty("difficulty")]
         public int Difficulty { get; set; }
 
         // rDPS
-        [JsonPropertyName("total")]
+        [JsonProperty("total")]
         public double DPS { get; set; }
     }
 
