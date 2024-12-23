@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
@@ -12,7 +11,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
 namespace DailyRoutines.Modules;
@@ -391,17 +389,17 @@ public class AutoCheckFoodUsage : DailyModuleBase
         return true;
     }
 
-    private unsafe bool? TakeFoodInternal(uint itemID, bool isHQ)
+    private bool? TakeFoodInternal(uint itemID, bool isHQ)
     {
         TaskHelper.Abort();
         if (TryGetWellFedParam(out var itemFoodId, out var remainingTime) &&
             itemFoodId                 == ToFoodRowID(itemID)             &&
             remainingTime.TotalMinutes >= 25)
             return true;
+
+        UseActionManager.UseActionLocation(ActionType.Item, isHQ ? itemID  + 100_0000 : itemID, 0xE0000000, default, 0xFFFF);
         
-        ActionManager.Instance()->UseAction(ActionType.Item, isHQ ? itemID + 100_0000 : itemID, 0xE000_0000, 65535);
-        
-        TaskHelper.DelayNext(3000);
+        TaskHelper.DelayNext(3_000);
         TaskHelper.Enqueue(() => CheckFoodState(itemID, isHQ));
         return true;
     }
@@ -437,7 +435,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         if (statusIndex == -1) return false;
 
         var status = statusManager->Status[statusIndex];
-        itemFoodRowID = status.Param;
+        itemFoodRowID = (uint)status.Param % 10_000;
         remainingTime = TimeSpan.FromSeconds(status.RemainingTime);
         return true;
     }
