@@ -54,6 +54,9 @@ public class ASTHelper : DailyModuleBase
         // hook before send card & heal
         UseActionManager.Register(OnPreUseAction);
 
+        // task helper for select candidates
+        TaskHelper ??= new TaskHelper { TimeLimitMS = 20_000 };
+
         // fetch team logs when zone changed (for ultimates and current savage)
         DService.ClientState.TerritoryChanged += OnZoneChanged;
     }
@@ -163,7 +166,7 @@ public class ASTHelper : DailyModuleBase
             ImGui.Text("Debug Tools:");
             ImGui.SameLine();
             if (ImGui.Button("Fetch Candidate Manually"))
-                OnZoneChanged(1226);
+                OnZoneChanged(1234);
         }
     }
 
@@ -182,12 +185,14 @@ public class ASTHelper : DailyModuleBase
                 // melee card: the balance 37023
                 if (targetId == UnspecificTargetId && actionId == 37023)
                 {
+                    if (DEBUG) NotifyHelper.Chat($"Send Melee Card to {MeleeCandidateId}");
                     NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-Melee", FetchMemberNameById(MeleeCandidateId)));
                     targetId = MeleeCandidateId;
                 }
                 // range card: the spear 37026
                 else if (targetId == UnspecificTargetId && actionId == 37026)
                 {
+                    if (DEBUG) NotifyHelper.Chat($"Send Range Card to {RangeCandidateId}");
                     NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-Melee", FetchMemberNameById(RangeCandidateId)));
                     targetId = RangeCandidateId;
                 }
@@ -223,30 +228,51 @@ public class ASTHelper : DailyModuleBase
     // update candidates when zone changed
     private void OnZoneChanged(ushort zone)
     {
+        if (DEBUG)
+        {
+            NotifyHelper.Chat($"Zone Changed: {zone}");
+            NotifyHelper.Chat($"Auto Play Card: {ModuleConfig.AutoPlayCard}");
+            NotifyHelper.Chat($"Easy Heal: {ModuleConfig.EasyHeal}");
+        }
+
         // disable auto play card or no party member
-        if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.PartyList.Length == 0) return;
+        if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable) return;
+        TaskHelper.Enqueue(() => !OmenTools.Infos.InfosOm.BetweenAreas, "##WaitForEnterDuty", null, null, 2);
+        TaskHelper.Enqueue(() => SelectCandidates(zone));
+    }
 
-
+    private bool? SelectCandidates(ushort zone)
+    {
         // reset candidates when zone changed
-        MeleeCandidateId = 0;
-        RangeCandidateId = 0;
+        MeleeCandidateId = UnspecificTargetId;
+        RangeCandidateId = UnspecificTargetId;
 
         // find card candidates
         var partyList = DService.PartyList; // role [0 tank, 2 melee, 3 range, 4 healer]
+        if (partyList.Length == 0)
+        {
+            TaskHelper.Abort();
+            return true;
+        }
+
+        if (DEBUG) NotifyHelper.Chat($"Party Members Found {partyList.Length}");
+
         var selectedMeleeReason = string.Empty;
         var selectedRangeReason = string.Empty;
 
-        // check FFLogs API Key status when in advance mode
-        if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance && !ModuleConfig.KeyValid)
-        {
-            NotifyHelper.Chat(GetLoc("ASTHealer-AutoPlayCard-AdvanceFallback"));
-            ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
-            SaveConfig(ModuleConfig);
-        }
+        // advance fallback when no valid zone id or invalid key
+        if (!Dal2LogsZoneMap.ContainsKey(zone) || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
+            if (!ModuleConfig.KeyValid)
+            {
+                NotifyHelper.Chat(GetLoc("ASTHealer-AutoPlayCard-AdvanceFallback"));
+                ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
+                SaveConfig(ModuleConfig);
+            }
 
         // select the best candidate for melee and range according to rdps
         if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
         {
+            if (DEBUG) NotifyHelper.Chat("Auto Play Card Advance Mode");
             var tmpBestMeleeDps = -1.0;
             var tmpBestRangeDps = -1.0;
             foreach (var member in partyList)
@@ -284,12 +310,14 @@ public class ASTHelper : DailyModuleBase
         // select candidates according to default order
         else if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Default)
         {
+            if (DEBUG) NotifyHelper.Chat("Auto Play Card Default Mode");
             // melee with higher order
             foreach (var meleeJob in MeleeOrder)
             {
                 var meleeMember = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == meleeJob);
                 if (meleeMember != null)
                 {
+                    if (DEBUG) NotifyHelper.Chat($"Find Melee: {meleeMember.ClassJob.GameData.Name}");
                     MeleeCandidateId = meleeMember.ObjectId;
                     selectedMeleeReason = GetLoc("ASTHelper-AutoPlayCard-Message-HighestOrder", meleeMember.ClassJob.GameData.Name);
                     break;
@@ -302,6 +330,7 @@ public class ASTHelper : DailyModuleBase
                 var rangeMember = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == rangeJob);
                 if (rangeMember != null)
                 {
+                    if (DEBUG) NotifyHelper.Chat($"Find Range: {rangeMember.ClassJob.GameData.Name}");
                     RangeCandidateId = rangeMember.ObjectId;
                     selectedMeleeReason = GetLoc("ASTHelper-AutoPlayCard-Message-HighestOrder", rangeMember.ClassJob.GameData.Name);
                     break;
@@ -310,14 +339,14 @@ public class ASTHelper : DailyModuleBase
         }
 
         // melee fallback: if no candidate found, select the first melee or first party member.
-        if (MeleeCandidateId == 0)
+        if (MeleeCandidateId == UnspecificTargetId)
         {
             MeleeCandidateId = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 2, partyList.First()).ObjectId;
             selectedMeleeReason = GetLoc("ASTHelper-AutoPlayCard-Message-FallFirst");
         }
 
         // range fallback: if no candidate found, select the last range or last party member.
-        if (RangeCandidateId == 0)
+        if (RangeCandidateId == UnspecificTargetId)
         {
             RangeCandidateId = partyList.LastOrDefault(m => m.ClassJob.GameData.Role == 3, partyList.Last()).ObjectId;
             selectedRangeReason = GetLoc("ASTHelper-AutoPlayCard-Message-FallLast");
@@ -328,6 +357,9 @@ public class ASTHelper : DailyModuleBase
         var rangeCandidateName = FetchMemberNameById(RangeCandidateId);
         NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-MeleeCandidate", meleeCandidateName, selectedMeleeReason));
         NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-RangeCandidate", rangeCandidateName, selectedRangeReason));
+
+        TaskHelper.Abort();
+        return true;
     }
 
     private static uint TargetNeedHeal()
