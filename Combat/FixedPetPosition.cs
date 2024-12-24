@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -17,6 +18,9 @@ public class FixedPetPosition : DailyModuleBase
 {
     private static Config ModuleConfig = null!;
     private DateTime BattleStartTime = DateTime.MinValue;
+    private static string ContentSearchInput = string.Empty;
+    private bool IsPicking = false;
+    private (uint territoryKey, int index)? currentPickingRow = null;
 
     public override ModuleInfo Info => new()
     {
@@ -36,47 +40,34 @@ public class FixedPetPosition : DailyModuleBase
         DService.Condition.ConditionChange += OnConditionChanged;
 
         TaskHelper.Enqueue(SchedulePetMovements);
+        CleanEmptyLists();
     }
 
     public override void ConfigUI()
     {
-        ImGui.TextColored(LightSkyBlue, GetLoc("FixedPetPosition-Config"));
-        ImGui.Spacing();
-
-        // 显示当前区域 ID
-        ImGui.Text($"{GetLoc("AutoMarksFinder-CurrentZone")} {DService.ClientState.TerritoryType}");
         ImGui.Spacing();
 
         var tableWidth = (ImGui.GetContentRegionAvail() - ScaledVector2(100f)) with { Y = 0 };
 
         var addColText = "Add"; // or "添加"
-        var addColWidth = ImGui.CalcTextSize(addColText).X + (2 * ImGui.GetStyle().ItemSpacing.X);
+        var addColWidth = ScaledVector2(20f).X;
 
-        var regionIdText = GetLoc("Zone") + " ID"; // “区域 ID”
-        var regionIdWidth = ImGui.CalcTextSize(regionIdText).X
-                            + (ImGui.GetStyle().FramePadding.X * 4);
-        
+        var regionIdText = GetLoc("Zone"); // “区域”
+        var regionIdWidth = (tableWidth * 0.28f).X;
+
         var remarkText = GetLoc("Note"); // “备注”
-        var remarkWidth = ImGui.CalcTextSize(remarkText).X 
-                          + (ImGui.GetStyle().FramePadding.X * 6);
+        var remarkWidth = (tableWidth * 0.15f).X;
 
         var delayText = GetLoc("FixedPetPosition-Delay"); // “进入战斗后生效(秒)”
-        var delayWidth = ImGui.CalcTextSize(delayText).X
-                         + (ImGui.GetStyle().FramePadding.X * 6);
+        var delayWidth = (tableWidth * 0.1f).X;
 
-        var xPosText = GetLoc("Position") + "-X"; // “X 坐标”
-        var xPosWidth = ImGui.CalcTextSize(xPosText).X
-                        + (ImGui.GetStyle().FramePadding.X * 5);
-
-        var yPosText = GetLoc("Position") + "-Y"; // “Y 坐标”
-        var yPosWidth = ImGui.CalcTextSize(yPosText).X
-                        + (ImGui.GetStyle().FramePadding.X * 5);
+        var posText = GetLoc("Position"); // “坐标”
+        var posWidth = (tableWidth * 0.2f).X;
 
         // 绘制表格
-        using var table = ImRaii.Table("PositionSchedulesTable", 7,
+        using var table = ImRaii.Table("PositionSchedulesTable", 6,
                                        ImGuiTableFlags.Borders
-                                       | ImGuiTableFlags.RowBg
-                                       | ImGuiTableFlags.Resizable,
+                                       | ImGuiTableFlags.RowBg,
                                        tableWidth);
         if (!table)
             return;
@@ -86,8 +77,7 @@ public class FixedPetPosition : DailyModuleBase
         ImGui.TableSetupColumn(regionIdText, ImGuiTableColumnFlags.WidthFixed, regionIdWidth);
         ImGui.TableSetupColumn(remarkText, ImGuiTableColumnFlags.WidthFixed, remarkWidth);
         ImGui.TableSetupColumn(delayText, ImGuiTableColumnFlags.WidthFixed, delayWidth);
-        ImGui.TableSetupColumn(xPosText, ImGuiTableColumnFlags.WidthFixed, xPosWidth);
-        ImGui.TableSetupColumn(yPosText, ImGuiTableColumnFlags.WidthFixed, yPosWidth);
+        ImGui.TableSetupColumn(posText, ImGuiTableColumnFlags.WidthFixed, posWidth);
         ImGui.TableSetupColumn(GetLoc("Operation"), ImGuiTableColumnFlags.WidthStretch);
 
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
@@ -122,9 +112,7 @@ public class FixedPetPosition : DailyModuleBase
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(delayText);
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(xPosText);
-        ImGui.TableNextColumn();
-        ImGui.TextUnformatted(yPosText);
+        ImGui.TextUnformatted(posText);
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(GetLoc("Operation"));
 
@@ -156,35 +144,54 @@ public class FixedPetPosition : DailyModuleBase
                 // 1) TerritoryId (区域ID)
                 ImGui.TableNextColumn();
                 var editingTerritoryId = schedule.ZoneID;
-                ImGuiOm.InputUInt($"##TerritoryId_{territoryKey}_{i}", ref editingTerritoryId, 0, 0);
-                if (ImGui.IsItemDeactivatedAfterEdit())
+                var filteredContents = PresetData.Contents
+                                                 .Where(pair => pair.Value.ContentMemberType.Row == 3) // 只要 8人本
+                                                 .ToDictionary(pair => pair.Key, pair => pair.Value);
+
+                ImGui.SetNextItemWidth(regionIdWidth);
+                using (ImRaii.PushId($"SingleSelectCombo_Id_{territoryKey}_{i}"))
                 {
-                    // 只有在输入完毕后再写回
-                    editingTerritoryId = Math.Max(0, editingTerritoryId);
-                    if (editingTerritoryId != schedule.ZoneID)
+                    if (SingleSelectCombo(filteredContents, ref editingTerritoryId, ref ContentSearchInput,
+                                          x => $"{x.Name}",
+                                          new[] { (GetLoc("Name"), ImGuiTableColumnFlags.None, 0f) },
+                                          [
+                                              x => () => { ImGui.Text($"{x.Name}"); }
+                                          ],
+                                          [x => x.Name.RawString, x => x.RowId.ToString()]))
                     {
-                        // 如果 TerritoryId 改了，需要把这条 schedule 移动到新的 key
-                        // 1. 从旧列表移除
-                        scheduleList.RemoveAt(i);
-                        i--;
+                        // 只有在输入完毕后再写回
+                        editingTerritoryId = Math.Max(0, editingTerritoryId);
+                        //NotifyHelper.Chat($"editingTerritoryId: {editingTerritoryId}");
+                        //NotifyHelper.Chat($"schedule.ZoneID: {schedule.ZoneID}");
 
-                        // 2. 放到新 key 下 (如果不存在就新建)
-                        if (!ModuleConfig.PositionSchedules.ContainsKey((uint)editingTerritoryId))
-                            ModuleConfig.PositionSchedules[editingTerritoryId] = new List<PositionSchedule>();
 
-                        ModuleConfig.PositionSchedules[editingTerritoryId].Add(new PositionSchedule
+                        if (editingTerritoryId != schedule.ZoneID)
                         {
-                            Enabled = schedule.Enabled,
-                            ZoneID = editingTerritoryId,
-                            TimeInSeconds = schedule.TimeInSeconds,
-                            PosX = schedule.PosX,
-                            PosZ = schedule.PosZ
-                        });
+                            // 如果 TerritoryId 改了，需要把这条 schedule 移动到新的 key
+                            // 1. 从旧列表移除
+                            scheduleList.RemoveAt(i);
+                            if (scheduleList.Count == 0)
+                                ModuleConfig.PositionSchedules.Remove(territoryKey);
+                            i--;
 
-                        SaveConfig(ModuleConfig);
-                        TaskHelper.Abort();
-                        TaskHelper.Enqueue(SchedulePetMovements);
-                        continue;
+                            // 2. 放到新 key 下 (如果不存在就新建)
+                            if (!ModuleConfig.PositionSchedules.ContainsKey((uint)editingTerritoryId))
+                                ModuleConfig.PositionSchedules[editingTerritoryId] = new List<PositionSchedule>();
+
+                            ModuleConfig.PositionSchedules[editingTerritoryId].Add(new PositionSchedule
+                            {
+                                Enabled = schedule.Enabled,
+                                ZoneID = editingTerritoryId,
+                                TimeInSeconds = schedule.TimeInSeconds,
+                                PosX = schedule.PosX,
+                                PosZ = schedule.PosZ
+                            });
+
+                            SaveConfig(ModuleConfig);
+                            TaskHelper.Abort();
+                            TaskHelper.Enqueue(SchedulePetMovements);
+                            continue;
+                        }
                     }
                 }
 
@@ -192,6 +199,7 @@ public class FixedPetPosition : DailyModuleBase
                 ImGui.TableNextColumn();
                 {
                     var remark = schedule.Remark;
+                    ImGui.SetNextItemWidth(remarkWidth);
                     ImGui.InputText($"##Remark_{territoryKey}_{i}", ref remark, 256);
                     if (ImGui.IsItemDeactivatedAfterEdit())
                     {
@@ -204,10 +212,11 @@ public class FixedPetPosition : DailyModuleBase
                         }
                     }
                 }
-                
+
                 // 3) TimeInSeconds
                 ImGui.TableNextColumn();
                 var timeInSeconds = schedule.TimeInSeconds;
+                ImGui.SetNextItemWidth(delayWidth);
                 ImGui.InputInt($"##Time_{territoryKey}_{i}", ref timeInSeconds, 0, 0);
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
@@ -221,10 +230,14 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 4) PosX
+
+                // 4) PosX, PosZ
                 ImGui.TableNextColumn();
                 var posX = schedule.PosX;
-                ImGui.InputFloat($"##PosX_{territoryKey}_{i}", ref posX, 0f, 0f, "%.3f");
+                var posZ = schedule.PosZ;
+
+                ImGui.SetNextItemWidth((posWidth - 70) / 2);
+                ImGui.InputFloat($"##PosX_{territoryKey}_{i}", ref posX, 0f, 0f, "%.1f");
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     // 简单判断浮点数变化
@@ -237,10 +250,9 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 5) PosZ
-                ImGui.TableNextColumn();
-                var posZ = schedule.PosZ;
-                ImGui.InputFloat($"##PosZ_{territoryKey}_{i}", ref posZ, 0f, 0f, "%.3f");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth((posWidth - 70) / 2);
+                ImGui.InputFloat($"##PosZ_{territoryKey}_{i}", ref posZ, 0f, 0f, "%.1f");
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
                     if (MathF.Abs(posZ - schedule.PosZ) > 0.0001f)
@@ -252,10 +264,106 @@ public class FixedPetPosition : DailyModuleBase
                     }
                 }
 
-                // 6) 操作（删除）
-                ImGui.TableNextColumn();
-                if (ImGui.Button($"{GetLoc("Delete")}##Schedule_{territoryKey}_{i}"))
+                ImGui.SameLine();
+                if (ImGuiOm.ButtonIcon($"GetCurrent_{territoryKey}_{i}", FontAwesomeIcon.Crosshairs,
+                                       GetLoc("FixedPetPosition-GetCurrent")))
                 {
+                    var localPlayer = DService.ClientState.LocalPlayer;
+                    if (localPlayer != null)
+                    {
+                        schedule.PosX = localPlayer.Position.X;
+                        schedule.PosZ = localPlayer.Position.Z;
+                        SaveConfig(ModuleConfig);
+                        TaskHelper.Abort();
+                        TaskHelper.Enqueue(SchedulePetMovements);
+                    }
+                }
+
+                // 按钮：取鼠标
+                ImGui.SameLine();
+                if (!IsPicking)
+                {
+                    if (ImGuiOm.ButtonIcon($"TakeMouse_{territoryKey}_{i}", FontAwesomeIcon.MousePointer,
+                                           GetLoc("FixedPetPosition-GetMouse")))
+                    {
+                        IsPicking = true;
+                        currentPickingRow = (territoryKey, i);
+                        //NotifyHelper.Chat("请用鼠标指向游戏世界中的目标位置，然后按 Ctrl + Alt 确定目标位置");
+                    }
+                }
+                else
+                {
+                    if (ImGuiOm.ButtonIcon($"CancelPick_{territoryKey}_{i}", FontAwesomeIcon.Times,
+                                           GetLoc("FixedPetPosition-CancelPick")))
+                    {
+                        IsPicking = false;
+                        currentPickingRow = null;
+                        //NotifyHelper.Chat("已取消选取。");
+                    }
+                }
+
+                if (IsPicking)
+                {
+                    if ((ImGui.IsKeyDown(ImGuiKey.LeftAlt) || ImGui.IsKeyDown(ImGuiKey.RightAlt)) &&
+                        (ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl)))
+                    {
+                        Vector2 mousePos = ImGui.GetMousePos();
+                        //NotifyHelper.Chat($"鼠标位置：{mousePos}");
+                        DService.Gui.ScreenToWorld(mousePos, out var worldPos);
+                        if (worldPos != null)
+                        {
+                            ModuleConfig.PositionSchedules[currentPickingRow!.Value.territoryKey][
+                                currentPickingRow!.Value.index].PosX = worldPos.X;
+                            ModuleConfig.PositionSchedules[currentPickingRow!.Value.territoryKey][
+                                currentPickingRow!.Value.index].PosZ = worldPos.Z;
+                            SaveConfig(ModuleConfig);
+                            TaskHelper.Abort();
+                            TaskHelper.Enqueue(SchedulePetMovements);
+                            IsPicking = false;
+                            currentPickingRow = null;
+                        }
+                    }
+                }
+
+
+                // 5) 操作（删除）
+                ImGui.TableNextColumn();
+
+                if (ImGuiOm.ButtonIcon($"Delete_{territoryKey}_{i}", FontAwesomeIcon.TrashAlt,
+                                       GetLoc("AutoDiscard-DeleteWhenHoldCtrl")))
+                {
+                    if (ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
+                    {
+                        scheduleList.RemoveAt(i);
+                        SaveConfig(ModuleConfig);
+                        TaskHelper.Abort();
+                        TaskHelper.Enqueue(SchedulePetMovements);
+                    }
+                }
+
+                ImGui.SameLine();
+                if (ImGuiOm.ButtonIcon($"Export_{territoryKey}_{i}", FontAwesomeIcon.FileExport, GetLoc("Export")))
+                    ExportToClipboard(schedule);
+
+                ImGui.SameLine();
+                if (ImGuiOm.ButtonIcon($"Import_{territoryKey}_{i}", FontAwesomeIcon.FileImport, GetLoc("Import")))
+                {
+                    // 从剪贴板读取一个“单个”的 schedule 对象
+                    var importedSchedule = ImportFromClipboard<PositionSchedule>();
+                    if (importedSchedule == null) return;
+
+                    // 根据 schedule.ZoneID 放到你的 Dictionary<uint, List<PositionSchedule>> 里
+                    uint zoneId = importedSchedule.ZoneID;
+                    if (!ModuleConfig.PositionSchedules.TryGetValue(zoneId, out var thisScheduleList))
+                    {
+                        thisScheduleList = new List<PositionSchedule>();
+                        ModuleConfig.PositionSchedules[zoneId] = thisScheduleList;
+                    }
+
+                    // 加进去
+                    scheduleList.Add(importedSchedule);
+
+                    // 保存并刷新
                     scheduleList.RemoveAt(i);
                     SaveConfig(ModuleConfig);
                     TaskHelper.Abort();
@@ -388,11 +496,22 @@ public class FixedPetPosition : DailyModuleBase
         return cfc.ContentMemberType.Row == 3;
     }
 
+    // 清理ModuleConfig中List<PositionSchedule>>中的空列表
+    private void CleanEmptyLists()
+    {
+        foreach (var (territoryKey, scheduleList) in ModuleConfig.PositionSchedules.ToArray())
+        {
+            if (scheduleList.Count == 0)
+                ModuleConfig.PositionSchedules.Remove(territoryKey);
+        }
+    }
+
     public override void Uninit()
     {
         DService.ClientState.TerritoryChanged -= OnTerritoryChanged;
         DService.DutyState.DutyRecommenced -= OnDutyRecommenced;
         DService.Condition.ConditionChange -= OnConditionChanged;
+        CleanEmptyLists();
         base.Uninit();
     }
 
@@ -404,11 +523,11 @@ public class FixedPetPosition : DailyModuleBase
 
     public class PositionSchedule
     {
-        public bool   Enabled       { get; set; } = true;         // 是否启用
-        public uint   ZoneID        { get; set; }                 // 区域 ID
-        public string Remark        { get; set; } = string.Empty; // 备注
-        public int    TimeInSeconds { get; set; }                 // 战斗开始后的时间点 (秒)
-        public float  PosX          { get; set; }                 // X 坐标
-        public float  PosZ          { get; set; }                 // Z 坐标
+        public bool Enabled { get; set; } = true;          // 是否启用
+        public uint ZoneID { get; set; }                   // 区域 ID
+        public string Remark { get; set; } = string.Empty; // 备注
+        public int TimeInSeconds { get; set; }             // 战斗开始后的时间点 (秒)
+        public float PosX { get; set; }                    // X 坐标
+        public float PosZ { get; set; }                    // Z 坐标
     }
 }
