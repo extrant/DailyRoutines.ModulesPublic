@@ -38,6 +38,9 @@ public class ASTHelper : DailyModuleBase
     private static uint MeleeCandidateId = UnspecificTargetId;
     private static uint RangeCandidateId = UnspecificTargetId;
 
+    // cache for member objectID for easy access
+    private static uint[] PartyMemberIds;
+
     // debug mode
     private const bool DEBUG = false;
 
@@ -180,23 +183,24 @@ public class ASTHelper : DailyModuleBase
         ref ulong targetId, ref Vector3 location, ref uint extraParam)
     {
         {
+            if (DEBUG) NotifyHelper.Chat($"Action: {type} | {actionId} | {targetId}");
             if (type != ActionType.Action || DService.PartyList.Length == 0) return;
 
             // auto play card
             if (ModuleConfig.AutoPlayCard != AutoPlayCardStatus.Disable)
             {
                 // melee card: the balance 37023
-                if (targetId == UnspecificTargetId && actionId == 37023)
+                if (actionId == 37023 && !PartyMemberIds.Contains((uint)targetId))
                 {
                     if (DEBUG) NotifyHelper.Chat($"Send Melee Card to {MeleeCandidateId}");
                     NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-Melee", FetchMemberNameById(MeleeCandidateId)));
                     targetId = MeleeCandidateId;
                 }
                 // range card: the spear 37026
-                else if (targetId == UnspecificTargetId && actionId == 37026)
+                else if (actionId == 37026 && !PartyMemberIds.Contains((uint)targetId))
                 {
                     if (DEBUG) NotifyHelper.Chat($"Send Range Card to {RangeCandidateId}");
-                    NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-Melee", FetchMemberNameById(RangeCandidateId)));
+                    NotifyHelper.Chat(GetLoc("ASTHelper-AutoPlayCard-Message-Range", FetchMemberNameById(RangeCandidateId)));
                     targetId = RangeCandidateId;
                 }
             }
@@ -204,7 +208,7 @@ public class ASTHelper : DailyModuleBase
             // easy heal
             if (ModuleConfig.EasyHeal == EasyHealStatus.Enable)
             {
-                if (targetId == UnspecificTargetId && TargetHealActions.Contains(actionId))
+                if (TargetHealActions.Contains(actionId) && !PartyMemberIds.Contains((uint)targetId))
                 {
                     // find target with the lowest HP ratio within range and satisfy threshold
                     targetId = TargetNeedHeal();
@@ -258,7 +262,10 @@ public class ASTHelper : DailyModuleBase
             return true;
         }
 
+        // cache member objectID for easy access
         if (DEBUG) NotifyHelper.Chat($"Party Members Found {partyList.Length}");
+        PartyMemberIds = partyList.Select(m => m.ObjectId).ToArray();
+
 
         var selectedMeleeReason = string.Empty;
         var selectedRangeReason = string.Empty;
