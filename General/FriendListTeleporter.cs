@@ -2,13 +2,16 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using OmenTools;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace ExpandfriendTeleporter;
+namespace DailyRoutines.Modules;
 
-public unsafe class ExpandfriendTeleporter : DailyModuleBase
+public unsafe class FriendListTeleporter : DailyModuleBase
 {
     private static readonly TeleportMenuItem TeleportItem = new();
 
@@ -36,14 +39,14 @@ public unsafe class ExpandfriendTeleporter : DailyModuleBase
     public override void Uninit()
     {
         DService.ContextMenu.OnMenuOpened -= OnMenuOpen;
+        base.Uninit();
     }
 
-    private void OnMenuOpen(IMenuOpenedArgs args)
+    private static void OnMenuOpen(IMenuOpenedArgs args)
     {
         if (!TeleportItem.IsDisplay(args)) return;
         args.AddMenuItem(TeleportItem.Get());
     }
-
 
     private class TeleportMenuItem : MenuItemBase
     {
@@ -51,36 +54,32 @@ public unsafe class ExpandfriendTeleporter : DailyModuleBase
 
         public override string Name { get; protected set; } = "传送到好友地图";
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
-        {
-            Telepo.Instance()->Teleport(_aetheryteId, 0);
-        }
+        protected override void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(_aetheryteId, 0);
 
         public override bool IsDisplay(IMenuOpenedArgs args)
         {
             if (args.AddonName == "FriendList")
             {
-                var a = (AgentFriendlist*)DService.Gui.FindAgentInterface(args.AddonName);
-                var b = (AddonFriendList*)args.AddonPtr;
-                if (a->InfoProxy->CharData[b->FriendList->HeldItemIndex].Location < 1) return false;
+                var friendListAddonAgent = (AgentFriendlist*)DService.Gui.FindAgentInterface(args.AddonName);
+                var friendListAddon = (AddonFriendList*)args.AddonPtr;
+                if (friendListAddonAgent->InfoProxy->CharData[friendListAddon->FriendList->HeldItemIndex].Location < 1) return false;
 
-                var aetid = getAetheryteId(a->InfoProxy->CharData[b->FriendList->HeldItemIndex].Location);
-                if (aetid < 1) return false;
-                _aetheryteId = aetid;
-                return true;
+                _aetheryteId = GetAetheryteId(friendListAddonAgent->InfoProxy->CharData[friendListAddon->FriendList->HeldItemIndex].Location);
+                return _aetheryteId > 0;
             }
 
             return false;
         }
 
-        private static uint getAetheryteId(uint Location)
+        private static uint GetAetheryteId(uint Location)
         {
-            if (SpecialLocation.TryGetValue(Location, out var value)) Location = value;
-            foreach (var aa in DService.AetheryteList)
-                if (aa.TerritoryId == Location)
-                    return aa.AetheryteId;
+            if (!SpecialLocation.TryGetValue(Location, out Location)) return 0;
+            var result = DService.AetheryteList
+                                 .Where(aetheryte => aetheryte.TerritoryId == Location)
+                                 .Select(aetheryte => aetheryte.AetheryteId)
+                                 .FirstOrDefault();
 
-            return 0;
+            return result;
         }
     }
 }
