@@ -4,9 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
-using DailyRoutines.Managers;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -30,18 +28,13 @@ public class AutoOpenMapLinks : DailyModuleBase
     private static readonly AutoOpenMapLinksMenuItem AutoOpenMapLinksItem = new();
 
     private static Config ModuleConfig = null!;
-    private static readonly HashSet<XivChatType> ValidChatTypes;
+    private static readonly HashSet<XivChatType> ValidChatTypes = [.. Enum.GetValues<XivChatType>()];
 
     public class Config : ModuleConfiguration
     {
         public HashSet<string> WhitelistPlayer = [];
         public HashSet<XivChatType> WhitelistChannel = [];
         public bool IsFlagCentered = false;
-    }
-
-    static AutoOpenMapLinks()
-    {
-        ValidChatTypes = [..Enum.GetValues<XivChatType>()];
     }
 
     public override void Init()

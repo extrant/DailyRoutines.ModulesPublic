@@ -78,7 +78,7 @@ public class AutoRetarget : DailyModuleBase
             return;
         }
 
-        List<IGameObject> Found = [];
+        List<IGameObject> found = [];
         foreach (var igo in DService.ObjectTable)
         {
             var objName = igo is IPlayerCharacter ipc
@@ -87,17 +87,17 @@ public class AutoRetarget : DailyModuleBase
 
             if (ModuleConfig.PrioritizeForlorn && igo is IBattleNpc ibn && (ibn.NameId == 6737 || ibn.NameId == 6738))
             {
-                Found.Insert(0, igo);
+                found.Insert(0, igo);
                 break;
             }
 
             if (objName != ModuleConfig.DisplayName) continue;
-            Found.Add(igo);
+            found.Add(igo);
         }
 
-        if (Found.Count != 0)
+        if (found.Count != 0)
         {
-            var igo = Found.First();
+            var igo = found.First();
             if (igo is IBattleNpc ibn && (ibn.NameId == 6737 || ibn.NameId == 6738)) 
                 DService.Targets.Target = igo;
             else 
