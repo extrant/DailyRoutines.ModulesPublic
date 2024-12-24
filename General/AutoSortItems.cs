@@ -20,8 +20,8 @@ namespace DailyRoutines.Modules;
 
 public class AutoSortItems : DailyModuleBase
 {
-    private readonly string[] _sortOptions        = [GetLoc("AutoSortItems-Desc"), GetLoc("AutoSortItems-Asc")];
-    private readonly string[] _tabOptions         = [GetLoc("AutoSortItems-Tab"), GetLoc("AutoSortItems-UnTab")];
+    private readonly string[] _sortOptions        = [GetLoc("Desc"), GetLoc("Asc")];
+    private readonly string[] _tabOptions         = [GetLoc("Tab"), GetLoc("UnTab")];
     private readonly string[] _sortOptionsCommand = ["des", "asc"];
 
     private static Config _config = null!;
@@ -80,29 +80,29 @@ public class AutoSortItems : DailyModuleBase
         }
 
         ImGui.Spacing();
-        if (ImGui.Button(GetLoc("AutoSortItems-ResetSettings")))
+        if (ImGui.Button(GetLoc("Reset")))
         {
             ResetConfigToDefault();
         }
         
         ImGui.Spacing();
         var tableSize = ImGui.GetContentRegionAvail() with { Y = 0 };
-        using var table = ImRaii.Table(GetLoc("AutoSortItemsTableTitle"), 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
+        using var table = ImRaii.Table(GetLoc("Sort"), 3, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
         if (!table) return;
 
-        ImGui.TableSetupColumn(GetLoc("AutoSortItems-ColumnName"), ImGuiTableColumnFlags.WidthFixed, 100f * GlobalFontScale);
-        ImGui.TableSetupColumn(GetLoc("AutoSortItems-ColumnCategory"), ImGuiTableColumnFlags.WidthFixed, 150f * GlobalFontScale);
-        ImGui.TableSetupColumn(GetLoc("AutoSortItems-ColumnDescription"), ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(GetLoc("Name"), ImGuiTableColumnFlags.WidthFixed, 100f * GlobalFontScale);
+        ImGui.TableSetupColumn(GetLoc("Method"), ImGuiTableColumnFlags.WidthFixed, 150f * GlobalFontScale);
+        ImGui.TableSetupColumn(GetLoc("Note"), ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableHeadersRow();
         
-        DrawTableRow(GetLoc("AutoSortItems-RowChestId"), ref _config.ArmouryChestId, _sortOptions, "");
-        DrawTableRow(GetLoc("AutoSortItems-RowItemLevel"), ref _config.ArmouryItemLevel, _sortOptions, "");
-        DrawTableRow(GetLoc("AutoSortItems-RowCategory"), ref _config.ArmouryCategory, _sortOptions, GetLoc("AutoSortItems-ArmouryCategoryDesc"));
-        DrawTableRow(GetLoc("AutoSortItems-RowInventoryHq"), ref _config.InventoryHq, _sortOptions, "");
-        DrawTableRow(GetLoc("AutoSortItems-RowInventoryId"), ref _config.InventoryId, _sortOptions, "");
-        DrawTableRow(GetLoc("AutoSortItems-RowInventoryItemLevel"), ref _config.InventoryItemLevel, _sortOptions, "");
-        DrawTableRow(GetLoc("AutoSortItems-RowInventoryCategory"), ref _config.InventoryCategory, _sortOptions, GetLoc("AutoSortItems-InventoryCategoryDesc"));
-        DrawTableRow(GetLoc("AutoSortItems-RowInventoryTab"), ref _config.InventoryTab, _tabOptions, GetLoc("AutoSortItems-InventoryTabDesc"));
+        DrawTableRow(GetLoc("Gear") + " ID", ref _config.ArmouryChestId, _sortOptions, "");
+        DrawTableRow(GetLoc("Gear") + " "+ GetLoc("Level"), ref _config.ArmouryItemLevel, _sortOptions, "");
+        DrawTableRow(GetLoc("Gear") + " "+ GetLoc("Type"), ref _config.ArmouryCategory, _sortOptions, GetLoc("AutoSortItems-ArmouryCategoryDesc"));
+        DrawTableRow(GetLoc("Item") + " HQ", ref _config.InventoryHq, _sortOptions, "");
+        DrawTableRow(GetLoc("Item") + " ID", ref _config.InventoryId, _sortOptions, "");
+        DrawTableRow(GetLoc("Item") + " "+ GetLoc("Level"), ref _config.InventoryItemLevel, _sortOptions, "");
+        DrawTableRow(GetLoc("Item") + " "+ GetLoc("Type"), ref _config.InventoryCategory, _sortOptions, GetLoc("AutoSortItems-InventoryCategoryDesc"));
+        DrawTableRow(GetLoc("Item") + " "+ GetLoc("Tab"), ref _config.InventoryTab, _tabOptions, GetLoc("AutoSortItems-InventoryTabDesc"));
     }
 
     private static unsafe bool IsInNormalMap()
