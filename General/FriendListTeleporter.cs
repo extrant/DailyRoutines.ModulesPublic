@@ -73,7 +73,7 @@ public unsafe class FriendListTeleporter : DailyModuleBase
 
         private static uint GetAetheryteId(uint Location)
         {
-            if (!SpecialLocation.TryGetValue(Location, out Location)) return 0;
+            if (SpecialLocation.TryGetValue(Location, out var tempLocation)) Location = tempLocation;
             var result = DService.AetheryteList
                                  .Where(aetheryte => aetheryte.TerritoryId == Location)
                                  .Select(aetheryte => aetheryte.AetheryteId)
