@@ -1,0 +1,86 @@
+using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
+using Dalamud.Game.Gui.ContextMenu;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using OmenTools;
+
+namespace ExpandfriendTeleporter;
+
+public unsafe class ExpandfriendTeleporter : DailyModuleBase
+{
+    private static readonly TeleportMenuItem TeleportItem = new();
+
+    private static readonly Dictionary<uint, uint> SpecialLocation = new()
+    {
+        { 128, 129 },
+        { 133, 132 },
+        { 131, 130 },
+        { 399, 478 }
+    };
+
+    public override ModuleInfo Info => new()
+    {
+        Title = "右键好友列表传送", //  GetLoc("ExpandfriendTeleporter"),
+        Description = "右键好友列表传送", //GetLoc("ExpandfriendTeleporter"),
+        Category = ModuleCategories.General,
+        Author = ["Xww"]
+    };
+
+    public override void Init()
+    {
+        DService.ContextMenu.OnMenuOpened += OnMenuOpen;
+    }
+
+    public override void Uninit()
+    {
+        DService.ContextMenu.OnMenuOpened -= OnMenuOpen;
+    }
+
+    private void OnMenuOpen(IMenuOpenedArgs args)
+    {
+        if (!TeleportItem.IsDisplay(args)) return;
+        args.AddMenuItem(TeleportItem.Get());
+    }
+
+
+    private class TeleportMenuItem : MenuItemBase
+    {
+        private uint _aetheryteId;
+
+        public override string Name { get; protected set; } = "传送到好友地图";
+
+        protected override void OnClicked(IMenuItemClickedArgs args)
+        {
+            Telepo.Instance()->Teleport(_aetheryteId, 0);
+        }
+
+        public override bool IsDisplay(IMenuOpenedArgs args)
+        {
+            if (args.AddonName == "FriendList")
+            {
+                var a = (AgentFriendlist*)DService.Gui.FindAgentInterface(args.AddonName);
+                var b = (AddonFriendList*)args.AddonPtr;
+                if (a->InfoProxy->CharData[b->FriendList->HeldItemIndex].Location < 1) return false;
+
+                var aetid = getAetheryteId(a->InfoProxy->CharData[b->FriendList->HeldItemIndex].Location);
+                if (aetid < 1) return false;
+                _aetheryteId = aetid;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static uint getAetheryteId(uint Location)
+        {
+            if (SpecialLocation.TryGetValue(Location, out var value)) Location = value;
+            foreach (var aa in DService.AetheryteList)
+                if (aa.TerritoryId == Location)
+                    return aa.AetheryteId;
+
+            return 0;
+        }
+    }
+}
