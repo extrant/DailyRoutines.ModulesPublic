@@ -94,7 +94,9 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
                         InfosOm.CollectablesShop->Close(true);
                 });
                 TaskHelper.Enqueue(() => !OccupiedInEvent);
-                TaskHelper.Enqueue(() => GamePacketManager.SendPackt(new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, 3539066)));
+                TaskHelper.Enqueue(() => GamePacketManager.SendPackt(
+                                       new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId,
+                                                           GetScriptEventID(DService.ClientState.TerritoryType))));
             }
         }
     }
@@ -124,6 +126,17 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
         TaskHelper.Enqueue(EnqueueExchange, "EnqueueNewRound");
     }
+
+    private static uint GetScriptEventID(uint zone)
+        => zone switch
+        {
+            478  => 3539065, // 田园郡
+            635  => 3539064, // 神拳痕
+            820  => 3539063, // 游末邦
+            963  => 3539062, // 拉札罕
+            1186 => 3539072, // 九号解决方案
+            _    => 3539066  // 利姆萨·罗敏萨下层甲板、格里达尼亚旧街、乌尔达哈来生回廊
+        };
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
     {
