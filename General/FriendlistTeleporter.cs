@@ -15,14 +15,6 @@ public class FriendlistTeleporter : DailyModuleBase
 {
     private static readonly TeleportMenuItem TeleportItem = new();
 
-    private static readonly Dictionary<uint, uint> SpecialLocation = new()
-    {
-        { 128, 129 },
-        { 133, 132 },
-        { 131, 130 },
-        { 399, 478 }
-    };
-
     public override ModuleInfo Info => new()
     {
         Title = "右键好友列表传送",
@@ -72,7 +64,14 @@ public class FriendlistTeleporter : DailyModuleBase
 
         private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
         {
-            if (SpecialLocation.TryGetValue(zoneID, out var tempLocation)) zoneID = tempLocation;
+            zoneID = zoneID switch
+            {
+                128 => 129,
+                133 => 132,
+                131 => 130,
+                399 => 478,
+                _ => zoneID
+            };
             aetheryteID = DService.AetheryteList
                                   .Where(aetheryte => aetheryte.TerritoryId == zoneID)
                                   .Select(aetheryte => aetheryte.AetheryteId)
