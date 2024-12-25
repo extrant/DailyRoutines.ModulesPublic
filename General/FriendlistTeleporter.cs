@@ -17,8 +17,8 @@ public class FriendlistTeleporter : DailyModuleBase
 
     public override ModuleInfo Info => new()
     {
-        Title = "右键好友列表传送",
-        Description = "右键好友列表传送",
+        Title = GetLoc("FriendlistTeleporterTitle"),
+        Description = GetLoc("FriendlistTeleporterDescription"),
         Category = ModuleCategories.General,
         Author = ["Xww"]
     };
@@ -44,7 +44,7 @@ public class FriendlistTeleporter : DailyModuleBase
     {
         private uint aetheryteID;
 
-        public override string Name { get; protected set; } = "传送到好友地图";
+        public override string Name { get; protected set; } = GetLoc("FriendlistTeleporter-MenuItemTeleport");
 
         protected override unsafe void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(aetheryteID, 0);
 
