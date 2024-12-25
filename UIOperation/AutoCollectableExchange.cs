@@ -39,7 +39,8 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
     public override void OverlayUI()
     {
-        if (InfosOm.CollectablesShop == null)
+        var addon = InfosOm.CollectablesShop;
+        if (addon == null)
         {
             Overlay.IsOpen = false;
             return;
@@ -47,11 +48,14 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
         
         var buttonNode = InfosOm.CollectablesShop->GetNodeById(51);
         if (buttonNode == null) return;
+        
+        if (buttonNode->IsVisible())
+            buttonNode->ToggleVisibility(false);
 
         using var font = FontManager.UIFont80.Push();
 
-        var windowSize = ImGui.GetWindowSize();
-        ImGui.SetWindowPos(new Vector2(buttonNode->ScreenX, buttonNode->ScreenY - windowSize.Y));
+        ImGui.SetWindowPos(new Vector2(addon->X + addon->GetScaledWidth(true), addon->Y + addon->GetScaledHeight(true)) 
+                           - ImGui.GetWindowSize() - ScaledVector2(12f));
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(ImGuiColors.DalamudYellow, GetLoc("AutoCollectableExchangeTitle"));
@@ -63,19 +67,35 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
         }
 
         ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop"))) 
-            TaskHelper.Abort();
-
-        ImGui.SameLine();
-        if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094).Unknown2.ExtractText()))
+        using (ImRaii.Disabled(!TaskHelper.IsBusy))
         {
-            TaskHelper.Enqueue(() =>
+            if (ImGui.Button(GetLoc("Stop"))) 
+                TaskHelper.Abort();
+        }
+        
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+        
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            ImGui.SameLine();
+            using (ImRaii.Disabled(!buttonNode->NodeFlags.HasFlag(NodeFlags.Enabled)))
             {
-                if (IsAddonAndNodesReady(InfosOm.CollectablesShop))
-                    InfosOm.CollectablesShop->Close(true);
-            });
-            TaskHelper.Enqueue(() => !OccupiedInEvent);
-            TaskHelper.Enqueue(() => GamePacketManager.SendPackt(new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, 3539066)));
+                if (ImGui.Button(LuminaCache.GetRow<Addon>(531).Text.ExtractText()))
+                    HandInCollectables(AgentModule.Instance()->GetAgentByInternalId(AgentId.CollectablesShop));
+            }
+            
+            ImGui.SameLine();
+            if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094).Unknown2.ExtractText()))
+            {
+                TaskHelper.Enqueue(() =>
+                {
+                    if (IsAddonAndNodesReady(InfosOm.CollectablesShop))
+                        InfosOm.CollectablesShop->Close(true);
+                });
+                TaskHelper.Enqueue(() => !OccupiedInEvent);
+                TaskHelper.Enqueue(() => GamePacketManager.SendPackt(new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, 3539066)));
+            }
         }
     }
 
