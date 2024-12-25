@@ -309,7 +309,7 @@ public class ASTHelper : DailyModuleBase
                         {
                             RangeCandidateId = member.ObjectId;
                             tmpBestRangeDps = bestRecord.DPS;
-                            selectedMeleeReason = GetLoc("ASTHelper-AutoPlayCard-Message-HighestDPS", $"{bestRecord.DPS:0.0}");
+                            selectedRangeReason = GetLoc("ASTHelper-AutoPlayCard-Message-HighestDPS", $"{bestRecord.DPS:0.0}");
                         }
 
                         break;
