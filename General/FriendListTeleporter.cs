@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace DailyRoutines.Modules;
 
-public unsafe class FriendListTeleporter : DailyModuleBase
+public class FriendlistTeleporter : DailyModuleBase
 {
     private static readonly TeleportMenuItem TeleportItem = new();
 
@@ -25,8 +25,8 @@ public unsafe class FriendListTeleporter : DailyModuleBase
 
     public override ModuleInfo Info => new()
     {
-        Title = "右键好友列表传送", //  GetLoc("ExpandfriendTeleporter"),
-        Description = "右键好友列表传送", //GetLoc("ExpandfriendTeleporter"),
+        Title = "右键好友列表传送",
+        Description = "右键好友列表传送",
         Category = ModuleCategories.General,
         Author = ["Xww"]
     };
@@ -50,36 +50,35 @@ public unsafe class FriendListTeleporter : DailyModuleBase
 
     private class TeleportMenuItem : MenuItemBase
     {
-        private uint _aetheryteId;
+        private uint aetheryteID;
 
         public override string Name { get; protected set; } = "传送到好友地图";
 
-        protected override void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(_aetheryteId, 0);
+        protected override unsafe void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(aetheryteID, 0);
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override unsafe bool IsDisplay(IMenuOpenedArgs args)
         {
             if (args.AddonName == "FriendList")
             {
-                var friendListAddonAgent = (AgentFriendlist*)DService.Gui.FindAgentInterface(args.AddonName);
-                var friendListAddon = (AddonFriendList*)args.AddonPtr;
-                if (friendListAddonAgent->InfoProxy->CharData[friendListAddon->FriendList->HeldItemIndex].Location < 1) return false;
-
-                _aetheryteId = GetAetheryteId(friendListAddonAgent->InfoProxy->CharData[friendListAddon->FriendList->HeldItemIndex].Location);
-                return _aetheryteId > 0;
+                var agentFriendlist = AgentFriendlist.Instance();
+                var zoneID =
+                    agentFriendlist->InfoProxy->CharData[((AddonFriendList*)FriendList)->FriendList->HeldItemIndex]
+                        .Location;
+                return zoneID > 0 && GetAetheryteId(zoneID, out aetheryteID);
             }
 
             return false;
         }
 
-        private static uint GetAetheryteId(uint Location)
+        private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
         {
-            if (SpecialLocation.TryGetValue(Location, out var tempLocation)) Location = tempLocation;
-            var result = DService.AetheryteList
-                                 .Where(aetheryte => aetheryte.TerritoryId == Location)
-                                 .Select(aetheryte => aetheryte.AetheryteId)
-                                 .FirstOrDefault();
+            if (SpecialLocation.TryGetValue(zoneID, out var tempLocation)) zoneID = tempLocation;
+            aetheryteID = DService.AetheryteList
+                                  .Where(aetheryte => aetheryte.TerritoryId == zoneID)
+                                  .Select(aetheryte => aetheryte.AetheryteId)
+                                  .FirstOrDefault();
 
-            return result;
+            return aetheryteID > 0;
         }
     }
 }
