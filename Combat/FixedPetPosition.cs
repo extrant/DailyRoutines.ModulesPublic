@@ -294,7 +294,7 @@ public class FixedPetPosition : DailyModuleBase
                 else
                 {
                     if (ImGuiOm.ButtonIcon($"CancelPick_{territoryKey}_{i}", FontAwesomeIcon.Times,
-                                           GetLoc("FixedPetPosition-CancelPick")))
+                                           GetLoc("Cancel")))
                     {
                         IsPicking = false;
                         currentPickingRow = null;
