@@ -2,11 +2,6 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using OmenTools;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace DailyRoutines.Modules;
@@ -48,22 +43,17 @@ public class FriendlistTeleporter : DailyModuleBase
 
         protected override unsafe void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(aetheryteID, 0);
 
-        public override unsafe bool IsDisplay(IMenuOpenedArgs args)
-        {
-            if (args.AddonName == "FriendList")
-            {
-                var agentFriendlist = AgentFriendlist.Instance();
-                var zoneID =
-                    agentFriendlist->InfoProxy->CharData[((AddonFriendList*)FriendList)->FriendList->HeldItemIndex]
-                        .Location;
-                return zoneID > 0 && GetAetheryteId(zoneID, out aetheryteID);
-            }
-
-            return false;
-        }
+        public override bool IsDisplay(IMenuOpenedArgs args) => args.Target is MenuTargetDefault target
+                                                                && target.TargetCharacter?.Location.GameData is not null
+                                                                && args.AddonName == "FriendList"
+                                                                && GetAetheryteId(
+                                                                    target.TargetCharacter.Location.GameData.RowId,
+                                                                    out aetheryteID);
 
         private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
         {
+            aetheryteID = 0;
+            if (zoneID == 0) return false;
             zoneID = zoneID switch
             {
                 128 => 129,
