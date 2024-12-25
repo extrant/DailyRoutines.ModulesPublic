@@ -3,15 +3,17 @@ using System.Numerics;
 using ClickLib;
 using ClickLib.Clicks;
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using DailyRoutines.Infos.Clicks;
+using DailyRoutines.Managers;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using GrandCompany = FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany;
 
@@ -41,6 +43,16 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         InventoryType.ArmoryOffHand,
     ];
 
+    private static readonly Dictionary<uint, uint> ZoneToEventID = new()
+    {
+        // 黑涡团
+        [128] = 1441793,
+        // 双蛇党
+        [132] = 1441794,
+        // 恒辉队
+        [130] = 1441795,
+    };
+
     private static Config ModuleConfig = null!;
 
     private static HashSet<uint> HQItems = [];
@@ -49,7 +61,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        TaskHelper ??= new() { AbortOnTimeout = true };
+        TaskHelper ??= new();
         Overlay ??= new Overlay(this);
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanySupplyList", OnAddonSupplyList);
@@ -63,33 +75,103 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         var addon = GrandCompanySupplyList;
         if (!IsAddonAndNodesReady(addon)) return;
 
-        var pos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 6);
+        using var font = FontManager.UIFont80.Push();
+        
+        var pos = new Vector2(addon->GetX(), addon->GetY() - ImGui.GetTextLineHeightWithSpacing());
         ImGui.SetWindowPos(pos);
 
         ImGui.TextColored(ImGuiColors.DalamudYellow, GetLoc("AutoExpertDeliveryTitle"));
+
+        var playerState = PlayerState.Instance();
+        var rank        = playerState->GetGrandCompanyRank();
+        var rankText = (GrandCompany)playerState->GrandCompany switch
+        {
+            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank).Singular.ExtractText(),
+            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank).Singular.ExtractText(),
+            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank).Singular.ExtractText(),
+            _                           => string.Empty,
+        };
+        if (string.IsNullOrEmpty(rankText)) return;
+
+        var rankData = LuminaCache.GetRow<GrandCompanyRank>(rank);
+        var iconID = (GrandCompany)playerState->GrandCompany switch
+        {
+            GrandCompany.Maelstrom      => rankData.IconMaelstrom,
+            GrandCompany.TwinAdder      => rankData.IconSerpents,
+            GrandCompany.ImmortalFlames => rankData.IconFlames,
+            _                           => 0,
+        };
+        if (iconID == 0) return;
+
+        var icon = DService.Texture.GetFromGameIcon(new((uint)iconID)).GetWrapOrDefault();
+        if (icon == null) return;
+
+        ImGui.SameLine();
+        using (ImRaii.Group())
+        {
+            ImGui.Image(icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            
+            ImGui.SameLine();
+            ImGui.Text(rankText);
+        }
+        
+        ImGuiOm.HelpMarker($"{Lang.Get("ConflictKey")}: {Service.Config.ConflictKey}");
+        
         ImGui.Separator();
         ImGui.Spacing();
 
-        ConflictKeyText();
-
-        if (ImGui.Checkbox(GetLoc("AutoExpertDelivery-AutoSwitch"), ref ModuleConfig.AutoSwitchWhenOpen))
+        using (ImRaii.Group())
         {
-            if (ModuleConfig.AutoSwitchWhenOpen)
-                ClickGrandCompanySupplyList.Using((nint)addon).ExpertDelivery();
-            SaveConfig(ModuleConfig);
+            if (ImGui.Checkbox(GetLoc("AutoExpertDelivery-SkipHQ"), ref ModuleConfig.SkipWhenHQ))
+                SaveConfig(ModuleConfig);
+            
+            ImGui.SameLine();
+            if (ImGui.Checkbox(GetLoc("AutoExpertDelivery-AutoSwitch"), ref ModuleConfig.AutoSwitchWhenOpen))
+            {
+                if (ModuleConfig.AutoSwitchWhenOpen)
+                    ClickGrandCompanySupplyList.Using((nint)addon).ExpertDelivery();
+                SaveConfig(ModuleConfig);
+            }
         }
 
-        ImGui.BeginDisabled(TaskHelper.IsBusy);
-        if (ImGui.Checkbox(GetLoc("AutoExpertDelivery-SkipHQ"), ref ModuleConfig.SkipWhenHQ))
-            SaveConfig(ModuleConfig);
-
-        if (ImGui.Button(GetLoc("Start")))
-            EnqueueARound();
-        ImGui.EndDisabled();
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(GetLoc("Start")))
+                EnqueueARound();
+        }
 
         ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop")))
-            TaskHelper.Abort();
+        using (ImRaii.Disabled(!TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(GetLoc("Stop")))
+                TaskHelper.Abort();
+        }
+        
+        ImGui.SameLine();
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(LuminaCache.GetRow<Addon>(3280).Text.ExtractText()))
+            {
+                if (!ZoneToEventID.TryGetValue(DService.ClientState.TerritoryType, out var eventID)) return;
+                
+                TaskHelper.Enqueue(() =>
+                {
+                    if (!OccupiedInEvent) return true;
+                
+                    if (IsAddonAndNodesReady(GrandCompanySupplyList))
+                        GrandCompanySupplyList->Close(true);
+                
+                    if (IsAddonAndNodesReady(SelectString))
+                        SelectString->Close(true);
+
+                    return false;
+                });
+
+                TaskHelper.Enqueue(
+                    () => GamePacketManager.SendPackt(
+                        new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, eventID)));
+            }
+        }
     }
 
     private void EnqueueARound()

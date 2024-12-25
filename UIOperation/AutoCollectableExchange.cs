@@ -1,5 +1,6 @@
+using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos.Clicks;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -7,7 +8,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 
 namespace DailyRoutines.Modules;
 
@@ -33,25 +34,32 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CollectablesShop", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CollectablesShop", OnAddon);
-        if (CollectablesShop != null) OnAddon(AddonEvent.PostSetup, null);
+        if (InfosOm.CollectablesShop != null) OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()
     {
-        if (CollectablesShop == null)
+        var addon = InfosOm.CollectablesShop;
+        if (addon == null)
         {
             Overlay.IsOpen = false;
             return;
         }
-        var buttonNode = CollectablesShop->GetNodeById(51);
+        
+        var buttonNode = InfosOm.CollectablesShop->GetNodeById(51);
         if (buttonNode == null) return;
+        
+        if (buttonNode->IsVisible())
+            buttonNode->ToggleVisibility(false);
 
-        ImGui.SetWindowPos(new(buttonNode->ScreenX - ImGui.GetWindowSize().X, buttonNode->ScreenY + 4f));
+        using var font = FontManager.UIFont80.Push();
+
+        ImGui.SetWindowPos(new Vector2(addon->X + addon->GetScaledWidth(true), addon->Y + addon->GetScaledHeight(true)) 
+                           - ImGui.GetWindowSize() - ScaledVector2(12f));
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(ImGuiColors.DalamudYellow, GetLoc("AutoCollectableExchangeTitle"));
 
-        ImGui.SameLine();
         using (ImRaii.Disabled(!buttonNode->NodeFlags.HasFlag(NodeFlags.Enabled) || TaskHelper.IsBusy))
         {
             if (ImGui.Button(GetLoc("Start")))
@@ -59,20 +67,51 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
         }
 
         ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop"))) TaskHelper.Abort();
+        using (ImRaii.Disabled(!TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(GetLoc("Stop"))) 
+                TaskHelper.Abort();
+        }
+        
+        ImGui.SameLine();
+        ImGui.TextDisabled("|");
+        
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            ImGui.SameLine();
+            using (ImRaii.Disabled(!buttonNode->NodeFlags.HasFlag(NodeFlags.Enabled)))
+            {
+                if (ImGui.Button(LuminaCache.GetRow<Addon>(531).Text.ExtractText()))
+                    HandInCollectables(AgentModule.Instance()->GetAgentByInternalId(AgentId.CollectablesShop));
+            }
+            
+            ImGui.SameLine();
+            if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094).Unknown2.ExtractText()))
+            {
+                TaskHelper.Enqueue(() =>
+                {
+                    if (IsAddonAndNodesReady(InfosOm.CollectablesShop))
+                        InfosOm.CollectablesShop->Close(true);
+                });
+                TaskHelper.Enqueue(() => !OccupiedInEvent);
+                TaskHelper.Enqueue(() => GamePacketManager.SendPackt(
+                                       new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId,
+                                                           GetScriptEventID(DService.ClientState.TerritoryType))));
+            }
+        }
     }
 
     private void EnqueueExchange()
     {
         TaskHelper.Enqueue(() =>
         {
-            if (CollectablesShop == null || IsAddonAndNodesReady(SelectYesno))
+            if (InfosOm.CollectablesShop == null || IsAddonAndNodesReady(SelectYesno))
             {
                 TaskHelper.Abort();
                 return true;
             }
 
-            var list = CollectablesShop->GetComponentNodeById(31)->GetAsAtkComponentList();
+            var list = InfosOm.CollectablesShop->GetComponentNodeById(31)->GetAsAtkComponentList();
             if (list == null) return false;
 
             if (list->ListLength <= 0)
@@ -87,6 +126,17 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
         TaskHelper.Enqueue(EnqueueExchange, "EnqueueNewRound");
     }
+
+    private static uint GetScriptEventID(uint zone)
+        => zone switch
+        {
+            478  => 3539065, // 田园郡
+            635  => 3539064, // 神拳痕
+            820  => 3539063, // 游末邦
+            963  => 3539062, // 拉札罕
+            1186 => 3539072, // 九号解决方案
+            _    => 3539066  // 利姆萨·罗敏萨下层甲板、格里达尼亚旧街、乌尔达哈来生回廊
+        };
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
     {
