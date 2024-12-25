@@ -70,7 +70,7 @@ public class ASTHelper : DailyModuleBase
         ImGui.Text(GetLoc("ASTHelper-AutoPlayCardTitle"));
         ImGui.Text(GetLoc("ASTHelper-AutoPlayCardDescription"));
         ImGui.Spacing();
-        if (ImGui.RadioButton($"{GetLoc("Off")} ({GetLoc("ASTHelper-AutoPlayCard-OffDescription")})", ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
+        if (ImGui.RadioButton($"{GetLoc("Disable")} ({GetLoc("ASTHelper-AutoPlayCard-DisableDescription")})", ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
         {
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Disable;
             SaveConfig(ModuleConfig);
@@ -128,13 +128,13 @@ public class ASTHelper : DailyModuleBase
         ImGui.Text(GetLoc("ASTHelper-EasyHealDescription"));
         ImGui.Spacing();
 
-        if (ImGui.RadioButton($"{GetLoc("Off")} ({GetLoc("ASTHelper-EasyHeal-OffDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Disable))
+        if (ImGui.RadioButton($"{GetLoc("Disable")} ({GetLoc("ASTHelper-EasyHeal-DisableDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Disable))
         {
             ModuleConfig.EasyHeal = EasyHealStatus.Disable;
             SaveConfig(ModuleConfig);
         }
 
-        if (ImGui.RadioButton($"{GetLoc("On")} ({GetLoc("ASTHelper-EasyHeal-OnDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Enable))
+        if (ImGui.RadioButton($"{GetLoc("Enable")} ({GetLoc("ASTHelper-EasyHeal-EnableDescription")})", ModuleConfig.EasyHeal == EasyHealStatus.Enable))
         {
             ModuleConfig.EasyHeal = EasyHealStatus.Enable;
             SaveConfig(ModuleConfig);
