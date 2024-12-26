@@ -3,6 +3,7 @@ using DailyRoutines.Infos;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using System.Linq;
+using DailyRoutines.Managers;
 
 namespace DailyRoutines.Modules;
 
@@ -16,7 +17,8 @@ public class FriendlistTeleporter : DailyModuleBase
         Title = GetLoc("FriendlistTeleporterTitle"),
         Description = GetLoc("FriendlistTeleporterDescription"),
         Category = ModuleCategories.General,
-        Author = ["Xww", "KirisameVanilla"]
+        Author = ["Xww", "KirisameVanilla"],
+        ModulesRecommend = ["WorldTravelCommand"]
     };
 
     public override void Init()
@@ -34,7 +36,7 @@ public class FriendlistTeleporter : DailyModuleBase
     {
         if (TeleportItem.IsDisplay(args))
             args.AddMenuItem(TeleportItem.Get());
-        if (CrossWorldItem.IsDisplay(args))
+        if (ModuleManager.IsModuleEnabled("WorldTravelCommand") == true && CrossWorldItem.IsDisplay(args))
             args.AddMenuItem(CrossWorldItem.Get());
     }
 
@@ -55,8 +57,9 @@ public class FriendlistTeleporter : DailyModuleBase
 
         private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
         {
+            var localZoneID = (uint)DService.ClientState.TerritoryType;
             aetheryteID = 0;
-            if (zoneID == 0) return false;
+            if (zoneID == 0 || zoneID == localZoneID) return false;
             zoneID = zoneID switch
             {
                 128 => 129,
@@ -65,6 +68,7 @@ public class FriendlistTeleporter : DailyModuleBase
                 399 => 478,
                 _ => zoneID
             };
+            if (zoneID == localZoneID) return false;
             aetheryteID = DService.AetheryteList
                                   .Where(aetheryte => aetheryte.TerritoryId == zoneID)
                                   .Select(aetheryte => aetheryte.AetheryteId)
