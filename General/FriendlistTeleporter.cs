@@ -9,13 +9,14 @@ namespace DailyRoutines.Modules;
 public class FriendlistTeleporter : DailyModuleBase
 {
     private static readonly TeleportMenuItem TeleportItem = new();
+    private static readonly CrossWorldMenuItem CrossWorldItem = new();
 
     public override ModuleInfo Info => new()
     {
         Title = GetLoc("FriendlistTeleporterTitle"),
         Description = GetLoc("FriendlistTeleporterDescription"),
         Category = ModuleCategories.General,
-        Author = ["Xww"]
+        Author = ["Xww", "KirisameVanilla"]
     };
 
     public override void Init()
@@ -31,8 +32,10 @@ public class FriendlistTeleporter : DailyModuleBase
 
     private static void OnMenuOpen(IMenuOpenedArgs args)
     {
-        if (!TeleportItem.IsDisplay(args)) return;
-        args.AddMenuItem(TeleportItem.Get());
+        if (TeleportItem.IsDisplay(args))
+            args.AddMenuItem(TeleportItem.Get());
+        if (CrossWorldItem.IsDisplay(args))
+            args.AddMenuItem(CrossWorldItem.Get());
     }
 
     private class TeleportMenuItem : MenuItemBase
@@ -43,9 +46,9 @@ public class FriendlistTeleporter : DailyModuleBase
 
         protected override unsafe void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(aetheryteID, 0);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) => args.Target is MenuTargetDefault target
+        public override bool IsDisplay(IMenuOpenedArgs args) => args.AddonName == "FriendList"
+                                                                && args.Target is MenuTargetDefault target
                                                                 && target.TargetCharacter?.Location.GameData is not null
-                                                                && args.AddonName == "FriendList"
                                                                 && GetAetheryteId(
                                                                     target.TargetCharacter.Location.GameData.RowId,
                                                                     out aetheryteID);
@@ -68,6 +71,34 @@ public class FriendlistTeleporter : DailyModuleBase
                                   .FirstOrDefault();
 
             return aetheryteID > 0;
+        }
+    }
+
+    private class CrossWorldMenuItem : MenuItemBase
+    {
+        private uint targetWorldID;
+        public override string Name { get; protected set; } = GetLoc("FriendlistTeleporter-MenuItemCrossWorld");
+
+        protected override void OnClicked(IMenuItemClickedArgs args)
+        {
+            try
+            {
+                var targetWorld = PresetData.Worlds[targetWorldID].Name.RawString;
+                ChatHelper.Instance.SendMessage($"/pdr worldtravel {targetWorld}");
+            } catch {}
+        }
+        public override bool IsDisplay(IMenuOpenedArgs args)
+        {
+            if (args.AddonName != "FriendList") return false;
+
+            if (args.Target is MenuTargetDefault { TargetCharacter.CurrentWorld.GameData: { RowId: var _targetWorldID } } &&
+                _targetWorldID != DService.ClientState.LocalPlayer.CurrentWorld.GameData.RowId)
+            {
+                targetWorldID = _targetWorldID;
+                return true;
+            }
+
+            return false;
         }
     }
 }
