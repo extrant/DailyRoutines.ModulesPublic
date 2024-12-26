@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if DEBUG
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -543,3 +544,5 @@ public class ASTHelper : DailyModuleBase
         25873  // exaltation
     ];
 }
+
+#endif
