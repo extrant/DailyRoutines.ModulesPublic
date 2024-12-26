@@ -44,7 +44,7 @@ public unsafe class AutoMount : DailyModuleBase
         ImGui.SameLine();
         ImGui.Text(ModuleConfig.SelectedMount == 0
                        ? GetLoc("AutoMount-RandomMount")
-                       : LuminaCache.GetRow<Mount>(ModuleConfig.SelectedMount).Singular.RawString);
+                       : LuminaCache.GetRow<Mount>(ModuleConfig.SelectedMount).Singular.ExtractText());
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoMount-SelecteMount")}:");

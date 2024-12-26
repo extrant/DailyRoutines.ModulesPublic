@@ -123,7 +123,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
                 foreach (var player in ModuleConfig.BlacklistPlayers)
                 {
                     if (!PresetData.Worlds.TryGetValue(player.WorldID, out var world)) continue;
-                    ImGui.Selectable($"{world.Name.RawString} / {player.PlayerName}");
+                    ImGui.Selectable($"{world.Name.ExtractText()} / {player.PlayerName}");
 
                     using var contextMenu =
                         ImRaii.ContextPopupItem($"DeleteBlacklistPlayer_{player.PlayerName}_{player.WorldID}");
@@ -218,7 +218,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
 
                             var job = LuminaCache.GetRow<ClassJob>(player.JobID);
                             var message = GetSLoc("AutoPlayerCommend-NoticeMessage",
-                                                  job.ToBitmapFontIcon(), job.Name.RawString,
+                                                  job.ToBitmapFontIcon(), job.Name.ExtractText(),
                                                   player.PlayerName);
                             Chat(message);
                             return;
@@ -263,7 +263,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             var playerName = MemoryHelper.ReadStringNullTerminated(stringArray[num]);
             var worldName = MemoryHelper.ReadStringNullTerminated(stringArray[200 + num]);
             var world = PresetData.Worlds.Values.FirstOrDefault(
-                x => x.Name.RawString.Contains(worldName, StringComparison.OrdinalIgnoreCase));
+                x => x.Name.ExtractText().Contains(worldName, StringComparison.OrdinalIgnoreCase));
             if (world == null || string.IsNullOrWhiteSpace(playerName)) continue;
 
             var player = new PlayerInfo(playerName, world.RowId);
@@ -351,9 +351,9 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             NotificationInfo(
                 ModuleConfig.BlacklistPlayers.Add(info)
                     ? GetLoc("AutoPlayerCommend-AddToBlacklistSuccess", 
-                                           playerName, playerWorld.GameData.Name.RawString)
+                                           playerName, playerWorld.GameData.Name.ExtractText())
                     : GetLoc("AutoPlayerCommend-AddToBlacklistFail", 
-                                           playerName, playerWorld.GameData.Name.RawString));
+                                           playerName, playerWorld.GameData.Name.ExtractText()));
         }
     }
 }

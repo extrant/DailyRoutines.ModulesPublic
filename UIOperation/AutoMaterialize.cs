@@ -131,10 +131,10 @@ public unsafe class AutoMaterialize : DailyModuleBase
                 var itemData = LuminaCache.GetRow<Item>(slot->ItemId);
                 if (itemData == null) continue;
 
-                var itemName = itemData.Name.RawString;
+                var itemName = itemData.Name.ExtractText();
                 TaskHelper.Enqueue(() => ExtractMateria(type, (uint)i) == 0, $"开始精炼单件装备 {itemName}({slot->ItemId})");
                 TaskHelper.Enqueue(() => NotificationInfo(
-                                       GetLoc("AutoMaterialize-Notice-ExtractNow", itemData.Name.RawString),
+                                       GetLoc("AutoMaterialize-Notice-ExtractNow", itemData.Name.ExtractText()),
                                        GetLoc("AutoMaterializeTitle")), $"通知精制进度 {itemName}({slot->ItemId})");
                 TaskHelper.DelayNext(1_000, $"等待精制完成 {itemName}({slot->ItemId})");
                 TaskHelper.Enqueue(() => StartARound(types), $"开始下一轮精制 本轮: {itemName}({slot->ItemId})");

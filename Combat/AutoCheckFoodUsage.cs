@@ -211,7 +211,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                     ImGui.SameLine();
                     ImGui.SetNextItemWidth(200f * GlobalFontScale);
                     SingleSelectCombo(PresetData.Food, ref SelectedItem, ref SelectItemSearch,
-                                      x => $"{x.Name.RawString} ({x.RowId})",
+                                      x => $"{x.Name.ExtractText()} ({x.RowId})",
                                       [new("物品", ImGuiTableColumnFlags.WidthStretch, 0)],
                                       [
                                           x => () =>
@@ -225,7 +225,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                                                   SelectedItem = SelectedItem == x.RowId ? 0 : x.RowId;
                                               }
                                           }
-                                      ], [x => x.Name.RawString, x => x.RowId.ToString()], true);
+                                      ], [x => x.Name.ExtractText(), x => x.RowId.ToString()], true);
 
                     ImGui.SameLine();
                     ImGui.Checkbox("HQ", ref SelectItemIsHQ);
@@ -272,7 +272,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
 
             ImGui.TableNextColumn();
             ImGui.Selectable(
-                $"{LuminaCache.GetRow<Item>(preset.ItemID).Name.RawString} {(preset.IsHQ ? "(HQ)" : "")}");
+                $"{LuminaCache.GetRow<Item>(preset.ItemID).Name.ExtractText()} {(preset.IsHQ ? "(HQ)" : "")}");
 
             using (var context = ImRaii.ContextPopupItem("PresetContextMenu"))
             {
@@ -320,13 +320,13 @@ public class AutoCheckFoodUsage : DailyModuleBase
                                          },
                                          x => () =>
                                          {
-                                             var contentName = x.ContentFinderCondition?.Value?.Name?.RawString ?? "";
+                                             var contentName = x.ContentFinderCondition?.Value?.Name?.ExtractText() ?? "";
                                              ImGui.Text(contentName);
                                          }
                                      ],
                                      [
                                          x => x.ExtractPlaceName(),
-                                         x => x.ContentFinderCondition?.Value?.Name?.RawString ?? ""
+                                         x => x.ContentFinderCondition?.Value?.Name?.ExtractText() ?? ""
                                      ], true))
                 {
                     preset.Zones = zones;
@@ -413,7 +413,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
             remainingTime.TotalMinutes >= 25)
         {
             Chat(Lang.Get("AutoCheckFoodUsage-NoticeMessage",
-                                                   LuminaCache.GetRow<Item>(itemID).Name.RawString,
+                                                   LuminaCache.GetRow<Item>(itemID).Name.ExtractText(),
                                                    isHQ ? "HQ" : "NQ"));
             return true;
         }

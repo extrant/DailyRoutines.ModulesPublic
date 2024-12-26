@@ -83,7 +83,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
 
         ScaledDummy(5f);
         
-        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1030).Text.RawString);
+        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1030).Text.ExtractText());
         ImGui.Spacing();
         
         ImGui.AlignTextToFramePadding();
@@ -139,7 +139,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
         
         ScaledDummy(5f);
         
-        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1110).Text.RawString);
+        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1110).Text.ExtractText());
         ImGui.Spacing();
         
         ImGui.AlignTextToFramePadding();

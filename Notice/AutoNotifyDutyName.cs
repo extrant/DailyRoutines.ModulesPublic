@@ -23,7 +23,7 @@ public class AutoNotifyDutyName : DailyModuleBase
     {
         if (!PresetData.Contents.TryGetValue(territory, out var content)) return;
 
-        var message = Lang.Get("AutoNotifyDutyName-NoticeMessage", content.ClassJobLevelSync, content.Name.RawString);
+        var message = Lang.Get("AutoNotifyDutyName-NoticeMessage", content.ClassJobLevelSync, content.Name.ExtractText());
 
         Chat(message);
         NotificationInfo(message);

@@ -51,12 +51,12 @@ public unsafe class AutoDiscard : DailyModuleBase
         ModuleConfig = LoadConfig<Config>() ?? new();
 
         var itemNames = LuminaCache.Get<Item>()
-                                 .Where(x => !string.IsNullOrEmpty(x.Name.RawString) &&
+                                 .Where(x => !string.IsNullOrEmpty(x.Name.ExtractText()) &&
                                              x.ItemSortCategory.Row != 3 && x.ItemSortCategory.Row != 4)
-                                 .GroupBy(x => x.Name.RawString)
+                                 .GroupBy(x => x.Name.ExtractText())
                                  .Select(x => x.First())
                                  .ToList();
-        ItemSearcher ??= new(itemNames, [x => x.Name.RawString, x => x.RowId.ToString()], x => x.Name.RawString);
+        ItemSearcher ??= new(itemNames, [x => x.Name.ExtractText(), x => x.RowId.ToString()], x => x.Name.ExtractText());
 
         TaskHelper ??= new TaskHelper { TimeLimitMS = 10_000 };
 
@@ -265,7 +265,7 @@ public unsafe class AutoDiscard : DailyModuleBase
             switch (Behaviour)
             {
                 case DiscardBehaviour.Discard:
-                    if (!ClickContextMenu(LuminaCache.GetRow<Addon>(91).Text.RawString))
+                    if (!ClickContextMenu(LuminaCache.GetRow<Addon>(91).Text.ExtractText()))
                     {
                         InfosOm.ContextMenu->Close(true);
                         break;
@@ -276,7 +276,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                 case DiscardBehaviour.Sell:
                     if (IsAddonAndNodesReady(GetAddonByName("RetainerGrid0")) || IsAddonAndNodesReady(RetainerSellList))
                     {
-                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(5480).Text.RawString))
+                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(5480).Text.ExtractText()))
                         {
                             InfosOm.ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
@@ -289,7 +289,7 @@ public unsafe class AutoDiscard : DailyModuleBase
 
                     if (IsAddonAndNodesReady(Shop))
                     {
-                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(93).Text.RawString))
+                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(93).Text.ExtractText()))
                         {
                             InfosOm.ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
@@ -467,11 +467,11 @@ public unsafe class AutoDiscard : DailyModuleBase
                     if (specificItemIcon == null) continue;
 
                     if (!string.IsNullOrWhiteSpace(SelectedItemSearchInput) &&
-                        !specificItem.Name.RawString.Contains(SelectedItemSearchInput, StringComparison.OrdinalIgnoreCase)) continue;
+                        !specificItem.Name.ExtractText().Contains(SelectedItemSearchInput, StringComparison.OrdinalIgnoreCase)) continue;
 
                     if (ImGuiOm.SelectableImageWithText(specificItemIcon.ImGuiHandle,
                                                         new(ImGui.GetTextLineHeightWithSpacing()), 
-                                                        specificItem.Name.RawString,
+                                                        specificItem.Name.ExtractText(),
                                                         false, 
                                                         ImGuiSelectableFlags.DontClosePopups))
                         group.Items.Remove(specificItem.RowId);
@@ -509,7 +509,7 @@ public unsafe class AutoDiscard : DailyModuleBase
 
                     if (ImGuiOm.SelectableImageWithText(itemIcon.ImGuiHandle,
                                                         new(ImGui.GetTextLineHeightWithSpacing()), 
-                                                        item.Name.RawString,
+                                                        item.Name.ExtractText(),
                                                         group.Items.Contains(item.RowId),
                                                         ImGuiSelectableFlags.DontClosePopups))
                     {

@@ -182,7 +182,7 @@ public class AutoOpenMapLinks : DailyModuleBase
         {
             if (payload is PlayerPayload playerPayload)
             {
-                var senderName = $"{playerPayload.PlayerName}@{playerPayload.World.Name.RawString}";
+                var senderName = $"{playerPayload.PlayerName}@{playerPayload.World.Name.ExtractText()}";
                 if (ModuleConfig.WhitelistPlayer.Contains(senderName))
                 {
                     SetFlag(territoryId, mapId, mapPayload.RawX, mapPayload.RawY);

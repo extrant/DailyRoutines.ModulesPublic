@@ -222,7 +222,7 @@ public class MultiTargetTracker : DailyModuleBase
             var chara = ipc.ToStruct();
             ContentID = chara->ContentId;
             Name      = ipc.Name.TextValue;
-            WorldName = ipc.HomeWorld.GameData.Name.RawString;
+            WorldName = ipc.HomeWorld.GameData.Name.ExtractText();
         }
 
         public TrackPlayer() { }

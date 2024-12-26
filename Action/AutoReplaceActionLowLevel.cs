@@ -93,14 +93,14 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGuiOm.TextImage(action0Data.Name.RawString, action0Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            ImGuiOm.TextImage(action0Data.Name.ExtractText(), action0Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
 
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.Text("→");
 
             ImGui.TableNextColumn();
-            ImGuiOm.TextImage(action1Data.Name.RawString, action1Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            ImGuiOm.TextImage(action1Data.Name.ExtractText(), action1Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
         }
     }
 

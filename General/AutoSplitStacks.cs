@@ -106,7 +106,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                     ImGui.SameLine();
                     ImGui.SetNextItemWidth(250f * GlobalFontScale);
                     using (var combo = ImRaii.Combo("###ItemSelectCombo",
-                                                    SelectedItem == null ? "" : SelectedItem.Name.RawString,
+                                                    SelectedItem == null ? "" : SelectedItem.Name.ExtractText(),
                                ImGuiComboFlags.HeightLarge))
                     {
                         if (combo)
@@ -176,7 +176,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
             ImGui.TableNextColumn();
             var icon = ImageHelper.GetIcon(LuminaCache.GetRow<Item>(group.ItemID).Icon);
-            var name = LuminaCache.GetRow<Item>(group.ItemID).Name.RawString;
+            var name = LuminaCache.GetRow<Item>(group.ItemID).Name.ExtractText();
             ImGuiOm.TextImage(name, icon.ImGuiHandle, ScaledVector2(24f));
 
             ImGui.TableNextColumn();
@@ -375,7 +375,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         TaskHelper.DelayNext(20, $"ContextMenu_{itemID}_{foundType}_{foundSlot}", false, 2);
         TaskHelper.Enqueue(() =>
         {
-            ClickContextMenu(LuminaCache.GetRow<Addon>(92).Text.RawString);
+            ClickContextMenu(LuminaCache.GetRow<Addon>(92).Text.ExtractText());
             return true;
         }, null, null, null, 2);
 

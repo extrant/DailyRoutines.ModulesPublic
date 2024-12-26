@@ -33,7 +33,7 @@ public unsafe class NoAttackWrongMandragoras : DailyModuleBase
     {
         Mandragoras ??= LuminaCache.Get<BNpcName>()
                                    .Where(x => ValidBNPCNames.Any(
-                                              name => x.Singular.RawString.Contains(
+                                              name => x.Singular.ExtractText().Contains(
                                                   name, StringComparison.OrdinalIgnoreCase)))
                                    .Select(queen => Enumerable.Range((int)(queen.RowId - 4), 5).Select(id => (uint)id)
                                                               .ToArray())

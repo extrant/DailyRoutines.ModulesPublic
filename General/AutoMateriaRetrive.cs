@@ -44,8 +44,8 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
     public override void Init()
     {
         ItemNames ??= LuminaCache.Get<Item>()
-                                 .Where(x => x.MateriaSlotCount > 0 && !string.IsNullOrEmpty(x.Name.RawString))
-                                 .GroupBy(x => x.Name.RawString)
+                                 .Where(x => x.MateriaSlotCount > 0 && !string.IsNullOrEmpty(x.Name.ExtractText()))
+                                 .GroupBy(x => x.Name.ExtractText())
                                  .ToDictionary(x => x.Key, x => x.First());
 
         _ItemNames = ItemNames.Take(10).ToDictionary(x => x.Key, x => x.Value);
@@ -68,7 +68,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         if (ImGui.BeginCombo("###ItemSelectCombo",
-                             SelectedItem == null ? string.Empty : SelectedItem.Name.RawString,
+                             SelectedItem == null ? string.Empty : SelectedItem.Name.ExtractText(),
                              ImGuiComboFlags.HeightLargest))
         {
             ImGui.InputTextWithHint("###GameItemSearchInput", Lang.Get("PleaseSearch"), ref ItemSearchInput, 128);

@@ -114,17 +114,17 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
                                  [x => () =>
                                  {
                                      if (!DService.Texture.TryGetFromGameIcon(x.Icon, out var statusIcon)) return;
-                                     using var id = ImRaii.PushId($"{x.Name.RawString}_{x.RowId}");
+                                     using var id = ImRaii.PushId($"{x.Name.ExtractText()}_{x.RowId}");
                                      if (ImGuiOm.SelectableImageWithText(
                                              statusIcon.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()),
-                                             x.Name.RawString,
+                                             x.Name.ExtractText(),
                                              SelectedOnlineStatus.Contains(x.RowId),
                                              ImGuiSelectableFlags.DontClosePopups))
                                      {
                                          if (!SelectedOnlineStatus.Remove(x.RowId))
                                              SelectedOnlineStatus.Add(x.RowId);
                                      }
-                                 }], [x => x.Name.RawString]);
+                                 }], [x => x.Name.ExtractText()]);
 
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
@@ -289,7 +289,7 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
                     if (withText)
                     {
                         ImGui.SameLine();
-                        ImGui.Text($"{row.Name.RawString}({row.RowId})");
+                        ImGui.Text($"{row.Name.ExtractText()}({row.RowId})");
                     }
                 }
 

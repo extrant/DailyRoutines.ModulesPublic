@@ -223,7 +223,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
             ImGui.Spacing();
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(result.Name.RawString, ImageHelper.GetIcon(result.Icon).ImGuiHandle,
+            ImGuiOm.TextImage(result.Name.ExtractText(), ImageHelper.GetIcon(result.Icon).ImGuiHandle,
                               ScaledVector2(20f));
 
             ImGui.TableNextColumn();
@@ -284,7 +284,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         {
             if (ModuleConfig.SendNotification && NotificationThrottler.Throttle(adjustedActionID, 1_000))
                 NotificationInfo(GetLoc("AutoPreventDuplicateStatus-PreventedNotification",
-                                                     actionData.Name.RawString, adjustedActionID));
+                                                     actionData.Name.ExtractText(), adjustedActionID));
 
             isPrevented = true;
         }
@@ -350,7 +350,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         public IDalamudTextureWrap? GetIcon() => !PresetData.Statuses.TryGetValue(StatusID, out var rowData) ? null : DService.Texture.GetFromGameIcon(new(rowData.Icon)).GetWrapOrDefault();
 
-        public string? GetName() => !PresetData.Statuses.TryGetValue(StatusID, out var rowData) ? null : rowData.Name.RawString;
+        public string? GetName() => !PresetData.Statuses.TryGetValue(StatusID, out var rowData) ? null : rowData.Name.ExtractText();
 
         public bool HasStatus()
         {

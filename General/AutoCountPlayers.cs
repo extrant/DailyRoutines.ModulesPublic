@@ -149,7 +149,7 @@ public class AutoCountPlayers : DailyModuleBase
 
             GameObjectID = obj?.GameObjectId ?? 0;
             Name = Character?.Name.TextValue ?? string.Empty;
-            Job = Character?.ClassJob.GameData?.Name?.RawString ?? string.Empty;
+            Job = Character?.ClassJob.GameData?.Name?.ExtractText() ?? string.Empty;
 
             identifier = $"{Name}_{Job}_{GameObjectID}";
         }

@@ -92,7 +92,7 @@ public unsafe class AutoDeleteLetters : DailyModuleBase
         var addon = ContextMenu;
         if (addon == null || !IsAddonAndNodesReady(addon)) return false;
 
-        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(431).Text.RawString)) return false;
+        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(431).Text.ExtractText())) return false;
 
         TaskHelper.DelayNext(100, "Delay_ClickDelete");
         TaskHelper.Enqueue(RightClickLetter);

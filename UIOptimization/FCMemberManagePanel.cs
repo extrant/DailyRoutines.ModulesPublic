@@ -286,24 +286,24 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
             ImGui.Spacing();
         
             // 冒险者铭牌
-            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(15083).Text.RawString))
-                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(15083).Text.RawString);
+            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(15083).Text.ExtractText()))
+                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(15083).Text.ExtractText());
         
             // 个人信息
-            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(51).Text.RawString))
-                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(51).Text.RawString);
+            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(51).Text.ExtractText()))
+                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(51).Text.ExtractText());
         
             // 部队信息
-            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2807).Text.RawString))
-                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2807).Text.RawString);
+            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2807).Text.ExtractText()))
+                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2807).Text.ExtractText());
             
             // 任命
-            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2656).Text.RawString))
-                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2656).Text.RawString);
+            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2656).Text.ExtractText()))
+                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2656).Text.ExtractText());
             
             // 除名
-            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2801).Text.RawString))
-                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2801).Text.RawString);
+            if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2801).Text.ExtractText()))
+                OpenContextMenuAndClick(data.Index, LuminaCache.GetRow<Addon>(2801).Text.ExtractText());
 
             ImGui.EndPopup();
         }
@@ -325,24 +325,24 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
                     SelectedMembers.Clear();
                 
                 // 冒险者铭牌
-                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(15083).Text.RawString))
-                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(15083).Text.RawString);
+                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(15083).Text.ExtractText()))
+                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(15083).Text.ExtractText());
         
                 // 个人信息
-                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(51).Text.RawString))
-                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(51).Text.RawString, "SocialDetailB");
+                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(51).Text.ExtractText()))
+                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(51).Text.ExtractText(), "SocialDetailB");
         
                 // 部队信息
-                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2807).Text.RawString))
-                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2807).Text.RawString);
+                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2807).Text.ExtractText()))
+                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2807).Text.ExtractText());
             
                 // 任命
-                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2656).Text.RawString))
-                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2656).Text.RawString);
+                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2656).Text.ExtractText()))
+                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2656).Text.ExtractText());
             
                 // 除名
-                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2801).Text.RawString))
-                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2801).Text.RawString, "SelectYesno",
+                if (ImGui.MenuItem(LuminaCache.GetRow<Addon>(2801).Text.ExtractText()))
+                    EnqueueContentMenuClicks(SelectedMembers, LuminaCache.GetRow<Addon>(2801).Text.ExtractText(), "SelectYesno",
                                              () =>
                                              {
                                                  ContextTaskHelper.Enqueue(
@@ -543,9 +543,9 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
                 ContentID = data.ContentId,
                 Index     = index,
                 OnlineStatus = (uint)GetOrigOnlineStatusID(data.State),
-                Name    = string.IsNullOrWhiteSpace(data.NameString) ? LuminaCache.GetRow<Addon>(964).Text.RawString : data.NameString,
+                Name    = string.IsNullOrWhiteSpace(data.NameString) ? LuminaCache.GetRow<Addon>(964).Text.ExtractText() : data.NameString,
                 JobIcon = data.Job == 0 ? null : DService.Texture.GetFromGameIcon(new(62100U + data.Job)),
-                Job     = data.Job == 0 ? string.Empty : LuminaCache.GetRow<ClassJob>(data.Job).Abbreviation.RawString,
+                Job     = data.Job == 0 ? string.Empty : LuminaCache.GetRow<ClassJob>(data.Job).Abbreviation.ExtractText(),
                 Location = data.Location != 0
                                ? LuminaCache.GetRow<TerritoryType>(data.Location).ExtractPlaceName()
                                : lastOnlineTime,

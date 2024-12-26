@@ -32,7 +32,7 @@ public class AutoNotifyCountdown : DailyModuleBase
 
         Countdown ??= LuminaCache.GetRow<LogMessage>(5255).Text.Payloads
                                  .Where(x => x.PayloadType == PayloadType.Text)
-                                 .Select(text => text.RawString).ToList();
+                                 .Select(text => text.ExtractText()).ToList();
 
         DService.Chat.ChatMessage += OnChatMessage;
     }

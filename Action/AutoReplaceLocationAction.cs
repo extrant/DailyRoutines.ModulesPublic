@@ -136,14 +136,14 @@ public class AutoReplaceLocationAction : DailyModuleBase
             var action = LuminaCache.GetRow<Action>(actionPair.Key);
             var state = actionPair.Value;
 
-            if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.RawString}", ref state))
+            if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
             {
                 ModuleConfig.EnabledActions[actionPair.Key] = state;
                 SaveConfig(ModuleConfig);
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.RawString, ImageHelper.GetIcon(action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetIcon(action.Icon).ImGuiHandle, ScaledVector2(20f));
         }
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
@@ -151,14 +151,14 @@ public class AutoReplaceLocationAction : DailyModuleBase
             var action = LuminaCache.GetRow<PetAction>(actionPair.Key);
             var state = actionPair.Value;
 
-            if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.RawString}", ref state))
+            if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
             {
                 ModuleConfig.EnabledPetActions[actionPair.Key] = state;
                 SaveConfig(ModuleConfig);
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.RawString, ImageHelper.GetIcon((uint)action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetIcon((uint)action.Icon).ImGuiHandle, ScaledVector2(20f));
         }
     }
 

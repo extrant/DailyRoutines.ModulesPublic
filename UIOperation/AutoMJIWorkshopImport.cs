@@ -42,7 +42,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
             .ToDictionary(x => x.RowId, x => x);
         ItemNameMap = OriginalCraftItemsSheet.Values
             .ToDictionary(
-                r => RemoveMJIItemPrefix(r.Item.Value?.Name.RawString ?? ""),
+                r => RemoveMJIItemPrefix(r.Item.Value?.Name.ExtractText() ?? ""),
                 r => r,
                 StringComparer.OrdinalIgnoreCase
             );
@@ -212,7 +212,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
     private static void DrawItemName(uint craftObjectId)
     {
         if (!OriginalCraftItemsSheet.TryGetValue(craftObjectId, out var row) || row.Item.Value == null) return;
-        ImGui.TextUnformatted(row.Item.Value.Name.RawString);
+        ImGui.TextUnformatted(row.Item.Value.Name.ExtractText());
     }
 
     private static string RemoveMJIItemPrefix(string name) =>

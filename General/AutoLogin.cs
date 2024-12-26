@@ -140,7 +140,7 @@ public unsafe class AutoLogin : DailyModuleBase
                     using (ImRaii.PushColor(ImGuiCol.Text, i % 2 == 0 ? ImGuiColors.TankBlue : ImGuiColors.DalamudWhite))
                     {
                         ImGui.Selectable(
-                            $"{i + 1}. {Lang.Get("AutoLogin-LoginInfoDisplayText", world.Name.RawString, world.DataCenter.Value.Name.RawString, info.CharaIndex)}");
+                            $"{i + 1}. {Lang.Get("AutoLogin-LoginInfoDisplayText", world.Name.ExtractText(), world.DataCenter.Value.Name.ExtractText(), info.CharaIndex)}");
                     }
 
                     using (var source = ImRaii.DragDropSource())
@@ -150,8 +150,8 @@ public unsafe class AutoLogin : DailyModuleBase
                             if (ImGui.SetDragDropPayload("LoginInfoReorder", nint.Zero, 0)) _dropIndex = i;
                             ImGui.TextColored(ImGuiColors.DalamudYellow,
                                               Lang.Get("AutoLogin-LoginInfoDisplayText",
-                                                                   world.Name.RawString,
-                                                                   world.DataCenter.Value.Name.RawString,
+                                                                   world.Name.ExtractText(),
+                                                                   world.DataCenter.Value.Name.ExtractText(),
                                                                    info.CharaIndex));
                         }
                     }
@@ -243,7 +243,7 @@ public unsafe class AutoLogin : DailyModuleBase
                 ManualCharaIndex = charaIndex0;
                 break;
             case 2:
-                var world1 = PresetData.Worlds.FirstOrDefault(x => x.Value.Name.RawString.Contains(parts[0])).Key;
+                var world1 = PresetData.Worlds.FirstOrDefault(x => x.Value.Name.ExtractText().Contains(parts[0])).Key;
                 if (world1 == 0) return;
                 if (!int.TryParse(parts[1], out var charaIndex1) || charaIndex1 < 0 || charaIndex1 > 8) return;
 
@@ -271,7 +271,7 @@ public unsafe class AutoLogin : DailyModuleBase
 
         var click = new ClickSelectYesNo();
         var title = Marshal.PtrToStringUTF8((nint)SelectYesno->AtkValues[0].String);
-        if (!title.Contains(LuminaCache.GetRow<Addon>(115).Text.RawString))
+        if (!title.Contains(LuminaCache.GetRow<Addon>(115).Text.ExtractText()))
         {
             click.No();
             return false;
