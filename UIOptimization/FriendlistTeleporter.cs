@@ -16,9 +16,9 @@ public class FriendlistTeleporter : DailyModuleBase
     {
         Title = GetLoc("FriendlistTeleporterTitle"),
         Description = GetLoc("FriendlistTeleporterDescription"),
-        Category = ModuleCategories.General,
+        Category = ModuleCategories.UIOptimization,
         Author = ["Xww", "KirisameVanilla"],
-        ModulesRecommend = ["WorldTravelCommand"]
+        ModulesPrerequisite = ["WorldTravelCommand"]
     };
 
     public override void Init()
@@ -89,7 +89,11 @@ public class FriendlistTeleporter : DailyModuleBase
             {
                 var targetWorld = PresetData.Worlds[targetWorldID].Name.RawString;
                 ChatHelper.Instance.SendMessage($"/pdr worldtravel {targetWorld}");
-            } catch {}
+            }
+            catch
+            {
+                // ignored
+            }
         }
         public override bool IsDisplay(IMenuOpenedArgs args)
         {
