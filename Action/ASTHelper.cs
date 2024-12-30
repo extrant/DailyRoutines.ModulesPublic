@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -620,7 +620,7 @@ public class ASTHelper : DailyModuleBase
             var uri   = $"{FFLogsUri}/parses/character/{charaName}/{serverSlug}/{region}";
             var query = HttpUtility.ParseQueryString(string.Empty);
             query["api_key"]   = ModuleConfig.FFLogsAPIKey;
-            query["metric"]    = "rdps";
+            query["metric"]    = "ndps";
             query["encounter"] = Dal2LogsZoneMap[zone].ToString();
 
             // contains all ultimates and current savage in current patch
