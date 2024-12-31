@@ -186,11 +186,7 @@ public class ASTHelper : DailyModuleBase
         }
 
         ImGui.NewLine();
-
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("Notification")}{GetLoc("Method")}");
-
-        ImGui.Spacing();
-
+        
         using (ImRaii.PushIndent())
         {
             if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
@@ -388,7 +384,7 @@ public class ASTHelper : DailyModuleBase
                 RefreshMarks();
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             if (NotifyErrorOnce)
             {
@@ -408,10 +404,10 @@ public class ASTHelper : DailyModuleBase
     private const uint UnspecificTargetId = 0xE000_0000;
 
     private static ushort        ZoneId;
-    private static HashSet<uint> PartyMemberIdsCache = new HashSet<uint>(); // check party member changed or not
+    private static HashSet<uint> PartyMemberIdsCache = new(); // check party member changed or not
 
-    private static readonly List<(uint id, double DPS)> MeleeCandidateOrder = new List<(uint id, double DPS)>();
-    private static readonly List<(uint id, double DPS)> RangeCandidateOrder = new List<(uint id, double DPS)>();
+    private static readonly List<(uint id, double DPS)> MeleeCandidateOrder = new();
+    private static readonly List<(uint id, double DPS)> RangeCandidateOrder = new();
     private static          uint                        MeleeCandidateIdxCache;
     private static          uint                        RangeCandidateIdxCache;
 
@@ -674,7 +670,7 @@ public class ASTHelper : DailyModuleBase
     #region ImageNode
 
     private static readonly List<nint>               ImageNodes   = new(8);
-    private static readonly Dictionary<ushort, uint> MarkedStatus = new Dictionary<ushort, uint>();
+    private static readonly Dictionary<ushort, uint> MarkedStatus = new();
 
     private static readonly object Lock = new();
     private static          bool   MarkIsBuild;
