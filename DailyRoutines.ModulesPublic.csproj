@@ -92,10 +92,6 @@
             <HintPath>$(BaseOutputPath)\$(Configuration)\DailyRoutines.dll</HintPath>
             <Private>false</Private>
         </Reference>
-        <Reference Include="DailyRoutines.Modules">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\DailyRoutines.Modules.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
         <Reference Include="TinyPinyin">
             <HintPath>$(BaseOutputPath)\$(Configuration)\TinyPinyin.dll</HintPath>
             <Private>false</Private>
