@@ -209,7 +209,7 @@ public class ASTHelper : DailyModuleBase
                     SaveConfig(ModuleConfig);
                     NewMark(0, LuminaCache.GetRow<LuminaAction>(37023).Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
-                    RefreshMarks();
+                    RefreshMarks(true);
                 }
 
                 ImGui.TextColored(LightSalmon, GetLoc("IconOffset"));
@@ -219,7 +219,7 @@ public class ASTHelper : DailyModuleBase
                     SaveConfig(ModuleConfig);
                     NewMark(0, LuminaCache.GetRow<LuminaAction>(37023).Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
-                    RefreshMarks();
+                    RefreshMarks(true);
                 }
             }
         }
@@ -416,7 +416,7 @@ public class ASTHelper : DailyModuleBase
             return;
 
         // advance fallback when no valid zone id or invalid key
-        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
+        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) && ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
         {
             if (!ModuleConfig.KeyValid)
             {
@@ -761,7 +761,7 @@ public class ASTHelper : DailyModuleBase
 
         foreach (var node in ImageNodes)
             UnlinkAndFreeImageNode((AtkImageNode*)node.Value, PartyList);
-        
+
         ImageNodes.Clear();
         MarkIsBuild = false;
     }
@@ -811,12 +811,12 @@ public class ASTHelper : DailyModuleBase
             MarkNeedClear = true;
     }
 
-    private static void RefreshMarks()
+    private static void RefreshMarks(bool keptOne = false)
     {
         foreach (var (iconId, idx) in MarkedStatus)
         {
             DelMark(idx);
-            if (idx < DService.PartyList.Length || (DService.PartyList.Length is 0 && idx is 0))
+            if (idx < DService.PartyList.Length || (keptOne && DService.PartyList.Length is 0 && idx is 0))
                 NewMark(idx, iconId);
         }
     }
@@ -917,5 +917,6 @@ public class ASTHelper : DailyModuleBase
 
     #endregion
 }
+
 
 #endif
