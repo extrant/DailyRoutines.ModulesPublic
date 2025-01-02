@@ -51,7 +51,6 @@ public class ASTHelper : DailyModuleBase
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_PartyList", OnPartyListPostDraw);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_PartyList", OnPartyListPreFinalize);
     }
 
     public override unsafe void Uninit()
@@ -60,7 +59,6 @@ public class ASTHelper : DailyModuleBase
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
         DService.AddonLifecycle.UnregisterListener(AddonEvent.PostDraw, OnPartyListPostDraw);
-        DService.AddonLifecycle.UnregisterListener(AddonEvent.PreFinalize, OnPartyListPreFinalize);
 
         ResetPartyList();
         ReleaseImagesNodes();
@@ -102,8 +100,10 @@ public class ASTHelper : DailyModuleBase
             // Api Key [v1] for fetching FFLogs records (auto play card advance mode)
             if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
             {
-                // api key (v1)
                 ImGui.Spacing();
+
+                ImGui.AlignTextToFramePadding();
+                ImGui.TextColored(LightYellow, $"{GetLoc("ASTHelper-DuringTestDescription")}");
 
                 ImGui.AlignTextToFramePadding();
                 ImGui.TextColored(LightGoldenrod, "FFLogs V1 API Key");
@@ -186,7 +186,7 @@ public class ASTHelper : DailyModuleBase
         }
 
         ImGui.NewLine();
-        
+
         using (ImRaii.PushIndent())
         {
             if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
@@ -195,14 +195,14 @@ public class ASTHelper : DailyModuleBase
             if (ImGui.Checkbox(GetLoc("SendNotification"), ref ModuleConfig.SendNotification))
                 SaveConfig(ModuleConfig);
 
-            if (ImGui.Checkbox($"{GetLoc("Show")}{GetLoc("Mark")}", ref ModuleConfig.OverlayMark))
+            if (ImGui.Checkbox(GetLoc("ASTHelper-MarkOnPartyList"), ref ModuleConfig.OverlayMark))
                 SaveConfig(ModuleConfig);
 
             if (ModuleConfig.OverlayMark)
             {
                 ImGui.Spacing();
 
-                ImGui.TextColored(LightSalmon, GetLoc("MarkerInPartyList-IconScale"));
+                ImGui.TextColored(LightSalmon, GetLoc("IconScale"));
                 ImGui.SameLine();
                 if (ImGui.SliderFloat("##MarkScale", ref ModuleConfig.MarkScale, 0.1f, 1.0f, "%.2f"))
                 {
@@ -212,7 +212,7 @@ public class ASTHelper : DailyModuleBase
                     RefreshMarks();
                 }
 
-                ImGui.TextColored(LightSalmon, GetLoc("MarkerInPartyList-IconOffset"));
+                ImGui.TextColored(LightSalmon, GetLoc("IconOffset"));
                 ImGui.SameLine();
                 if (ImGui.SliderFloat2("##MarkMargin", ref ModuleConfig.MarkOffset, -50f, 50f, "%.2f"))
                 {
@@ -305,20 +305,18 @@ public class ASTHelper : DailyModuleBase
         }
     }
 
-    private void OnZoneChanged(ushort zone)
+    private static void OnZoneChanged(ushort zone)
     {
         MemberBestRecords.Clear();
-        ZoneId = zone;
+        ReleaseImagesNodes();
     }
 
-    private void OnDutyRecommenced(object? sender, ushort e)
+    private static void OnDutyRecommenced(object? sender, ushort e)
         => OrderCandidates();
 
-    // fetch member information by id
     private static IPartyMember? FetchMember(uint id)
         => DService.PartyList.FirstOrDefault(m => m.ObjectId == id);
 
-    // fetch member index in ui
     private static unsafe uint? FetchMemberIndex(uint id)
         => (uint)AgentModule.Instance()->GetAgentHUD()->PartyMembers.ToArray()
                                                                     .Select((m, i) => (m, i))
@@ -329,9 +327,8 @@ public class ASTHelper : DailyModuleBase
     public static unsafe void OnPartyListPostDraw(AddonEvent type, AddonArgs args)
     {
         // build marks
-        lock (Lock)
-            if (ModuleConfig.OverlayMark && !MarkIsBuild)
-                BuildImagesNodes();
+        if (ModuleConfig.OverlayMark && !MarkIsBuild)
+            BuildImagesNodes();
 
         // clear all marks
         if (MarkNeedClear && MarkedStatus.Count is 0)
@@ -394,16 +391,12 @@ public class ASTHelper : DailyModuleBase
         }
     }
 
-    public static void OnPartyListPreFinalize(AddonEvent type, AddonArgs args)
-        => ReleaseImagesNodes();
-
     #endregion
 
     #region AutoPlayCard
 
     private const uint UnspecificTargetId = 0xE000_0000;
 
-    private static ushort        ZoneId;
     private static HashSet<uint> PartyMemberIdsCache = new(); // check party member changed or not
 
     private static readonly List<(uint id, double DPS)> MeleeCandidateOrder = new();
@@ -423,7 +416,7 @@ public class ASTHelper : DailyModuleBase
             return;
 
         // advance fallback when no valid zone id or invalid key
-        if (!Dal2LogsZoneMap.ContainsKey(ZoneId) || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
+        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
         {
             if (!ModuleConfig.KeyValid)
             {
@@ -442,7 +435,7 @@ public class ASTHelper : DailyModuleBase
         {
             foreach (var member in partyList)
             {
-                var bestRecord = FetchBestLogsRecord(ZoneId, member).GetAwaiter().GetResult();
+                var bestRecord = FetchBestLogsRecord(DService.ClientState.TerritoryType, member).GetAwaiter().GetResult();
                 if (bestRecord is null) continue;
 
                 switch (member.ClassJob.GameData.Role)
@@ -669,67 +662,42 @@ public class ASTHelper : DailyModuleBase
 
     #region ImageNode
 
-    private static readonly List<nint>               ImageNodes   = new(8);
-    private static readonly Dictionary<ushort, uint> MarkedStatus = new();
+    private static readonly ConcurrentDictionary<uint, nint>   ImageNodes   = new();
+    private static readonly ConcurrentDictionary<ushort, uint> MarkedStatus = new();
 
-    private static readonly object Lock = new();
-    private static          bool   MarkIsBuild;
-    private static          bool   MarkNeedClear;
+    private static volatile bool MarkIsBuild;
+    private static volatile bool MarkNeedClear;
 
     private static unsafe AtkImageNode* CreateImageNode()
     {
-        var node = (AtkImageNode*)IMemorySpace.GetUISpace()->Malloc((ulong)sizeof(AtkImageNode), 8);
-        if (node is null) return null;
-        IMemorySpace.Memset(node, 0, (ulong)sizeof(AtkImageNode));
-        node->Ctor();
+        if (!TryMakeImageNode(202502, 0, 0, 1, (byte)ImageNodeFlags.AutoFit, out var node))
+            return null;
 
-        node->AtkResNode.Type      = NodeType.Image;
-        node->AtkResNode.NodeFlags = NodeFlags.AnchorLeft | NodeFlags.AnchorTop;
-        node->AtkResNode.DrawFlags = 0;
-
-        node->WrapMode =  1;
-        node->Flags    |= (byte)ImageNodeFlags.AutoFit;
-
-        var partsList = (AtkUldPartsList*)IMemorySpace.GetUISpace()->Malloc((ulong)sizeof(AtkUldPartsList), 8);
-        if (partsList is null)
+        if (!TryMakePartsList(202501, out var partsList))
         {
-            node->AtkResNode.Destroy(true);
+            FreeImageNode(node);
             return null;
         }
 
-        partsList->Id        = 0;
-        partsList->PartCount = 1;
-
-        var part = (AtkUldPart*)IMemorySpace.GetUISpace()->Malloc((ulong)sizeof(AtkUldPart), 8);
-        if (part is null)
+        if (!TryMakePart(0, 0, 50, 50, out var part))
         {
-            IMemorySpace.Free(partsList, (ulong)sizeof(AtkUldPartsList));
-            node->AtkResNode.Destroy(true);
+            FreeImageNode(node);
+            FreePartsList(partsList);
             return null;
         }
 
-        part->U      = 0;
-        part->V      = 0;
-        part->Width  = 80;
-        part->Height = 80;
-
-        partsList->Parts = part;
-
-        var asset = (AtkUldAsset*)IMemorySpace.GetUISpace()->Malloc((ulong)sizeof(AtkUldAsset), 8);
-        if (asset is null)
+        if (!TryMakeAsset(202503, out var asset))
         {
-            IMemorySpace.Free(part, (ulong)sizeof(AtkUldPart));
-            IMemorySpace.Free(partsList, (ulong)sizeof(AtkUldPartsList));
-            node->AtkResNode.Destroy(true);
+            FreeImageNode(node);
+            FreePartsList(partsList);
+            FreePart(part);
             return null;
         }
 
-        asset->Id = 0;
-        asset->AtkTexture.Ctor();
+        AddAsset(part, asset);
+        AddPart(partsList, part);
+        AddPartsList(node, partsList);
 
-        part->UldAsset = asset;
-
-        node->PartsList = partsList;
         node->LoadIconTexture(61201, 0);
         node->AtkResNode.SetPriority(5);
         return node;
@@ -739,10 +707,10 @@ public class ASTHelper : DailyModuleBase
     {
         if (idx > 7 || PartyList is null || ImageNodes.Count <= idx) return;
 
-        var node = (AtkImageNode*)ImageNodes[(int)idx];
-        if (node is null) return;
+        if (!ImageNodes.TryGetValue(idx, out var tmp)) return;
+        var node = (AtkImageNode*)tmp;
 
-        var anchor = PartyList->GetNodeById(10 + idx);
+        var anchor = PartyList->GetNodeById(10 + (uint)idx);
         if (anchor is null) return;
 
         var pos = new Vector2(anchor->X, anchor->Y) + ModuleConfig.MarkOffset;
@@ -763,7 +731,7 @@ public class ASTHelper : DailyModuleBase
     {
         if (idx > 7 || PartyList is null || ImageNodes.Count <= idx) return;
 
-        var node = (AtkImageNode*)ImageNodes[(int)idx];
+        var node = (AtkImageNode*)ImageNodes[idx];
         if (node is null) return;
 
         node->ToggleVisibility(false);
@@ -771,38 +739,29 @@ public class ASTHelper : DailyModuleBase
 
     private static unsafe void BuildImagesNodes()
     {
-        if (PartyList is null) return;
+        if (PartyList is null || MarkIsBuild) return;
 
-        lock (Lock)
+        foreach (var idx in Enumerable.Range(0, 8))
         {
-            if (MarkIsBuild) return;
+            var node = CreateImageNode();
+            if (node is null) continue;
 
-            foreach (var idx in Enumerable.Range(10, 8))
-            {
-                var node = CreateImageNode();
-                if (node is null) continue;
+            ImageNodes[(uint)idx] = (nint)node;
 
-                node->AtkResNode.NodeId = 202412;
-                ImageNodes.Add((nint)node);
-
-                LinkNodeAtEnd((AtkResNode*)node, PartyList);
-            }
-
-            MarkIsBuild = true;
+            LinkNodeAtEnd((AtkResNode*)node, PartyList);
         }
+
+        MarkIsBuild = true;
     }
 
     private static unsafe void ReleaseImagesNodes()
     {
-        lock (Lock)
-        {
-            if (!MarkIsBuild) return;
-            if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded) return;
+        if (!MarkIsBuild) return;
+        if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded) return;
 
-            foreach (var node in ImageNodes)
-                UnlinkAndFreeImageNode((AtkImageNode*)node, PartyList);
-            ImageNodes.Clear();
-        }
+        foreach (var node in ImageNodes)
+            UnlinkAndFreeImageNode((AtkImageNode*)node.Value, PartyList);
+        ImageNodes.Clear();
     }
 
     private static unsafe void ResetPartyList(AtkUnitBase* partyList = null)
@@ -839,10 +798,11 @@ public class ASTHelper : DailyModuleBase
 
     private static void DelMark(uint idx)
     {
-        if (MarkedStatus.ContainsValue(idx))
+        if (MarkedStatus.Any(x => x.Value == idx))
         {
-            MarkedStatus.Remove(MarkedStatus.First(x => x.Value == idx).Key);
-            HideImageNode(idx);
+            var mark = MarkedStatus.FirstOrDefault(x => x.Value == idx);
+            if (!mark.Equals(default(KeyValuePair<ushort, uint>)) && MarkedStatus.TryRemove(mark.Key, out _))
+                HideImageNode(idx);
         }
 
         if (MarkedStatus.Count is 0)
@@ -933,10 +893,10 @@ public class ASTHelper : DailyModuleBase
 
     // predefined card priority, arranged based on FFLogs statistics current order.
     // https://www.fflogs.com/zone/statistics/62
-    public static readonly string[] MeleeOrder = ["Viper", "Dragon", "Ninja", "Monk", "Reaper", "Samurai"];
+    public static readonly string[] MeleeOrder = ["Samurai", "Ninja", "Dragon", "Monk", "Reaper", "Viper"];
 
     public static readonly string[] RangeOrder =
-        ["Black Mage", "Pictomancer", "Red Mage", "Machinist", "Summoner", "Bard", "Dancer"];
+        ["Pictomancer", "Black Mage", "Summoner", "Red Mage", "Machinist", "Bard", "Dancer"];
 
     // list of target healing actions
     public static readonly uint[] TargetHealActions =
