@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
-using DailyRoutines.Managers;
+using DailyRoutines.Windows;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
-using ImGuiNET;
 
 namespace DailyRoutines.Modules;
 
@@ -27,10 +27,15 @@ public class PartyFinderFilter : DailyModuleBase
     private readonly HashSet<(ushort, string)> descriptionSet = [];
     private static Config ModuleConfig = null!;
 
-    public override void Init()
+    public override unsafe void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new Config();
         DService.PartyFinder.ReceiveListing += OnReceiveListing;
+        Overlay ??= new Overlay(this);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroup", OnAddonPF);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "LookingForGroup", OnAddonPF);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddonPF);
+        if (LookingForGroup != null) OnAddonPF(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -57,6 +62,18 @@ public class PartyFinderFilter : DailyModuleBase
             ModuleConfig.BlackList.Add(new(true, string.Empty));
 
         DrawBlacklistEditor();
+    }
+
+    public override void OverlayUI() => ConfigUI();
+
+    private void OnAddonPF(AddonEvent type, AddonArgs? args)
+    {
+        Overlay.IsOpen = type switch
+        {
+            AddonEvent.PostSetup => true,
+            AddonEvent.PreFinalize => false,
+            _ => Overlay.IsOpen
+        };
     }
 
     private void DrawBlacklistEditor()
@@ -136,6 +153,7 @@ public class PartyFinderFilter : DailyModuleBase
 
     public override void Uninit()
     {
+        DService.AddonLifecycle.UnregisterListener(OnAddonPF);
         DService.PartyFinder.ReceiveListing -= OnReceiveListing;
         base.Uninit();
     }
