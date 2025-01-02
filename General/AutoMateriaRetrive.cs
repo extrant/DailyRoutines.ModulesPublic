@@ -1,11 +1,8 @@
-using DailyRoutines.Managers;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-using ImGuiNET;
 using System.Collections.Generic;
 using Lumina.Excel.GeneratedSheets;
-using DailyRoutines.Helpers;
 using System.Linq;
 using Dalamud.Interface.Utility.Raii;
 using System;

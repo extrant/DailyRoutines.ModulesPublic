@@ -33,7 +33,6 @@ public class PartyFinderFilter : DailyModuleBase
         DService.PartyFinder.ReceiveListing += OnReceiveListing;
         Overlay ??= new Overlay(this);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroup", OnAddonPF);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "LookingForGroup", OnAddonPF);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddonPF);
         if (LookingForGroup != null) OnAddonPF(AddonEvent.PostSetup, null);
     }
