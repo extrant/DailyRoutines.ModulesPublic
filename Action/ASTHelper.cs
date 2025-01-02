@@ -761,7 +761,9 @@ public class ASTHelper : DailyModuleBase
 
         foreach (var node in ImageNodes)
             UnlinkAndFreeImageNode((AtkImageNode*)node.Value, PartyList);
+        
         ImageNodes.Clear();
+        MarkIsBuild = false;
     }
 
     private static unsafe void ResetPartyList(AtkUnitBase* partyList = null)
