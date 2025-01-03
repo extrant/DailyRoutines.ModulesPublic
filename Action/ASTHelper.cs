@@ -1,4 +1,3 @@
-#if DEBUG
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -914,6 +913,3 @@ public class ASTHelper : DailyModuleBase
 
     #endregion
 }
-
-
-#endif
