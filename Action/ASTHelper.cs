@@ -1,5 +1,6 @@
 #if DEBUG
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -18,7 +19,6 @@ using Newtonsoft.Json;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
-using FFXIVClientStructs.FFXIV.Client.System.Memory;
 
 namespace DailyRoutines.Modules;
 
@@ -710,7 +710,7 @@ public class ASTHelper : DailyModuleBase
         if (!ImageNodes.TryGetValue(idx, out var tmp)) return;
         var node = (AtkImageNode*)tmp;
 
-        var anchor = PartyList->GetNodeById(10 + (uint)idx);
+        var anchor = PartyList->GetNodeById(10 + idx);
         if (anchor is null) return;
 
         var pos = new Vector2(anchor->X, anchor->Y) + ModuleConfig.MarkOffset;
@@ -800,12 +800,9 @@ public class ASTHelper : DailyModuleBase
 
     private static void DelMark(uint idx)
     {
-        if (MarkedStatus.Any(x => x.Value == idx))
-        {
-            var mark = MarkedStatus.FirstOrDefault(x => x.Value == idx);
-            if (!mark.Equals(default(KeyValuePair<ushort, uint>)) && MarkedStatus.TryRemove(mark.Key, out _))
-                HideImageNode(idx);
-        }
+        var first = MarkedStatus.FirstOrDefault(x => x.Value == idx);
+        if (first.Key != default && MarkedStatus.TryRemove(first.Key, out _))
+            HideImageNode(idx);
 
         if (MarkedStatus.Count is 0)
             MarkNeedClear = true;
