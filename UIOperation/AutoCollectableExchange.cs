@@ -14,7 +14,8 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoCollectableExchange : DailyModuleBase
 {
-    private static readonly CompSig HandInCollectablesSig = new("48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F1 48 8B 49"); 
+    private static readonly CompSig HandInCollectablesSig =
+        new("48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F1 48 8B 49");
     private delegate nint HandInCollectablesDelegate(AgentInterface* agentCollectablesShop);
     private static HandInCollectablesDelegate? HandInCollectables;
     
@@ -140,6 +141,9 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
     {
+        var addon = args.Addon.ToAtkUnitBase();
+        if (addon == null) return;
+        
         Overlay.IsOpen = type switch
         {
             AddonEvent.PostSetup => true,
