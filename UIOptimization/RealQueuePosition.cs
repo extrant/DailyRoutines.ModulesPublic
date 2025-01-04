@@ -93,7 +93,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
         if (*(int*)(*(nint*)(a2 + 32) + 20) > 0)
             index = 6;
 
-        var position = *(byte*)(agentData + 0x12c);
+        var position = *(uint*)(agentData + 0x12c);
         var positionStr = $"{LuminaCache.GetRow<Addon>(10988).Text.ExtractText()}: #{position}";
         fixed (byte* strPtr = Encoding.UTF8.GetBytes(positionStr))
             SetStringArrayDataValueAndUpdate((StringArrayData*)a3, index, strPtr, 0, 1);
