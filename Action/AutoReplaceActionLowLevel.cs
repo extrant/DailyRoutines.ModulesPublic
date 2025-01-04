@@ -5,7 +5,6 @@ using Dalamud.Hooking;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
 namespace DailyRoutines.Modules;
@@ -50,23 +49,21 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
         [3610] = 3594,
         // 阳星相位 - 阳星
         [3601] = 3600,
+        // 异言 - 悖论
+        [16507] = 7422,
+        // 必杀剑·闪影 - 必杀剑·红莲
+        [16481] = 7496
     };
 
     public override void Init()
     {
-        IsActionReplaceableHook ??=
-            DService.Hook.HookFromSignature<IsActionReplaceableDelegate>(
-                IsActionReplaceableSig.Get(), IsActionReplaceableDetour);
+        IsActionReplaceableHook ??= IsActionReplaceableSig.GetHook<IsActionReplaceableDelegate>(IsActionReplaceableDetour);
         IsActionReplaceableHook.Enable();
 
-        GetAdjustedActionIDHook ??=
-            DService.Hook.HookFromSignature<GetAdjustedActionIDDelegate>(
-                GetAdjustedActionIDSig.Get(), GetAdjustedActionIDDetour);
+        GetAdjustedActionIDHook ??= GetAdjustedActionIDSig.GetHook<GetAdjustedActionIDDelegate>(GetAdjustedActionIDDetour);
         GetAdjustedActionIDHook.Enable();
 
-        GetIconIDForSlotHook ??=
-            DService.Hook.HookFromSignature<GetIconIDForSlotDelegate>(
-                GetIconIDForSlotSig.Get(), GetIconIDForSlotDetour);
+        GetIconIDForSlotHook ??= GetIconIDForSlotSig.GetHook<GetIconIDForSlotDelegate>(GetIconIDForSlotDetour);
         GetIconIDForSlotHook.Enable();
     }
 
@@ -77,7 +74,7 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
         if (!table) return;
 
         // 让它们在视觉上看起来更平均
-        ImGui.TableSetupColumn("技能1", ImGuiTableColumnFlags.None, 30);
+        ImGui.TableSetupColumn("技能1", ImGuiTableColumnFlags.None, 40);
         ImGui.TableSetupColumn("箭头", ImGuiTableColumnFlags.None, 10);
         ImGui.TableSetupColumn("技能2", ImGuiTableColumnFlags.None, 40);
 
