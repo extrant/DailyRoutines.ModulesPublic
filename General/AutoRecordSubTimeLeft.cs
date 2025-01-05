@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
@@ -32,20 +34,18 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         Entry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
         Entry.Shown   =   true;
 
-        if (ModuleConfig.TimeLeft != TimeSpan.MinValue && ModuleConfig.LastSuccessRecord != DateTime.MinValue)
-            Entry.Text = $"{GetLoc("AutoRecordSubTimeLeft-ExpireTime")}: {DateTime.Now + ModuleConfig.TimeLeft}";
+        RefreshEntry();
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CharaSelect", OnLobby);
     }
 
     public override void ConfigUI()
     {
-        if (ImGui.Button($"{GetLoc("Reset")}##TL_Reset"))
-            ResetConfig();
-
-        ImGui.Spacing();
-
-        if (ModuleConfig.TimeLeft == TimeSpan.MinValue || ModuleConfig.LastSuccessRecord == DateTime.MinValue)
+        var contentID = DService.ClientState.LocalContentId;
+        if (contentID == 0) return;
+        
+        if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
+            (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
         {
             ImGui.TextColored(Orange, GetLoc("AutoRecordSubTimeLeft-NoData"));
             return;
@@ -54,12 +54,17 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-LastRecordTime")}:");
 
         ImGui.SameLine();
-        ImGui.Text($"{ModuleConfig.LastSuccessRecord}");
+        ImGui.Text($"{info.Record}");
 
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-TimeTill")}:");
+        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-MonthSub")} {GetLoc("AutoRecordSubTimeLeft-TimeTill")}:");
 
         ImGui.SameLine();
-        ImGui.Text($"{ModuleConfig.TimeLeft:dd\\:hh\\:mm\\:ss}");
+        ImGui.Text(FormatTimeSpan(info.LeftMonth, CultureInfo.CurrentCulture));
+        
+        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-TimeSub")} {GetLoc("AutoRecordSubTimeLeft-TimeTill")}:");
+
+        ImGui.SameLine();
+        ImGui.Text(FormatTimeSpan(info.LeftTime, CultureInfo.CurrentCulture));
     }
 
     public override void Uninit()
@@ -83,25 +88,17 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
             var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
             if (info == null) return;
 
-            var time = GetLeftTimeSecond(*info);
-
-            if (time.MonthTime != 0)
-            {
-                ModuleConfig.TimeLeft = TimeSpan.FromSeconds(time.MonthTime);
-            }
-            else if (time.PointTime != 0)
-            {
-                ModuleConfig.TimeLeft = TimeSpan.FromSeconds(time.PointTime);
-            }
-            else
-            {
-                return;
-            }
-                
-            ModuleConfig.LastSuccessRecord = DateTime.Now;
+            var contentID = agent->LobbyData.ContentId;
+            if (contentID == 0) return;
+            
+            var timeInfo = GetLeftTimeSecond(*info);
+            ModuleConfig.Infos[contentID]
+                = new(DateTime.Now,
+                      timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
+                      timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
             ModuleConfig.Save(this);
 
-            Entry.Text = $"{GetLoc("AutoRecordSubTimeLeft-ExpireTime")}: {DateTime.Now + ModuleConfig.TimeLeft}";
+            RefreshEntry(contentID);
         }
         catch (Exception)
         {
@@ -109,16 +106,16 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         }
     }
 
-    private static (int MonthTime, int PointTime) GetLeftTimeSecond(LobbySubscriptionInfo str)
+    private static (int MonthTime, int PointTime) GetLeftTimeSecond(LobbySubscriptionInfo info)
     {
-        var size = Marshal.SizeOf(str);
+        var size = Marshal.SizeOf(info);
         var arr = new byte[size];
         var ptr = IntPtr.Zero;
 
         try
         {
             ptr = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(str, ptr, true);
+            Marshal.StructureToPtr(info, ptr, true);
             Marshal.Copy(ptr, arr, 0, size);
         }
         finally
@@ -131,17 +128,32 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         return (Convert.ToInt32(month, 16), Convert.ToInt32(point, 16));
     }
 
-    private void ResetConfig()
+    private static void RefreshEntry(ulong contentID = 0)
     {
-        ModuleConfig.LastSuccessRecord = DateTime.MinValue;
-        ModuleConfig.TimeLeft          = TimeSpan.MinValue;
-
-        ModuleConfig.Save(this);
+        if (contentID == 0) contentID = DService.ClientState.LocalContentId;
+        if (contentID == 0) return;
+        
+        if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
+            (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
+            return;
+        
+        var isMonth = info.LeftMonth != TimeSpan.MinValue;
+        var expireTime = DateTime.Now + (isMonth ? info.LeftMonth : info.LeftTime);
+        Entry.Text =
+            $"{GetLoc($"AutoRecordSubTimeLeft-{(isMonth ? "Month" : "Time")}Sub")}: {expireTime:MM/dd HH:mm}";
+        Entry.Tooltip = $"{GetLoc("AutoRecordSubTimeLeft-ExpireTime")}:\n{expireTime}\n" +
+                        $"{GetLoc("AutoRecordSubTimeLeft-TimeTill")}:\n{FormatTimeSpan(isMonth ? info.LeftMonth : info.LeftTime, CultureInfo.CurrentCulture)}";
     }
+    
+    public static string FormatTimeSpan(TimeSpan timeSpan, CultureInfo culture) =>
+        culture.TwoLetterISOLanguageName switch
+        {
+            "zh" => $"{timeSpan.Days} 天 {timeSpan.Hours} 小时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒",
+            _    => $"{timeSpan.Days} d {timeSpan.Hours} h {timeSpan.Minutes} m {timeSpan.Seconds} s"
+        };
 
     private class Config : ModuleConfiguration
     {
-        public DateTime LastSuccessRecord = DateTime.MinValue;
-        public TimeSpan TimeLeft          = TimeSpan.MinValue;
+        public Dictionary<ulong, (DateTime Record, TimeSpan LeftMonth, TimeSpan LeftTime)> Infos = [];
     }
 }
