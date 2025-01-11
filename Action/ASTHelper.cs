@@ -75,7 +75,7 @@ public class ASTHelper : DailyModuleBase
 
         using (ImRaii.PushIndent())
         {
-            if (ImGui.RadioButton($"{GetLoc("Disable")}",
+            if (ImGui.RadioButton($"{GetLoc("Disable")}##autocard",
                                   ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable))
             {
                 ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Disable;
@@ -148,7 +148,7 @@ public class ASTHelper : DailyModuleBase
 
         using (ImRaii.PushIndent())
         {
-            if (ImGui.RadioButton($"{GetLoc("Disable")}",
+            if (ImGui.RadioButton($"{GetLoc("Disable")}##easyheal",
                                   ModuleConfig.EasyHeal == EasyHealStatus.Disable))
             {
                 ModuleConfig.EasyHeal = EasyHealStatus.Disable;
