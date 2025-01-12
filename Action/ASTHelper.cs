@@ -398,10 +398,10 @@ public class ASTHelper : DailyModuleBase
 
     private static HashSet<uint> PartyMemberIdsCache = new(); // check party member changed or not
 
-    private static readonly List<(uint id, double DPS)> MeleeCandidateOrder = new();
-    private static readonly List<(uint id, double DPS)> RangeCandidateOrder = new();
-    private static          uint                        MeleeCandidateIdxCache;
-    private static          uint                        RangeCandidateIdxCache;
+    private static readonly List<(uint id, double priority)> MeleeCandidateOrder = new();
+    private static readonly List<(uint id, double priority)> RangeCandidateOrder = new();
+    private static          uint                             MeleeCandidateIdxCache;
+    private static          uint                             RangeCandidateIdxCache;
 
     private static void OrderCandidates()
     {
@@ -415,21 +415,34 @@ public class ASTHelper : DailyModuleBase
             return;
 
         // advance fallback when no valid zone id or invalid key
-        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) && ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
+        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) && ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance && !ModuleConfig.KeyValid)
         {
-            if (!ModuleConfig.KeyValid)
+            if (FirstTimeFallback)
             {
-                if (FirstTimeFallback)
-                {
-                    Chat(GetLoc("ASTHealer-AutoPlayCard-AdvanceFallback"));
-                    FirstTimeFallback = false;
-                }
-
-                ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
+                Chat(GetLoc("ASTHealer-AutoPlayCard-AdvanceFallback"));
+                FirstTimeFallback = false;
             }
+
+            ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
         }
 
-        // select the best candidate for melee and range according to rdps
+        // set candidates priority based on predefined order
+        for (var idx = 0; idx < MeleeOrder.Length; idx++)
+        {
+            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == MeleeOrder[idx]);
+            if (member is not null && MeleeCandidateOrder.All(m => m.id != member.ObjectId))
+                MeleeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
+        }
+
+        for (var idx = 0; idx < RangeOrder.Length; idx++)
+        {
+            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == RangeOrder[idx]);
+            if (member is not null && RangeCandidateOrder.All(m => m.id != member.ObjectId))
+                RangeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
+        }
+
+
+        // adjust candidates priority based on FFLogs records (auto play card advance mode)
         if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
         {
             foreach (var member in partyList)
@@ -437,42 +450,49 @@ public class ASTHelper : DailyModuleBase
                 var bestRecord = FetchBestLogsRecord(DService.ClientState.TerritoryType, member).GetAwaiter().GetResult();
                 if (bestRecord is null) continue;
 
-                switch (member.ClassJob.GameData.Role)
+                // scale priority based on sigmoid percentile
+                var scale = 1 / (1 + Math.Exp(-(bestRecord.Percentile - 50) / 8.33));
+
+                // update priority
+                if (member.ClassJob.GameData.Role == 2)
                 {
-                    case 2:
-                        MeleeCandidateOrder.Add((member.ObjectId, bestRecord.DPS));
-                        break;
-                    case 3:
-                        RangeCandidateOrder.Add((member.ObjectId, bestRecord.DPS));
-                        break;
+                    var idx = MeleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
+                    if (idx != -1)
+                    {
+                        var priority = MeleeCandidateOrder[idx].priority * scale;
+                        MeleeCandidateOrder[idx] = (member.ObjectId, priority);
+                    }
+                }
+                else if (member.ClassJob.GameData.Role == 3)
+                {
+                    var idx = RangeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
+                    if (idx != -1)
+                    {
+                        var priority = RangeCandidateOrder[idx].priority * scale;
+                        RangeCandidateOrder[idx] = (member.ObjectId, priority);
+                    }
                 }
             }
-
-            MeleeCandidateOrder.Sort((a, b) => b.DPS.CompareTo(a.DPS));
-            RangeCandidateOrder.Sort((a, b) => b.DPS.CompareTo(a.DPS));
         }
 
-        // fallback: select candidates according to default order
-        foreach (var meleeJob in MeleeOrder)
-        {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == meleeJob);
-            if (member is not null && MeleeCandidateOrder.All(m => m.id != member.ObjectId))
-                MeleeCandidateOrder.Add((member.ObjectId, 0));
-        }
-
-        foreach (var rangeJob in RangeOrder)
-        {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == rangeJob);
-            if (member is not null && RangeCandidateOrder.All(m => m.id != member.ObjectId))
-                RangeCandidateOrder.Add((member.ObjectId, 0));
-        }
-
-        // finally fallback: select the first and last member
+        // fallback: select the first dps in party list
         if (MeleeCandidateOrder.Count is 0)
-            MeleeCandidateOrder.Add((partyList.First().ObjectId, -5));
+        {
+            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 3);
+            if (firstRange is not null)
+                MeleeCandidateOrder.Add((firstRange.ObjectId, -5));
+        }
 
         if (RangeCandidateOrder.Count is 0)
-            RangeCandidateOrder.Add((partyList.Last().ObjectId, -5));
+        {
+            var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 2);
+            if (firstMelee is not null)
+                RangeCandidateOrder.Add((firstMelee.ObjectId, -5));
+        }
+
+        // sort candidates by priority
+        MeleeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
+        RangeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
     }
 
     private static uint FetchCandidateId(string role)
@@ -512,12 +532,11 @@ public class ASTHelper : DailyModuleBase
             if (Vector3.Distance(candidate.Position, DService.ClientState.LocalPlayer.Position) > 30)
                 continue;
 
-
             return member.id;
         }
 
         if (needResort)
-            candidates.Sort((a, b) => b.DPS.CompareTo(a.DPS));
+            candidates.Sort((a, b) => b.priority.CompareTo(a.priority));
 
         return DService.ClientState.LocalPlayer.EntityId;
     }
@@ -819,7 +838,6 @@ public class ASTHelper : DailyModuleBase
 
     #endregion
 
-
     #region Structs
 
     private class Config : ModuleConfiguration
@@ -871,9 +889,13 @@ public class ASTHelper : DailyModuleBase
         [JsonProperty("difficulty")]
         public int Difficulty { get; set; }
 
-        // rDPS
+        // DPS
         [JsonProperty("total")]
         public double DPS { get; set; }
+
+        // percentile
+        [JsonProperty("percentile")]
+        public double Percentile { get; set; }
     }
 
     public enum AutoPlayCardStatus
@@ -894,7 +916,7 @@ public class ASTHelper : DailyModuleBase
     public static readonly string[] MeleeOrder = ["Samurai", "Ninja", "Dragon", "Monk", "Reaper", "Viper"];
 
     public static readonly string[] RangeOrder =
-        ["Pictomancer", "Black Mage", "Summoner", "Red Mage", "Machinist", "Bard", "Dancer"];
+        ["Pictomancer", "Summoner", "Machinist", "Red Mage", "Bard", "Dancer", "Black Mage"];
 
     // list of target healing actions
     public static readonly uint[] TargetHealActions =
