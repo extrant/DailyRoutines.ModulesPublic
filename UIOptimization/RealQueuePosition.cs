@@ -1,11 +1,11 @@
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.Sheets;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using DailyRoutines.Infos;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -94,7 +94,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
             index = 6;
 
         var position = *(uint*)(agentData + 0x12c);
-        var positionStr = $"{LuminaCache.GetRow<Addon>(10988).Text.ExtractText()}: #{position}";
+        var positionStr = $"{LuminaCache.GetRow<Addon>(10988)!.Value.Text.ExtractText()}: #{position}";
         fixed (byte* strPtr = Encoding.UTF8.GetBytes(positionStr))
             SetStringArrayDataValueAndUpdate((StringArrayData*)a3, index, strPtr, 0, 1);
 
