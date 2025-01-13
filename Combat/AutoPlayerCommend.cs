@@ -213,9 +213,9 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
                         {
                             Callback(addon, true, callbackIndex, i);
 
-                            var job = LuminaCache.GetRow<ClassJob>(player.JobID);
+                            LuminaCache.TryGetRow<ClassJob>(player.JobID, out var job);
                             var message = GetSLoc("AutoPlayerCommend-NoticeMessage",
-                                                  job.ToBitmapFontIcon(), job!.Value.Name.ExtractText(),
+                                                  job.ToBitmapFontIcon(), job.Name.ExtractText(),
                                                   player.PlayerName);
                             Chat(message);
                             return;

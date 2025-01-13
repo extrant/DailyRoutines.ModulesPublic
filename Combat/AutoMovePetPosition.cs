@@ -132,7 +132,8 @@ public class AutoMovePetPosition : DailyModuleBase
 
                 // 1) ZoneID (区域ID)
                 var editingZoneID  = schedule.ZoneID;
-                var editingContent = LuminaCache.GetRow<TerritoryType>(editingZoneID)!.Value.ContentFinderCondition.ValueNullable;
+                if (!LuminaCache.TryGetRow<TerritoryType>(editingZoneID, out var zone)) continue;
+                var editingContent = zone.ContentFinderCondition.ValueNullable;
 
                 ImGui.TableNextColumn();
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);

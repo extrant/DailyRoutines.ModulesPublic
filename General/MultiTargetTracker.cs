@@ -141,7 +141,7 @@ public class MultiTargetTracker : DailyModuleBase
         if (BetweenAreas || !IsScreenReady() || DService.ClientState.TerritoryType == 0) return;
         if (ModuleConfig.PermanentTrackedPlayers.Count == 0 && TempTrackedPlayers.Count == 0) return;
 
-        var currentZoneData = LuminaCache.GetRow<TerritoryType>(DService.ClientState.TerritoryType)!.Value;
+        if (!LuminaCache.TryGetRow<TerritoryType>(DService.ClientState.TerritoryType, out var currentZoneData)) return;
 
         Dictionary<ulong, Vector3> validPlayers = [];
 

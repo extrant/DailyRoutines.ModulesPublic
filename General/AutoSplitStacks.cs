@@ -173,8 +173,9 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             }
 
             ImGui.TableNextColumn();
-            var icon = ImageHelper.GetIcon(LuminaCache.GetRow<Item>(group.ItemID)!.Value.Icon);
-            var name = LuminaCache.GetRow<Item>(group.ItemID)!.Value.Name.ExtractText();
+            if (!LuminaCache.TryGetRow<Item>(group.ItemID, out var item)) continue;
+            var icon = ImageHelper.GetIcon(item.Icon);
+            var name = item.Name.ExtractText();
             ImGuiOm.TextImage(name, icon.ImGuiHandle, ScaledVector2(24f));
 
             ImGui.TableNextColumn();

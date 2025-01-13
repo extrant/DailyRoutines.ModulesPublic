@@ -133,7 +133,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         // 技能启用情况
         foreach (var actionPair in ModuleConfig.EnabledActions)
         {
-            var action = LuminaCache.GetRow<Action>(actionPair.Key)!.Value;
+            if (!LuminaCache.TryGetRow<Action>(actionPair.Key, out var action)) continue;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -148,7 +148,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
         {
-            var action = LuminaCache.GetRow<PetAction>(actionPair.Key)!.Value;
+            if (!LuminaCache.TryGetRow<PetAction>(actionPair.Key, out var action)) continue;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -174,14 +174,15 @@ public class AutoReplaceLocationAction : DailyModuleBase
         
         var isMapValid = currentMapData != null && currentMapData.Value.TerritoryType.RowId > 0 &&
                          currentMapData.Value.TerritoryType.Value.ContentFinderCondition.RowId > 0;
-
+        var currentMapPlaceName = isMapValid ? currentMapData!.Value.PlaceName.Value.Name.ExtractText() : "";
+        var currentMapPlaceNameSub = isMapValid ? currentMapData!.Value.PlaceNameSub.Value.Name.ExtractText() : "";
         using var disabled = ImRaii.Disabled(!isMapValid);
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("CurrentMap")}:");
 
         ImGui.SameLine();
-        ImGui.Text($"{currentMapData!.Value.PlaceName.Value.Name.ExtractText()} / {currentMapData!.Value.PlaceNameSub.Value.Name.ExtractText()}");
+        ImGui.Text($"{currentMapPlaceName} / {currentMapPlaceNameSub}");
 
         ImGui.SameLine();
         ImGui.TextDisabled("|");
@@ -189,7 +190,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.SameLine();
         if (ImGui.Button($"{GetLoc("OpenMap")}"))
         {
-            agent->OpenMap(currentMapData!.Value.RowId, currentMapData!.Value.TerritoryType.RowId, null, MapType.Teleport);
+            agent->OpenMap(currentMapData!.Value.RowId, currentMapData.Value.TerritoryType.RowId, null, MapType.Teleport);
             MarkCenterPoint();
         }
 
@@ -373,7 +374,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         if (!PresetData.TryGetContent(DService.ClientState.TerritoryType, out var content) ||
             content.ContentType.RowId is not (4 or 5)) return false;
 
-        var map = LuminaCache.GetRow<Map>(DService.ClientState.MapId)!.Value;
+        if (!LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map)) return false;
         var modifiedLocation = MapToWorld(new Vector2(6.125f), map).ToVector3();
 
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);

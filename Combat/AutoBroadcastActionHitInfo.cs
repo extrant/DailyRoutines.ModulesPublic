@@ -131,7 +131,7 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
             {
                 using var id = ImRaii.PushId($"ActionCustomName_{actionNamePair.Key}");
 
-                var data       = LuminaCache.GetRow<Action>(actionNamePair.Key)!.Value;
+                if (!LuminaCache.TryGetRow<Action>(actionNamePair.Key, out var data)) continue;
                 var actionIcon = DService.Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
                 if (actionIcon == null) continue;
 

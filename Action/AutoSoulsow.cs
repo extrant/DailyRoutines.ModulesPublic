@@ -88,9 +88,10 @@ public class AutoSoulsow : DailyModuleBase
         HashSet<uint> InvalidContentTypes = [16, 17, 18, 19, 31, 32, 34, 35];
 
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
+
         var contentData = LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
         
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData!.Value.ContentType.RowId));
+        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }
 
     public override void Uninit()

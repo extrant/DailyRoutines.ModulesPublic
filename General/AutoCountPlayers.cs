@@ -83,18 +83,22 @@ public class AutoCountPlayers : DailyModuleBase
             using var id = ImRaii.PushId($"{playerAround.GameObjectID}");
             if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("AutoCountPlayers-Locate")))
             {
-                var mapPos = WorldToMap(playerAround.Character.Position.ToVector2(),
-                                        LuminaCache.GetRow<Map>(DService.ClientState.MapId)!.Value);
-                var message = new SeStringBuilder()
-                              .Add(new PlayerPayload(playerAround.Name, playerAround.Character.ToStruct()->HomeWorld))
-                              .Append(" (")
-                              .AddIcon(playerAround.Character.ClassJob.ValueNullable.ToBitmapFontIcon())
-                              .Append($" {playerAround.Job})")
-                              .Add(new NewLinePayload())
-                              .Append("     ")
-                              .Append(SeString.CreateMapLink(DService.ClientState.TerritoryType, DService.ClientState.MapId, mapPos.X, mapPos.Y))
-                              .Build();
-                Chat(message);
+                if (LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
+                {
+                    var mapPos = WorldToMap(playerAround.Character.Position.ToVector2(), map);
+                    var message = new SeStringBuilder()
+                                  .Add(new PlayerPayload(playerAround.Name,
+                                                         playerAround.Character.ToStruct()->HomeWorld))
+                                  .Append(" (")
+                                  .AddIcon(playerAround.Character.ClassJob.ValueNullable.ToBitmapFontIcon())
+                                  .Append($" {playerAround.Job})")
+                                  .Add(new NewLinePayload())
+                                  .Append("     ")
+                                  .Append(SeString.CreateMapLink(DService.ClientState.TerritoryType,
+                                                                 DService.ClientState.MapId, mapPos.X, mapPos.Y))
+                                  .Build();
+                    Chat(message);
+                }
             }
 
             if (ImGui.IsItemHovered() &&
