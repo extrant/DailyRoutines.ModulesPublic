@@ -133,7 +133,7 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
                    ? GetIconIDForSlotHook.Original(slot, type, actionID)
                    : LuminaCache.TryGetRow<Action>(adjustedActionID, out var row)
                        ? row.Icon
-                       : (uint)0;
+                       : 0u;
     }
 
     private static bool IsActionReplaceableDetour(uint actionID) => true;
