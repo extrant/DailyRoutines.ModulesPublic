@@ -41,7 +41,7 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
     private delegate nint AgentFCReceiveEventInternalDelegate(AgentFreeCompany* agent, nint a2);
     private static AgentFCReceiveEventInternalDelegate? AgentFCReceiveEventInternal;
 
-    private static readonly CompSig OpenFCMemberContextMenuSig = new("88 54 24 ?? 53 56 41 54 41 55");
+    private static readonly CompSig OpenFCMemberContextMenuSig = new("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4F 10 E8 ?? ?? ?? ?? 44 8B 43 20");
     private delegate void OpenFCMemberContextMenuDelegate(AgentFreeCompany* agent, ushort index);
     private static OpenFCMemberContextMenuDelegate? OpenFCMemberContextMenu;
     

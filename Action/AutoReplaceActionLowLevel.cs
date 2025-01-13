@@ -18,10 +18,9 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
         Category = ModuleCategories.Action,
     };
 
-    private static readonly CompSig IsActionReplaceableSig =
-        new("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? C6 83 ?? ?? ?? ?? ?? 48 8B 5C 24");
-    private delegate bool IsActionReplaceableDelegate(uint actionID);
-    private static Hook<IsActionReplaceableDelegate> IsActionReplaceableHook;
+    private static readonly CompSig IsActionReplaceableSig = new("E8 ?? ?? ?? ?? 84 C0 74 69 8B D3");
+    private delegate        bool IsActionReplaceableDelegate(uint actionID);
+    private static          Hook<IsActionReplaceableDelegate> IsActionReplaceableHook;
 
     private static readonly CompSig GetAdjustedActionIDSig = new("E8 ?? ?? ?? ?? 89 03 8B 03");
     private delegate uint GetAdjustedActionIDDelegate(ActionManager* manager, uint actionID);

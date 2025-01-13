@@ -19,7 +19,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
         Category = ModuleCategories.General,
     };
 
-    private static readonly CompSig RetriveMateriaSig = new("E8 ?? ?? ?? ?? EB ?? 44 0F B7 46");
+    private static readonly CompSig RetriveMateriaSig = new("E8 ?? ?? ?? ?? 88 87 08 01 00 00");
     private delegate bool RetriveMateriaDelegate(
         EventFramework* framework, int eventID, InventoryType inventoryType, short inventorySlot, int extraParam);
     private static Hook<RetriveMateriaDelegate>? RetriveMateriaHook;
