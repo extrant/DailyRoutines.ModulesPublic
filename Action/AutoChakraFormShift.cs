@@ -46,7 +46,7 @@ public class AutoChakraFormShift : DailyModuleBase
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
         var contentData = LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
         
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData!.Value.ContentType.RowId));
+        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }
 
     private unsafe bool? UseRelatedActions()

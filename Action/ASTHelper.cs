@@ -296,7 +296,8 @@ public class ASTHelper : DailyModuleBase
                     if (ModuleConfig.OverlayMark)
                     {
                         var idx = FetchMemberIndex((uint)targetID) ?? 0;
-                        NewMark(idx, LuminaCache.GetRow<LuminaAction>(actionID)!.Value.Icon);
+                        if (!LuminaCache.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
+                        NewMark(idx, actionRow.Icon);
                         DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
                     }
                 }

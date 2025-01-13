@@ -84,20 +84,20 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
             var action1Data = LuminaCache.GetRow<Action>(action1);
             if (action0Data == null || action1Data == null) continue;
 
-            var action0Icon = DService.Texture.GetFromGameIcon(new(action0Data!.Value.Icon)).GetWrapOrDefault();
-            var action1Icon = DService.Texture.GetFromGameIcon(new(action1Data!.Value.Icon)).GetWrapOrDefault();
+            var action0Icon = DService.Texture.GetFromGameIcon(new(action0Data.Value.Icon)).GetWrapOrDefault();
+            var action1Icon = DService.Texture.GetFromGameIcon(new(action1Data.Value.Icon)).GetWrapOrDefault();
             if (action0Icon == null || action1Icon == null) continue;
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGuiOm.TextImage(action0Data!.Value.Name.ExtractText(), action0Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            ImGuiOm.TextImage(action0Data.Value.Name.ExtractText(), action0Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
 
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.Text("→");
 
             ImGui.TableNextColumn();
-            ImGuiOm.TextImage(action1Data!.Value.Name.ExtractText(), action1Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            ImGuiOm.TextImage(action1Data.Value.Name.ExtractText(), action1Icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
         }
     }
 
@@ -129,10 +129,11 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
     {
         if (type != RaptureHotbarModule.HotbarSlotType.Action)
             return GetIconIDForSlotHook.Original(slot, type, actionID);
-
         return !TryGetReplacement(actionID, out var adjustedActionID)
                    ? GetIconIDForSlotHook.Original(slot, type, actionID)
-                   : LuminaCache.GetRow<Action>(adjustedActionID)!.Value.Icon;
+                   : LuminaCache.TryGetRow<Action>(adjustedActionID, out var row)
+                       ? row.Icon
+                       : (uint)0;
     }
 
     private static bool IsActionReplaceableDetour(uint actionID) => true;

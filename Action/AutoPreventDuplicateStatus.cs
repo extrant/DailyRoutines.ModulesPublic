@@ -269,7 +269,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         var actionData = LuminaCache.GetRow<Action>(adjustedActionID);
         if (actionData == null) return;
 
-        var canTargetSelf = actionData!.Value.CanTargetSelf;
+        var canTargetSelf = actionData.Value.CanTargetSelf;
         // 雪仇
         if (adjustedActionID == 7535) canTargetSelf = false;
 
@@ -283,7 +283,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         {
             if (ModuleConfig.SendNotification && NotificationThrottler.Throttle(adjustedActionID, 1_000))
                 NotificationInfo(GetLoc("AutoPreventDuplicateStatus-PreventedNotification",
-                                                     actionData!.Value.Name.ExtractText(), adjustedActionID));
+                                                     actionData.Value.Name.ExtractText(), adjustedActionID));
 
             isPrevented = true;
         }
