@@ -123,14 +123,14 @@ public class AutoSortItems : DailyModuleBase
     {
         var currentMapData = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
         if (currentMapData == null) return false;
-        if (currentMapData.TerritoryType.Row == 0 ||
-            currentMapData.TerritoryType.Value.ContentFinderCondition.Row != 0) return false;
+        if (currentMapData.TerritoryType.RowId == 0 ||
+            currentMapData.TerritoryType.Value.ContentFinderCondition.RowId != 0) return false;
 
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
         var contentData =
             LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
 
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.ContentType.Row));
+        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.ContentType.RowId));
     }
 
     private void SendSortCommand()

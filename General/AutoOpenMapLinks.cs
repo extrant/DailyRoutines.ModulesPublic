@@ -222,12 +222,12 @@ public class AutoOpenMapLinks : DailyModuleBase
         {
             if (args.Target is not MenuTargetDefault target) return;
             if (target.TargetCharacter == null && string.IsNullOrWhiteSpace(target.TargetName) &&
-                target.TargetHomeWorld.GameData == null) return;
+                target.TargetHomeWorld.ValueNullable == null) return;
 
             var playerName = target.TargetCharacter != null ? target.TargetCharacter.Name : target.TargetName;
             var playerWorld = target.TargetCharacter != null ? target.TargetCharacter.HomeWorld : target.TargetHomeWorld;
 
-            var id = $"{playerName}@{playerWorld.GameData.Name}";
+            var id = $"{playerName}@{playerWorld.ValueNullable.Name}";
             if(!ModuleConfig.WhitelistPlayer.Add(id))
                 NotificationWarning(GetLoc("AutoOpenMapLinks-AlreadyExistedInList"));
         }

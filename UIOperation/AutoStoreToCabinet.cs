@@ -46,8 +46,8 @@ public class AutoStoreToCabinet : DailyModuleBase
     public override void Init()
     {
         CabinetItems ??= LuminaCache.Get<Cabinet>()
-                                    .Where(x => x.Item.Row > 0)
-                                    .ToDictionary(x => x.Item.Row, x => x.RowId);
+                                    .Where(x => x.Item.RowId > 0)
+                                    .ToDictionary(x => x.Item.RowId, x => x.RowId);
 
         CancelSource ??= new();
         Overlay ??= new Overlay(this);

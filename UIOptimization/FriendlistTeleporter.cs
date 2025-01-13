@@ -50,9 +50,9 @@ public class FriendlistTeleporter : DailyModuleBase
 
         public override bool IsDisplay(IMenuOpenedArgs args) => args.AddonName == "FriendList"
                                                                 && args.Target is MenuTargetDefault target
-                                                                && target.TargetCharacter?.Location.GameData is not null
+                                                                && target.TargetCharacter?.Location.ValueNullable is not null
                                                                 && GetAetheryteId(
-                                                                    target.TargetCharacter.Location.GameData.RowId,
+                                                                    target.TargetCharacter.Location.ValueNullable.RowId,
                                                                     out aetheryteID);
 
         private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
@@ -99,8 +99,8 @@ public class FriendlistTeleporter : DailyModuleBase
         {
             if (args.AddonName != "FriendList") return false;
 
-            if (args.Target is MenuTargetDefault { TargetCharacter.CurrentWorld.GameData: { RowId: var _targetWorldID } } &&
-                _targetWorldID != DService.ClientState.LocalPlayer.CurrentWorld.GameData.RowId)
+            if (args.Target is MenuTargetDefault { TargetCharacter.CurrentWorld.ValueNullable: { RowId: var _targetWorldID } } &&
+                _targetWorldID != DService.ClientState.LocalPlayer.CurrentWorld.ValueNullable.RowId)
             {
                 targetWorldID = _targetWorldID;
                 return true;

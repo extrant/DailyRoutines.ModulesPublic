@@ -52,7 +52,7 @@ public unsafe class AutoDiscard : DailyModuleBase
 
         var itemNames = LuminaCache.Get<Item>()
                                  .Where(x => !string.IsNullOrEmpty(x.Name.ExtractText()) &&
-                                             x.ItemSortCategory.Row != 3 && x.ItemSortCategory.Row != 4)
+                                             x.ItemSortCategory.RowId != 3 && x.ItemSortCategory.RowId != 4)
                                  .GroupBy(x => x.Name.ExtractText())
                                  .Select(x => x.First())
                                  .ToList();
