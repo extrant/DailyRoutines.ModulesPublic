@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
-using System.Text;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.Dtr;
@@ -12,6 +8,9 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using System;
+using System.Linq;
+using System.Text;
 
 namespace DailyRoutines.Modules;
 
@@ -85,7 +84,7 @@ public class AutoCountPlayers : DailyModuleBase
             if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("AutoCountPlayers-Locate")))
             {
                 var mapPos = WorldToMap(playerAround.Character.Position.ToVector2(),
-                                        LuminaCache.GetRow<Map>(DService.ClientState.MapId));
+                                        LuminaCache.GetRow<Map>(DService.ClientState.MapId)!.Value);
                 var message = new SeStringBuilder()
                               .Add(new PlayerPayload(playerAround.Name, playerAround.Character.ToStruct()->HomeWorld))
                               .Append(" (")
@@ -149,7 +148,7 @@ public class AutoCountPlayers : DailyModuleBase
 
             GameObjectID = obj?.GameObjectId ?? 0;
             Name = Character?.Name.TextValue ?? string.Empty;
-            Job = Character?.ClassJob.ValueNullable?.Name?.ExtractText() ?? string.Empty;
+            Job = Character?.ClassJob.ValueNullable?.Name.ExtractText() ?? string.Empty;
 
             identifier = $"{Name}_{Job}_{GameObjectID}";
         }

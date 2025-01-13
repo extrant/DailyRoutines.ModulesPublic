@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -13,6 +9,10 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
 namespace DailyRoutines.Modules;
 
@@ -104,7 +104,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                     ImGui.SameLine();
                     ImGui.SetNextItemWidth(250f * GlobalFontScale);
                     using (var combo = ImRaii.Combo("###ItemSelectCombo",
-                                                    SelectedItem == null ? "" : SelectedItem.Name.ExtractText(),
+                                                    SelectedItem == null ? "" : SelectedItem.Value.Name.ExtractText(),
                                ImGuiComboFlags.HeightLarge))
                     {
                         if (combo)
@@ -119,7 +119,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                             {
                                 var icon = ImageHelper.GetIcon(item.Icon).ImGuiHandle;
                                 if (ImGuiOm.SelectableImageWithText(icon, new(ImGui.GetTextLineHeightWithSpacing()),
-                                                                    item.Name.ExtractText(), item == SelectedItem))
+                                                                    item.Name.ExtractText(), item.Equals(SelectedItem)))
                                     SelectedItem = item;
                             }
                         }
@@ -142,7 +142,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                     if (ImGuiOm.ButtonIconWithTextVertical(FontAwesomeIcon.Plus, Lang.Get("Add"),
                                                            buttonSize: new(ImGui.CalcTextSize("三个字").X, itemSize.Y)))
                     {
-                        var newGroup = new SplitGroup(SelectedItem.RowId, SplitAmountInput);
+                        var newGroup = new SplitGroup(SelectedItem!.Value.RowId, SplitAmountInput);
                         if (!ModuleConfig.SplitGroups.Contains(newGroup))
                         {
                             ModuleConfig.SplitGroups.Add(newGroup);
@@ -173,8 +173,8 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             }
 
             ImGui.TableNextColumn();
-            var icon = ImageHelper.GetIcon(LuminaCache.GetRow<Item>(group.ItemID).Icon);
-            var name = LuminaCache.GetRow<Item>(group.ItemID).Name.ExtractText();
+            var icon = ImageHelper.GetIcon(LuminaCache.GetRow<Item>(group.ItemID)!.Value.Icon);
+            var name = LuminaCache.GetRow<Item>(group.ItemID)!.Value.Name.ExtractText();
             ImGuiOm.TextImage(name, icon.ImGuiHandle, ScaledVector2(24f));
 
             ImGui.TableNextColumn();
@@ -271,9 +271,8 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
         var item = LuminaCache.Get<Item>()
                               .Where(x => x.Name.ExtractText().Contains(args, StringComparison.OrdinalIgnoreCase))
-                              .OrderBy(x => x.Name.ExtractText().Length)
-                              .FirstOrDefault();
-        if (item != null)
+                              .MinBy(x => x.Name.ExtractText().Length);
+        if (!item.Equals(null))
         {
             var group = ModuleConfig.SplitGroups.FirstOrDefault(x => x.ItemID == item.RowId);
             if (group == null) return;
@@ -373,7 +372,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         TaskHelper.DelayNext(20, $"ContextMenu_{itemID}_{foundType}_{foundSlot}", false, 2);
         TaskHelper.Enqueue(() =>
         {
-            ClickContextMenu(LuminaCache.GetRow<Addon>(92).Text.ExtractText());
+            ClickContextMenu(LuminaCache.GetRow<Addon>(92)!.Value.Text.ExtractText());
             return true;
         }, null, null, null, 2);
 

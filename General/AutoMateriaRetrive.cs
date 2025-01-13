@@ -1,12 +1,12 @@
+using DailyRoutines.Abstracts;
 using Dalamud.Hooking;
+using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-using System.Collections.Generic;
 using Lumina.Excel.Sheets;
-using System.Linq;
-using Dalamud.Interface.Utility.Raii;
 using System;
-using DailyRoutines.Abstracts;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -65,7 +65,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         if (ImGui.BeginCombo("###ItemSelectCombo",
-                             SelectedItem == null ? string.Empty : SelectedItem.Name.ExtractText(),
+                             SelectedItem == null ? string.Empty : SelectedItem.Value.Name.ExtractText(),
                              ImGuiComboFlags.HeightLargest))
         {
             ImGui.InputTextWithHint("###GameItemSearchInput", Lang.Get("PleaseSearch"), ref ItemSearchInput, 128);
