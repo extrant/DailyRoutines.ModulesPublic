@@ -170,12 +170,10 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.TextColored(LightSteelBlue1, $"{GetLoc("AutoReplaceLocationAction-CenterPointData")}");
         using var indent = ImRaii.PushIndent();
 
-        var currentMapData = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
-        
-        var isMapValid = currentMapData != null && currentMapData.Value.TerritoryType.RowId > 0 &&
-                         currentMapData.Value.TerritoryType.Value.ContentFinderCondition.RowId > 0;
-        var currentMapPlaceName = isMapValid ? currentMapData!.Value.PlaceName.Value.Name.ExtractText() : "";
-        var currentMapPlaceNameSub = isMapValid ? currentMapData!.Value.PlaceNameSub.Value.Name.ExtractText() : "";
+        var isMapValid = LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var currentMapData) && currentMapData.TerritoryType.RowId > 0 &&
+                         currentMapData.TerritoryType.Value.ContentFinderCondition.RowId > 0;
+        var currentMapPlaceName = isMapValid ? currentMapData.PlaceName.Value.Name.ExtractText() : "";
+        var currentMapPlaceNameSub = isMapValid ? currentMapData.PlaceNameSub.Value.Name.ExtractText() : "";
         using var disabled = ImRaii.Disabled(!isMapValid);
 
         ImGui.AlignTextToFramePadding();
@@ -190,7 +188,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.SameLine();
         if (ImGui.Button($"{GetLoc("OpenMap")}"))
         {
-            agent->OpenMap(currentMapData!.Value.RowId, currentMapData.Value.TerritoryType.RowId, null, MapType.Teleport);
+            agent->OpenMap(currentMapData.RowId, currentMapData.TerritoryType.RowId, null, MapType.Teleport);
             MarkCenterPoint();
         }
 
@@ -244,36 +242,36 @@ public class AutoReplaceLocationAction : DailyModuleBase
             ClearCenterPoint();
 
             // 地图数据
-            if (ZoneMapMarkers.TryGetValue(currentMapData.Value.RowId, out var markers))
+            if (ZoneMapMarkers.TryGetValue(currentMapData.RowId, out var markers))
             {
                 markers.ForEach(x =>
                 {
                     var mapPosition = x.Value.ToVector3(0);
-                    mapPosition.X += currentMapData.Value.OffsetX;
-                    mapPosition.Z += currentMapData.Value.OffsetY;
+                    mapPosition.X += currentMapData.OffsetX;
+                    mapPosition.Z += currentMapData.OffsetY;
                     agent->AddMapMarker(mapPosition, 60931);
                 });
             }
 
             // 自动居中
-            var mapAutoCenter = MapToWorld(new Vector2(6.125f), currentMapData.Value).ToVector3(0);
-            mapAutoCenter.X += currentMapData.Value.OffsetX;
-            mapAutoCenter.Z += currentMapData.Value.OffsetY;
+            var mapAutoCenter = MapToWorld(new Vector2(6.125f), currentMapData).ToVector3(0);
+            mapAutoCenter.X += currentMapData.OffsetX;
+            mapAutoCenter.Z += currentMapData.OffsetY;
             agent->AddMapMarker(mapAutoCenter, 60932);
 
             // 自定义
-            if (ModuleConfig.CustomMarkers.TryGetValue(currentMapData.Value.RowId, out var cMarkers))
+            if (ModuleConfig.CustomMarkers.TryGetValue(currentMapData.RowId, out var cMarkers))
             {
                 cMarkers.ForEach(x =>
                 {
                     var mapPosition = x.ToVector3(0);
-                    mapPosition.X += currentMapData.Value.OffsetX;
-                    mapPosition.Z += currentMapData.Value.OffsetY;
+                    mapPosition.X += currentMapData.OffsetX;
+                    mapPosition.Z += currentMapData.OffsetY;
                     agent->AddMapMarker(mapPosition, 60933);
                 });
             }
 
-            agent->OpenMap(currentMapData.Value.RowId, currentMapData.Value.TerritoryType.RowId, null, MapType.Teleport);
+            agent->OpenMap(currentMapData.RowId, currentMapData.TerritoryType.RowId, null, MapType.Teleport);
         }
 
         void ClearCenterPoint()
