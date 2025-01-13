@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
@@ -11,8 +8,9 @@ using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using ImGuiNET;
 using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace DailyRoutines.Modules;
 
@@ -128,8 +126,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
                 if (slot == null || slot->ItemId == 0) continue;
                 if (slot->Spiritbond != 10_000) continue;
 
-                var itemData = LuminaCache.GetRow<Item>(slot->ItemId);
-                if (itemData == null) continue;
+                if (!LuminaCache.TryGetRow<Item>(slot->ItemId, out var itemData)) continue;
 
                 var itemName = itemData.Name.ExtractText();
                 TaskHelper.Enqueue(() => ExtractMateria(type, (uint)i) == 0, $"开始精炼单件装备 {itemName}({slot->ItemId})");

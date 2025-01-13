@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Numerics;
 using ClickLib;
 using ClickLib.Clicks;
 using DailyRoutines.Abstracts;
@@ -15,6 +13,8 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.Numerics;
 using GrandCompany = FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany;
 
 namespace DailyRoutines.Modules;
@@ -86,14 +86,14 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         var rank        = playerState->GetGrandCompanyRank();
         var rankText = (GrandCompany)playerState->GrandCompany switch
         {
-            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank).Singular.ExtractText(),
-            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank).Singular.ExtractText(),
-            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank).Singular.ExtractText(),
+            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank)?.Singular.ExtractText(),
             _                           => string.Empty,
         };
         if (string.IsNullOrEmpty(rankText)) return;
 
-        var rankData = LuminaCache.GetRow<GrandCompanyRank>(rank);
+        if (!LuminaCache.TryGetRow<GrandCompanyRank>(rank, out var rankData)) return;
         var iconID = (GrandCompany)playerState->GrandCompany switch
         {
             GrandCompany.Maelstrom      => rankData.IconMaelstrom,
@@ -150,7 +150,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         ImGui.SameLine();
         using (ImRaii.Disabled(TaskHelper.IsBusy))
         {
-            if (ImGui.Button(LuminaCache.GetRow<Addon>(3280).Text.ExtractText()))
+            if (ImGui.Button(LuminaCache.GetRow<Addon>(3280)!.Value.Text.ExtractText()))
             {
                 if (!ZoneToEventID.TryGetValue(DService.ClientState.TerritoryType, out var eventID)) return;
                 
