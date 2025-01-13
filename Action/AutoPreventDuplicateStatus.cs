@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Interface.Textures.TextureWraps;
@@ -10,7 +7,9 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -270,7 +269,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         var actionData = LuminaCache.GetRow<Action>(adjustedActionID);
         if (actionData == null) return;
 
-        var canTargetSelf = actionData.CanTargetSelf;
+        var canTargetSelf = actionData!.Value.CanTargetSelf;
         // 雪仇
         if (adjustedActionID == 7535) canTargetSelf = false;
 
@@ -284,7 +283,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         {
             if (ModuleConfig.SendNotification && NotificationThrottler.Throttle(adjustedActionID, 1_000))
                 NotificationInfo(GetLoc("AutoPreventDuplicateStatus-PreventedNotification",
-                                                     actionData.Name.ExtractText(), adjustedActionID));
+                                                     actionData!.Value.Name.ExtractText(), adjustedActionID));
 
             isPrevented = true;
         }

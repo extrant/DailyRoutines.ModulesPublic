@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DailyRoutines.Infos;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 

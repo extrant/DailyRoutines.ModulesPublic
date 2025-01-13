@@ -1,16 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace DailyRoutines.Modules;
 
@@ -83,7 +81,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
 
         ScaledDummy(5f);
         
-        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1030).Text.ExtractText());
+        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1030)!.Value.Text.ExtractText());
         ImGui.Spacing();
         
         ImGui.AlignTextToFramePadding();
@@ -139,7 +137,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
         
         ScaledDummy(5f);
         
-        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1110).Text.ExtractText());
+        ImGui.TextColored(ImGuiColors.TankBlue, LuminaCache.GetRow<Addon>(1110)!.Value.Text.ExtractText());
         ImGui.Spacing();
         
         ImGui.AlignTextToFramePadding();

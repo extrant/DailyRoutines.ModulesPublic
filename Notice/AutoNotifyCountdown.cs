@@ -7,7 +7,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PayloadType = Lumina.Text.Payloads.PayloadType;
 
 namespace DailyRoutines.Modules;

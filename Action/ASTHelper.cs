@@ -17,7 +17,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Newtonsoft.Json;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
+using LuminaAction = Lumina.Excel.Sheets.Action;
 
 namespace DailyRoutines.Modules;
 
@@ -69,7 +69,7 @@ public class ASTHelper : DailyModuleBase
     {
         // auto play card
         ImGui.TextColored(LightSkyBlue, GetLoc("ASTHelper-AutoPlayCardTitle"));
-        ImGuiOm.HelpMarker(GetLoc("ASTHelper-AutoPlayCardDescription", LuminaCache.GetRow<LuminaAction>(17055).Name.ExtractText()));
+        ImGuiOm.HelpMarker(GetLoc("ASTHelper-AutoPlayCardDescription", LuminaCache.GetRow<LuminaAction>(17055)!.Value.Name.ExtractText()));
 
         ImGui.Spacing();
 
@@ -206,7 +206,7 @@ public class ASTHelper : DailyModuleBase
                 if (ImGui.SliderFloat("##MarkScale", ref ModuleConfig.MarkScale, 0.1f, 1.0f, "%.2f"))
                 {
                     SaveConfig(ModuleConfig);
-                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023).Icon);
+                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
                     RefreshMarks(true);
                 }
@@ -216,7 +216,7 @@ public class ASTHelper : DailyModuleBase
                 if (ImGui.SliderFloat2("##MarkMargin", ref ModuleConfig.MarkOffset, -50f, 50f, "%.2f"))
                 {
                     SaveConfig(ModuleConfig);
-                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023).Icon);
+                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
                     RefreshMarks(true);
                 }
@@ -251,8 +251,8 @@ public class ASTHelper : DailyModuleBase
                 if (member != null)
                 {
                     var name         = member.Name.ExtractText();
-                    var classJobIcon = member.ClassJob.GameData.ToBitmapFontIcon();
-                    var classJobName = member.ClassJob.GameData.Name.ExtractText();
+                    var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
+                    var classJobName = member.ClassJob.Value.Name.ExtractText();
 
                     var locKey = actionID switch
                     {
@@ -286,8 +286,8 @@ public class ASTHelper : DailyModuleBase
                 if (member != null)
                 {
                     var name         = member.Name.ExtractText();
-                    var classJobIcon = member.ClassJob.GameData.ToBitmapFontIcon();
-                    var classJobName = member.ClassJob.GameData.Name.ExtractText();
+                    var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
+                    var classJobName = member.ClassJob.Value.Name.ExtractText();
 
                     if (ModuleConfig.SendChat)
                         Chat(GetSLoc("ASTHealer-EasyHeal-Message", name, classJobIcon, classJobName));
@@ -296,7 +296,7 @@ public class ASTHelper : DailyModuleBase
                     if (ModuleConfig.OverlayMark)
                     {
                         var idx = FetchMemberIndex((uint)targetID) ?? 0;
-                        NewMark(idx, LuminaCache.GetRow<LuminaAction>(actionID).Icon);
+                        NewMark(idx, LuminaCache.GetRow<LuminaAction>(actionID)!.Value.Icon);
                         DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
                     }
                 }
@@ -359,7 +359,7 @@ public class ASTHelper : DailyModuleBase
                     if (meleeIdx != MeleeCandidateIdxCache)
                     {
                         DelMark(MeleeCandidateIdxCache);
-                        NewMark(meleeIdx, LuminaCache.GetRow<LuminaAction>(37023).Icon);
+                        NewMark(meleeIdx, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
                         MeleeCandidateIdxCache = meleeIdx;
                     }
 
@@ -369,7 +369,7 @@ public class ASTHelper : DailyModuleBase
                     if (rangeIdx != RangeCandidateIdxCache)
                     {
                         DelMark(RangeCandidateIdxCache);
-                        NewMark(rangeIdx, LuminaCache.GetRow<LuminaAction>(37026).Icon);
+                        NewMark(rangeIdx, LuminaCache.GetRow<LuminaAction>(37026)!.Value.Icon);
                         RangeCandidateIdxCache = rangeIdx;
                     }
                 }
@@ -411,7 +411,7 @@ public class ASTHelper : DailyModuleBase
 
         // find card candidates
         var partyList = DService.PartyList; // role [0 tank, 2 melee, 3 range, 4 healer]
-        if (partyList.Length is 0 || DService.ClientState.LocalPlayer.ClassJob.GameData.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable)
+        if (partyList.Length is 0 || DService.ClientState.LocalPlayer.ClassJob.Value.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable)
             return;
 
         // advance fallback when no valid zone id or invalid key
@@ -429,14 +429,14 @@ public class ASTHelper : DailyModuleBase
         // set candidates priority based on predefined order
         for (var idx = 0; idx < MeleeOrder.Length; idx++)
         {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == MeleeOrder[idx]);
+            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == MeleeOrder[idx]);
             if (member is not null && MeleeCandidateOrder.All(m => m.id != member.ObjectId))
                 MeleeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
         }
 
         for (var idx = 0; idx < RangeOrder.Length; idx++)
         {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.GameData.NameEnglish == RangeOrder[idx]);
+            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == RangeOrder[idx]);
             if (member is not null && RangeCandidateOrder.All(m => m.id != member.ObjectId))
                 RangeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
         }
@@ -454,7 +454,7 @@ public class ASTHelper : DailyModuleBase
                 var scale = 1 / (1 + Math.Exp(-(bestRecord.Percentile - 50) / 8.33));
 
                 // update priority
-                if (member.ClassJob.GameData.Role == 2)
+                if (member.ClassJob.Value.Role == 2)
                 {
                     var idx = MeleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                     if (idx != -1)
@@ -463,7 +463,7 @@ public class ASTHelper : DailyModuleBase
                         MeleeCandidateOrder[idx] = (member.ObjectId, priority);
                     }
                 }
-                else if (member.ClassJob.GameData.Role == 3)
+                else if (member.ClassJob.Value.Role == 3)
                 {
                     var idx = RangeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                     if (idx != -1)
@@ -478,14 +478,14 @@ public class ASTHelper : DailyModuleBase
         // fallback: select the first dps in party list
         if (MeleeCandidateOrder.Count is 0)
         {
-            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 3);
+            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role == 3);
             if (firstRange is not null)
                 MeleeCandidateOrder.Add((firstRange.ObjectId, -5));
         }
 
         if (RangeCandidateOrder.Count is 0)
         {
-            var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.GameData.Role == 2);
+            var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.Value.Role == 2);
             if (firstMelee is not null)
                 RangeCandidateOrder.Add((firstMelee.ObjectId, -5));
         }
@@ -598,7 +598,7 @@ public class ASTHelper : DailyModuleBase
 
     private static string GetRegion()
     {
-        return DService.ClientState.LocalPlayer.CurrentWorld.GameData.DataCenter.Value.Region switch
+        return DService.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Region switch
         {
             1 => "JP",
             2 => "NA",
@@ -617,9 +617,9 @@ public class ASTHelper : DailyModuleBase
 
         // get character info
         var charaName  = member.Name;
-        var serverSlug = member.World.GameData.Name;
+        var serverSlug = member.World.Value.Name.ExtractText();
         var region     = GetRegion();
-        var job        = member.ClassJob.GameData.NameEnglish;
+        var job        = member.ClassJob.Value.NameEnglish.ExtractText();
 
         // fetch record
         try

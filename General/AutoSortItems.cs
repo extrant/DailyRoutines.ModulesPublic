@@ -3,7 +3,7 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 

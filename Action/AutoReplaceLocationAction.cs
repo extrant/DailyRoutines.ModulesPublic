@@ -12,8 +12,8 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
-using Action = Lumina.Excel.GeneratedSheets.Action;
+using Lumina.Excel.Sheets;
+using Action = Lumina.Excel.Sheets.Action;
 using MapType = FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType;
 
 namespace DailyRoutines.Modules;
@@ -42,7 +42,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     static AutoReplaceLocationAction()
     {
         LuminaCache.Get<Map>()
-                   .Where(x => x.TerritoryType.Row > 0 && x.TerritoryType.Value.ContentFinderCondition.Row > 0)
+                   .Where(x => x.TerritoryType.RowId > 0 && x.TerritoryType.Value.ContentFinderCondition.RowId > 0)
                    .ForEach(map =>
                    {
                        GetMapMarkers(map.RowId)
@@ -133,7 +133,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         // 技能启用情况
         foreach (var actionPair in ModuleConfig.EnabledActions)
         {
-            var action = LuminaCache.GetRow<Action>(actionPair.Key);
+            var action = LuminaCache.GetRow<Action>(actionPair.Key)!.Value;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -148,7 +148,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
         {
-            var action = LuminaCache.GetRow<PetAction>(actionPair.Key);
+            var action = LuminaCache.GetRow<PetAction>(actionPair.Key)!.Value;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -171,8 +171,9 @@ public class AutoReplaceLocationAction : DailyModuleBase
         using var indent = ImRaii.PushIndent();
 
         var currentMapData = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
-        var isMapValid = currentMapData != null && currentMapData.TerritoryType.Row > 0 &&
-                         currentMapData.TerritoryType.Value.ContentFinderCondition.Row > 0;
+        
+        var isMapValid = currentMapData != null && currentMapData.Value.TerritoryType.RowId > 0 &&
+                         currentMapData.Value.TerritoryType.Value.ContentFinderCondition.RowId > 0;
 
         using var disabled = ImRaii.Disabled(!isMapValid);
 
@@ -180,7 +181,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("CurrentMap")}:");
 
         ImGui.SameLine();
-        ImGui.Text($"{currentMapData.PlaceName?.Value?.Name} / {currentMapData.PlaceNameSub?.Value?.Name}");
+        ImGui.Text($"{currentMapData!.Value.PlaceName.Value.Name.ExtractText()} / {currentMapData!.Value.PlaceNameSub.Value.Name.ExtractText()}");
 
         ImGui.SameLine();
         ImGui.TextDisabled("|");
@@ -188,7 +189,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.SameLine();
         if (ImGui.Button($"{GetLoc("OpenMap")}"))
         {
-            agent->OpenMap(currentMapData.RowId, currentMapData.TerritoryType.Row, null, MapType.Teleport);
+            agent->OpenMap(currentMapData!.Value.RowId, currentMapData!.Value.TerritoryType.RowId, null, MapType.Teleport);
             MarkCenterPoint();
         }
 
@@ -242,36 +243,36 @@ public class AutoReplaceLocationAction : DailyModuleBase
             ClearCenterPoint();
 
             // 地图数据
-            if (ZoneMapMarkers.TryGetValue(currentMapData.RowId, out var markers))
+            if (ZoneMapMarkers.TryGetValue(currentMapData.Value.RowId, out var markers))
             {
                 markers.ForEach(x =>
                 {
                     var mapPosition = x.Value.ToVector3(0);
-                    mapPosition.X += currentMapData.OffsetX;
-                    mapPosition.Z += currentMapData.OffsetY;
+                    mapPosition.X += currentMapData.Value.OffsetX;
+                    mapPosition.Z += currentMapData.Value.OffsetY;
                     agent->AddMapMarker(mapPosition, 60931);
                 });
             }
 
             // 自动居中
-            var mapAutoCenter = MapToWorld(new Vector2(6.125f), currentMapData).ToVector3(0);
-            mapAutoCenter.X += currentMapData.OffsetX;
-            mapAutoCenter.Z += currentMapData.OffsetY;
+            var mapAutoCenter = MapToWorld(new Vector2(6.125f), currentMapData.Value).ToVector3(0);
+            mapAutoCenter.X += currentMapData.Value.OffsetX;
+            mapAutoCenter.Z += currentMapData.Value.OffsetY;
             agent->AddMapMarker(mapAutoCenter, 60932);
 
             // 自定义
-            if (ModuleConfig.CustomMarkers.TryGetValue(currentMapData.RowId, out var cMarkers))
+            if (ModuleConfig.CustomMarkers.TryGetValue(currentMapData.Value.RowId, out var cMarkers))
             {
                 cMarkers.ForEach(x =>
                 {
                     var mapPosition = x.ToVector3(0);
-                    mapPosition.X += currentMapData.OffsetX;
-                    mapPosition.Z += currentMapData.OffsetY;
+                    mapPosition.X += currentMapData.Value.OffsetX;
+                    mapPosition.Z += currentMapData.Value.OffsetY;
                     agent->AddMapMarker(mapPosition, 60933);
                 });
             }
 
-            agent->OpenMap(currentMapData.RowId, currentMapData.TerritoryType.Row, null, MapType.Teleport);
+            agent->OpenMap(currentMapData.Value.RowId, currentMapData.Value.TerritoryType.RowId, null, MapType.Teleport);
         }
 
         void ClearCenterPoint()
@@ -370,9 +371,9 @@ public class AutoReplaceLocationAction : DailyModuleBase
     private static bool HandlePresetCenterLocation(ref Vector3 sourceLocation)
     {
         if (!PresetData.TryGetContent(DService.ClientState.TerritoryType, out var content) ||
-            content.ContentType.Row is not (4 or 5)) return false;
+            content.ContentType.RowId is not (4 or 5)) return false;
 
-        var map = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
+        var map = LuminaCache.GetRow<Map>(DService.ClientState.MapId)!.Value;
         var modifiedLocation = MapToWorld(new Vector2(6.125f), map).ToVector3();
 
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);
