@@ -7,7 +7,7 @@
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
         <Title>Daily Routines Modules In Public</Title>
-        <Configurations>Debug;Release</Configurations>
+        <Configurations>Debug;Release;ReleaseTest</Configurations>
     </PropertyGroup>
 
     <PropertyGroup>
