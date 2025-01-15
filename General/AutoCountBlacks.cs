@@ -30,7 +30,7 @@ using OmenTools.Infos;
 
 namespace DailyRoutines.Modules;
 
-public class AutoCountBlacksTitle : DailyModuleBase
+public class AutoCountBlacks : DailyModuleBase
 {
     private int BlackNum;
     private StringBuilder Tooltip = new();
@@ -66,7 +66,7 @@ public class AutoCountBlacksTitle : DailyModuleBase
         var worldSheet = DService.Data.GetExcelSheet<World>();
         var luminaWorlds = worldSheet.Where(world =>
                     !string.IsNullOrEmpty(world.Name) &&
-                     world.RowId != 0);
+                     world.RowId is not 0);
 
         Worlds = luminaWorlds.ToDictionary(luminaWorld => luminaWorld.RowId, luminaWorld => luminaWorld);
     }
@@ -93,8 +93,8 @@ public class AutoCountBlacksTitle : DailyModuleBase
 
     private unsafe void OnUpdate(IFramework _)
     {
-        if (DService.ClientState.LocalPlayer == null) return;
-        if (DtrEntry == null) return;
+        if (DService.ClientState.LocalPlayer is null) return;
+        if (DtrEntry is null) return;
 
         Tooltip.Clear();
         BlackNum = 0;
@@ -103,7 +103,7 @@ public class AutoCountBlacksTitle : DailyModuleBase
         for (int i = 0; i < length; i++)
         {
             var obj = DService.ObjectTable[i];
-            if (obj != null && obj.ObjectKind == ObjectKind.Player)
+            if (obj is not null && obj.ObjectKind is ObjectKind.Player)
             {
                 var needCheckPos = obj.Position;
                 if(Vector3.Distance(myPos, needCheckPos) <= ModuleConfig.CheckRange)
