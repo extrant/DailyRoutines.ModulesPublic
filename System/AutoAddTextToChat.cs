@@ -112,7 +112,7 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
             
             ImGui.SameLine();
             
-            if (ImGuiOm.ButtonIcon("Delete", FontAwesomeIcon.TrashAlt, "Delete"))
+            if (ImGuiOm.ButtonIcon("Delete", FontAwesomeIcon.TrashAlt, GetLoc("Delete")))
             {
                 ModuleConfig.BlackList.RemoveAt(i);
                 ModuleConfig.Save(this);
