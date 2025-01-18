@@ -17,6 +17,7 @@ global using Dalamud.Game;
 using System.Collections.Generic;
 using System.Linq;
 using DailyRoutines.Abstracts;
+using DailyRoutines.Managers;
 using Dalamud.Hooking;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
@@ -42,37 +43,48 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
 
     private static Hook<ProcessSendedChatDelegate>? ProcessSendedChatHook;
 
-    private static Config ModuleConfig = null!;
+    private static Config? ModuleConfig;
 
     public override void Init()
     {
-        ModuleConfig = new Config().Load(this);
-        if (ModuleConfig.BlackList.Count == 0)
+        var config = LoadConfig<Config>();
+        if (config == null)
         {
-            ModuleConfig.BlackList.Add(".", "。", "？", "?", "！", "!", "吗", "吧", "呢", "啊", "呗", "呀", "阿", "哦", "嘛", "咯", "哎", "啦", "哇", "呵", "哈", "奥", "嗷");
-            ModuleConfig.Save(this);
+            config = new Config();
+            if (LanguageManager.CurrentLanguage == ClientLanguage.ChineseSimplified.ToString())
+            {
+                config.BlackList.Add(".", "。", "？", "?", "！", "!", "吗", "吧", "呢", "啊", "呗", "呀", "阿", "哦", "嘛", "咯", "哎", "啦", "哇", "呵", "哈", "奥", "嗷");
+            }
+            SaveConfig(config);
         }
-        ProcessSendedChatHook ??= DService.Hook.HookFromSignature<ProcessSendedChatDelegate>(ProcessSendedChatSig.Get(), ProcessSendedChatDetour);
+        else
+        {
+            ModuleConfig = config;
+        }
+
+        ProcessSendedChatHook ??= ProcessSendedChatSig.GetHook<ProcessSendedChatDelegate>(ProcessSendedChatDetour);
         ProcessSendedChatHook.Enable();
     }
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("Prefix"), ref ModuleConfig.IsAddPrefix)) ModuleConfig.Save(this);
-        if (ImGui.Checkbox(GetLoc("Suffix"), ref ModuleConfig.IsAddSuffix)) ModuleConfig.Save(this);
+        if (ImGui.Checkbox(GetLoc("Prefix"), ref ModuleConfig.IsAddPrefix)) SaveConfig(ModuleConfig);
+        if (ImGui.Checkbox(GetLoc("Suffix"), ref ModuleConfig.IsAddSuffix)) SaveConfig(ModuleConfig);
 
         ImGui.Spacing();
         ImGui.AlignTextToFramePadding();
 
         ImGui.Text(GetLoc("Prefix"));
         ImGui.SameLine();
-        if (ImGui.InputText("###Prefix", ref ModuleConfig.PrefixString, 48)) ModuleConfig.Save(this);
+        ImGui.InputText("###Prefix", ref ModuleConfig.PrefixString, 48);
+        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
         ImGui.Spacing();
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("Suffix"));
         ImGui.SameLine();
-        if (ImGui.InputText("###Suffix", ref ModuleConfig.SuffixString, 48)) ModuleConfig.Save(this);
+        ImGui.InputText("###Suffix", ref ModuleConfig.SuffixString, 48);
+        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
         ImGui.Spacing();
         
         ImGui.AlignTextToFramePadding();
@@ -81,41 +93,45 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
         {
             ModuleConfig.BlackList.Add(string.Empty);
-            ModuleConfig.Save(this);
+            SaveConfig(ModuleConfig);
         }
+
         ImGui.Spacing();
         
-        var tableSize = (ImGui.GetContentRegionAvail() * 0.75f) with { Y = 0 };
-        using var table = ImRaii.Table(GetLoc("Sort"), 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
+        if (ModuleConfig.BlackList.Count == 0) return;
+
+        var blackListItems = ModuleConfig.BlackList.ToList();
+        var tableSize = (ImGui.GetContentRegionAvail() * 0.85f) with { Y = 0 };
+        using var table = ImRaii.Table(GetLoc("Blacklist"), 5, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
         if (!table) return;
         
         ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthStretch);
         
-        for (var i = 0; i < ModuleConfig.BlackList.Count; i++)
+        for (var i = 0; i < blackListItems.Count; i++)
         {
-            var isNextRow = i % 4 == 0;
-            if (isNextRow) ImGui.TableNextRow();
-            
-            ImGui.TableSetColumnIndex(i % 4);
-            
-            var blackListInput = ModuleConfig.BlackList[i];
-            var inputRef = blackListInput;
-            using var id = ImRaii.PushId($"{blackListInput}_{i}_Command");
+            if (i % 5 == 0) ImGui.TableNextRow();
+
+            ImGui.TableSetColumnIndex(i % 5);
+
+            var inputRef = blackListItems[i];
+            using var id = ImRaii.PushId($"{inputRef}_{i}_Command");
             ImGui.InputText($"##Item{i}", ref inputRef, 48);
-            
+
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                ModuleConfig.BlackList[i] = inputRef;
-                ModuleConfig.Save(this);
+                ModuleConfig.BlackList.Remove(blackListItems[i]);
+                ModuleConfig.BlackList.Add(inputRef);
+                SaveConfig(ModuleConfig);
+                blackListItems[i] = inputRef;
             }
-            
+
             ImGui.SameLine();
-            
             if (ImGuiOm.ButtonIcon("Delete", FontAwesomeIcon.TrashAlt, GetLoc("Delete")))
             {
-                ModuleConfig.BlackList.RemoveAt(i);
-                ModuleConfig.Save(this);
+                ModuleConfig.BlackList.Remove(blackListItems[i]);
+                SaveConfig(ModuleConfig);
+                blackListItems.RemoveAt(i);
                 i--;
             }
         }
@@ -162,7 +178,7 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
                 if (firstSpaceIndex == -1) return false;
                 var secondSpaceIndex = original.IndexOf(' ', firstSpaceIndex + 1);
                 if (secondSpaceIndex == -1) return false;
-                handledMessage = $"{original.Substring(0, secondSpaceIndex)} {ModuleConfig.PrefixString}{original.Substring(secondSpaceIndex).TrimStart()}";
+                handledMessage = $"{original[..secondSpaceIndex]} {ModuleConfig.PrefixString}{original[secondSpaceIndex..].TrimStart()}";
             }
             else 
             { 
@@ -179,6 +195,6 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         public bool IsAddSuffix;
         public string PrefixString = "";
         public string SuffixString = "";
-        public readonly List<string> BlackList = [];
+        public readonly HashSet<string> BlackList = [];
     }
 }
