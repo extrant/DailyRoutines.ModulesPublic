@@ -30,20 +30,20 @@ using OmenTools.Infos;
 
 namespace DailyRoutines.Modules;
 
-public class AutoCountBlacks : DailyModuleBase
+public unsafe class AutoCountBlacks : DailyModuleBase
 {
-    private int BlackNum;
-    private StringBuilder Tooltip = new();
     private static Config ModuleConfig = null!;
     private static IDtrBarEntry DtrEntry;
+    private static HashSet<ulong> BlackHashSet = new();
 
-    private Dictionary<uint, World> Worlds;
-    private Hook<InfoProxyInterface.Delegates.EndRequest>? InfoProxyBlackListEndRequestHook;
+    private static readonly CompSig InfoProxyBlackListUpdateSig = new("48 89 5C 24 ?? 4C 8B 91 ?? ?? ?? ?? 33 C0");
+    private delegate void InfoProxyBlackListUpdateDelegate(InfoProxyBlacklist.BlockResult* outBlockResult, ulong accountId, ulong contentId);
+    private static Hook<InfoProxyBlackListUpdateDelegate>? InfoProxyBlackListUpdateHook;
 
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoCountBlacksTitle"),
-        Description = GetLoc("AutoCountBlacksTitleDesc"),
+        Title = GetLoc("AutoCountBlacks-Title"),
+        Description = GetLoc("AutoCountBlacks-Desc"),
         Category = ModuleCategories.General,
         Author = ["ToxicStar"],
     };
@@ -52,99 +52,106 @@ public class AutoCountBlacks : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        InitWorlds();
-        InitHookBlackList();
+        ResetBlackList();
 
-        DtrEntry = DService.DtrBar.Get("DailyRoutines-AutoCountBlacksTitle");
+        InfoProxyBlackListUpdateHook ??= InfoProxyBlackListUpdateSig.GetHook<InfoProxyBlackListUpdateDelegate>(InfoProxyBlackListUpdateDetour);
+        InfoProxyBlackListUpdateHook.Enable();
+
+        DtrEntry = DService.DtrBar.Get("DailyRoutines-AutoCountBlacks");
         DtrEntry.Shown = true;
 
         FrameworkManager.Register(false, OnUpdate);
     }
 
-    private void InitWorlds()
+    private void InfoProxyBlackListUpdateDetour(InfoProxyBlacklist.BlockResult* outBlockResult, ulong accountId, ulong contentId)
     {
-        var worldSheet = DService.Data.GetExcelSheet<World>();
-        var luminaWorlds = worldSheet.Where(world =>
-                    !string.IsNullOrEmpty(world.Name) &&
-                     world.RowId is not 0);
+        InfoProxyBlackListUpdateHook.Original(outBlockResult, accountId, contentId);
 
-        Worlds = luminaWorlds.ToDictionary(luminaWorld => luminaWorld.RowId, luminaWorld => luminaWorld);
-    }
-
-    private unsafe void InitHookBlackList()
-    {
-        var infoProxyBlackListEndRequestAddress = (nint)InfoModule.Instance()->GetInfoProxyById(InfoProxyId.Blacklist)->VirtualTable->EndRequest;
-        InfoProxyBlackListEndRequestHook ??= DService.Hook.HookFromAddress<InfoProxyInterface.Delegates.EndRequest>(infoProxyBlackListEndRequestAddress, InfoProxyBlackListEndRequestDetour);
-        InfoProxyBlackListEndRequestHook.Enable();
-    }
-
-    private unsafe void InfoProxyBlackListEndRequestDetour(InfoProxyInterface* thisPtr)
-    {
-        //每次加载黑名单时，统计一次
-        var infoProxyBlacklist = InfoProxyBlacklist.Instance();
-        ModuleConfig.BlackList.Clear();
-        foreach (var blockCharacter in infoProxyBlacklist->BlockedCharacters)
+        //触发了黑名单更新
+        if (outBlockResult->BlockedCharacterIndex != BlackHashSet.Count)
         {
-            //blockCharacter.Id = accountId for new, contentId for old
-            ModuleConfig.BlackList.Add(blockCharacter.Id);
+            ResetBlackList();
         }
-        SaveConfig(ModuleConfig);
     }
 
-    private unsafe void OnUpdate(IFramework _)
+    private static void ResetBlackList()
     {
-        if (DService.ClientState.LocalPlayer is null) return;
-        if (DtrEntry is null) return;
-
-        Tooltip.Clear();
-        BlackNum = 0;
-        var myPos = DService.ClientState.LocalPlayer.Position;
-        var length = DService.ObjectTable.Length >= 200 ? 200 : DService.ObjectTable.Length;
-        for (int i = 0; i < length; i++)
+        //启动/更新时，统计一次
+        var tempHashSet = new HashSet<ulong>();
+        foreach (var blockCharacter in InfoProxyBlacklist.Instance()->BlockedCharacters)
         {
-            var obj = DService.ObjectTable[i];
+            if(blockCharacter.Id is not 0)
+            {
+                //blockCharacter.Id = accountId for new, contentId for old
+                tempHashSet.Add(blockCharacter.Id);
+
+                //BlockedCharacters只增不减，必须使用BlockedCharactersCount处理变化后的数量
+                if (tempHashSet.Count >= InfoProxyBlacklist.Instance()->BlockedCharactersCount)
+                {
+                    break;
+                }
+            }
+        }
+        BlackHashSet = tempHashSet;
+    }
+
+    private static void OnUpdate(IFramework _)
+    {
+        if (!Throttler.Throttle("DailyRoutines-AutoCountBlacks-OnUpdate")) return;
+        if (DtrEntry is null) return;
+        if (DService.ClientState.LocalPlayer is not { } localPlayer) return;
+
+        var tooltip = new StringBuilder();
+        int blackNum = 0;
+        var myPos = localPlayer.Position;
+        var checkRange = ModuleConfig.CheckRange * ModuleConfig.CheckRange;
+        foreach (var obj in DService.ObjectTable)
+        {
             if (obj is not null && obj.ObjectKind is ObjectKind.Player)
             {
                 var needCheckPos = obj.Position;
-                if(Vector3.Distance(myPos, needCheckPos) <= ModuleConfig.CheckRange)
+                if (Vector3.DistanceSquared(myPos, needCheckPos) <= checkRange)
                 {
                     var chara = (BattleChara*)obj.Address;
-                    if (!Worlds.TryGetValue(chara->HomeWorld, out var world))
+                    if (chara is null)
+                    {
+                        continue;
+                    }
+
+                    if (!PresetData.TryGetCNWorld(chara->HomeWorld, out var world))
                     {
                         continue;
                     }
 
                     //Character.Id = accountId for new, contentId for old
-                    if (ModuleConfig.BlackList.Contains(chara->Character.ContentId) || ModuleConfig.BlackList.Contains(chara->Character.AccountId))
+                    if (BlackHashSet.Contains(chara->Character.ContentId) || BlackHashSet.Contains(chara->Character.AccountId))
                     {
-                        Tooltip.AppendLine($"{obj.Name}@{world.Name.ToString()}");
-                        BlackNum++;
+                        tooltip.AppendLine($"{obj.Name}@{world.Name.ToString()}");
+                        blackNum++;
                     }
                 }
             }
         }
 
-        DtrEntry.Text = string.Format(GetLoc("AutoCountBlacksTitle-Text"), BlackNum.ToString());
-        DtrEntry.Tooltip = Tooltip.ToString().Trim();
+        DtrEntry.Text = string.Format(GetLoc("AutoCountBlacks-DtrEntry-Text"), blackNum.ToString());
+        DtrEntry.Tooltip = tooltip.ToString().Trim();
     }
 
     public override void ConfigUI()
     {
-        if (ImGui.InputInt(GetLoc("AutoCountBlacksTitle-Range"), ref ModuleConfig.CheckRange))
+        if (ImGui.InputInt(GetLoc("AutoCountBlacks-Range"), ref ModuleConfig.CheckRange))
         {
             ModuleConfig.CheckRange = Math.Max(1, ModuleConfig.CheckRange);
+            SaveConfig(ModuleConfig);
         }
     }
 
     public override void Uninit()
     {
-        DtrEntry?.Remove();
-        DtrEntry = null;
-
         FrameworkManager.Unregister(OnUpdate);
 
-        InfoProxyBlackListEndRequestHook?.Dispose();
-        InfoProxyBlackListEndRequestHook = null;
+        DtrEntry?.Remove();
+        DtrEntry = null;
 
         base.Uninit();
     }
@@ -152,6 +159,5 @@ public class AutoCountBlacks : DailyModuleBase
     public class Config : ModuleConfiguration
     {
         public int CheckRange = 2;
-        public HashSet<ulong> BlackList = new();
     }
 }
