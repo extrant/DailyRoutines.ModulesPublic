@@ -42,8 +42,8 @@ public unsafe class AutoCountBlacks : DailyModuleBase
 
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoCountBlacks-Title"),
-        Description = GetLoc("AutoCountBlacks-Desc"),
+        Title = GetLoc("AutoCountBlacksTitle"),
+        Description = GetLoc("AutoCountBlacksDescription"),
         Category = ModuleCategories.General,
         Author = ["ToxicStar"],
     };
@@ -57,7 +57,7 @@ public unsafe class AutoCountBlacks : DailyModuleBase
         InfoProxyBlackListUpdateHook ??= InfoProxyBlackListUpdateSig.GetHook<InfoProxyBlackListUpdateDelegate>(InfoProxyBlackListUpdateDetour);
         InfoProxyBlackListUpdateHook.Enable();
 
-        DtrEntry = DService.DtrBar.Get("DailyRoutines-AutoCountBlacks");
+        DtrEntry ??= DService.DtrBar.Get("DailyRoutines-AutoCountBlacks");
         DtrEntry.Shown = true;
 
         FrameworkManager.Register(false, OnUpdate);
