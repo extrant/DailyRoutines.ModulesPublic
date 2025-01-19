@@ -97,7 +97,7 @@ public unsafe class AutoCountBlacks : DailyModuleBase
 
     private static void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("DailyRoutines-AutoCountBlacks-OnUpdate")) return;
+        if (!Throttler.Throttle("AutoCountBlacks-OnUpdate")) return;
         if (DtrEntry is null) return;
         if (DService.ClientState.LocalPlayer is not { } localPlayer) return;
 
