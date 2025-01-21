@@ -35,7 +35,7 @@ public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
         if (config == null)
         {
             config = new Config();
-            if (LanguageManager.CurrentLanguage == ClientLanguage.ChineseSimplified.ToString())
+            if (LanguageManager.CurrentLanguage == "ChineseSimplified")
                 config.Blacklist.Add(".", "。", "？", "?", "！", "!", "吗", "吧", "呢", "啊", "呗", "呀", "阿", "哦", "嘛", "咯",
                                      "哎", "啦", "哇", "呵", "哈", "奥", "嗷");
             
