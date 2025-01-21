@@ -11,12 +11,12 @@ using FFXIVClientStructs.FFXIV.Component.Shell;
 
 namespace DailyRoutines.Modules;
 
-public unsafe class AutoAddTextToChat : DailyModuleBase
+public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoAddTextToChatTitle"),
-        Description = GetLoc("AutoAddTextToChatDescription"),
+        Title = GetLoc("AutoAddChatPrefixSuffixTitle"),
+        Description = GetLoc("AutoAddChatPrefixSuffixDescription"),
         Author = ["那年雪落"],
         Category = ModuleCategories.System,
     };
@@ -36,7 +36,7 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         {
             config = new Config();
             if (LanguageManager.CurrentLanguage == ClientLanguage.ChineseSimplified.ToString())
-                config.BlackList.Add(".", "。", "？", "?", "！", "!", "吗", "吧", "呢", "啊", "呗", "呀", "阿", "哦", "嘛", "咯",
+                config.Blacklist.Add(".", "。", "？", "?", "！", "!", "吗", "吧", "呢", "啊", "呗", "呀", "阿", "哦", "嘛", "咯",
                                      "哎", "啦", "哇", "呵", "哈", "奥", "嗷");
             
             SaveConfig(config);
@@ -52,27 +52,28 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
     {
         if (ImGui.Checkbox(GetLoc("Prefix"), ref ModuleConfig.IsAddPrefix)) 
             SaveConfig(ModuleConfig);
+
+
+        if (ModuleConfig.IsAddPrefix)
+        {
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(200f * GlobalFontScale);
+            ImGui.InputText("###Prefix", ref ModuleConfig.PrefixString, 48);
+            if (ImGui.IsItemDeactivatedAfterEdit()) 
+                SaveConfig(ModuleConfig);
+        }
+        
         if (ImGui.Checkbox(GetLoc("Suffix"), ref ModuleConfig.IsAddSuffix)) 
             SaveConfig(ModuleConfig);
 
-        ImGui.Spacing();
-        ImGui.AlignTextToFramePadding();
-
-        ImGui.Text(GetLoc("Prefix"));
-        
-        ImGui.SameLine();
-        ImGui.InputText("###Prefix", ref ModuleConfig.PrefixString, 48);
-        if (ImGui.IsItemDeactivatedAfterEdit()) 
-            SaveConfig(ModuleConfig);
-        
-        ImGui.Spacing();
-
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text(GetLoc("Suffix"));
-        
-        ImGui.SameLine();
-        ImGui.InputText("###Suffix", ref ModuleConfig.SuffixString, 48);
-        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
+        if (ModuleConfig.IsAddSuffix)
+        {
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(200f * GlobalFontScale);
+            ImGui.InputText("###Suffix", ref ModuleConfig.SuffixString, 48);
+            if (ImGui.IsItemDeactivatedAfterEdit()) 
+                SaveConfig(ModuleConfig);
+        }
         
         ImGui.Spacing();
         
@@ -82,27 +83,23 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         ImGui.SameLine();
         if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
         {
-            ModuleConfig.BlackList.Add(string.Empty);
+            ModuleConfig.Blacklist.Add(string.Empty);
             SaveConfig(ModuleConfig);
         }
 
         ImGui.Spacing();
         
-        if (ModuleConfig.BlackList.Count == 0) return;
+        if (ModuleConfig.Blacklist.Count == 0) return;
 
-        var blackListItems = ModuleConfig.BlackList.ToList();
+        var blackListItems = ModuleConfig.Blacklist.ToList();
         var tableSize = (ImGui.GetContentRegionAvail() * 0.85f) with { Y = 0 };
-        using var table = ImRaii.Table(GetLoc("Blacklist"), 5, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
+        using var table = ImRaii.Table(GetLoc("Blacklist"), 5, ImGuiTableFlags.NoBordersInBody, tableSize);
         if (!table) return;
-        
-        ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthStretch);
         
         for (var i = 0; i < blackListItems.Count; i++)
         {
             if (i % 5 == 0) ImGui.TableNextRow();
-
-            ImGui.TableSetColumnIndex(i % 5);
+            ImGui.TableNextColumn();
 
             var inputRef = blackListItems[i];
             using var id = ImRaii.PushId($"{inputRef}_{i}_Command");
@@ -110,8 +107,8 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
             ImGui.InputText($"##Item{i}", ref inputRef, 48);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
-                ModuleConfig.BlackList.Remove(blackListItems[i]);
-                ModuleConfig.BlackList.Add(inputRef);
+                ModuleConfig.Blacklist.Remove(blackListItems[i]);
+                ModuleConfig.Blacklist.Add(inputRef);
                 SaveConfig(ModuleConfig);
                 blackListItems[i] = inputRef;
             }
@@ -119,7 +116,7 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
             ImGui.SameLine();
             if (ImGuiOm.ButtonIcon("Delete", FontAwesomeIcon.TrashAlt, GetLoc("Delete")))
             {
-                ModuleConfig.BlackList.Remove(blackListItems[i]);
+                ModuleConfig.Blacklist.Remove(blackListItems[i]);
                 SaveConfig(ModuleConfig);
                 blackListItems.RemoveAt(i);
                 i--;
@@ -135,7 +132,7 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
 
         if ((!string.IsNullOrWhiteSpace(messageText) && !isCommand) || isTellCommand)
         {
-            if (IsWhiteListChat(messageText))
+            if (IsWhitelistChat(messageText))
             {
                 ProcessSendedChatHook.Original(module, message, uiModule);
                 return;
@@ -153,8 +150,8 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         ProcessSendedChatHook.Original(module, message, uiModule);
     }
 
-    private static bool IsWhiteListChat(string message) 
-        => ModuleConfig?.BlackList.Any(whiteListChat => !string.IsNullOrEmpty(whiteListChat) && message.EndsWith(whiteListChat)) ?? false;
+    private static bool IsWhitelistChat(string message) 
+        => ModuleConfig?.Blacklist.Any(whiteListChat => !string.IsNullOrEmpty(whiteListChat) && message.EndsWith(whiteListChat)) ?? false;
 
     private static bool AddPrefixAndSuffixIfNeeded(string original, out string handledMessage, bool isTellCommand = false)
     {
@@ -185,6 +182,6 @@ public unsafe class AutoAddTextToChat : DailyModuleBase
         public bool IsAddSuffix;
         public string PrefixString = "";
         public string SuffixString = "";
-        public readonly HashSet<string> BlackList = [];
+        public readonly HashSet<string> Blacklist = [];
     }
 }
