@@ -116,4 +116,8 @@
       <None Remove=".gitignore" />
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="System.CodeDom" Version="9.0.1" />
+    </ItemGroup>
+
 </Project>
