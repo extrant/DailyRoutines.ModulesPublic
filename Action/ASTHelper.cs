@@ -10,6 +10,7 @@ using System.Web;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Party;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -49,6 +50,7 @@ public class ASTHelper : DailyModuleBase
         UseActionManager.Register(OnPreUseAction);
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
+        DService.Condition.ConditionChange    += OnConditionChanged;
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_PartyList", OnPartyListPostDraw);
     }
 
@@ -57,6 +59,7 @@ public class ASTHelper : DailyModuleBase
         UseActionManager.Unregister(OnPreUseAction);
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
+        DService.Condition.ConditionChange    -= OnConditionChanged;
         DService.AddonLifecycle.UnregisterListener(AddonEvent.PostDraw, OnPartyListPostDraw);
 
         ResetPartyList();
@@ -266,6 +269,13 @@ public class ASTHelper : DailyModuleBase
                         NotificationInfo(GetLoc($"ASTHelper-AutoPlayCard-Message-{locKey}", name, string.Empty, classJobName));
                 }
             }
+
+            // mark opener end
+            if (actionID is 37026 && IsOpener)
+            {
+                IsOpener    = false;
+                NeedReorder = true;
+            }
         }
 
         // easy heal
@@ -311,6 +321,20 @@ public class ASTHelper : DailyModuleBase
         ReleaseImagesNodes();
     }
 
+    private void OnConditionChanged(ConditionFlag flag, bool value)
+    {
+        if (flag is ConditionFlag.InCombat)
+        {
+            IsOpener    = true;
+            NeedReorder = false;
+        }
+        else
+        {
+            IsOpener    = false;
+            NeedReorder = true;
+        }
+    }
+
     private static void OnDutyRecommenced(object? sender, ushort e)
         => OrderCandidates();
 
@@ -344,11 +368,12 @@ public class ASTHelper : DailyModuleBase
             {
                 // need to update candidates?
                 var ids = DService.PartyList.Select(m => m.ObjectId).ToHashSet();
-                if (!ids.SetEquals(PartyMemberIdsCache))
+                if (!ids.SetEquals(PartyMemberIdsCache) || NeedReorder)
                 {
                     // party member changed, update candidates
                     OrderCandidates();
                     PartyMemberIdsCache = ids;
+                    NeedReorder         = false;
                 }
 
                 // draw marks
@@ -404,6 +429,9 @@ public class ASTHelper : DailyModuleBase
     private static          uint                             MeleeCandidateIdxCache;
     private static          uint                             RangeCandidateIdxCache;
 
+    private static bool IsOpener;
+    private static bool NeedReorder;
+
     private static void OrderCandidates()
     {
         // reset candidates before select new candidates
@@ -411,7 +439,7 @@ public class ASTHelper : DailyModuleBase
         RangeCandidateOrder.Clear();
 
         // find card candidates
-        var partyList = DService.PartyList; // role [0 tank, 2 melee, 3 range, 4 healer]
+        var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
         if (partyList.Length is 0 || DService.ClientState.LocalPlayer.ClassJob.Value.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable)
             return;
 
@@ -427,21 +455,25 @@ public class ASTHelper : DailyModuleBase
             ModuleConfig.AutoPlayCard = AutoPlayCardStatus.Default;
         }
 
+        // is opener or 2m+?
+        var orderLabel = IsOpener ? "Opener" : "2m+";
+
         // set candidates priority based on predefined order
-        for (var idx = 0; idx < MeleeOrder.Length; idx++)
+        var meleeOrder = MeleeOrder[orderLabel];
+        for (var idx = 0; idx < meleeOrder.Length; idx++)
         {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == MeleeOrder[idx]);
+            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == meleeOrder[idx]);
             if (member is not null && MeleeCandidateOrder.All(m => m.id != member.ObjectId))
                 MeleeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
         }
 
-        for (var idx = 0; idx < RangeOrder.Length; idx++)
+        var rangeOrder = RangeOrder[orderLabel];
+        for (var idx = 0; idx < rangeOrder.Length; idx++)
         {
-            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == RangeOrder[idx]);
+            var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == rangeOrder[idx]);
             if (member is not null && RangeCandidateOrder.All(m => m.id != member.ObjectId))
                 RangeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
         }
-
 
         // adjust candidates priority based on FFLogs records (auto play card advance mode)
         if (ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance)
@@ -455,7 +487,7 @@ public class ASTHelper : DailyModuleBase
                 var scale = 1 / (1 + Math.Exp(-(bestRecord.Percentile - 50) / 8.33));
 
                 // update priority
-                if (member.ClassJob.Value.Role == 2)
+                if (member.ClassJob.Value.Role is (1 or 2))
                 {
                     var idx = MeleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                     if (idx != -1)
@@ -464,7 +496,7 @@ public class ASTHelper : DailyModuleBase
                         MeleeCandidateOrder[idx] = (member.ObjectId, priority);
                     }
                 }
-                else if (member.ClassJob.Value.Role == 3)
+                else if (member.ClassJob.Value.Role is 3)
                 {
                     var idx = RangeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                     if (idx != -1)
@@ -479,14 +511,14 @@ public class ASTHelper : DailyModuleBase
         // fallback: select the first dps in party list
         if (MeleeCandidateOrder.Count is 0)
         {
-            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role == 3);
+            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is (1 or 3));
             if (firstRange is not null)
                 MeleeCandidateOrder.Add((firstRange.ObjectId, -5));
         }
 
         if (RangeCandidateOrder.Count is 0)
         {
-            var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.Value.Role == 2);
+            var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is 2);
             if (firstMelee is not null)
                 RangeCandidateOrder.Add((firstMelee.ObjectId, -5));
         }
@@ -912,12 +944,19 @@ public class ASTHelper : DailyModuleBase
         Enable   // select target with the lowest HP ratio within range when no target selected
     }
 
-    // predefined card priority, arranged based on FFLogs statistics current order.
-    // https://www.fflogs.com/zone/statistics/62
-    public static readonly string[] MeleeOrder = ["Samurai", "Ninja", "Dragon", "Monk", "Reaper", "Viper"];
+    // predefined card priority, arranged based on the guidance in The Balance
+    // https://www.thebalanceffxiv.com/
+    public static readonly Dictionary<string, string[]> MeleeOrder = new()
+    {
+        ["Opener"] = ["Samurai", "Ninja", "Dragon", "Dark Knight", "Monk", "Reaper", "Viper"],
+        ["2m+"]    = ["Samurai", "Ninja", "Viper", "Dragon", "Monk", "Dark Knight", "Reaper"]
+    };
 
-    public static readonly string[] RangeOrder =
-        ["Pictomancer", "Summoner", "Machinist", "Red Mage", "Bard", "Dancer", "Black Mage"];
+    public static readonly Dictionary<string, string[]> RangeOrder = new()
+    {
+        ["Opener"] = ["Pictomancer", "Summoner", "Machinist", "Dancer", "Red Mage", "Black Mage", "Bard"],
+        ["2m+"]    = ["Pictomancer", "Summoner", "Machinist", "Bard", "Red Mage", "Dancer", "Black Mage"]
+    };
 
     // list of target healing actions
     public static readonly uint[] TargetHealActions =
