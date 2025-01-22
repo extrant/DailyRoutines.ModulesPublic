@@ -24,11 +24,11 @@ public unsafe class AutoMaterialize : DailyModuleBase
     };
 
     // 0 - 成功; 3 - 获取 InventoryType 或 InventorySlot 失败; 4 - 物品为空或不符合条件; 34 - 当前状态无法使用; 
-    private static readonly CompSig ExtractMateriaSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 41 0F BF F8");
+    private static readonly CompSig ExtractMateriaSig = new("E8 ?? ?? ?? ?? 83 7E 20 00 75 5A");
     private delegate int ExtractMateriaDelegate(nint a1, InventoryType type, uint slot);
     private static Hook<ExtractMateriaDelegate>? ExtractMateriaHook;
 
-    private static readonly CompSig MaterializeController = new("48 8D 0D ?? ?? ?? ?? 8B 16 E8 ?? ?? ?? ?? 83 7B");
+    private static readonly CompSig MaterializeController = new("48 8D 0D ?? ?? ?? ?? 8B D0 E8 ?? ?? ?? ?? 83 7E");
 
     private static readonly InventoryType[] ArmoryInventories =
     [
