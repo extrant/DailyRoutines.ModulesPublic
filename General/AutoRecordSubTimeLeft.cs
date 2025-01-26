@@ -42,6 +42,9 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
         AgentLobbyOnLoginHook ??= AgentLobbyOnLoginSig.GetHook<AgentLobbyOnLoginDelegate>(AgentLobbyOnLoginDetour);
         AgentLobbyOnLoginHook.Enable();
+        
+        DService.ClientState.Login  += OnLogin;
+        DService.ClientState.Logout += OnLogout;
     }
 
     public override void ConfigUI()
@@ -77,8 +80,25 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         Entry?.Remove();
         Entry = null;
         
+        DService.ClientState.Login  -= OnLogin;
+        DService.ClientState.Logout -= OnLogout;
+        
         base.Uninit();
     }
+    
+    private void OnLogin()
+    {
+        TaskHelper.Enqueue(() =>
+        {
+            var contentID = DService.ClientState.LocalContentId;
+            if (contentID == 0) return false;
+            
+            RefreshEntry(contentID);
+            return true;
+        });
+    }
+
+    private void OnLogout() => TaskHelper?.Abort();
 
     private nint AgentLobbyOnLoginDetour(AgentLobby* agent)
     {
@@ -149,7 +169,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
             return;
         
         var isMonth = info.LeftMonth != TimeSpan.MinValue;
-        var expireTime = DateTime.Now + (isMonth ? info.LeftMonth : info.LeftTime);
+        var expireTime = info.Record + (isMonth ? info.LeftMonth : info.LeftTime);
         
         Entry.Text =
             $"{GetLoc($"AutoRecordSubTimeLeft-{(isMonth ? "Month" : "Time")}Sub")}: {expireTime:MM/dd HH:mm}";
