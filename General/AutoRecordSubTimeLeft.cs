@@ -29,14 +29,14 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
     
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? Entry;
-
+    
     public override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new();
+        ModuleConfig =   LoadConfig<Config>() ?? new();
+        TaskHelper   ??= new();
 
         Entry         ??= DService.DtrBar.Get("DailyRoutines-GameTimeLeft");
         Entry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
-        Entry.Shown   =   true;
 
         RefreshEntry();
 
@@ -76,39 +76,45 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
     {
         Entry?.Remove();
         Entry = null;
-
+        
         base.Uninit();
     }
 
-    private static nint AgentLobbyOnLoginDetour(AgentLobby* agent)
+    private nint AgentLobbyOnLoginDetour(AgentLobby* agent)
     {
+        var ret = AgentLobbyOnLoginHook.Original(agent);
         UpdateSubInfo(agent);
-        return AgentLobbyOnLoginHook.Original(agent);
+        return ret;
     }
 
-    private static void UpdateSubInfo(AgentLobby* agent)
+    private void UpdateSubInfo(AgentLobby* agent)
     {
-        try
+        TaskHelper.Enqueue(() =>
         {
-            var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
-            if (info == null) return;
+            try
+            {
+                var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
+                if (info == null) return false;
 
-            var contentID = agent->LobbyData.ContentId;
-            if (contentID == 0) return;
+                var contentID = agent->LobbyData.ContentId;
+                if (contentID == 0) return false;
+
+                var timeInfo = GetLeftTimeSecond(*info);
+                ModuleConfig.Infos[contentID]
+                    = new(DateTime.Now,
+                          timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
+                          timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
+                ModuleConfig.Save(ModuleManager.GetModule<AutoRecordSubTimeLeft>());
+
+                RefreshEntry(contentID);
+            }
+            catch (Exception ex)
+            {
+                Debug("更新订阅信息失败", ex);
+            }
             
-            var timeInfo = GetLeftTimeSecond(*info);
-            ModuleConfig.Infos[contentID]
-                = new(DateTime.Now,
-                      timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
-                      timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
-            ModuleConfig.Save(ModuleManager.GetModule<AutoRecordSubTimeLeft>());
-
-            RefreshEntry(contentID);
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
+            return true;
+        }, "更新订阅信息");
     }
 
     private static (int MonthTime, int PointTime) GetLeftTimeSecond(LobbySubscriptionInfo info)
@@ -144,10 +150,12 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         
         var isMonth = info.LeftMonth != TimeSpan.MinValue;
         var expireTime = DateTime.Now + (isMonth ? info.LeftMonth : info.LeftTime);
+        
         Entry.Text =
             $"{GetLoc($"AutoRecordSubTimeLeft-{(isMonth ? "Month" : "Time")}Sub")}: {expireTime:MM/dd HH:mm}";
         Entry.Tooltip = $"{GetLoc("AutoRecordSubTimeLeft-ExpireTime")}:\n{expireTime}\n" +
                         $"{GetLoc("AutoRecordSubTimeLeft-TimeTill")}:\n{FormatTimeSpan(isMonth ? info.LeftMonth : info.LeftTime, CultureInfo.CurrentCulture)}";
+        Entry.Shown = true;
     }
     
     public static string FormatTimeSpan(TimeSpan timeSpan, CultureInfo culture) =>
