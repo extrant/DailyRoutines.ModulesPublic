@@ -98,7 +98,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         });
     }
 
-    private void OnLogout() => TaskHelper?.Abort();
+    private void OnLogout(int code, int type) => TaskHelper?.Abort();
 
     private nint AgentLobbyOnLoginDetour(AgentLobby* agent)
     {
