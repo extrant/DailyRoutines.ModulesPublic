@@ -4,14 +4,14 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using DailyRoutines.Managers;
 using Dalamud.Game.Gui.Dtr;
+using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace DailyRoutines.Modules;
 
-public class AutoRecordSubTimeLeft : DailyModuleBase
+public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
@@ -23,6 +23,10 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
     public override ModulePermission Permission => new() { CNOnly = true };
 
+    private static readonly CompSig AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 46 08 01 E9 ?? ?? ?? ?? 83 FB 03");
+    private delegate nint AgentLobbyOnLoginDelegate(AgentLobby* agent);
+    private static Hook<AgentLobbyOnLoginDelegate>? AgentLobbyOnLoginHook;
+    
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? Entry;
 
@@ -36,7 +40,8 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
         RefreshEntry();
 
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CharaSelect", OnLobby);
+        AgentLobbyOnLoginHook ??= AgentLobbyOnLoginSig.GetHook<AgentLobbyOnLoginDelegate>(AgentLobbyOnLoginDetour);
+        AgentLobbyOnLoginHook.Enable();
     }
 
     public override void ConfigUI()
@@ -72,17 +77,17 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         Entry?.Remove();
         Entry = null;
 
-        DService.AddonLifecycle.UnregisterListener(OnLobby);
         base.Uninit();
     }
 
-    private unsafe void OnLobby(AddonEvent eventType, AddonArgs? args)
+    private static nint AgentLobbyOnLoginDetour(AgentLobby* agent)
     {
-        if (DService.ClientState.IsLoggedIn) return;
+        UpdateSubInfo(agent);
+        return AgentLobbyOnLoginHook.Original(agent);
+    }
 
-        var agent = AgentLobby.Instance();
-        if (agent == null) return;
-
+    private static void UpdateSubInfo(AgentLobby* agent)
+    {
         try
         {
             var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
@@ -96,7 +101,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                 = new(DateTime.Now,
                       timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
                       timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
-            ModuleConfig.Save(this);
+            ModuleConfig.Save(ModuleManager.GetModule<AutoRecordSubTimeLeft>());
 
             RefreshEntry(contentID);
         }
