@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Infos;
-using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
@@ -14,8 +12,8 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
+using Newtonsoft.Json;
 
 namespace DailyRoutines.Modules;
 
@@ -180,6 +178,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
 
         var allies = DService.PartyList.Select(x => new PlayerInfo(x.Name.ExtractText(), x.World.GameData.RowId)
                             {
+                                RawRole = x.ClassJob.GameData.Role,
                                 Role = GetCharacterJobRole(x.ClassJob.GameData.Role),
                                 JobID = x.ClassJob.GameData.RowId,
                             })
@@ -188,6 +187,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
         if (allies.Count == 0) return;
         var playersToCommend = allies
                                .OrderByDescending(player => localPlayer.ClassJob.Id == player.JobID || 
+                                                            localPlayer.ClassJob.GameData.Role == player.RawRole ||
                                                             player.Role == localPlayerInfo.Role)
                                .ThenByDescending(player => localPlayerInfo.Role switch
                                {
@@ -302,10 +302,12 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             WorldID = world;
         }
 
-        public string      PlayerName { get; set; } = string.Empty;
-        public uint        WorldID    { get; set; }
-        public PlayerRole? Role       { get; set; } = PlayerRole.None;
-        public uint        JobID      { get; set; }
+        public string PlayerName { get; set; } = string.Empty;
+        public uint   WorldID    { get; set; }
+
+        [JsonIgnore] public PlayerRole? Role    { get; set; } = PlayerRole.None;
+        [JsonIgnore] public byte        RawRole { get; set; }
+        [JsonIgnore] public uint        JobID   { get; set; }
 
         public bool Equals(PlayerInfo? other)
         {
@@ -315,9 +317,9 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             return PlayerName == other.PlayerName && WorldID == other.WorldID;
         }
 
-        public override bool Equals(object? obj) { return Equals(obj as PlayerInfo); }
+        public override bool Equals(object? obj) => Equals(obj as PlayerInfo);
 
-        public override int GetHashCode() { return HashCode.Combine(PlayerName, WorldID); }
+        public override int GetHashCode() => HashCode.Combine(PlayerName, WorldID);
 
         public static bool operator ==(PlayerInfo? lhs, PlayerInfo? rhs)
         {
@@ -325,7 +327,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(PlayerInfo lhs, PlayerInfo rhs) { return !(lhs == rhs); }
+        public static bool operator !=(PlayerInfo lhs, PlayerInfo rhs) => !(lhs == rhs);
     }
 
     private class Config : ModuleConfiguration
