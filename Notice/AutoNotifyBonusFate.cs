@@ -2,6 +2,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Fates;
 using Dalamud.Plugin.Services;
+using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,10 +20,16 @@ public class AutoNotifyBonusFate : DailyModuleBase
     };
 
     private static List<IFate> LastFates = [];
-    private static readonly List<ushort> ValidTerritory = [1187, 1188, 1189, 1190, 1191, 1192]; // All Dawntrail maps
+    private static HashSet<ushort>? ValidTerritory;
 
     public override void Init()
     {
+        ValidTerritory ??= LuminaCache.Get<TerritoryType>()
+                                      .Where(x => x.TerritoryIntendedUse == 1)
+                                      .Where(x => x.ExVersion.Value.RowId >= 2)
+                                      .Select(x => (ushort)x.RowId)
+                                      .ToHashSet();
+
         FrameworkManager.Register(false, OnUpdate);
         DService.ClientState.TerritoryChanged += OnTerritoryChanged;
     }
