@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.Addon.Lifecycle;
@@ -9,7 +12,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 
 namespace DailyRoutines.Modules;
@@ -175,16 +178,16 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
 
         var allies = DService.PartyList.Select(x => new PlayerInfo(x.Name.ExtractText(), x.World.Value.RowId)
                             {
-                                RawRole = x.ClassJob.GameData.Role,
-                                Role = GetCharacterJobRole(x.ClassJob.GameData.Role),
-                                JobID = x.ClassJob.GameData.RowId,
+                                RawRole = x.ClassJob.Value.Role,
+                                Role = GetCharacterJobRole(x.ClassJob.Value.Role),
+                                JobID = x.ClassJob.Value.RowId,
                             })
                             .Where(x => x != localPlayerInfo && !ModuleConfig.BlacklistPlayers.Contains(x)).ToList();
 
         if (allies.Count == 0) return;
         var playersToCommend = allies
-                               .OrderByDescending(player => localPlayer.ClassJob.Id == player.JobID || 
-                                                            localPlayer.ClassJob.GameData.Role == player.RawRole ||
+                               .OrderByDescending(player => localPlayer.ClassJob.RowId == player.JobID || 
+                                                            localPlayer.ClassJob.Value.Role == player.RawRole ||
                                                             player.Role == localPlayerInfo.Role)
                                .ThenByDescending(player => localPlayerInfo.Role switch
                                {

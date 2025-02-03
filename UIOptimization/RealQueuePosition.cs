@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DailyRoutines.Infos;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -91,7 +91,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
         }
 
         var position = *(uint*)(agentData + 0x12c);
-        var positionStr = $"{LuminaCache.GetRow<Addon>(10988).Text.ExtractText()}: #{position}";
+        var positionStr = $"{LuminaCache.GetRow<Addon>(10988)!.Value.Text.ExtractText()}: #{position}";
         a3->SetValue(index, positionStr);
         
         var queueTime = TimeSpan.FromSeconds(*(int*)(agentData + 0x128));
