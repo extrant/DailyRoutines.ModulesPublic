@@ -174,7 +174,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                 SaveConfig(ModuleConfig);
         
             ImGui.SameLine();
-            if (ImGui.Checkbox(Lang.Get("AutoCheckFoodUsage-SendNotice"), ref ModuleConfig.SendNotice))
+            if (ImGui.Checkbox(Lang.Get("SendNotification"), ref ModuleConfig.SendNotice))
                 SaveConfig(ModuleConfig);
 
             ImGuiOm.HelpMarker(Lang.Get("AutoCheckFoodUsage-RefreshThresholdHelp"));
