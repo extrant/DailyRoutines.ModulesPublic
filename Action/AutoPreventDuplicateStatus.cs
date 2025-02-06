@@ -78,7 +78,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         { 7863, new([new(2, DetectType.Target)]) },
         { 7540, new([new(2, DetectType.Target)]) },
         { 16, new([new(2, DetectType.Target)]) },
-        { 29064, new([new(1343, DetectType.Target)]) },
+        { 29064, new([new(1343, DetectType.Target), new(3054, DetectType.Target), new(3248, DetectType.Target)]) },
         // 真北
         { 7546, new([new(1250, DetectType.Self)]) },
         // 亲疏自行 (战士)
@@ -142,7 +142,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         // 心关
         { 29264, new([new(2872, DetectType.Target)]) },
         // 默者的夜曲
-        { 29395, new([new(3054, DetectType.Target)]) },
+        { 29395, new([new(3054, DetectType.Target), new(3248, DetectType.Target)]) },
         // 星遁天诛
         { 29515, new([new(1302, DetectType.Target), new(3039, DetectType.Target)]) },
     };
