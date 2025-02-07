@@ -155,6 +155,7 @@ public unsafe class AutoDiscard : DailyModuleBase
     {
         foundItem = [];
         if (InventoryExpansion == null) return false;
+        
         var inventoryManager = InventoryManager.Instance();
         if (inventoryManager == null) return false;
 
@@ -165,8 +166,11 @@ public unsafe class AutoDiscard : DailyModuleBase
 
             for (var i = 0; i < container->Size; i++)
             {
-                var slot = container->GetInventorySlot(i);
-                if (slot->ItemId == itemID) foundItem.Add(*slot);
+                var slot       = container->GetInventorySlot(i);
+                var slotItemID = slot->ItemId % 100_0000;
+                if (slotItemID != itemID) continue;
+                
+                foundItem.Add(*slot);
             }
         }
 
@@ -259,14 +263,14 @@ public unsafe class AutoDiscard : DailyModuleBase
         private bool? ClickDiscardContextMenu(TaskHelper? taskHelper)
         {
             if (!Throttler.Throttle("AutoDiscard", 100)) return false;
-            if (InfosOm.ContextMenu == null || !IsAddonAndNodesReady(InfosOm.ContextMenu)) return false;
+            if (ContextMenu == null || !IsAddonAndNodesReady(ContextMenu)) return false;
 
             switch (Behaviour)
             {
                 case DiscardBehaviour.Discard:
                     if (!ClickContextMenu(LuminaCache.GetRow<Addon>(91)!.Value.Text.ExtractText()))
                     {
-                        InfosOm.ContextMenu->Close(true);
+                        ContextMenu->Close(true);
                         break;
                     }
 
@@ -277,7 +281,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                     {
                         if (!ClickContextMenu(LuminaCache.GetRow<Addon>(5480)!.Value.Text.ExtractText()))
                         {
-                            InfosOm.ContextMenu->Close(true);
+                            ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
 
                             taskHelper.Abort();
@@ -290,7 +294,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                     {
                         if (!ClickContextMenu(LuminaCache.GetRow<Addon>(93)!.Value.Text.ExtractText()))
                         {
-                            InfosOm.ContextMenu->Close(true);
+                            ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
 
                             taskHelper.Abort();
@@ -299,7 +303,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                         break;
                     }
 
-                    InfosOm.ContextMenu->Close(true);
+                    ContextMenu->Close(true);
                     ChatError(GetLoc("AutoDiscard-NoSellPage"));
 
                     taskHelper.Abort();

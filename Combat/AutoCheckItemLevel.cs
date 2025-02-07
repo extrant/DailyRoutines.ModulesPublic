@@ -21,9 +21,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
     private static readonly HashSet<uint> ValidContentJobCategories = [108, 142, 146];
     private static readonly HashSet<uint> HaveOffHandJobCategories = [2, 7, 8, 20];
-
-    private static HudPartyMember? CurrentMember;
-
+    
     public override void Init()
     {
         TaskHelper ??= new TaskHelper { TimeLimitMS = 20_000 };
@@ -33,8 +31,6 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
     private void OnZoneChanged(ushort zone)
     {
-        CurrentMember = null;
-
         if (DService.ClientState.IsPvP) return;
         if (!PresetData.TryGetContent(zone, out var content) || content.PvP ||
             !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.RowId)) return;
@@ -44,7 +40,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         Chat(message);
 
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty", null, null, 2);
-        TaskHelper.Enqueue(() => CheckMembersItemLevel([DService.ClientState.LocalPlayer.GameObjectId]));
+        TaskHelper.Enqueue(() => CheckMembersItemLevel([]));
     }
 
     private bool? CheckMembersItemLevel(HashSet<ulong> checkedMembers)
@@ -52,7 +48,13 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         if (IsAddonAndNodesReady(CharacterInspect))
             CharacterInspect->Close(true);
 
-        if (DService.PartyList.Length <= 1 || DService.PartyList.All(x => checkedMembers.Contains(x.GameObject?.GameObjectId ?? 0)))
+        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+
+        if (checkedMembers.Count == 0)
+            checkedMembers = [localPlayer.GameObjectId];
+
+        if (DService.PartyList.Length <= 1 || 
+            DService.PartyList.All(x => checkedMembers.Contains(x.GameObject?.GameObjectId ?? 0)))
         {
             TaskHelper.Abort();
             return true;
@@ -60,7 +62,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
         foreach (var partyMember in DService.PartyList)
         {
-            if (partyMember.GameObject == null) continue;
+            if (partyMember == null || partyMember.GameObject == null) continue;
             if (!checkedMembers.Add(partyMember.GameObject.GameObjectId)) continue;
 
             TaskHelper.Enqueue(() =>
