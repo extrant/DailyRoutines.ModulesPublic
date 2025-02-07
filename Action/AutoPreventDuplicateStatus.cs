@@ -11,8 +11,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DailyRoutines.Modules;
 

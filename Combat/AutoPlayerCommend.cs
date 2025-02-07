@@ -7,7 +7,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -101,9 +101,9 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
 
             var index = Math.Clamp(hudMembers.IndexOf(x => x.ContentId == (ulong)member.ContentId) - 1, 0, 6);
             
-            var rawRole = member.ClassJob.GameData.Role;
+            var rawRole = member.ClassJob.Value.Role;
             partyMembers[
-                (member.Name.ExtractText(), member.World.Id, member.ClassJob.Id, rawRole,
+                (member.Name.ExtractText(), member.World.RowId, member.ClassJob.RowId, rawRole,
                     GetCharacterJobRole(rawRole), (ulong)member.ContentId)] = index;
         }
         
@@ -119,13 +119,13 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
                                    if (AssignedCommendationContentID != 0 &&
                                        x.Key.ContentID               == AssignedCommendationContentID)
                                        return 2;
-                                   if (localPlayer.ClassJob.Id            == x.Key.ClassJob ||
-                                       localPlayer.ClassJob.GameData.Role == x.Key.RoleRaw)
+                                   if (localPlayer.ClassJob.RowId            == x.Key.ClassJob ||
+                                       localPlayer.ClassJob.Value.Role == x.Key.RoleRaw)
                                        return 1;
                                    return 0;
                                })
                                // 计算对位
-                               .ThenByDescending(x => GetCharacterJobRole(localPlayer.ClassJob.GameData.Role) switch
+                               .ThenByDescending(x => GetCharacterJobRole(localPlayer.ClassJob.Value.Role) switch
                                {
                                    PlayerRole.Tank or PlayerRole.Healer
                                        => x.Key.Role
@@ -220,7 +220,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
             var playerWorld = target.TargetCharacter != null ? target.TargetCharacter.HomeWorld : target.TargetHomeWorld;
 
             NotificationInfo(GetLoc("AutoPlayerCommend-AssignPlayerCommendMessage", playerName,
-                                    playerWorld.GameData.Name.ExtractText()));
+                                    playerWorld.Value.Name.ExtractText()));
             AssignedCommendationContentID = contentID;
         }
     }

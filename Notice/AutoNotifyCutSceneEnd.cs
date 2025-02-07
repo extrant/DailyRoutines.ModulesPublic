@@ -1,9 +1,12 @@
+using System;
+using System.Diagnostics;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -59,7 +62,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         IsDutyEnd = false;
         
         if (!LuminaCache.TryGetRow<TerritoryType>(zone, out var zoneRow) ||
-            zoneRow.ContentFinderCondition.Value == null) return;
+            zoneRow.ContentFinderCondition.ValueNullable == null) return;
         
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty");
         TaskHelper.Enqueue(CheckIsDutyStateEligibleThenEnqueue, "CheckIsDutyStateEligibleThenEnqueue");
