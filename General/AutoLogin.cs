@@ -52,7 +52,7 @@ public unsafe class AutoLogin : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 10000 };
+        TaskHelper ??= new TaskHelper { TimeLimitMS = 60_000 };
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "_TitleMenu", OnTitleMenu);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "Dialogue", OnDialogue);
 
@@ -300,7 +300,8 @@ public unsafe class AutoLogin : DailyModuleBase
     private void OnDialogue(AddonEvent type, AddonArgs args)
     {
         if (!Throttler.Throttle("AutoLogin-OnDialogue", 5000)) return;
-        
+        if (InterruptByConflictKey(TaskHelper, this)) return;
+
         TaskHelper.Abort();
         TaskHelper.Enqueue(() =>
         {

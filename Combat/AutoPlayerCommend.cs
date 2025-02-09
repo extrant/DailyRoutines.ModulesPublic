@@ -5,6 +5,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Gui.ContextMenu;
+using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
@@ -31,9 +32,8 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
-
         TaskHelper ??= new TaskHelper { TimeLimitMS = 10_000 };
-
+        
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.ContextMenu.OnMenuOpened  += OnMenuOpen;
         DService.DutyState.DutyCompleted   += OnDutyComplete;
@@ -71,13 +71,15 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
         if (ModuleConfig.BlacklistContentZones.Contains(dutyZoneID)) return;
         if (DService.PartyList.Length <= 1) return;
 
-        TaskHelper.Enqueue(OpenCommendWindow,   "打开最优队员推荐列表");
-        TaskHelper.Enqueue(EnqueueCommendation, "给予最优队员推荐");
+        var orig = DService.GameConfig.UiConfig.GetUInt("MipDispType");
+        TaskHelper.Enqueue(() => SetMIPDisplayType(),     "设置最优队员推荐不显示列表");
+        TaskHelper.Enqueue(OpenCommendWindow,             "打开最优队员推荐列表");
+        TaskHelper.Enqueue(EnqueueCommendation,           "给予最优队员推荐");
+        TaskHelper.Enqueue(() => SetMIPDisplayType(orig), "还原原始最优队友推荐设置");
     }
 
     private static bool? OpenCommendWindow()
     {
-        
         var notification    = GetAddonByName("_Notification");
         var notificationMvp = GetAddonByName("_NotificationIcMvp");
         if (notification == null && notificationMvp == null) return true;
@@ -88,8 +90,8 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
     
     private static bool? EnqueueCommendation()
     {
-        if (!IsAddonAndNodesReady(GetAddonByName("VoteMvp")) &&
-            !IsAddonAndNodesReady(GetAddonByName("BannerMIP"))) return false;
+        if (!IsAddonAndNodesReady(VoteMvp)) return false;
+        if (!AgentModule.Instance()->GetAgentByInternalId(AgentId.ContentsMvp)->IsAgentActive()) return false;
         if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
         
         var hudMembers = AgentHUD.Instance()->PartyMembers.ToArray();
@@ -110,6 +112,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
         if (partyMembers.Count == 0) return true;
 
         var blacklistPlayers = GetBlacklistPlayerContentIDs();
+        // 优先级排序
         var playersToCommend = partyMembers
                                .Where(x => !ModuleConfig.AutoIgnoreBlacklistPlayers || 
                                            !blacklistPlayers.Contains(x.Key.ContentID))
@@ -140,24 +143,58 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
                                        _                 => 0,
                                    },
                                    _ => 0,
-                               });
+                               })
+                               .Select(x => new
+                               {
+                                   x.Key.Name,
+                                   x.Key.ClassJob
+                               })
+                               .ToList();
+        if (playersToCommend.Count == 0) return true;
         
-        foreach (var memberPair in playersToCommend)
+        foreach (var memberInfo in playersToCommend)
         {
-            if (AgentModule.Instance()->GetAgentByInternalId(AgentId.ContentsMvp)->IsAgentActive())
-                SendEvent(AgentId.ContentsMvp, 0, 0, memberPair.Value);
-            else if (AgentModule.Instance()->GetAgentByInternalId(AgentId.BannerMIP)->IsAgentActive())
-                SendEvent(AgentId.BannerMIP,   0, 0, memberPair.Value);
+            if (!TryFindPlayerIndex(memberInfo.Name, memberInfo.ClassJob, out var playerIndex)) continue;
+            if (!LuminaCache.TryGetRow<ClassJob>(memberInfo.ClassJob, out var job)) continue;
             
-            if (!LuminaCache.TryGetRow<ClassJob>(memberPair.Key.ClassJob, out var job)) continue;
-            Chat(GetSLoc("AutoPlayerCommend-NoticeMessage", job.ToBitmapFontIcon(), job.Name.ExtractText(),
-                         memberPair.Key.Name));
-            break;
+            SendEvent(AgentId.ContentsMvp, 0, 0, playerIndex);
+            Chat(GetSLoc("AutoPlayerCommend-NoticeMessage", 
+                         job.ToBitmapFontIcon(), job.Name.ExtractText(), memberInfo.Name));
+            return true;
         }
 
+        ChatError(GetLoc("AutoPlayerCommend-ErrorWhenGiveCommendationMessage"));
         return true;
+
+        bool TryFindPlayerIndex(string playerName, uint playerJob, out int playerIndex)
+        {
+            playerIndex = -1;
+
+            var count = VoteMvp->AtkValues[1].UInt;
+            for (var i = 0; i < count; i++)
+            {
+                var isEnabled = VoteMvp->AtkValues[16 + i].UInt == 1;
+                if (!isEnabled) continue;
+                
+                var name      = string.Empty;
+                try { name = SeString.Parse(VoteMvp->AtkValues[9 + i].String).ExtractText(); }
+                catch { name = string.Empty; }
+                if (string.IsNullOrWhiteSpace(name) || name != playerName) continue;
+                
+                var classJob  = VoteMvp->AtkValues[2 + i].UInt - 62100;
+                if (classJob <= 0 || classJob != playerJob) continue;
+                
+                playerIndex = i;
+                return true;
+            }
+            
+            return false;
+        }
     }
 
+    private static void SetMIPDisplayType(uint type = 0)
+        => DService.GameConfig.UiConfig.Set("MipDispType", type);
+    
     private static HashSet<ulong> GetBlacklistPlayerContentIDs()
         => InfoProxyBlacklist.Instance()->BlockedCharacters.ToArray().Select(x => x.Id).ToHashSet();
 
