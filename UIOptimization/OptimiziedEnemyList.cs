@@ -127,6 +127,20 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                 UpdateTextNodes();
             }
         }
+        
+        ImGui.Spacing();
+        
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextColored(LightSkyBlue, GetLoc("FontSize"));
+        
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(100f * GlobalFontScale);
+        ImGuiOm.InputByte("###FontSize", ref ModuleConfig.FontSize);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+        {
+            ModuleConfig.Save(this);
+            UpdateTextNodes();
+        }
     }
 
     private void OnAddon(AddonEvent type, AddonArgs args)
@@ -191,7 +205,8 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                                             ? ConvertVector4ToByteColor(ModuleConfig.BackgroundColor)
                                             : castTextNode->BackgroundColor;
             
-            textNode->SetPositionFloat(Math.Max(90, 38 + (14 * nameLength)), 4);
+            textNode->FontSize = ModuleConfig.FontSize;
+            textNode->SetPositionFloat(Math.Max(90, 38 + (14 * nameLength)) + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
             textNode->SetText(bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime
                                   ? $"{GetCastInfoText((ActionType)bc.CastActionType, bc.CastActionId)}: {bc.CurrentCastTime:F1}/{bc.TotalCastTime:F1}"
                                   : GetGeneralInfoText((int)((float)bc.CurrentHp / bc.MaxHp * 100), enmity));
@@ -216,7 +231,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             textNode->DrawFlags = castTextNode->DrawFlags;
             textNode->Alpha_2   = 255;
             textNode->LineSpacing = 20;
-            textNode->FontSize = 10;
+            textNode->FontSize = ModuleConfig.FontSize;
             textNode->TextFlags =
                 (byte)(TextFlags.AutoAdjustNodeSize | TextFlags.Edge | TextFlags.Bold | TextFlags.Emboss);
             
@@ -329,5 +344,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         public Vector4 TextColor = new(1, 1, 1, 1);
         public Vector4 EdgeColor = new(0.6157f, 0.5137f, 0.3569f, 1);
         public Vector4 BackgroundColor = new(0, 0, 0, 0);
+
+        public byte FontSize = 10;
     }
 }
