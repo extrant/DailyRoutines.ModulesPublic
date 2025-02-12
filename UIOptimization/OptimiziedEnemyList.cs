@@ -32,8 +32,9 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         
         MakeTextNodesAndLink();
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "_EnemyList", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,          "_EnemyList", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_EnemyList", OnAddon);
     }
 
     public override void ConfigUI()
@@ -153,6 +154,10 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             case AddonEvent.PreRequestedUpdate:
                 UpdateTextNodes();
                 break;
+            case AddonEvent.PostDraw:
+                if (!Throttler.Throttle("OptimiziedEnemyList-OnPostDraw")) break;
+                UpdateTextNodes();
+                break;
         }
     }
 
@@ -180,12 +185,17 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             
             if (!hateInfo.TryGetValue(gameObj.EntityId, out var enmity)) continue;
 
-            var nameLength = gameObj.Name.ExtractText().Length;
             var textNode = (AtkTextNode*)nodes[i].TextNodePtr;
-            
             var componentNode = (AtkComponentNode*)nodes[i].ComponentNodePtr;
+            
             var castTextNode = componentNode->Component->UldManager.SearchNodeById(4)->GetAsAtkTextNode();
             if (castTextNode == null) continue;
+
+            var targetNameTextNode = componentNode->Component->UldManager.SearchNodeById(6)->GetAsAtkTextNode();
+            if (targetNameTextNode == null) continue;
+
+            var targetNameNode = SanitizeSeIcon(targetNameTextNode->NodeText.ExtractText());
+            var nameLength     = targetNameNode.Length;
             
             if (bc.IsCasting)
             {
