@@ -31,6 +31,8 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
     private void OnZoneChanged(ushort zone)
     {
+        TaskHelper.Abort();
+        
         if (DService.ClientState.IsPvP) return;
         if (!PresetData.TryGetContent(zone, out var content) || content.PvP ||
             !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.Row)) return;
