@@ -36,7 +36,8 @@ public class AutoNotifyDutyName : DailyModuleBase
     {
         if (!PresetData.Contents.TryGetValue(territory, out var content)) return;
 
-        var levelText = content.ClassJobLevelRequired == content.ClassJobLevelSync
+        var levelText = content.ClassJobLevelRequired == content.ClassJobLevelSync ||
+                        content.ClassJobLevelRequired > content.ClassJobLevelSync
                             ? content.ClassJobLevelSync.ToString()
                             : $"{content.ClassJobLevelRequired}-{content.ClassJobLevelSync}";
         var message = GetLoc("AutoNotifyDutyName-NoticeMessage", levelText, content.Name.ExtractText(),
