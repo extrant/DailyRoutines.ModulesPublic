@@ -20,17 +20,18 @@ public class SastashaHelper : DailyModuleBase
     };
 
     // Book Data ID - Coral Data ID
-    private static readonly Dictionary<uint, (uint CoralDataID, ushort UIColor)> BookToCoral = new()
+    private static readonly Dictionary<uint, (uint CoralDataID, ushort UIColor, ObjectHighlightColor HighlightColor)> BookToCoral = new()
     {
         // 蓝珊瑚
-        [2000212] = (2000213, 37),
+        [2000212] = (2000213, 37, ObjectHighlightColor.Yellow),
         // 红珊瑚
-        [2001548] = (2000214, 17),
+        [2001548] = (2000214, 17, ObjectHighlightColor.Green),
         // 绿珊瑚
-        [2001549] = (2000215, 45),
+        [2001549] = (2000215, 45, ObjectHighlightColor.Red),
     };
 
     private static ulong CorrectCoralDataID;
+    private static ObjectHighlightColor CorrectCoralHighlightColor;
 
     public override void Init()
     {
@@ -44,6 +45,9 @@ public class SastashaHelper : DailyModuleBase
     {
         TaskHelper.Abort();
         FrameworkManager.Unregister(OnUpdate);
+
+        CorrectCoralDataID = 0;
+        CorrectCoralHighlightColor = ObjectHighlightColor.None;
         if (zone != 1036) return;
         
         TaskHelper.Enqueue(GetCorrectCoral);
@@ -53,13 +57,13 @@ public class SastashaHelper : DailyModuleBase
     private static unsafe void OnUpdate(IFramework _)
     {
         if (!Throttler.Throttle("SastashaHelper-OnUpdate", 2_000)) return;
-        if (CorrectCoralDataID == 0) return;
+        if (CorrectCoralDataID == 0 || CorrectCoralHighlightColor == ObjectHighlightColor.None) return;
 
         var coral = DService.ObjectTable.FirstOrDefault(
             x => x.ObjectKind == ObjectKind.EventObj && x.DataId == CorrectCoralDataID);
         if (coral == null) return;
 
-        coral.ToStruct()->Highlight(coral.IsTargetable ? ObjectHighlightColor.Black : ObjectHighlightColor.None);
+        coral.ToStruct()->Highlight(coral.IsTargetable ? CorrectCoralHighlightColor : ObjectHighlightColor.None);
     }
     
     private static bool? GetCorrectCoral()
@@ -77,6 +81,9 @@ public class SastashaHelper : DailyModuleBase
                      new SeStringBuilder()
                          .AddUiForeground(LuminaCache.GetRow<EObjName>(info.CoralDataID).Singular.ExtractText(),
                                           info.UIColor).Build()));
+        
+        CorrectCoralDataID         = info.CoralDataID;
+        CorrectCoralHighlightColor = info.HighlightColor;
         return true;
     }
 
