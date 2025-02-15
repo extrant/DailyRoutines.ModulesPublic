@@ -365,14 +365,15 @@ public class AutoReplaceLocationAction : DailyModuleBase
     }
 
     // 预设场中
-    private static bool HandlePresetCenterLocation(ref Vector3 sourceLocation)
+    private static unsafe bool HandlePresetCenterLocation(ref Vector3 sourceLocation)
     {
-        if (!PresetData.TryGetContent(DService.ClientState.TerritoryType, out var content) ||
-            content.ContentType.Row is not (4 or 5)) return false;
-
-        var map = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
-        var modifiedLocation = MapToWorld(new Vector2(6.125f), map).ToVector3();
-
+        if (!LuminaCache.TryGetRow<ContentFinderCondition>
+                (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
+            content.ContentType.Row is not (4 or 5)                                     ||
+            !LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
+            return false;
+        
+        var modifiedLocation = TextureToWorld(new(1024f), map).ToVector3();
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);
     }
 

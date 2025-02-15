@@ -50,8 +50,10 @@ public unsafe class AutoMovePetCenter : DailyModuleBase
 
     private static void MovePetToMapCenter()
     {
-        if (GameMain.Instance()->CurrentContentFinderConditionId == 0 ||
-            DService.ClientState.LocalPlayer is null                  ||
+        if (!LuminaCache.TryGetRow<ContentFinderCondition>
+                (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
+            content.ContentType.Row is not (4 or 5)                                     ||
+            DService.ClientState.LocalPlayer is null                                    ||
             !LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
             return;
         
