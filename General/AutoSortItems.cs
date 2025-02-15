@@ -28,9 +28,10 @@ public class AutoSortItems : DailyModuleBase
     public override void Init()
     {
         ModuleConfig =   LoadConfig<Config>() ?? new();
-        TaskHelper   ??= new TaskHelper { TimeLimitMS = 30_000 };
+        TaskHelper   ??= new TaskHelper { TimeLimitMS = 15_000 };
         
         DService.ClientState.TerritoryChanged += OnZoneChanged;
+        OnZoneChanged(DService.ClientState.TerritoryType);
     }
     
     public override void ConfigUI()
@@ -100,14 +101,16 @@ public class AutoSortItems : DailyModuleBase
     
     private void OnZoneChanged(ushort zone)
     {
-        if (zone <= 0) return;
         TaskHelper.Abort();
+        
+        if (zone == 0) return;
         TaskHelper.Enqueue(CheckCanSort);
     }
 
     private bool? CheckCanSort()
     {
         if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return false;
+        
         var isInNormalConditions = DService.Condition[ConditionFlag.NormalConditions] || DService.Condition[ConditionFlag.Mounted];
         if (!isInNormalConditions || !IsInNormalMap())
         {
@@ -133,8 +136,10 @@ public class AutoSortItems : DailyModuleBase
         return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.ContentType.Row));
     }
 
-    private void SendSortCommand()
+    private static bool? SendSortCommand()
     {
+        if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return false;
+        
         SendSortCondition("armourychest", "id", ModuleConfig.ArmouryChestId);
         SendSortCondition("armourychest", "itemlevel", ModuleConfig.ArmouryItemLevel);
         SendSortCondition("armourychest", "category", ModuleConfig.ArmouryCategory);
@@ -155,7 +160,7 @@ public class AutoSortItems : DailyModuleBase
         if (ModuleConfig.SendChat)
             Chat(GetLoc("AutoSortItems-SortMessage"));
 
-        return;
+        return true;
 
         void SendSortCondition(string target, string condition, int setting)
             => ChatHelper.Instance.SendMessage($"/itemsort condition {target} {condition} {sortOptionsCommand[setting]}");
