@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Text;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.Dtr;
@@ -132,6 +131,8 @@ public class AutoCountPlayers : DailyModuleBase
         Entry = null;
 
         FrameworkManager.Unregister(OnUpdate);
+        
+        base.Uninit();
     }
 
     public class GamePlayerAround : IEquatable<GamePlayerAround>
