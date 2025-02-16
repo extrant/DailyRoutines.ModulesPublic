@@ -206,8 +206,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                 EnqueueSplit(group);
 
             ImGui.SameLine();
-            if (ImGuiOm.ButtonIcon($"{group.ItemID}_Delete", FontAwesomeIcon.TrashAlt,
-                                   Lang.Get("AutoSplitStacks-HoldCtrlToDelete")))
+            if (ImGuiOm.ButtonIcon($"{group.ItemID}_Delete", FontAwesomeIcon.TrashAlt, GetLoc("HoldCtrlToDelete")))
             {
                 if (ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
                 {

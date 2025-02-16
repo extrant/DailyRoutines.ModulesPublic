@@ -580,8 +580,7 @@ public unsafe class AutoDiscard : DailyModuleBase
             ExportToClipboard(group);
 
         ImGui.SameLine();
-        if (ImGuiOm.ButtonIcon($"Delete_{index}", FontAwesomeIcon.TrashAlt,
-                               GetLoc("AutoDiscard-DeleteWhenHoldCtrl")))
+        if (ImGuiOm.ButtonIcon($"Delete_{index}", FontAwesomeIcon.TrashAlt, GetLoc("HoldCtrlToDelete")))
         {
             if (ImGui.IsKeyDown(ImGuiKey.LeftCtrl))
             {
