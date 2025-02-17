@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -13,7 +14,6 @@ using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using GrandCompany = FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany;
 
@@ -129,32 +129,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         using (ImRaii.Disabled(TaskHelper.IsBusy))
         {
             if (ImGui.Button(GetLoc("Start")))
-            {
-                foreach (var item in ExpertDeliveryItem.Parse(GrandCompanySupplyList))
-                {
-                    TaskHelper.Enqueue(() =>
-                    {
-                        if (item.HandIn())
-                        {
-                            if (item.IsHQ() || item.HasMateria())
-                            {
-                                TaskHelper.Enqueue(() => SelectYesno != null, null, null, null, 2);
-                                TaskHelper.Enqueue(() => ClickSelectYesNo.Using((nint)SelectYesno).Yes(),
-                                                   null, null, null, 2);
-                            }
-                            
-                            TaskHelper.Enqueue(() => GrandCompanySupplyReward != null, null, null, null, 2);
-                            TaskHelper.Enqueue(
-                                () => ClickGrandCompanySupplyReward.Using((nint)GrandCompanySupplyReward).Deliver(),
-                                null, null, null, 2);
-                            
-                            TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
-                            TaskHelper.Enqueue(() => ExpertDeliveryItem.Refresh(),      null, null, null, 2);
-                            TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
-                        }
-                    });
-                }
-            }
+                EnqueueDelivery();
         }
 
         ImGui.SameLine();
@@ -174,10 +149,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 TaskHelper.Enqueue(() =>
                 {
                     if (!OccupiedInEvent) return true;
-                
+                    
                     if (IsAddonAndNodesReady(GrandCompanySupplyList))
                         GrandCompanySupplyList->Close(true);
-                
+                    
                     if (IsAddonAndNodesReady(SelectString))
                         SelectString->Close(true);
 
@@ -188,6 +163,37 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                     () => GamePacketManager.SendPackt(
                         new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, eventID)));
             }
+        }
+    }
+
+    private void EnqueueDelivery()
+    {
+        foreach (var item in ExpertDeliveryItem.Parse().Where(x => x.GetIndex() != -1))
+        {
+            TaskHelper.Enqueue(() =>
+            {
+                if (item.HandIn())
+                {
+                    if (item.IsHQ() || item.HasMateria())
+                    {
+                        TaskHelper.Enqueue(() => IsAddonAndNodesReady(SelectYesno), null, null, null, 2);
+                        TaskHelper.Enqueue(() => ClickSelectYesNo.Using((nint)SelectYesno).Yes(),
+                                           null, null, null, 2);
+                    }
+                            
+                    TaskHelper.Enqueue(() => IsAddonAndNodesReady(GrandCompanySupplyReward), null, null, null, 2);
+                    TaskHelper.Enqueue(
+                        () => ClickGrandCompanySupplyReward.Using((nint)GrandCompanySupplyReward).Deliver(),
+                        null, null, null, 2);
+                    
+                    TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
+                    TaskHelper.Enqueue(() => ExpertDeliveryItem.Refresh(),      null, null, null, 2);
+                    TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
+                    TaskHelper.Enqueue(() => EnqueueDelivery(),                 null, null, null, 2);
+                }
+            });
+            
+            break;
         }
     }
 
@@ -214,28 +220,18 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 
     private record ExpertDeliveryItem(uint ItemID, InventoryType Container, ushort Slot, uint SealReward)
     {
-        public static List<ExpertDeliveryItem> Parse(AtkUnitBase* addon)
+        public static List<ExpertDeliveryItem> Parse()
         {
             List<ExpertDeliveryItem> returnValues = [];
-            if (addon == null || addon->NameString != "GrandCompanySupplyList") return returnValues;
-
-            var loadState = addon->AtkValues[0].UInt;
-            if (loadState != 2) return returnValues;
             
-            var tab = addon->AtkValues[5].UInt;
-            if (tab != 2) return returnValues;
-            
-            var itemCount = addon->AtkValues[6].UInt;
-            if (itemCount == 0) return returnValues;
+            var agent = AgentGrandCompanySupply.Instance();
+            if (agent == null || agent->ItemArray == null) return returnValues;
 
-            for (var i = 0U; i < itemCount; i++)
+            for (var i = 0U; i < agent->NumItems; i++)
             {
-                var sealReward = addon->AtkValues[265 + i].UInt;
-                var container  = (InventoryType)addon->AtkValues[345 + i].UInt;
-                var slot       = addon->AtkValues[385 + i].UInt;
-                var itemID     = addon->AtkValues[425 + i].UInt;
-                
-                returnValues.Add(new(itemID, container, (ushort)slot, sealReward));
+                var item = agent->ItemArray[i];
+                if (item.ItemId == 0 || item.IsBonusReward || item.ExpReward > 0 || item.SealReward <= 0) continue;
+                returnValues.Add(new(item.ItemId, item.Inventory, item.Slot, (uint)item.SealReward));
             }
             
             return returnValues;
@@ -291,7 +287,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             var itemCount = addon->AtkValues[6].UInt;
             if (itemCount == 0) return -1;
             
-            for (var i = 0; i < itemCount; i++)
+            for (var i = 0; i < Math.Min(40, itemCount); i++)
             {
                 var sealReward = addon->AtkValues[265 + i].UInt;
                 var container  = (InventoryType)addon->AtkValues[345 + i].UInt;
