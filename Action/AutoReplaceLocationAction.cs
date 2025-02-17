@@ -63,7 +63,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ExecuteCommandManager.Register(OnPreExecuteCommandComplexLocation);
 
         ParseActionCommandArgHook ??=
-            DService.Hook.HookFromSignature<ParseActionCommandArgDelegate>(ParseActionCommandArgSig.Get(), ParseActionCommandArgDetour);
+            ParseActionCommandArgSig.GetHook<ParseActionCommandArgDelegate>(ParseActionCommandArgDetour);
         ParseActionCommandArgHook.Enable();
     }
 
