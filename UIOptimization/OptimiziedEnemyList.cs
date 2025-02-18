@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
@@ -173,6 +172,12 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                                                 .DistinctBy(x => x.EntityId)
                                                 .ToDictionary(x => x.EntityId, x => x.Enmity);
         
+        var castWidth  = stackalloc ushort[1];
+        var castHeight = stackalloc ushort[1];
+        
+        var infoWidth = stackalloc ushort[1];
+        var infoHeight = stackalloc ushort[1];
+        
         for (var i = 0; i < nodes.Count; i++)
         {
             var offset       = 8 + (i * 6);
@@ -205,6 +210,8 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                 if (castBackgroundNode != null) castBackgroundNode->SetAlpha(0);
             }
             
+            targetNameTextNode->GetTextDrawSize(castWidth, castHeight);
+            
             textNode->TextColor = ModuleConfig.UseCustomizeTextColor
                                       ? ConvertVector4ToByteColor(ModuleConfig.TextColor)
                                       : castTextNode->TextColor;
@@ -216,10 +223,12 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                                             : castTextNode->BackgroundColor;
             
             textNode->FontSize = ModuleConfig.FontSize;
-            textNode->SetPositionFloat(Math.Max(90, 38 + (14 * nameLength)) + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
             textNode->SetText(bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime
                                   ? $"{GetCastInfoText((ActionType)bc.CastActionType, bc.CastActionId)}: {bc.CurrentCastTime:F1}/{bc.TotalCastTime:F1}"
                                   : GetGeneralInfoText((int)((float)bc.CurrentHp / bc.MaxHp * 100), enmity));
+            
+            textNode->GetTextDrawSize(infoWidth, infoHeight);
+            textNode->SetPositionFloat(*castWidth + 24f + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
         }
     }
     
