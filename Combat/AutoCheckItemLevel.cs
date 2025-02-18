@@ -35,7 +35,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         
         if (DService.ClientState.IsPvP) return;
         if (!PresetData.TryGetContent(zone, out var content) || content.PvP ||
-            !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.Row)) return;
+            !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.RowId)) return;
         
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty", null, null, 2);
         TaskHelper.Enqueue(() => CheckMembersItemLevel([]));

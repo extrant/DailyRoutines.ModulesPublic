@@ -3,7 +3,7 @@ using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -52,7 +52,7 @@ public unsafe class AutoMovePetCenter : DailyModuleBase
     {
         if (!LuminaCache.TryGetRow<ContentFinderCondition>
                 (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
-            content.ContentType.Row is not (4 or 5)                                     ||
+            content.ContentType.RowId is not (4 or 5)                                     ||
             DService.ClientState.LocalPlayer is null                                    ||
             !LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
             return;

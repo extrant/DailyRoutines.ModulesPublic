@@ -5,7 +5,7 @@ using DailyRoutines.Managers;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic.Assist;
@@ -43,7 +43,7 @@ public class SastashaHelper : DailyModuleBase
 
     private void OnZoneChanged(ushort zone)
     {
-        TaskHelper.Abort();
+        TaskHelper?.Abort();
         FrameworkManager.Unregister(OnUpdate);
 
         CorrectCoralDataID = 0;
@@ -79,7 +79,7 @@ public class SastashaHelper : DailyModuleBase
 
         Chat(GetSLoc("SastashaHelper-Message",
                      new SeStringBuilder()
-                         .AddUiForeground(LuminaCache.GetRow<EObjName>(info.CoralDataID).Singular.ExtractText(),
+                         .AddUiForeground(LuminaCache.GetRow<EObjName>(info.CoralDataID)!.Value.Singular.ExtractText(),
                                           info.UIColor).Build()));
         
         CorrectCoralDataID         = info.CoralDataID;

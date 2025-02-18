@@ -369,7 +369,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     {
         if (!LuminaCache.TryGetRow<ContentFinderCondition>
                 (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
-            content.ContentType.Row is not (4 or 5)                                     ||
+            content.ContentType.RowId is not (4 or 5)                                     ||
             !LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
             return false;
         

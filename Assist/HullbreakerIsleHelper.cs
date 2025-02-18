@@ -6,7 +6,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic.Assist;
@@ -31,15 +31,15 @@ public class HullbreakerIsleHelper : DailyModuleBase
         TrapNames = new(StringComparer.OrdinalIgnoreCase)
         {
             // 捕兽夹
-            LuminaCache.GetRow<EObjName>(2000947).Singular.ExtractText(),
-            LuminaCache.GetRow<EObjName>(2000947).Plural.ExtractText(),
+            LuminaCache.GetRow<EObjName>(2000947)!.Value.Singular.ExtractText(),
+            LuminaCache.GetRow<EObjName>(2000947)!.Value.Plural.ExtractText(),
         };
 
         FakeTreasureNames = new(StringComparer.OrdinalIgnoreCase)
         {
             // 宝箱
-            LuminaCache.GetRow<EObjName>(2002491).Singular.ExtractText(),
-            LuminaCache.GetRow<EObjName>(2002491).Plural.ExtractText()
+            LuminaCache.GetRow<EObjName>(2002491)!.Value.Singular.ExtractText(),
+            LuminaCache.GetRow<EObjName>(2002491)!.Value.Plural.ExtractText()
         };
     }
 

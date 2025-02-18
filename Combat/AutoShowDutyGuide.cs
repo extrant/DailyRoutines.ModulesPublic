@@ -10,12 +10,6 @@ using DailyRoutines.Windows;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DailyRoutines.Modules;
 
@@ -145,7 +139,7 @@ public class AutoShowDutyGuide : DailyModuleBase
             return;
         }
 
-        Task.Run(async () => await GetDutyGuide(content.RowId), CancelSource.Token);
+        DService.Framework.RunOnTick(() => GetDutyGuide(content.RowId), default, default, CancelSource.Token);
     }
 
     private async Task GetDutyGuide(uint dutyID)
