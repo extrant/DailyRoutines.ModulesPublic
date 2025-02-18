@@ -135,6 +135,8 @@ public class AutoCountPlayers : DailyModuleBase
         Entry = null;
 
         FrameworkManager.Unregister(OnUpdate);
+        
+        base.Uninit();
     }
 
     public class GamePlayerAround : IEquatable<GamePlayerAround>

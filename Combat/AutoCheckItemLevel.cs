@@ -31,14 +31,12 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
     private void OnZoneChanged(ushort zone)
     {
+        TaskHelper.Abort();
+        
         if (DService.ClientState.IsPvP) return;
         if (!PresetData.TryGetContent(zone, out var content) || content.PvP ||
-            !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.RowId)) return;
-
-        var message = new SeStringBuilder().Append($"{GetLoc("AutoCheckItemLevel-ILRequired")}: ")
-                                           .AddUiForeground(content.ItemLevelRequired.ToString(), 34).Build();
-        Chat(message);
-
+            !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.Row)) return;
+        
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty", null, null, 2);
         TaskHelper.Enqueue(() => CheckMembersItemLevel([]));
     }
@@ -119,10 +117,10 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                     partyMember.Level.ToString(), (ushort)(partyMember.Level >= content.ClassJobLevelSync ? 43 : 17));
 
                 ssb.Add(new NewLinePayload());
-                ssb.Append($" {GetLoc("AutoCheckItemLevel-ILAverage")}: ")
+                ssb.Append($" {GetLoc("ILAverage")}: ")
                    .AddUiForeground(avgItemLevel.ToString(), (ushort)(avgItemLevel > content.ItemLevelSync ? 43 : 17));
 
-                ssb.Append($" {GetLoc("AutoCheckItemLevel-ILMinimum")}: ")
+                ssb.Append($" {GetLoc("ILMinimum")}: ")
                    .AddUiForeground(lowestIL.ToString(), (ushort)(lowestIL > content.ItemLevelRequired ? 43 : 17));
 
                 ssb.Add(new NewLinePayload());
