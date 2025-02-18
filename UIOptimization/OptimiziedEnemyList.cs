@@ -10,8 +10,8 @@ using Dalamud.Interface.Components;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
-using Action = Lumina.Excel.GeneratedSheets.Action;
+using Lumina.Excel.Sheets;
+using Action = Lumina.Excel.Sheets.Action;
 
 namespace DailyRoutines.Modules;
 
@@ -274,7 +274,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
     private static string GetGeneralInfoText(int percentage, int enmity) =>
         ModuleConfig.UseCustomizeText
             ? string.Format(ModuleConfig.CustomizeTextPattern, percentage, enmity)
-            : $"{LuminaCache.GetRow<Addon>(232).Text.ExtractText()}: {percentage}% / {LuminaCache.GetRow<Addon>(721).Text.ExtractText()}: {enmity}%";
+            : $"{LuminaCache.GetRow<Addon>(232)!.Value.Text.ExtractText()}: {percentage}% / {LuminaCache.GetRow<Addon>(721)!.Value.Text.ExtractText()}: {enmity}%";
 
     private static string GetCastInfoText(ActionType type, uint actionID)
     {
@@ -289,7 +289,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         }
 
         if (string.IsNullOrWhiteSpace(result))
-            result = LuminaCache.GetRow<Addon>(1032).Text.ExtractText();
+            result = LuminaCache.GetRow<Addon>(1032)!.Value.Text.ExtractText();
         
         return result;
     }

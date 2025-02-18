@@ -2,7 +2,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Fates;
 using Dalamud.Plugin.Services;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Text.SeStringHandling;
@@ -28,8 +28,8 @@ public class AutoNotifyBonusFate : DailyModuleBase
     static AutoNotifyBonusFate()
     {
         ValidTerritory = LuminaCache.Get<TerritoryType>()
-                                    .Where(x => x.TerritoryIntendedUse  == 1)
-                                    .Where(x => x.ExVersion.Value.RowId >= 2)
+                                    .Where(x => x.TerritoryIntendedUse.RowId == 1)
+                                    .Where(x => x.ExVersion.Value.RowId      >= 2)
                                     .Select(x => (ushort)x.RowId)
                                     .ToHashSet();
     }
@@ -86,12 +86,13 @@ public class AutoNotifyBonusFate : DailyModuleBase
         var newFates = LastFates.Count == 0 ? fateTable : fateTable.Except(LastFates);
         
         var mapID  = DService.ClientState.MapId;
+        if (!LuminaCache.TryGetRow<Map>(mapID, out var mapRow)) return;
         
         foreach (var fate in newFates)
         {
             if (fate == null || !fate.HasBonus) continue;
 
-            var mapPos = WorldToMap(fate.Position.ToVector2(), LuminaCache.GetRow<Map>(mapID));
+            var mapPos = WorldToMap(fate.Position.ToVector2(), mapRow);
             
             var chatMessage = GetSLoc("AutoNotifyBonusFate-Chat", fate.Name.ExtractText(), fate.Progress, SeString.CreateMapLink(zoneID, mapID, mapPos.X, mapPos.Y));
             var notificationMessage = GetLoc("AutoNotifyBonusFate-Notification", fate.Name.ExtractText(), fate.Progress);

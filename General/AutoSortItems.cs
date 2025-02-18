@@ -1,9 +1,9 @@
-using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using System.Collections.Generic;
 
 namespace DailyRoutines.Modules;
 
@@ -54,9 +54,9 @@ public class AutoSortItems : DailyModuleBase
         
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         ImGui.TableNextColumn();
-        ImGui.Text(LuminaCache.GetRow<Addon>(12210).Text.ExtractText());
+        ImGui.Text(LuminaCache.GetRow<Addon>(12210)!.Value.Text.ExtractText());
 
-        var typeText = LuminaCache.GetRow<Addon>(9448).Text.ExtractText();
+        var typeText = LuminaCache.GetRow<Addon>(9448)!.Value.Text.ExtractText();
         
         DrawTableRow("兵装库 ID", "ID", ref ModuleConfig.ArmouryChestId, sortOptions);
         DrawTableRow("兵装库等级", GetLoc("Level"), ref ModuleConfig.ArmouryItemLevel, sortOptions);
@@ -64,7 +64,7 @@ public class AutoSortItems : DailyModuleBase
         
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         ImGui.TableNextColumn();
-        ImGui.Text(LuminaCache.GetRow<Addon>(12209).Text.ExtractText());
+        ImGui.Text(LuminaCache.GetRow<Addon>(12209)!.Value.Text.ExtractText());
         
         DrawTableRow("背包 HQ", "HQ", ref ModuleConfig.InventoryHq, sortOptions);
         DrawTableRow("背包 ID", "ID", ref ModuleConfig.InventoryId, sortOptions);
@@ -124,16 +124,17 @@ public class AutoSortItems : DailyModuleBase
 
     private static unsafe bool IsInNormalMap()
     {
-        var currentMapData = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
-        if (currentMapData == null) return false;
-        if (currentMapData.TerritoryType.Row == 0 ||
-            currentMapData.TerritoryType.Value.ContentFinderCondition.Row != 0) return false;
+        var currentMapDataNullable = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
+        if (currentMapDataNullable == null) return false;
+        var currentMapData = currentMapDataNullable.Value;
+        if (currentMapData.TerritoryType.RowId == 0 ||
+            currentMapData.TerritoryType.Value.ContentFinderCondition.RowId != 0) return false;
 
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
         var contentData =
             LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
 
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.ContentType.Row));
+        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }
 
     private static bool? SendSortCommand()

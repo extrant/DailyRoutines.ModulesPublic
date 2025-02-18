@@ -1,12 +1,12 @@
-using System.Collections.Generic;
-using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -82,12 +82,12 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                     var slot = list[i];
                     var itemID = slot.ItemId;
                     var itemData = LuminaCache.GetRow<Item>(itemID);
-
+                    if (itemData == null) continue;
                     switch (i)
                     {
                         case 0:
                         {
-                            var category = itemData.ClassJobCategory.Row;
+                            var category = itemData.Value.ClassJobCategory.RowId;
                             if (HaveOffHandJobCategories.Contains(category))
                                 itemSlotAmount++;
 
@@ -98,10 +98,10 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                             continue;
                     }
 
-                    if (itemData.LevelItem.Row < lowestIL)
-                        lowestIL = itemData.LevelItem.Row;
+                    if (itemData.Value.LevelItem.RowId < lowestIL)
+                        lowestIL = itemData.Value.LevelItem.RowId;
 
-                    totalIL += itemData.LevelItem.Row;
+                    totalIL += itemData.Value.LevelItem.RowId;
                 }
 
                 var avgItemLevel = totalIL / itemSlotAmount;
@@ -111,7 +111,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 ssb.AddUiForeground(25);
                 ssb.Add(new PlayerPayload(partyMember.Name.TextValue, partyMember.GameObject.ToBCStruct()->HomeWorld));
                 ssb.AddUiForegroundOff();
-                ssb.Append($" ({partyMember.ClassJob.GameData.Name})");
+                ssb.Append($" ({partyMember.ClassJob.Value.Name.ExtractText()})");
 
                 ssb.Append($" {GetLoc("Level")}: ").AddUiForeground(
                     partyMember.Level.ToString(), (ushort)(partyMember.Level >= content.ClassJobLevelSync ? 43 : 17));

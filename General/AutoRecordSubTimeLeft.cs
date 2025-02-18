@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace DailyRoutines.Modules;
 
@@ -98,7 +98,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         });
     }
 
-    private void OnLogout() => TaskHelper?.Abort();
+    private void OnLogout(int code, int type) => TaskHelper?.Abort();
 
     private nint AgentLobbyOnLoginDetour(AgentLobby* agent)
     {
