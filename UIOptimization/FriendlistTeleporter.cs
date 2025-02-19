@@ -1,9 +1,9 @@
+using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -34,10 +34,17 @@ public class FriendlistTeleporter : DailyModuleBase
 
     private static void OnMenuOpen(IMenuOpenedArgs args)
     {
-        if (TeleportItem.IsDisplay(args))
-            args.AddMenuItem(TeleportItem.Get());
-        if (ModuleManager.IsModuleEnabled("WorldTravelCommand") == true && CrossWorldItem.IsDisplay(args))
-            args.AddMenuItem(CrossWorldItem.Get());
+        try
+        {
+            if (TeleportItem.IsDisplay(args))
+                args.AddMenuItem(TeleportItem.Get());
+        } catch { }
+        try
+        {
+            if (ModuleManager.IsModuleEnabled("WorldTravelCommand") == true && CrossWorldItem.IsDisplay(args))
+                args.AddMenuItem(CrossWorldItem.Get());
+        } catch { }
+        
     }
 
     private class TeleportMenuItem : MenuItemBase
@@ -50,7 +57,7 @@ public class FriendlistTeleporter : DailyModuleBase
 
         public override bool IsDisplay(IMenuOpenedArgs args) => args.AddonName == "FriendList"
                                                                 && args.Target is MenuTargetDefault target
-                                                                && target.TargetCharacter?.Location.Value is not null
+                                                                && target.TargetCharacter is not null
                                                                 && GetAetheryteId(
                                                                     target.TargetCharacter.Location.Value.RowId,
                                                                     out aetheryteID);
@@ -98,15 +105,20 @@ public class FriendlistTeleporter : DailyModuleBase
         public override bool IsDisplay(IMenuOpenedArgs args)
         {
             if (args.AddonName != "FriendList") return false;
-
-            if (args.Target is MenuTargetDefault { TargetCharacter.CurrentWorld.Value: { RowId: var _targetWorldID } } &&
-                _targetWorldID != DService.ClientState.LocalPlayer.CurrentWorld.Value.RowId)
+            try
             {
-                targetWorldID = _targetWorldID;
-                return true;
+                if (args.Target is MenuTargetDefault { TargetCharacter.CurrentWorld.RowId: var _targetWorldID } &&
+                    _targetWorldID !=DService.ClientState.LocalPlayer.CurrentWorld.RowId)
+                {
+                    targetWorldID = _targetWorldID;
+                    return true;
+                }
+                return false;
             }
-
-            return false;
+            catch
+            {
+                return false;
+            }
         }
     }
 }
