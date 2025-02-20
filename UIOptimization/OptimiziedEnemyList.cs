@@ -199,8 +199,6 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
 
             var targetNameTextNode = componentNode->Component->UldManager.SearchNodeById(6)->GetAsAtkTextNode();
             if (targetNameTextNode == null) continue;
-
-            var targetNameNode = SanitizeSeIcon(targetNameTextNode->NodeText.ExtractText());
             
             if (bc.IsCasting)
             {
