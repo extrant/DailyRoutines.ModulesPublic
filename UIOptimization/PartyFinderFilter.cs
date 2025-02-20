@@ -1,7 +1,5 @@
 using DailyRoutines.Abstracts;
 using DailyRoutines.Windows;
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -16,10 +14,10 @@ public class PartyFinderFilter : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("PartyFinderFilterTitle"),
+        Title       = GetLoc("PartyFinderFilterTitle"),
         Description = GetLoc("PartyFinderFilterDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["status102"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["status102"]
     };
 
     private int batchIndex;
@@ -27,14 +25,12 @@ public class PartyFinderFilter : DailyModuleBase
     private readonly HashSet<(ushort, string)> descriptionSet = [];
     private static Config ModuleConfig = null!;
 
-    public override unsafe void Init()
+    public override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new Config();
+        ModuleConfig =   LoadConfig<Config>() ?? new Config();
+        Overlay      ??= new Overlay(this);
+        
         DService.PartyFinder.ReceiveListing += OnReceiveListing;
-        Overlay ??= new Overlay(this);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroup", OnAddonPF);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddonPF);
-        if (LookingForGroup != null) OnAddonPF(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -61,18 +57,6 @@ public class PartyFinderFilter : DailyModuleBase
             ModuleConfig.BlackList.Add(new(true, string.Empty));
 
         DrawBlacklistEditor();
-    }
-
-    public override void OverlayUI() => ConfigUI();
-
-    private void OnAddonPF(AddonEvent type, AddonArgs? args)
-    {
-        Overlay.IsOpen = type switch
-        {
-            AddonEvent.PostSetup => true,
-            AddonEvent.PreFinalize => false,
-            _ => Overlay.IsOpen
-        };
     }
 
     private void DrawBlacklistEditor()
@@ -122,7 +106,7 @@ public class PartyFinderFilter : DailyModuleBase
         }
     }
 
-    private unsafe void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
+    private void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
     {
         if (batchIndex != args.BatchNumber)
         {
@@ -152,7 +136,6 @@ public class PartyFinderFilter : DailyModuleBase
 
     public override void Uninit()
     {
-        DService.AddonLifecycle.UnregisterListener(OnAddonPF);
         DService.PartyFinder.ReceiveListing -= OnReceiveListing;
         base.Uninit();
     }
