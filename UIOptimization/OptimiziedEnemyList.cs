@@ -201,7 +201,6 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             if (targetNameTextNode == null) continue;
 
             var targetNameNode = SanitizeSeIcon(targetNameTextNode->NodeText.ExtractText());
-            var nameLength     = targetNameNode.Length;
             
             if (bc.IsCasting)
             {
