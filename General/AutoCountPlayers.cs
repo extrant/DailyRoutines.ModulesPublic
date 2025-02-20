@@ -131,10 +131,10 @@ public class AutoCountPlayers : DailyModuleBase
 
     public override void Uninit()
     {
+        FrameworkManager.Unregister(OnUpdate);
+        
         Entry?.Remove();
         Entry = null;
-
-        FrameworkManager.Unregister(OnUpdate);
         
         base.Uninit();
     }
