@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
@@ -228,7 +229,8 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                                   : GetGeneralInfoText((int)((float)bc.CurrentHp / bc.MaxHp * 100), enmity));
             
             textNode->GetTextDrawSize(infoWidth, infoHeight);
-            textNode->SetPositionFloat(*castWidth + 24f + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
+            textNode->SetPositionFloat(Math.Max(90f, *castWidth + 28 + ModuleConfig.TextOffset.X),
+                                       4 + ModuleConfig.TextOffset.Y);
         }
     }
     
