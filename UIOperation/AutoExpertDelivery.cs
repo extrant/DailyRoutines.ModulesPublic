@@ -312,7 +312,19 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             return -1;
         }
 
-        public bool HasMateria() => GetSlot()->Materia.ToArray().Count(x => x != 0 && x <= 25) > 0;
+        public bool HasMateria()
+        {
+            if (!LuminaCache.TryGetRow<Item>(ItemID, out var row)) return false;
+            if (row.MateriaSlotCount <= 0) return false;
+
+            for (var i = 0; i < Math.Min(row.MateriaSlotCount, GetSlot()->Materia.Length); i++)
+            {
+                var materia = GetSlot()->Materia[i];
+                if (materia != 0) return true;
+            }
+            
+            return false;
+        }
 
         public bool IsHQ() => GetSlot()->Flags.HasFlag(InventoryItem.ItemFlags.HighQuality);
         
