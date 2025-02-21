@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using ClickLib;
 using ClickLib.Clicks;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
@@ -23,9 +24,9 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoExpertDeliveryTitle"),
+        Title       = GetLoc("AutoExpertDeliveryTitle"),
         Description = GetLoc("AutoExpertDeliveryDescription"),
-        Category = ModuleCategories.UIOperation,
+        Category    = ModuleCategories.UIOperation,
     };
 
     private class Config : ModuleConfiguration
@@ -58,7 +59,20 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "GrandCompanySupplyList", OnAddonSupplyList);
         if (IsAddonAndNodesReady(GrandCompanySupplyList)) OnAddonSupplyList(AddonEvent.PostSetup, null);
     }
-    
+
+    public override void ConfigUI()
+    {
+        if (ImGui.Button("测试"))
+        {
+            SendEvent(AgentId.GrandCompanySupply, 0, 1, 0, 2U);
+        }
+        
+        if (ImGui.Button("测试1"))
+        {
+            SendEvent(AgentId.GrandCompanySupply, 0, 0, 2);
+        }
+    }
+
     public override void OverlayUI()
     {
         var addon = GrandCompanySupplyList;
@@ -174,14 +188,11 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             {
                 if (item.HandIn())
                 {
-                    if (item.IsHQ() || item.HasMateria())
+                    TaskHelper.Enqueue(() =>
                     {
-                        TaskHelper.Enqueue(() => IsAddonAndNodesReady(SelectYesno), null, null, null, 2);
-                        TaskHelper.Enqueue(() => ClickSelectYesNo.Using((nint)SelectYesno).Yes(),
-                                           null, null, null, 2);
-                    }
-                            
-                    TaskHelper.Enqueue(() => IsAddonAndNodesReady(GrandCompanySupplyReward), null, null, null, 2);
+                        Click.TrySendClick("select_yes");
+                        return IsAddonAndNodesReady(GrandCompanySupplyReward);
+                    }, null, null, null, 2);
                     TaskHelper.Enqueue(
                         () => ClickGrandCompanySupplyReward.Using((nint)GrandCompanySupplyReward).Deliver(),
                         null, null, null, 2);
@@ -237,7 +248,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             return returnValues;
         }
 
-        public static void Refresh() => AgentGrandCompanySupply.Instance()->Show();
+        public static void Refresh() => SendEvent(AgentId.GrandCompanySupply, 0, 0, 2);
 
         public static bool IsAddonReady()
             => GrandCompanySupplyReward                      == null &&
