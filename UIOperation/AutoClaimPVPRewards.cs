@@ -78,7 +78,7 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
                         () => ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CollectTrophyCrystal),
                         $"ClaimTC_Rank{i}");
 
-                    TaskHelper.DelayNext(200, $"Delay_Rank{i}");
+                    TaskHelper.DelayNext(10, $"Delay_Rank{i}");
                 }
             }
         }
