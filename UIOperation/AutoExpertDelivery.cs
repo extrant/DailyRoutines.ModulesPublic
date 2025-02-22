@@ -60,19 +60,6 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         if (IsAddonAndNodesReady(GrandCompanySupplyList)) OnAddonSupplyList(AddonEvent.PostSetup, null);
     }
 
-    public override void ConfigUI()
-    {
-        if (ImGui.Button("测试"))
-        {
-            SendEvent(AgentId.GrandCompanySupply, 0, 1, 0, 2U);
-        }
-        
-        if (ImGui.Button("测试1"))
-        {
-            SendEvent(AgentId.GrandCompanySupply, 0, 0, 2);
-        }
-    }
-
     public override void OverlayUI()
     {
         var addon = GrandCompanySupplyList;
@@ -276,7 +263,12 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 
             var companySeals = InventoryManager.Instance()->GetCompanySeals(grandCompany);
             var capAmount = rank.MaxSeals;
-            if (companySeals + SealReward > capAmount) return true;
+            if (companySeals + SealReward > capAmount)
+            {
+                if (Throttler.Throttle("AutoExpertDelivery-ReachedSealCap", 2_000))
+                    NotificationInfo(GetLoc("AutoExpertDelivery-ReachdSealCap"));
+                return true;
+            }
 
             return false;
         }
