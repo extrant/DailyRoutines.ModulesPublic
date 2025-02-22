@@ -127,10 +127,6 @@ public class AutoUseManual : DailyModuleBase
         ImGui.Text(GetLoc("ManualNotice"));//"发送通知:"
         ImGui.SameLine();
         ImGui.Checkbox("##AutoCheckgysahl_greensUsageSendNotice", ref ModuleConfig.SendNotice);
-        if (ImGui.Button("1"))
-        {
-            ChatError($"{HasGather()}");
-        }
         SaveConfig(ModuleConfig);
     }
     
