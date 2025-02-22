@@ -87,8 +87,7 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
             }
             
             ImGui.SameLine();
-            // 这个Unknown2没有extractText
-            if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094)!.Value.Unknown2.ToString()))
+            if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094)!.Value.Unknown0.ExtractText()))
             {
                 TaskHelper.Enqueue(() =>
                 {
