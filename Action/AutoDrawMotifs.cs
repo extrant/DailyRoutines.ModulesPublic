@@ -41,9 +41,10 @@ public class AutoDrawMotifs : DailyModuleBase
 
     private void OnConditionChanged(ConditionFlag flag, bool value)
     {
-        if (value || flag is not ConditionFlag.InCombat) return;
+        if (flag != ConditionFlag.InCombat) return;
         TaskHelper.Abort();
-
+        
+        if (value) return;
         if (!DrawWhenOutOfCombat) return;
         TaskHelper.Enqueue(CheckCurrentJob);
     }
