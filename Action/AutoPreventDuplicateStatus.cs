@@ -145,6 +145,8 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         { 29395, new([new(3054, DetectType.Target), new(3248, DetectType.Target)]) },
         // 星遁天诛
         { 29515, new([new(1302, DetectType.Target), new(3039, DetectType.Target)]) },
+        // 分析 (PVP)
+        { 29414, new([new(3158, DetectType.Self)]) }
     };
 
     private static readonly Throttler<uint> NotificationThrottler = new();
