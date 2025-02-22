@@ -2,10 +2,10 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using System;
-using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Objects.Types;
+using System.Collections.Generic;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Services;
-using Status = Dalamud.Game.ClientState.Statuses.Status;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 
 namespace DailyRoutines.Modules;
@@ -15,7 +15,7 @@ public class AutoUseManual : DailyModuleBase
     public override ModuleInfo Info => new()
     {
         Title = GetLoc("AutoUseManual"),               //"自动使用生存学/工程学指南"
-        Description = GetLoc("AutoUseManualDescribe"), //"当前职业为非满级生产，采集职业时，自动按优先级吃指南获得经验加成buff"
+        Description = GetLoc("AutoUseManualDescribe"), //"当前职业为非满级生产，采集职业时，自动按从最高级优先吃指南获得经验加成buff"
         Category = ModuleCategories.Action,
     };
 
@@ -30,29 +30,33 @@ public class AutoUseManual : DailyModuleBase
 
         TaskHelper ??= new TaskHelper { TimeLimitMS = 60000 };
         
-        DService.Framework.Update += OnFrameworkUpdate;
+        FrameworkManager.Register(true, OnUpdate);
     }
-
+    
+    private static readonly HashSet<uint> GatherJobs = [16, 17, 18];
+    
+    private static readonly HashSet<uint> ArtJobs = [8, 9, 10, 11, 12, 13, 14, 15];
+    
     public static bool IsGatherJob()
     {
         var id = DService.ClientState.LocalPlayer.ClassJob.RowId;
-        return id == 16 || id == 17 || id == 18;
+        return GatherJobs.Contains(id);
     }
     
     public static bool IsArtJob()
     {
         var id = DService.ClientState.LocalPlayer.ClassJob.RowId;
-        return id >= 8 && id <= 15;
+        return ArtJobs.Contains(id);
     }
 
-    public static bool IsMaxLevel()
+    public static unsafe bool IsMaxLevel()
     {
         var level = DService.ClientState.LocalPlayer.Level;
-        return level == 100;
+        return level == UIState.Instance()->PlayerState.MaxLevel;
     }
     
     private static bool IsCooldownElapsed() => (DateTime.Now - LastTime).TotalSeconds >= CooldownSeconds;
-    private void OnFrameworkUpdate(IFramework iFramework)
+    private void OnUpdate(IFramework framework)
     {
         var id = DService.ClientState.LocalPlayer.ClassJob.RowId;
         
@@ -111,20 +115,22 @@ public class AutoUseManual : DailyModuleBase
 
     public static unsafe uint GetItemCount(uint itemId, bool isHq = false)
     {
-        // 获取 InventoryManager 的实例指针
         IntPtr inventoryManagerPtr = (IntPtr)InventoryManager.Instance();
 
-        // 将指针转换为 InventoryManager 结构体
-        InventoryManager inventoryManager = Marshal.PtrToStructure<InventoryManager>(inventoryManagerPtr);
+        if (inventoryManagerPtr == IntPtr.Zero)
+        {
+            return 0;
+        }
 
-        // 调用 GetInventoryItemCount 方法
-        return (uint)inventoryManager.GetInventoryItemCount(itemId, isHq, true, true, (short)0);
+        InventoryManager* inventoryManager = (InventoryManager*)inventoryManagerPtr;
+
+        return (uint)inventoryManager->GetInventoryItemCount(itemId, isHq, true, true, (short)0);
     }
     
 
     public override void ConfigUI()
     {
-        ImGui.Text(GetLoc("ManualNotice"));//"发送通知:"
+        ImGui.Text(GetLoc("SendNotification"));//"发送通知:"
         ImGui.SameLine();
         ImGui.Checkbox("##AutoCheckgysahl_greensUsageSendNotice", ref ModuleConfig.SendNotice);
         SaveConfig(ModuleConfig);
@@ -139,37 +145,28 @@ public class AutoUseManual : DailyModuleBase
         IsScreenReady() &&
         ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) == 0;
 
+    private IPlayerCharacter? me = DService.ClientState.LocalPlayer;
     private bool HasGather()
     {
-        var me = DService.ClientState.LocalPlayer;
-        if (DService.ClientState.LocalPlayer == null) return false;
-        if (HasAura(me, 46, 0))
+        if (DService.ClientState.LocalPlayer is null) return false;
+        if (HasAura(46))
             return true;
         return false;
     }
     
     private bool HasArt()
     {
-        var me = DService.ClientState.LocalPlayer;
-        if (DService.ClientState.LocalPlayer == null) return false;
-        if (HasAura(me, 45, 0))
+        if (DService.ClientState.LocalPlayer is null) return false;
+        if (HasAura(45))
             return true;
         return false;
     }
-
-    public bool HasAura(IBattleChara battleCharacter, uint id, int timeLeft)
+    
+    public unsafe bool HasAura(uint id)
     {
-        if (battleCharacter == null)
-            return false;
-        for (int index = 0; index < battleCharacter.StatusList.Length; ++index)
-        {
-            Status status = battleCharacter.StatusList[index];
-            if (status != null && status.StatusId != 0U && (int)status.StatusId == (int)id)
-            {
-                if (timeLeft == 0 || (double)Math.Abs(status.RemainingTime) * 1000.0 >= (double)timeLeft)
-                    return true;
-            }
-        }
+        var statusManager = me.ToBCStruct()->StatusManager;
+        if (statusManager.HasStatus(id))
+            return true;
         return false;
     }
     
@@ -181,8 +178,7 @@ public class AutoUseManual : DailyModuleBase
     
     public override void Uninit()
     {
-        DService.Framework.Update -= OnFrameworkUpdate;
-
+        FrameworkManager.Unregister(OnUpdate);
         base.Uninit();
     }
 }
