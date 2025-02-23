@@ -18,7 +18,8 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
     {
         Title       = GetLoc("AutoUseCrafterGathererManualTitle"),
         Description = GetLoc("AutoUseCrafterGathererManualDescription"),
-        Category    = ModuleCategories.General
+        Category    = ModuleCategories.General,
+        Author      = ["Shiyuvi", "AtmoOmen"]
     };
 
     private static readonly HashSet<uint> Gatherers;
