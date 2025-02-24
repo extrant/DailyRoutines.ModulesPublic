@@ -29,7 +29,7 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
     static AutoGysahlGreens()
     {
         ValidTerritory = LuminaCache.Get<TerritoryType>()
-                                    .Where(x => x.TerritoryIntendedUse.RowId == 1)
+                                    .Where(x => x.TerritoryIntendedUse.RowId == 1 && x.RowId != 250)        // RowId: 250 = 狼狱停船场
                                     .Select(x => (ushort)x.RowId)
                                     .ToHashSet();
     }
@@ -52,6 +52,11 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
         if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
             SaveConfig(ModuleConfig);
+
+        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NoBattleCheckBox"), ref ModuleConfig.isNotBattleJob))
+            SaveConfig(ModuleConfig);
+        
+        ImGuiOm.TooltipHover(GetLoc("AutoGysahlGreens-NoBattleTooltipHover"));
     }
 
     private static void OnZoneChanged(ushort zone)
@@ -68,6 +73,10 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (!Throttler.Throttle("AutoGysahlGreens-OnUpdate", 5_000)) return;
         if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
+
+        if (!LuminaCache.TryGetRow<ClassJob>(DService.ClientState.LocalPlayer.ClassJob.RowId, out var classJobData)) return;
+        if (!ModuleConfig.isNotBattleJob  && classJobData.DohDolJobIndex != -1) return;
+
         if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft > 300) return;
         
         if (InventoryManager.Instance()->GetInventoryItemCount(4868) <= 3)
@@ -98,5 +107,6 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         public bool  SendChat;
         public bool  SendNotification;
         public bool  SendTTS;
+        public bool  isNotBattleJob;
     }
 }
