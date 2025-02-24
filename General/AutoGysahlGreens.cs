@@ -26,6 +26,8 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
     private static bool HasNotifiedInCurrentZone;
 
+    private const uint GysahlGreens = 4868;
+
     static AutoGysahlGreens()
     {
         ValidTerritory = LuminaCache.Get<TerritoryType>()
@@ -53,10 +55,10 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
             SaveConfig(ModuleConfig);
 
-        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NoBattleCheckBox"), ref ModuleConfig.isNotBattleJob))
+        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NotBattleJobUsingGys"), ref ModuleConfig.NotBattleJobUsingGysahl))
             SaveConfig(ModuleConfig);
         
-        ImGuiOm.TooltipHover(GetLoc("AutoGysahlGreens-NoBattleTooltipHover"));
+        ImGuiOm.TooltipHover(GetLoc("AutoGysahlGreens-NotBattleJobUsingGysTooltipHover"));
     }
 
     private static void OnZoneChanged(ushort zone)
@@ -75,11 +77,11 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
         if (!LuminaCache.TryGetRow<ClassJob>(DService.ClientState.LocalPlayer.ClassJob.RowId, out var classJobData)) return;
-        if (!ModuleConfig.isNotBattleJob  && classJobData.DohDolJobIndex != -1) return;
+        if (!ModuleConfig.NotBattleJobUsingGysahl && classJobData.DohDolJobIndex != -1) return;
 
         if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft > 300) return;
         
-        if (InventoryManager.Instance()->GetInventoryItemCount(4868) <= 3)
+        if (InventoryManager.Instance()->GetInventoryItemCount(GysahlGreens) <= 3)
         {
             if (!HasNotifiedInCurrentZone)
             {
@@ -94,19 +96,16 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
             return;
         }
         
-        UseActionManager.UseActionLocation(ActionType.Item, 4868, 0xE0000000, default, 0xFFFF);
+        UseActionManager.UseActionLocation(ActionType.Item, GysahlGreens, 0xE0000000, default, 0xFFFF);
     }
     
-    public override void Uninit()
-    {
-        OnZoneChanged(0);
-    }
+    public override void Uninit() => OnZoneChanged(0);
 
     private class Config : ModuleConfiguration
     {
-        public bool  SendChat;
-        public bool  SendNotification;
-        public bool  SendTTS;
-        public bool  isNotBattleJob;
+        public bool  SendChat                = false;
+        public bool  SendNotification        = false;
+        public bool  SendTTS                 = false;
+        public bool  NotBattleJobUsingGysahl = false;
     }
 }
