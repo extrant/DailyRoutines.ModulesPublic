@@ -31,7 +31,8 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
     static AutoGysahlGreens()
     {
         ValidTerritory = LuminaCache.Get<TerritoryType>()
-                                    .Where(x => x.TerritoryIntendedUse.RowId == 1 && x.RowId != 250)        // RowId: 250 = 狼狱停船场
+                                    // RowId: 250 = 狼狱停船场
+                                    .Where(x => x.TerritoryIntendedUse.RowId == 1 && x.RowId != 250)
                                     .Select(x => (ushort)x.RowId)
                                     .ToHashSet();
     }
@@ -57,8 +58,6 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
         if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NotBattleJobUsingGys"), ref ModuleConfig.NotBattleJobUsingGysahl))
             SaveConfig(ModuleConfig);
-        
-        ImGuiOm.TooltipHover(GetLoc("AutoGysahlGreens-NotBattleJobUsingGysTooltipHover"));
     }
 
     private static void OnZoneChanged(ushort zone)
@@ -103,9 +102,9 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
     private class Config : ModuleConfiguration
     {
-        public bool  SendChat                = false;
-        public bool  SendNotification        = false;
-        public bool  SendTTS                 = false;
-        public bool  NotBattleJobUsingGysahl = false;
+        public bool SendChat;
+        public bool SendNotification = true;
+        public bool SendTTS;
+        public bool NotBattleJobUsingGysahl;
     }
 }
