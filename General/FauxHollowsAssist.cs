@@ -710,5 +710,3 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         private static Sheet RotateSheetLeft(Sheet sheet) => new(RotateCellMaskLeft(sheet.Blockers), sheet.Rows.Select(RotateRowLeft).ToArray());
     }
 }
-
-
