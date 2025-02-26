@@ -1,15 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Events;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -17,68 +17,29 @@ public class WeeklyBingoClickToOpen : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("WeeklyBingoClickToOpenTitle"),
+        Title       = GetLoc("WeeklyBingoClickToOpenTitle"),
         Description = GetLoc("WeeklyBingoClickToOpenDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["Due"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["Due"]
     };
 
-    private readonly IAddonEventHandle?[] eventHandles = new IAddonEventHandle?[16];
+    private static readonly IAddonEventHandle?[] eventHandles = new IAddonEventHandle?[16];
 
-    public override void Init()
+    public override unsafe void Init()
     {
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyBingo", OnAddonSetup);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddonFinalize);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyBingo", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddon);
+        
+        if (IsAddonAndNodesReady(WeeklyBingo)) OnAddon(AddonEvent.PostSetup, null);
     }
 
-    public override unsafe void Uninit()
+    public override void Uninit()
     {
-        DService.AddonLifecycle.UnregisterListener(OnAddonSetup, OnAddonFinalize);
-
-        var addon = (AddonWeeklyBingo*)DService.Gui.GetAddonByName("WeeklyBingo");
-        if (addon is not null)
-        {
-            ResetEventHandles();
-        }
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
+        OnAddon(AddonEvent.PreFinalize, null);
     }
 
-    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
-    {
-        var addonWeeklyBingo = (AddonWeeklyBingo*)args.Addon;
-
-        ResetEventHandles();
-        foreach (var index in Enumerable.Range(0, 16))
-        {
-            var dutySlot = addonWeeklyBingo->DutySlotList[index];
-            eventHandles[index] = DService.AddonEvent.AddEvent((nint)addonWeeklyBingo, (nint)dutySlot.DutyButton->OwnerNode, AddonEventType.ButtonClick, OnDutySlotClick);
-        }
-    }
-
-    private void OnAddonFinalize(AddonEvent type, AddonArgs args)
-    {
-        ResetEventHandles();
-    }
-
-    private unsafe void OnDutySlotClick(AddonEventType atkEventType, IntPtr atkUnitBase, IntPtr atkResNode)
-    {
-        var dutyButtonNode = (AtkResNode*)atkResNode;
-        var tileIndex = (int)dutyButtonNode->NodeId - 12;
-
-        var selectedTask = PlayerState.Instance()->GetWeeklyBingoTaskStatus(tileIndex);
-        var bingoData = PlayerState.Instance()->WeeklyBingoOrderData[tileIndex];
-
-        if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open)
-        {
-            var dutiesForTask = OrderDataToTerritory(bingoData);
-            var territoryType = dutiesForTask.FirstOrDefault();
-            var cfc = LuminaCache.Get<ContentFinderCondition>().FirstOrDefault(cfc => cfc.TerritoryType.RowId == territoryType);
-            if (cfc.RowId is 0) return;
-
-            AgentContentsFinder.Instance()->OpenRegularDuty(cfc.RowId);
-        }
-    }
-
-    private void ResetEventHandles()
+    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
     {
         foreach (var index in Enumerable.Range(0, 16))
         {
@@ -88,220 +49,271 @@ public class WeeklyBingoClickToOpen : DailyModuleBase
                 eventHandles[index] = null;
             }
         }
+        
+        if (type != AddonEvent.PostSetup) return;
+        
+        var addon = (AddonWeeklyBingo*)WeeklyBingo;
+        if (addon == null) return;
+        
+        foreach (var index in Enumerable.Range(0, 16))
+        {
+            var dutySlot = addon->DutySlotList[index];
+            var handle = DService.AddonEvent.AddEvent((nint)addon, (nint)dutySlot.DutyButton->OwnerNode,
+                                                      AddonEventType.ButtonClick, OnDutySlotClick);
+            eventHandles[index] = handle;
+        }
     }
 
-    public static List<uint> OrderDataToTerritory(uint orderDataId)
+    private unsafe void OnDutySlotClick(AddonEventType atkEventType, nint atkUnitBase, nint atkResNode)
     {
-        var bingoOrderData = LuminaCache.Get<WeeklyBingoOrderData>().GetRow(orderDataId);
+        var dutyButtonNode = (AtkResNode*)atkResNode;
+        if (dutyButtonNode == null) return;
 
-        switch (bingoOrderData.Type)
+        var agent = AgentContentsFinder.Instance();
+        if (agent == null) return;
+        
+        // 副本内无法打开
+        if (BoundByDuty) return;
+        
+        var tileIndex      = (int)dutyButtonNode->NodeId - 12;
+        var selectedTask = PlayerState.Instance()->GetWeeklyBingoTaskStatus(tileIndex);
+        var bingoRowID   = PlayerState.Instance()->WeeklyBingoOrderData[tileIndex];
+
+        if (selectedTask is PlayerState.WeeklyBingoTaskStatus.Open)
         {
-            case 0: // Specific Duty
-                return [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(c => c.Content.RowId == bingoOrderData.Data.RowId)
-                    .OrderBy(row => row.SortKey)
-                    .Select(c => c.TerritoryType.RowId)];
-
-            case 1: // Dungeon at specific level
-                return [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired == bingoOrderData.Data.RowId)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)];
-
-            case 2: // Dungeon at level range
-                return [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired >= bingoOrderData.Data.RowId - (bingoOrderData.Data.RowId > 50 ? 9 : 49) && m.ClassJobLevelRequired <= bingoOrderData.Data.RowId - 1)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)];
-
-            case 3: // Various special categories
-                return bingoOrderData.Unknown1 switch
-                {
-                    1 => [], // Treasure Map
-                    2 => [], // PvP
-                    3 => [.. LuminaCache.Get<ContentFinderCondition>()
-                        .Where(m => m.ContentType.RowId is 21)
-                        .OrderBy(row => row.SortKey)
-                        .Select(m => m.TerritoryType.RowId)], // Deep Dungeon
-                    _ => [],
-                };
-
-            case 4: // NRs / ARs
-                return bingoOrderData.Data.RowId switch
-                {
-                    // Bahamut Binding Coil, Second Coil, Final Coil
-                    2 => [241, 242, 243, 244, 245],
-                    3 => [355, 356, 357, 358],
-                    4 => [193, 194, 195, 196],
-
-                    // Alexander Gordias, Midas, The Creator
-                    5 => [442, 443, 444, 445],
-                    6 => [520, 521, 522, 523],
-                    7 => [580, 581, 582, 583],
-
-                    // Omega Deltascape, Sigmascape, Alphascape
-                    8 => [691, 692, 693, 694],
-                    9 => [748, 749, 750, 751],
-                    10 => [798, 799, 800, 801],
-
-                    // Eden's Gate: Resurrection or Descent
-                    11 => [849, 850],
-                    // Eden's Gate: Inundation or Sepulture
-                    12 => [851, 852],
-                    // Eden's Verse: Fulmination or Furor
-                    13 => [902, 903],
-                    // Eden's Verse: Iconoclasm or Refulgence
-                    14 => [904, 905],
-                    // Eden's Promise: Umbra or Litany
-                    15 => [942, 943],
-                    // Eden's Promise: Anamorphosis or Eternity
-                    16 => [944, 945],
-
-                    // Asphodelos: First or Second Circles
-                    17 => [1002, 1004],
-                    // Asphodelos: Third or Fourth Circles
-                    18 => [1006, 1008],
-                    // Abyssos: Fifth or Sixth Circles
-                    19 => [1081, 1083],
-                    // Abyssos: Seventh or Eight Circles
-                    20 => [1085, 1087],
-                    // Anabaseios: Ninth or Tenth Circles
-                    21 => [1147, 1149],
-                    // Anabaseios: Eleventh or Twelwth Circles
-                    22 => [1151, 1153],
-
-                    // Eden's Gate
-                    23 => [849, 850, 851, 852],
-                    // Eden's Verse
-                    24 => [902, 903, 904, 905],
-                    // Eden's Promise
-                    25 => [942, 943, 944, 945],
-
-                    // Alliance Raids (A Realm Reborn)
-                    26 => [174, 372, 151],
-                    // Alliance Raids (Heavensward)
-                    27 => [508, 556, 627],
-                    // Alliance Raids (Stormblood)
-                    28 => [734, 776, 826],
-                    // Alliance Raids (Shadowbringers)
-                    29 => [882, 917, 966],
-                    // Alliance Raids (Endwalker)
-                    30 => [1054, 1118, 1178],
-
-                    // Asphodelos
-                    31 => [1002, 1004, 1006, 1008],
-                    // Abyssos
-                    32 => [1081, 1083, 1085, 1087],
-                    // Anabaseios
-                    33 => [1147, 1149, 1151, 1153],
-
-                    // AAC Light-heavyweight M1/2
-                    34 => [1225, 1227],
-                    // AAC Light-heavyweight M3/4
-                    35 => [1229, 1231],
-
-                    _ => [],
-                };
-
-            case 5: // Larger level range
-                return bingoOrderData.Data.RowId switch
-                {
-                    49 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired >= 1 && m.ClassJobLevelRequired <= 49)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    79 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired >= 51 && m.ClassJobLevelRequired <= 79)
-                    .Where(m => m.ClassJobLevelRequired % 10 != 0)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    99 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired >= 81 && m.ClassJobLevelRequired <= 99)
-                    .Where(m => m.ClassJobLevelRequired % 10 != 0)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    _ => [],
-                };
-
-            case 6:
-                return bingoOrderData.Data.RowId switch
-                {
-                    60 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired == 50 || m.ClassJobLevelRequired == 60)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    80 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired == 70 || m.ClassJobLevelRequired == 80)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    90 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 2)
-                    .Where(m => m.ClassJobLevelRequired == 90)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    _ => [],
-                };
-
-            case 7:
-                return bingoOrderData.Data.RowId switch
-                {
-                    60 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 4)
-                    .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    100 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 4)
-                    .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 100)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    _ => [],
-                };
-
-            case 8:
-                return bingoOrderData.Data.RowId switch
-                {
-                    60 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 5)
-                    .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
-                    .Where(m => m.AllianceRoulette == true)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    90 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 5)
-                    .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 90)
-                    .Where(m => m.AllianceRoulette == true)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    _ => [],
-                };
-
-            case 9:
-                return bingoOrderData.Data.RowId switch
-                {
-                    60 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 5)
-                    .Where(m => m.NormalRaidRoulette == true)
-                    .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    100 => [.. LuminaCache.Get<ContentFinderCondition>()
-                    .Where(m => m.ContentType.RowId is 5)
-                    .Where(m => m.NormalRaidRoulette == true)
-                    .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 100)
-                    .OrderBy(row => row.SortKey)
-                    .Select(m => m.TerritoryType.RowId)],
-                    _ => [],
-                };
-
+            if (TryGetRouletteDutyByBingoData(bingoRowID, out var rouletteDuty))
+                agent->OpenRouletteDuty(rouletteDuty);
+            
+            if (TryGetRegularDutyByBingoData(bingoRowID, out var regularDuty))
+                agent->OpenRegularDuty(regularDuty);
         }
-        return [];
+    }
+
+    private static bool TryGetRouletteDutyByBingoData(uint bingoRowID, out byte rouletteRowID)
+    {
+        rouletteRowID = bingoRowID switch
+        {
+            // 纷争前线
+            54 => 7,
+            // 水晶冲突 (练习赛)
+            52 => 40,
+            _  => 0,
+        };
+        
+        return rouletteRowID != 0;
+    }
+
+    private static bool TryGetRegularDutyByBingoData(uint bingoRowID, out uint dutyRowID)
+    {
+        dutyRowID = 0;
+        if (!LuminaCache.TryGetRow<WeeklyBingoOrderData>(bingoRowID, out var bingoDataRow)) return false;
+        
+        var bingoDataID = bingoDataRow.Data.RowId;
+        dutyRowID = bingoDataRow.Type switch
+        {
+            // 具体副本
+            0 => LuminaCache.Get<ContentFinderCondition>()
+                            .Where(c => c.Content.RowId == bingoDataID)
+                            .OrderBy(row => row.SortKey)
+                            .FirstOrDefault().RowId,
+            // 指定等级的副本
+            1 => LuminaCache.Get<ContentFinderCondition>()
+                            .Where(m => m.ContentType.RowId is 2)
+                            .Where(m => m.ClassJobLevelRequired == bingoDataID)
+                            .OrderBy(row => row.SortKey)
+                            .FirstOrDefault().RowId,
+            // 指定等级区间的副本
+            2 => LuminaCache.Get<ContentFinderCondition>()
+                            .Where(m => m.ContentType.RowId is 2)
+                            .Where(m => m.ClassJobLevelRequired >= bingoDataID -
+                                        (bingoDataID > 50 ? 9 : 49) &&
+                                        m.ClassJobLevelRequired <= bingoDataID - 1)
+                            .OrderBy(row => row.SortKey)
+                            .FirstOrDefault().RowId,
+            // 挖宝, PVP, 深宫
+            3 => bingoRowID switch
+            {
+                46 => 0, // 宝物库
+                52 => 0, // 水晶冲突 (上面处理过了)
+                53 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 21)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId, // 深层迷宫
+                54 => 0,                                  // 纷争前线 (上面处理过了)
+                67 => 599,                                // 烈羽争锋 (现在就等于隐塞)
+                _  => 0
+            },
+            // 大型和团本
+            4 => bingoDataID switch
+            {
+                // 巴哈邂逅
+                2 => 93,
+                // 巴哈入侵
+                3 => 98,
+                // 巴哈真源
+                4 => 107,
+                // 亚历山大启动
+                5 => 112,
+                // 亚历山大律动
+                6 => 136,
+                // 亚历山大天动
+                7 => 186,
+                // 欧米茄德尔塔
+                8 => 252,
+                // 欧米茄西格玛
+                9 => 286,
+                // 欧米茄阿尔法
+                10 => 587,
+                // 伊甸觉醒 1-2
+                11 => 653,
+                // 伊甸觉醒 3-4
+                12 => 682,
+                // 伊甸共鸣 1-2
+                13 => 715,
+                // 伊甸共鸣 3-4
+                14 => 726,
+                // 伊甸再生 1-2
+                15 => 749,
+                // 伊甸再生 3-4
+                16 => 751,
+                // 万魔殿边狱 1-2
+                17 => 808,
+                // 万魔殿边狱 3-4
+                18 => 807,
+                // 万魔殿炼狱 1-2
+                19 => 872,
+                // 万魔殿炼狱 3-4
+                20 => 876,
+                // 万魔殿天狱 1-2
+                21 => 936,
+                // 万魔殿天狱 3-4
+                22 => 941,
+                // 伊甸觉醒
+                23 => 653,
+                // 伊甸共鸣
+                24 => 715,
+                // 伊甸再生
+                25 => 749,
+                // 2.0 团本
+                26 => 92,
+                // 3.0 团本
+                27 => 120,
+                // 4.0 团本
+                28 => 281,
+                // 5.0 团本
+                29 => 700,
+                // 6.0 团本
+                30 => 866,
+                // 万魔殿边狱
+                31 => 808,
+                // 万魔殿炼狱
+                32 => 872,
+                // 万魔殿天狱
+                33 => 936,
+                // 阿卡狄亚轻量级 1-2
+                34 => 985,
+                // 阿卡狄亚轻量级 3-4
+                35 => 989,
+                _ => 0
+            },
+            // 多等级区间
+            5 => bingoDataID switch
+            {
+                // 1-49 级迷宫
+                49 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired >= 1 && m.ClassJobLevelRequired <= 49)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                // 51-59/61-69/71-79 级迷宫
+                79 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired >= 51 && m.ClassJobLevelRequired <= 79 && 
+                                             m.ClassJobLevelRequired % 10 != 0)
+                                 .Where(m => m.ClassJobLevelRequired % 10 != 0)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                // 81-89/91-99 级迷宫
+                99 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired      >= 81 && m.ClassJobLevelRequired <= 99 &&
+                                             m.ClassJobLevelRequired % 10 != 0)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                _ => 0
+            },
+            // 整数级迷宫
+            6 => bingoDataID switch
+            {
+                60 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired is (50 or 60))
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                80 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired is (70 or 80))
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                90 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where(m => m.ClassJobLevelRequired is 90)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                _ => 0
+            },
+            // 歼灭战
+            7 => bingoDataID switch
+            {
+                60 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 4)
+                                 .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                100 => LuminaCache.Get<ContentFinderCondition>()
+                                  .Where(m => m.ContentType.RowId is 4)
+                                  .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 100)
+                                  .OrderBy(row => row.SortKey)
+                                  .FirstOrDefault().RowId,
+                _ => 0
+            },
+            // 团本
+            8 => bingoDataID switch
+            {
+                60 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 5)
+                                 .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
+                                 .Where(m => m.AllianceRoulette)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                90 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 5)
+                                 .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 90)
+                                 .Where(m => m.AllianceRoulette)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                _ => 0
+            },
+            // 大型
+            9 => bingoDataID switch
+            {
+                60 => LuminaCache.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 5)
+                                 .Where(m => m.NormalRaidRoulette)
+                                 .Where(m => m.ClassJobLevelRequired >= 50 && m.ClassJobLevelRequired <= 60)
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
+                100 => LuminaCache.Get<ContentFinderCondition>()
+                                  .Where(m => m.ContentType.RowId is 5)
+                                  .Where(m => m.NormalRaidRoulette)
+                                  .Where(m => m.ClassJobLevelRequired >= 70 && m.ClassJobLevelRequired <= 100)
+                                  .OrderBy(row => row.SortKey)
+                                  .FirstOrDefault().RowId,
+                _ => 0
+            },
+            _ => 0,
+        };
+        
+        return dutyRowID != 0;
     }
 }
