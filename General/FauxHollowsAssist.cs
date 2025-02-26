@@ -16,7 +16,7 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("FauxHollowsAssistTitle"),
+        Title       = GetLoc("FauxHollowsAssistTitle"),
         Description = GetLoc("FauxHollowsAssistDescription"),
         Category    = ModuleCategories.General,
         Author      = ["Veever"]
