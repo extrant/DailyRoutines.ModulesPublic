@@ -12,48 +12,36 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace DailyRoutines.Modules;
 
-public unsafe class FauxHollowsAssist : DailyModuleBase
+public unsafe class AutoRecommendFauxHollows : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title       = GetLoc("FauxHollowsAssistTitle"),
-        Description = GetLoc("FauxHollowsAssistDescription"),
-        Category    = ModuleCategories.General,
+        Title       = GetLoc("AutoRecommendFauxHollowsTitle"),
+        Description = GetLoc("AutoRecommendFauxHollowsDescription"),
+        Category    = ModuleCategories.UIOptimization,
         Author      = ["Veever"]
     };
 
-    private static Config ModuleConfig     = null!;
-    private readonly BoardState Board      = new();
-    private readonly Solver     FauxSolver = new();
+    private static          Config     ModuleConfig = null!;
+    private static readonly BoardState Board        = new();
+    private static readonly Solver     FauxSolver   = new();
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        Overlay           ??= new(this);
-        Overlay.WindowName  =   "AutoFauxHollows-Overlay";
-        Overlay.Flags      |=  ImGuiWindowFlags.AlwaysAutoResize;
+        Overlay ??= new(this);
 
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyPuzzle", OnWeeklyPuzzleEvent);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
         if (WeeklyPuzzle != null) OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("FauxHollowsAssist-HighlightBestStep"), ref ModuleConfig.HighlightBestStep))
-            ModuleConfig.Save(this);
-
-        if (ImGui.Checkbox(GetLoc("FauxHollowsAssist-PrioritizeSwords"), ref ModuleConfig.PrioritizeSwords))
+        if (ImGui.Checkbox(GetLoc("AutoRecommendFauxHollows-PrioritizeSwords"), ref ModuleConfig.PrioritizeSwords))
         {
             FauxSolver.FindSwordsFirst = ModuleConfig.PrioritizeSwords;
-            ModuleConfig.Save(this);
-        }
-
-        if (ImGui.Checkbox(GetLoc("FauxHollowsAssist-PrioritizeSwordsOverlay"),
-                           ref ModuleConfig.ShowSwordsSettingsOverlay))
-        {
-            Overlay.IsOpen = ModuleConfig.ShowSwordsSettingsOverlay;
             ModuleConfig.Save(this);
         }
     }
@@ -66,49 +54,16 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
             return;
         }
 
-        var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
-        if (addon == null) return;
-
-        var windowPos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 5);
+        var windowPos = new Vector2(WeeklyPuzzle->GetX() - ImGui.GetWindowSize().X, WeeklyPuzzle->GetY() + 5);
         ImGui.SetWindowPos(windowPos);
 
-        if (ModuleConfig.ShowSwordsSettingsOverlay)
-        {
-            ImGui.TextColored(Orange, GetLoc("FauxHollowsAssist-WindowSetting"));
-            ImGui.Separator();
+        ImGui.TextColored(Orange, GetLoc("AutoRecommendFauxHollowsTitle"));
+        
+        ImGui.Separator();
 
-            if (ImGui.Checkbox(GetLoc("FauxHollowsAssist-PrioritizeSwordsCheckBox"), ref ModuleConfig.PrioritizeSwords))
-            {
-                FauxSolver.FindSwordsFirst = ModuleConfig.PrioritizeSwords;
-                ModuleConfig.Save(this);
-            }
-
-            ImGui.SameLine();
-            ImGuiOm.HelpMarker(GetLoc("FauxHollowsAssist-PrioritizeSwordsHelpMarker"));
-        }
+        ConfigUI();
     }
-
-    private void OnWeeklyPuzzleEvent(AddonEvent type, AddonArgs? args)
-    {
-        switch (type)
-        {
-            case AddonEvent.PostSetup:
-                if (ModuleConfig.ShowSwordsSettingsOverlay)
-                    Overlay.IsOpen = true;
-
-                FrameworkManager.Register(true, OnUpdate);
-                break;
-
-            case AddonEvent.PreFinalize:
-                if (Overlay.IsOpen)
-                    Overlay.IsOpen = false;
-
-                FrameworkManager.Unregister(OnUpdate);
-                break;
-        }
-    }
-
-
+    
     public override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnWeeklyPuzzleEvent);
@@ -116,8 +71,25 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
 
         base.Uninit();
     }
+    
+    private void OnWeeklyPuzzleEvent(AddonEvent type, AddonArgs? args)
+    {
+        FrameworkManager.Unregister(OnUpdate);
+        
+        switch (type)
+        {
+            case AddonEvent.PostSetup:
+                Overlay.IsOpen = true;
+                FrameworkManager.Register(true, OnUpdate);
+                break;
 
-    private void OnUpdate(IFramework framework)
+            case AddonEvent.PreFinalize:
+                Overlay.IsOpen = false;
+                break;
+        }
+    }
+
+    private static void OnUpdate(IFramework framework)
     {
         if (!Throttler.Throttle("AutoFauxHollows_Update", 1_000)) return;
 
@@ -127,18 +99,15 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         var tileState = ParseTileInformation(addon);
         Board.Update(tileState);
 
-        if (ModuleConfig.HighlightBestStep)
-        {
-            var solution = FauxSolver.Solve(Board);
-            var bestScore = solution.Max();
-            if (bestScore == 0)
-                bestScore = -1;
+        var solution  = FauxSolver.Solve(Board);
+        var bestScore = solution.Max();
+        if (bestScore == 0)
+            bestScore = -1;
 
-            UpdateAddonColors(addon, solution, bestScore);
-        }
+        UpdateAddonColors(addon, solution, bestScore);
     }
 
-    private BoardState.Tile[] ParseTileInformation(AddonWeeklyPuzzle* addon)
+    private static BoardState.Tile[] ParseTileInformation(AddonWeeklyPuzzle* addon)
     {
         var result    = new BoardState.Tile[BoardState.Width * BoardState.Height];
         var tileIndex = 0;
@@ -190,7 +159,7 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         return result;
     }
 
-    private void UpdateAddonColors(AddonWeeklyPuzzle* addon, int[] solution, int bestScore)
+    private static void UpdateAddonColors(AddonWeeklyPuzzle* addon, int[] solution, int bestScore)
     {
         var tileIndex = 0;
         for (var y = 0; y < BoardState.Height; ++y)
@@ -212,13 +181,13 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         }
     }
     
-    private AtkComponentButton* GetTileButton(AddonWeeklyPuzzle* addon, int x, int y) 
+    private static AtkComponentButton* GetTileButton(AddonWeeklyPuzzle* addon, int x, int y) 
         => addon->GameBoard[y][x].Button;
 
-    private AtkImageNode* GetBackgroundImageNode(AtkComponentButton* button) 
+    private static AtkImageNode* GetBackgroundImageNode(AtkComponentButton* button) 
         => (AtkImageNode*)button->AtkComponentBase.UldManager.NodeList[3];
 
-    private AtkImageNode* GetIconImageNode(AtkComponentButton* button) 
+    private static AtkImageNode* GetIconImageNode(AtkComponentButton* button) 
         => (AtkImageNode*)button->AtkComponentBase.UldManager.NodeList[6];
 
     private enum WeeklyPuzzleTexture
@@ -253,9 +222,7 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
     
     private class Config : ModuleConfiguration
     {
-        public bool HighlightBestStep = true;
         public bool PrioritizeSwords;
-        public bool ShowSwordsSettingsOverlay = true;
     }
 
     public struct BitMask
