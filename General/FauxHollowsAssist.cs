@@ -34,9 +34,9 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         Overlay.WindowName  =   "AutoFauxHollows-Overlay";
         Overlay.Flags      |=  ImGuiWindowFlags.AlwaysAutoResize;
 
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyPuzzle", OnWeeklyPuzzleOpen);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleClose);
-        if (WeeklyPuzzle != null) OnWeeklyPuzzleOpen(AddonEvent.PostSetup, null);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        if (WeeklyPuzzle != null) OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -88,26 +88,30 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         }
     }
 
-    private void OnWeeklyPuzzleOpen(AddonEvent type, AddonArgs? args)
+    private void OnWeeklyPuzzleEvent(AddonEvent type, AddonArgs? args)
     {
-        if (ModuleConfig.ShowSwordsSettingsOverlay)
-            Overlay.IsOpen = true;
+        switch (type)
+        {
+            case AddonEvent.PostSetup:
+                if (ModuleConfig.ShowSwordsSettingsOverlay)
+                    Overlay.IsOpen = true;
 
-        FrameworkManager.Register(true, OnUpdate);
+                FrameworkManager.Register(true, OnUpdate);
+                break;
+
+            case AddonEvent.PreFinalize:
+                if (Overlay.IsOpen)
+                    Overlay.IsOpen = false;
+
+                FrameworkManager.Unregister(OnUpdate);
+                break;
+        }
     }
 
-    private void OnWeeklyPuzzleClose(AddonEvent type, AddonArgs? args)
-    {
-        if (Overlay.IsOpen)
-            Overlay.IsOpen = false;
-
-        FrameworkManager.Unregister(OnUpdate);
-    }
 
     public override void Uninit()
     {
-        DService.AddonLifecycle.UnregisterListener(OnWeeklyPuzzleOpen);
-        DService.AddonLifecycle.UnregisterListener(OnWeeklyPuzzleClose);
+        DService.AddonLifecycle.UnregisterListener(OnWeeklyPuzzleEvent);
         FrameworkManager.Unregister(OnUpdate);
 
         base.Uninit();
