@@ -21,7 +21,6 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         Category    = ModuleCategories.General,
         Author      = ["Veever"]
     };
-    public static AtkUnitBase* WeeklyPuzzle => GetAddonByName("WeeklyPuzzle");
 
     private static Config ModuleConfig     = null!;
     private readonly BoardState Board      = new();
