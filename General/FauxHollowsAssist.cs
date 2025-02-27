@@ -5,6 +5,7 @@ using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -21,10 +22,7 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
         Author      = ["Veever"]
     };
 
-    private const int IdyllshireId = 478;
-    
-    private static Config ModuleConfig = null!;
-
+    private static Config ModuleConfig     = null!;
     private readonly BoardState Board      = new();
     private readonly Solver     FauxSolver = new();
 
@@ -32,11 +30,13 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        Overlay            ??= new(this);
-        Overlay.WindowName =   "AutoFauxHollows-Overlay";
+        Overlay           ??= new(this);
+        Overlay.WindowName  =   "AutoFauxHollows-Overlay";
         Overlay.Flags      |=  ImGuiWindowFlags.AlwaysAutoResize;
 
-        FrameworkManager.Register(true, OnUpdate);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        if (WeeklyPuzzle != null) OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -57,27 +57,61 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
             ModuleConfig.Save(this);
         }
     }
-    
+
     public override void OverlayUI()
     {
+        if (!IsAddonAndNodesReady(WeeklyPuzzle))
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+
+        var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
+        if (addon == null) return;
+
+        var windowPos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 5);
+        ImGui.SetWindowPos(windowPos);
+
         if (ModuleConfig.ShowSwordsSettingsOverlay)
         {
-            ImGui.TextColored(Orange, "幻巧拼图设置");
+            ImGui.TextColored(Orange, GetLoc("FauxHollowsAssist-WindowSetting"));
             ImGui.Separator();
 
-            if (ImGui.Checkbox("优先寻找大剑", ref ModuleConfig.PrioritizeSwords))
+            if (ImGui.Checkbox(GetLoc("FauxHollowsAssist-PrioritizeSwordsCheckBox"), ref ModuleConfig.PrioritizeSwords))
             {
                 FauxSolver.FindSwordsFirst = ModuleConfig.PrioritizeSwords;
                 ModuleConfig.Save(this);
             }
 
             ImGui.SameLine();
-            ImGuiOm.HelpMarker("选中此选项后将优先寻找大剑");
+            ImGuiOm.HelpMarker(GetLoc("FauxHollowsAssist-PrioritizeSwordsHelpMarker"));
         }
     }
 
+    private void OnWeeklyPuzzleEvent(AddonEvent type, AddonArgs? args)
+    {
+        switch (type)
+        {
+            case AddonEvent.PostSetup:
+                if (ModuleConfig.ShowSwordsSettingsOverlay)
+                    Overlay.IsOpen = true;
+
+                FrameworkManager.Register(true, OnUpdate);
+                break;
+
+            case AddonEvent.PreFinalize:
+                if (Overlay.IsOpen)
+                    Overlay.IsOpen = false;
+
+                FrameworkManager.Unregister(OnUpdate);
+                break;
+        }
+    }
+
+
     public override void Uninit()
     {
+        DService.AddonLifecycle.UnregisterListener(OnWeeklyPuzzleEvent);
         FrameworkManager.Unregister(OnUpdate);
 
         base.Uninit();
@@ -87,40 +121,20 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
     {
         if (!Throttler.Throttle("AutoFauxHollows_Update", 1_000)) return;
 
-        if (DService.ClientState.TerritoryType != IdyllshireId)
-        {
-            if (Overlay.IsOpen && ModuleConfig.ShowSwordsSettingsOverlay) 
-                Overlay.IsOpen = false;
-            return;
-        }
-
         var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
-        if (addon == null) return;
+        if (addon == null || !IsAddonAndNodesReady(WeeklyPuzzle)) return;
 
-        var puzzleActive = addon != null && addon->IsVisible && addon->UldManager.LoadedState == AtkLoadState.Loaded;
+        var tileState = ParseTileInformation(addon);
+        Board.Update(tileState);
 
-        if (puzzleActive)
+        if (ModuleConfig.HighlightBestStep)
         {
-            if (ModuleConfig.ShowSwordsSettingsOverlay && !Overlay.IsOpen)
-                Overlay.IsOpen = true;
+            var solution = FauxSolver.Solve(Board);
+            var bestScore = solution.Max();
+            if (bestScore == 0)
+                bestScore = -1;
 
-            var tileState = ParseTileInformation(addon);
-            Board.Update(tileState);
-
-            if (ModuleConfig.HighlightBestStep)
-            {
-                var solution  = FauxSolver.Solve(Board);
-                var bestScore = solution.Max();
-                if (bestScore == 0)
-                    bestScore = -1;
-
-                UpdateAddonColors(addon, solution, bestScore);
-            }
-        }
-        else
-        {
-            if (Overlay.IsOpen && ModuleConfig.ShowSwordsSettingsOverlay) 
-                Overlay.IsOpen = false;
+            UpdateAddonColors(addon, solution, bestScore);
         }
     }
 
