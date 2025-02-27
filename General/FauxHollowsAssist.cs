@@ -94,7 +94,9 @@ public unsafe class FauxHollowsAssist : DailyModuleBase
             return;
         }
 
-        var addon        = (AddonWeeklyPuzzle*)DService.Gui.GetAddonByName("WeeklyPuzzle");
+        var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
+        if (addon == null) return;
+
         var puzzleActive = addon != null && addon->IsVisible && addon->UldManager.LoadedState == AtkLoadState.Loaded;
 
         if (puzzleActive)
