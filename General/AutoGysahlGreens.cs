@@ -28,7 +28,7 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
     static AutoGysahlGreens()
     {
-        ValidTerritory = PresetData.Zones
+        ValidTerritory = PresetSheet.Zones
                                    .Where(x => 
                                               x.Value.TerritoryIntendedUse.RowId == 1 
                                               && x.Key != 250)
@@ -74,7 +74,7 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
-        if (!PresetData.ClassJobs.TryGetValue(DService.ClientState.LocalPlayer.ClassJob.RowId,
+        if (!PresetSheet.ClassJobs.TryGetValue(DService.ClientState.LocalPlayer.ClassJob.RowId,
                                               out var classJobData)) return;
         if (!ModuleConfig.NotBattleJobUsingGysahl && classJobData.DohDolJobIndex != -1) return;
 

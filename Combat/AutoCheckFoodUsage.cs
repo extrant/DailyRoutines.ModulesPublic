@@ -1,19 +1,16 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 namespace DailyRoutines.Modules;
 
@@ -212,7 +209,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
 
                     ImGui.SameLine();
                     ImGui.SetNextItemWidth(200f * GlobalFontScale);
-                    SingleSelectCombo(PresetData.Food, ref SelectedItem, ref SelectItemSearch,
+                    SingleSelectCombo(PresetSheet.Food, ref SelectedItem, ref SelectItemSearch,
                                       x => $"{x.Name.ExtractText()} ({x.RowId})",
                                       [new("物品", ImGuiTableColumnFlags.WidthStretch, 0)],
                                       [
@@ -300,7 +297,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
             ImGui.SetNextItemWidth(-1f);
             using (var id0 = ImRaii.PushId("ZonesSelectCombo"))
             {
-                if (MultiSelectCombo(PresetData.Zones, ref zones, ref ZoneSearch,
+                if (MultiSelectCombo(PresetSheet.Zones, ref zones, ref ZoneSearch,
                                      [
                                          new("区域", ImGuiTableColumnFlags.WidthStretch, 0),
                                          new("副本", ImGuiTableColumnFlags.WidthStretch, 0)

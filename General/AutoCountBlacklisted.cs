@@ -1,5 +1,4 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.Gui.Dtr;
@@ -115,7 +114,7 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
                     var chara = obj.ToBCStruct();
                     if (chara is null) continue;
 
-                    if (!PresetData.Worlds.TryGetValue(chara->HomeWorld, out var world)) continue;
+                    if (!PresetSheet.Worlds.TryGetValue(chara->HomeWorld, out var world)) continue;
 
                     // Character.Id = accountId for new, contentId for old
                     if (BlacklistHashSet.Contains(chara->Character.ContentId) || BlacklistHashSet.Contains(chara->Character.AccountId))
