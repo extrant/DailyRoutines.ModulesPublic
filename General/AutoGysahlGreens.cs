@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DailyRoutines.Modules;
 
@@ -30,11 +28,12 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
 
     static AutoGysahlGreens()
     {
-        ValidTerritory = LuminaCache.Get<TerritoryType>()
-                                    // RowId: 250 = 狼狱停船场
-                                    .Where(x => x.TerritoryIntendedUse.RowId == 1 && x.RowId != 250)
-                                    .Select(x => (ushort)x.RowId)
-                                    .ToHashSet();
+        ValidTerritory = PresetData.Zones
+                                   .Where(x => 
+                                              x.Value.TerritoryIntendedUse.RowId == 1 
+                                              && x.Key != 250)
+                                   .Select(x => (ushort)x.Key)
+                                   .ToHashSet();
     }
 
     public override void Init()
@@ -75,7 +74,8 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
-        if (!LuminaCache.TryGetRow<ClassJob>(DService.ClientState.LocalPlayer.ClassJob.RowId, out var classJobData)) return;
+        if (!PresetData.ClassJobs.TryGetValue(DService.ClientState.LocalPlayer.ClassJob.RowId,
+                                              out var classJobData)) return;
         if (!ModuleConfig.NotBattleJobUsingGysahl && classJobData.DohDolJobIndex != -1) return;
 
         if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft > 300) return;
