@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
+
 namespace DailyRoutines.Modules;
+
 public class ReuseEmote : DailyModuleBase
 {
     internal  const string Command = "reuseemote";
@@ -20,13 +23,13 @@ public class ReuseEmote : DailyModuleBase
 
     public override void Init()
     {
-        for (ushort i = 1; i < 300; i++)
+        var emotesheet = DService.Data.GetExcelSheet<Emote>();
+        foreach (var e in emotesheet)
         {
             try
             {
-                var emote=DService.Data.GetExcelSheet<Emote>().GetRow(i);
-                EmoteMap.Add(emote.Name.ToString(), i);
-                EmoteMap.Add(emote.TextCommand.Value.Command.ToString().Replace("/",""), i);  //英文指令取出/
+                EmoteMap.Add(e.Name.ToString(),(ushort)e.RowId);
+                EmoteMap.Add(e.TextCommand.Value.Command.ToString().Replace("/",""), (ushort)e.RowId);
             }
             catch
             {
@@ -66,25 +69,22 @@ public class ReuseEmote : DailyModuleBase
         }
         NotificationInfo($"{GetLoc("ReuseEmote-Notice-Start")}：{argsStrings[0]}");
         _globalCts = new CancellationTokenSource();
-        Task.Delay(0).ContinueWith((_ => useemote(_globalCts, argsStrings)));
+        var millisecondsTimeout = 2000;
+        if(argsStrings.Length>1)
+            if(int.TryParse(argsStrings[1],out var timeOut))
+                millisecondsTimeout=timeOut;
+        Task.Delay(0).ContinueWith((_ => useemote(_globalCts,EmoteMap[argsStrings[0]],millisecondsTimeout)));
     }
 
-    private static unsafe void useemote(CancellationTokenSource cts,string[] args)
+    private static unsafe void useemote(CancellationTokenSource cts,ushort id, int time)
     {
-        AgentEmote.Instance()->ExecuteEmote(EmoteMap[args[0]],default,false,false);
-        var timeout = 2000;
-        if (args.Length == 2)
-        {
-            if (int.TryParse(args[1], out int i))
-                timeout = i;
-        }
         while (true)
         {
             try
             {
-                Thread.Sleep(timeout);
                 if (cts.Token.IsCancellationRequested) return;
-                AgentEmote.Instance()->ExecuteEmote(EmoteMap[args[0]],default,false,false);
+                AgentEmote.Instance()->ExecuteEmote(id,default,false,false);
+                Thread.Sleep(time);
             }
             catch
             {
