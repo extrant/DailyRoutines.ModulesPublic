@@ -23,7 +23,7 @@ public class ReuseEmote : DailyModuleBase
 
     public override void Init()
     {
-        var emotesheet = DService.Data.GetExcelSheet<Emote>();
+        var emotesheet = LuminaCache.Get<Emote>();
         foreach (var e in emotesheet)
         {
             try
