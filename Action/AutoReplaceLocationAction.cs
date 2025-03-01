@@ -300,9 +300,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             HandleMapLocation(markers, ref modifiedLocation) ||
             HandlePresetCenterLocation(ref modifiedLocation))
         {
-            isPrevented = true;
-
-            UseActionManager.UseActionLocation(type, actionID, targetID, modifiedLocation, extraParam);
+            location = modifiedLocation;
             NotifyLocationRedirect(modifiedLocation);
         }
     }
