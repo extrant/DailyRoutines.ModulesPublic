@@ -11,6 +11,7 @@ using DailyRoutines.Managers;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -72,40 +73,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         
         ImGui.TextColored(LightSkyBlue, GetLoc("AutoExpertDeliveryTitle"));
 
-        var playerState = PlayerState.Instance();
-        var rank        = playerState->GetGrandCompanyRank();
-        var rankText = (GrandCompany)playerState->GrandCompany switch
-        {
-            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank)?.Singular.ExtractText(),
-            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank)?.Singular.ExtractText(),
-            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank)?.Singular.ExtractText(),
-            _                           => string.Empty,
-        };
-        if (string.IsNullOrEmpty(rankText)) return;
-
-        if (!LuminaCache.TryGetRow<GrandCompanyRank>(rank, out var rankData)) return;
-        var iconID = (GrandCompany)playerState->GrandCompany switch
-        {
-            GrandCompany.Maelstrom      => rankData.IconMaelstrom,
-            GrandCompany.TwinAdder      => rankData.IconSerpents,
-            GrandCompany.ImmortalFlames => rankData.IconFlames,
-            _                           => 0,
-        };
-        if (iconID == 0) return;
-
-        var icon = DService.Texture.GetFromGameIcon(new((uint)iconID)).GetWrapOrDefault();
-        if (icon == null) return;
-
-        ImGui.SameLine();
-        using (ImRaii.Group())
-        {
-            ImGui.Image(icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
-            
-            ImGui.SameLine();
-            ImGui.Text(rankText);
-        }
-        
-        ImGuiOm.HelpMarker($"{Lang.Get("ConflictKey")}: {Service.Config.ConflictKey}");
+        DrawGrandCompanyInfo();
         
         ImGui.Separator();
         ImGui.Spacing();
@@ -167,32 +135,101 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         }
     }
 
-    private void EnqueueDelivery()
+    private static void DrawGrandCompanyInfo()
     {
-        foreach (var item in ExpertDeliveryItem.Parse().Where(x => x.GetIndex() != -1 && !x.IsNeedToSkip()))
+        var playerState = PlayerState.Instance();
+        var rank        = playerState->GetGrandCompanyRank();
+        var rankText = (GrandCompany)playerState->GrandCompany switch
         {
-            TaskHelper.Enqueue(() =>
-            {
-                if (item.HandIn())
-                {
-                    TaskHelper.Enqueue(() =>
-                    {
-                        Click.TrySendClick("select_yes");
-                        return IsAddonAndNodesReady(GrandCompanySupplyReward);
-                    }, null, null, null, 2);
-                    TaskHelper.Enqueue(
-                        () => ClickGrandCompanySupplyReward.Using((nint)GrandCompanySupplyReward).Deliver(),
-                        null, null, null, 2);
-                    
-                    TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
-                    TaskHelper.Enqueue(() => ExpertDeliveryItem.Refresh(),      null, null, null, 2);
-                    TaskHelper.Enqueue(() => ExpertDeliveryItem.IsAddonReady(), null, null, null, 2);
-                    TaskHelper.Enqueue(() => EnqueueDelivery(),                 null, null, null, 2);
-                }
-            });
+            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank)?.Singular.ExtractText(),
+            _                           => string.Empty,
+        };
+        if (string.IsNullOrEmpty(rankText)) return;
+
+        if (!LuminaCache.TryGetRow<GrandCompanyRank>(rank, out var rankData)) return;
+        var iconID = (GrandCompany)playerState->GrandCompany switch
+        {
+            GrandCompany.Maelstrom      => rankData.IconMaelstrom,
+            GrandCompany.TwinAdder      => rankData.IconSerpents,
+            GrandCompany.ImmortalFlames => rankData.IconFlames,
+            _                           => 0,
+        };
+        if (iconID == 0) return;
+
+        var icon = DService.Texture.GetFromGameIcon(new((uint)iconID)).GetWrapOrDefault();
+        if (icon == null) return;
+
+        ImGui.SameLine();
+        using (ImRaii.Group())
+        {
+            ImGui.Image(icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
             
-            break;
+            ImGui.SameLine();
+            ImGui.Text(rankText);
         }
+    }
+
+    private bool? EnqueueDelivery()
+    {
+        if (GrandCompanySupplyReward != null)
+        {
+            if (!IsAddonAndNodesReady(GrandCompanySupplyReward)) return false;
+            
+            ClickGrandCompanySupplyReward.Using((nint)GrandCompanySupplyReward).Deliver();
+            TaskHelper.Enqueue(EnqueueRefresh);
+            TaskHelper.Enqueue(EnqueueDelivery);
+            return true;
+        }
+        else if (SelectYesno != null)
+        {
+            if (!IsAddonAndNodesReady(SelectYesno)) return false;
+            
+            ClickSelectYesNo.Using((nint)SelectYesno).Yes();
+            TaskHelper.Enqueue(EnqueueDelivery);
+            return true;
+        }
+        else if (GrandCompanySupplyList != null)
+        {
+            if (!IsAddonAndNodesReady(GrandCompanySupplyList)         ||
+                AgentGrandCompanySupply.Instance()->ItemArray == null ||
+                GrandCompanySupplyList->AtkValues->UInt       != 2)
+                return false;
+            
+            var items = ExpertDeliveryItem.Parse().Where(x => x.GetIndex() != -1 && !x.IsNeedToSkip()).ToList();
+            if (items.Count > 0)
+            {
+                items.First().HandIn();
+                TaskHelper.Enqueue(EnqueueDelivery);
+                return true;
+            }
+            else
+            {
+                TaskHelper.Abort();
+                return true;
+            }
+        }
+        else if (!DService.Condition[ConditionFlag.OccupiedInQuestEvent])
+        {
+            TaskHelper.Abort();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private static bool? EnqueueRefresh()
+    {
+        if (GrandCompanySupplyReward != null              ||
+            !IsAddonAndNodesReady(GrandCompanySupplyList) ||
+            AgentGrandCompanySupply.Instance()->ItemArray == null)
+            return false;
+
+        SendEvent(AgentId.GrandCompanySupply, 0, 0, 2);
+        return true;
     }
 
     // 悬浮窗控制
@@ -235,19 +272,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             return returnValues;
         }
 
-        public static void Refresh() => SendEvent(AgentId.GrandCompanySupply, 0, 0, 2);
-
-        public static bool IsAddonReady()
-            => GrandCompanySupplyReward                      == null &&
-               AgentGrandCompanySupply.Instance()->ItemArray != null &&
-               GrandCompanySupplyList->AtkValues->UInt       == 2;
-
-        public bool HandIn()
-        {
-            if (IsNeedToSkip()) return false;
-            SendEvent(AgentId.GrandCompanySupply, 0, 1, GetIndex());
-            return true;
-        }
+        public void HandIn() => Callback(GrandCompanySupplyList, true, 1, GetIndex());
 
         public bool IsNeedToSkip()
         {
