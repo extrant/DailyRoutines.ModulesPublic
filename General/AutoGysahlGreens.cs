@@ -74,9 +74,9 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
-        if (!PresetSheet.ClassJobs.TryGetValue(DService.ClientState.LocalPlayer.ClassJob.RowId,
-                                              out var classJobData)) return;
-        if (!ModuleConfig.NotBattleJobUsingGysahl && classJobData.DohDolJobIndex != -1) return;
+        var classJobData = DService.ClientState.LocalPlayer.ClassJob.ValueNullable;
+        if (classJobData == null) return;
+        if (!ModuleConfig.NotBattleJobUsingGysahl && (classJobData?.DohDolJobIndex ?? 0) != -1) return;
 
         if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft > 300) return;
         
