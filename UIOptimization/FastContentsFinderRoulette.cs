@@ -7,6 +7,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 
@@ -56,10 +57,16 @@ public unsafe class FastContentsFinderRoulette : DailyModuleBase
             var name = SanitizeSeIcon(SeString.Parse(nameNode->NodeText).TextValue);
             if (string.IsNullOrWhiteSpace(name)) continue;
             
+            var lockNode = (AtkImageNode*)listItemComponent->Component->UldManager.SearchNodeById(3);
+            if (lockNode == null) continue;
+            
             var levelNode = (AtkTextNode*)listItemComponent->Component->UldManager.SearchNodeById(18);
             if (levelNode == null) continue;
+            
+            if (levelNode->IsVisible())
+                levelNode->ToggleVisibility(false);
 
-            var position = new Vector2(levelNode->ScreenX, levelNode->ScreenY - 8f);
+            var position = new Vector2(levelNode->ScreenX + 6f, levelNode->ScreenY - 8f);
             ImGui.SetNextWindowPos(position);
             if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{name}",
                             ImGuiWindowFlags.NoDecoration    | ImGuiWindowFlags.AlwaysAutoResize   |
@@ -74,12 +81,15 @@ public unsafe class FastContentsFinderRoulette : DailyModuleBase
                 }
                 else
                 {
-                    if (ImGui.SmallButton($"{LuminaCache.GetRow<Addon>(2504)!.Value.Text.ExtractText()}###{name}"))
+                    using (ImRaii.Disabled(lockNode->IsVisible()))
                     {
-                        var content = LuminaCache.Get<ContentRoulette>()
-                                                 .FirstOrDefault(x => x.Name.ExtractText().Contains(name, StringComparison.OrdinalIgnoreCase));
-                        if (content.RowId != 0)
-                            ContentsFinderHelper.RequestDutyRoulette((ushort)content.RowId, ContentsFinderHelper.DefaultOption);
+                        if (ImGui.SmallButton($"{LuminaCache.GetRow<Addon>(2504)!.Value.Text.ExtractText()}###{name}"))
+                        {
+                            var content = LuminaCache.Get<ContentRoulette>()
+                                                     .FirstOrDefault(x => x.Name.ExtractText().Contains(name, StringComparison.OrdinalIgnoreCase));
+                            if (content.RowId != 0)
+                                ContentsFinderHelper.RequestDutyRoulette((ushort)content.RowId, ContentsFinderHelper.DefaultOption);
+                        }
                     }
                 }
                 ImGui.End();
