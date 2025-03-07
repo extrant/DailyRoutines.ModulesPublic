@@ -105,7 +105,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                 else
                 {
                     var sharedPrefix = $"{levelNode->NodeText.ExtractText()} {name}";
-                    
+
+                    name = name.Split(' ').LastOrDefault();
                     using (ImRaii.Group())
                     {
                         using (ImRaii.Disabled(lockNode->IsVisible()))
