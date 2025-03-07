@@ -56,6 +56,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         var isPendingSomething = treelistComponent->LayoutRefreshPending || treelistComponent->IsUpdatePending;
         if (listLength == 0 || isPendingSomething) return;
         
+        var lineHeight = ImGui.GetTextLineHeight() - ImGui.GetStyle().FramePadding.Y;
+        
         for (var i = 0; i < Math.Min(listLength, 45); i++)
         {
             var offset = 3 + i;
@@ -92,8 +94,12 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
             {
                 if (DService.Condition[ConditionFlag.InDutyQueue])
                 {
-                    if (ImGui.SmallButton($"{GetLoc("Cancel")}##{name}"))
-                        ContentsFinderHelper.CancelDutyApply();
+                    if (DService.Texture.TryGetFromGameIcon(new(61502), out var explorerTexture))
+                    {
+                        if (ImGui.ImageButton(explorerTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
+                            ContentsFinderHelper.CancelDutyApply();
+                        ImGuiOm.TooltipHover($"{GetLoc("Cancel")}");
+                    }
                 }
                 else
                 {
@@ -103,8 +109,6 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                     {
                         using (ImRaii.Disabled(lockNode->IsVisible()))
                         {
-                            var lineHeight = ImGui.GetTextLineHeight() - ImGui.GetStyle().FramePadding.Y;
-                            
                             if (DService.Texture.TryGetFromGameIcon(new(60081), out var joinTexture))
                             {
                                 if (ImGui.ImageButton(joinTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
