@@ -52,9 +52,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         var otherPFNode = (AtkTextNode*)ContentsFinder->GetNodeById(57);
         if (otherPFNode == null) return;
 
-        var listLength         = treelistComponent->ListLength;
-        var isPendingSomething = treelistComponent->LayoutRefreshPending || treelistComponent->IsUpdatePending;
-        if (listLength == 0 || isPendingSomething) return;
+        var listLength = treelistComponent->ListLength;
+        if (listLength == 0) return;
         
         var lineHeight = ImGui.GetTextLineHeight() - ImGui.GetStyle().FramePadding.Y;
         
@@ -72,7 +71,9 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
             var nameNode = (AtkTextNode*)listItemComponent->Component->UldManager.SearchNodeById(5);
             if (nameNode == null) continue;
             
-            var name = SanitizeSeIcon(SeString.Parse(nameNode->NodeText).TextValue);
+            var name = string.Empty;
+            try { name = nameNode->NodeText.ExtractText(); }
+            catch { name = string.Empty; }
             if (string.IsNullOrWhiteSpace(name)) continue;
             
             var lockNode = (AtkImageNode*)listItemComponent->Component->UldManager.SearchNodeById(3);
