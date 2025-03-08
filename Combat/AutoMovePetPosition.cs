@@ -72,11 +72,11 @@ public class AutoMovePetPosition : DailyModuleBase
         ImGui.TableNextColumn();
         if (ImGuiOm.ButtonIconSelectable("AddNewPreset", FontAwesomeIcon.Plus))
         {
-            // 添加新 TerritoryId (默认等于 0)
-            if (!ModuleConfig.PositionSchedules.ContainsKey(0))
-                ModuleConfig.PositionSchedules[0] = new List<PositionSchedule>();
+            // 添加新 TerritoryId (默认等于 1)
+            if (!ModuleConfig.PositionSchedules.ContainsKey(1))
+                ModuleConfig.PositionSchedules[1] = new List<PositionSchedule>();
 
-            ModuleConfig.PositionSchedules[0].Add(new PositionSchedule(Guid.NewGuid().ToString())
+            ModuleConfig.PositionSchedules[1].Add(new PositionSchedule(Guid.NewGuid().ToString())
             {
                 Enabled = true,
                 ZoneID = 0,
