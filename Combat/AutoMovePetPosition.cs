@@ -79,7 +79,7 @@ public class AutoMovePetPosition : DailyModuleBase
             ModuleConfig.PositionSchedules[1].Add(new PositionSchedule(Guid.NewGuid().ToString())
             {
                 Enabled = true,
-                ZoneID = 0,
+                ZoneID = 1,
                 DelayS = 0,
                 Position = default
             });
