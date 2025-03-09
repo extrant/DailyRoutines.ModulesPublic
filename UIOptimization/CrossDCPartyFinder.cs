@@ -28,7 +28,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     public override ModuleInfo Info => new()
     {
         Title       = "跨大区队员招募",
-        Description = "在原有 队员招募 界面新增大区选择, 选择其他大区后自动从众包网站上拉取并显示对应大区的招募信息",
+        Description = "允许在原有 队员招募 界面选择查看由众包网站提供的其他大区的招募信息",
         Category    = ModuleCategories.UIOptimization
     };
 
@@ -205,9 +205,11 @@ public class CrossDCPartyFinder : DailyModuleBase
                 {
                     if (isNeedToResetY) ImGui.SetScrollHereY();
                     if (!IsNeedToDisable) DrawPartyFinderList(sizeAfter);
+                    
+                    ScaledDummy(8f);
                 }
             }
-
+            
             ImGui.End();
         }
     }
@@ -217,11 +219,9 @@ public class CrossDCPartyFinder : DailyModuleBase
         using var table = ImRaii.Table("###ListingsTable", 3, ImGuiTableFlags.BordersInnerH, size);
         if (!table) return;
         
-        ImGui.TableSetupColumn("招募图标", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() * 4);
+        ImGui.TableSetupColumn("招募图标", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() * 3);
         ImGui.TableSetupColumn("招募详情", ImGuiTableColumnFlags.WidthStretch, 50);
         ImGui.TableSetupColumn("招募信息", ImGuiTableColumnFlags.WidthStretch, 20);
-
-        ImGui.TableHeadersRow();
         
         var startIndex = CurrentPage * ModuleConfig.PageSize;
         var pageItems = ListingsDisplay.Skip(startIndex).Take(ModuleConfig.PageSize).ToList();
@@ -236,17 +236,30 @@ public class CrossDCPartyFinder : DailyModuleBase
 
             ImGui.TableNextColumn();
             if (DService.Texture.TryGetFromGameIcon(new(listing.CategoryIcon), out var categoryTexture))
-                ImGui.Image(categoryTexture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing() * 4));
+                ImGui.Image(categoryTexture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing() * 3));
             
             // 招募详情
             ImGui.TableNextColumn();
-            var isDescEmpty = string.IsNullOrWhiteSpace(listing.Description);
             using (ImRaii.Group())
             {
-                using (FontManager.UIFont140.Push())
+                using (FontManager.UIFont120.Push())
                     ImGui.TextColored(LightSkyBlue, $"{listing.Duty}");
                 
+                ImGui.SameLine();
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalFontScale));
+                ImGui.TextColored(LightSkyBlue, $"({listing.PlayerName}@{listing.HomeWorld})");
+                ImGuiOm.TooltipHover($"{listing.PlayerName}@{listing.HomeWorld}");
+                if (ImGui.IsItemHovered())
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                if (ImGui.IsItemClicked())
+                {
+                    ImGui.SetClipboardText($"{listing.PlayerName}@{listing.HomeWorld}");
+                    NotificationSuccess(GetLoc("CopiedToClipboard"));
+                }
+                
+                var isDescEmpty = string.IsNullOrWhiteSpace(listing.Description);
                 ImGui.Text(isDescEmpty ? $"({LuminaCache.GetRow<Addon>(11100)!.Value.Text.ExtractText()})" : $"{listing.Description}");
+                if (!isDescEmpty) ImGuiOm.TooltipHover(listing.Description);
                 if (ImGui.IsItemHovered() && !isDescEmpty)
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
                 if (ImGui.IsItemClicked() && !isDescEmpty)
@@ -255,11 +268,6 @@ public class CrossDCPartyFinder : DailyModuleBase
                     NotificationSuccess(GetLoc("CopiedToClipboard"));
                 }
             }
-            if (!isDescEmpty) ImGuiOm.TooltipHover(listing.Description);
-            
-            var currentSize = ImGui.GetItemRectSize();
-            
-            ImGui.Dummy(new(1, Math.Max(1, (2 * ImGui.GetTextLineHeightWithSpacing()) - currentSize.Y + (2 * ImGui.GetStyle().ItemSpacing.Y))));
             
             if (listing.Detail != null)
             {
@@ -302,17 +310,8 @@ public class CrossDCPartyFinder : DailyModuleBase
             ImGui.TableNextColumn();
             using (FontManager.UIFont80.Push())
             {
-                ImGui.TextColored(LightSkyBlue, $"{listing.PlayerName}@{listing.HomeWorld}");
-                if (ImGui.IsItemHovered())
-                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-                if (ImGui.IsItemClicked())
-                {
-                    ImGui.SetClipboardText($"{listing.PlayerName}@{listing.HomeWorld}");
-                    NotificationSuccess(GetLoc("CopiedToClipboard"));
-                }
-                
-                ImGui.Text($"(当前位于: {listing.CreatedAtWorld})");
-                ImGui.NewLine();
+                ImGui.Text($"当前位于: {listing.CreatedAtWorld}");
+                ImGui.Text($"剩余人数: {listing.SlotAvailable - listing.SlotFilled}");
                 ImGui.Text($"剩余时间: {TimeSpan.FromSeconds(listing.TimeLeft).TotalMinutes:F0} 分钟");
                 ImGui.Text($"平均品级: {(listing.MinItemLevel == 0 ? "无" : $"{listing.MinItemLevel}")}");
             }
@@ -389,10 +388,12 @@ public class CrossDCPartyFinder : DailyModuleBase
         }
 
         List<PartyFinderList.PartyFinderListing> FilterAndSort(IEnumerable<PartyFinderList.PartyFinderListing> source)
-            => source.Where(x => string.IsNullOrWhiteSpace(CurrentSeach) ||
-                                 x.GetSearchString().Contains(CurrentSeach, StringComparison.OrdinalIgnoreCase))
-                     .OrderByDescending(x => !ModuleConfig.OrderByDescending ? 0 : x.TimeLeft)
-                     .ToList();
+        {
+            return source.Where(x => string.IsNullOrWhiteSpace(CurrentSeach) ||
+                                     x.GetSearchString().Contains(CurrentSeach, StringComparison.OrdinalIgnoreCase))
+                         .OrderByDescending(x => ModuleConfig.OrderByDescending ? x.TimeLeft : 1 / x.TimeLeft)
+                         .ToList();
+        }
     }
     
     private static unsafe void SendRequestDynamic()
