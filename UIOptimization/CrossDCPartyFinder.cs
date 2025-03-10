@@ -225,7 +225,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         var startIndex = CurrentPage * ModuleConfig.PageSize;
         var pageItems = ListingsDisplay.Skip(startIndex).Take(ModuleConfig.PageSize).ToList();
         
-        pageItems.ForEach(x => Task.Run(async () => await x.RequestAsync(), CancelSource.Token));
+        pageItems.ForEach(x => Task.Run(async () => await x.RequestAsync(), CancelSource.Token).ConfigureAwait(false));
 
         foreach (var listing in pageItems)
         {
@@ -349,7 +349,7 @@ public class CrossDCPartyFinder : DailyModuleBase
             LastUpdate      = DateTime.Now;
             LastRequest     = req;
             
-            var testResult = await testReq.Request();
+            var testResult = await testReq.Request().ConfigureAwait(false);
 
             // 没有数据就不继续请求了
             var totalPage = testResult.Overview.Total == 0 ? 0 : (testResult.Overview.Total + 99) / 100;
@@ -375,7 +375,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                     if (!IsAddonAndNodesReady(LookingForGroup)) return;
                     LookingForGroup->GetTextNodeById(49)->SetText($"{CurrentDataCenter}: {ListingsDisplay.Count}");
                 }
-            });
+            }).ConfigureAwait(false);
         });
 
         async Task Gather(uint page)
@@ -383,17 +383,15 @@ public class CrossDCPartyFinder : DailyModuleBase
             var clonedRequest = req.Clone();
             clonedRequest.Page = page;
             
-            var result   = await clonedRequest.Request();
+            var result   = await clonedRequest.Request().ConfigureAwait(false);
             listings.AddRange(result.Listings);
         }
 
-        List<PartyFinderList.PartyFinderListing> FilterAndSort(IEnumerable<PartyFinderList.PartyFinderListing> source)
-        {
-            return source.Where(x => string.IsNullOrWhiteSpace(CurrentSeach) ||
-                                     x.GetSearchString().Contains(CurrentSeach, StringComparison.OrdinalIgnoreCase))
-                         .OrderByDescending(x => ModuleConfig.OrderByDescending ? x.TimeLeft : 1 / x.TimeLeft)
-                         .ToList();
-        }
+        List<PartyFinderList.PartyFinderListing> FilterAndSort(IEnumerable<PartyFinderList.PartyFinderListing> source) =>
+            source.Where(x => string.IsNullOrWhiteSpace(CurrentSeach) ||
+                              x.GetSearchString().Contains(CurrentSeach, StringComparison.OrdinalIgnoreCase))
+                  .OrderByDescending(x => ModuleConfig.OrderByDescending ? x.TimeLeft : 1 / x.TimeLeft)
+                  .ToList();
     }
     
     private static unsafe void SendRequestDynamic()
@@ -692,7 +690,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 if (Detail != null || DetailReuqestTask != null) return;
                 
                 DetailReuqestTask = HttpClient.GetStringAsync($"{BASE_DETAIL_URL}{ID}");
-                Detail            = JsonConvert.DeserializeObject<PartyFinderListingDetail>(await DetailReuqestTask) ?? new();
+                Detail            = JsonConvert.DeserializeObject<PartyFinderListingDetail>(await DetailReuqestTask.ConfigureAwait(false)) ?? new();
             }
 
             public bool Equals(PartyFinderListing? other)
