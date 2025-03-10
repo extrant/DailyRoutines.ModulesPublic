@@ -254,7 +254,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
         var result   = originalText;
         var filtered = GetFilteredString(result);
 
-        // 记录已处理过的文本，防止无限循环
+        // 记录已处理过的文本, 防止无限循环
         var processedTexts = new HashSet<string>();
 
         while (filtered != result && !processedTexts.Contains(result))
@@ -262,7 +262,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             processedTexts.Add(result);
             var newResult = new StringBuilder();
 
-            // 跳过<tag>标签内容
+            // 跳过 <> 标签内容
             var insideTag = false;
 
             for (var i = 0; i < result.Length; i++)
@@ -289,7 +289,6 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                     // 截取被屏蔽的词
                     var censoredWord = result.Substring(startPos, i - startPos + 1);
 
-                    // 根据不同情况处理
                     if (censoredWord.Length == 1 && IsChineseCharacter(censoredWord[0]))
                     {
                         // 单个汉字转拼音
@@ -339,9 +338,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
         
         var result = new SeStringBuilder();
         
-        // 当前是否在标签内
         var insideTag = false;
-        // 当前是否在屏蔽词内
         var insideCensored = false;
         
         for (var i = 0; i < originalText.Length; i++)
@@ -360,7 +357,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             // 处理非标签内容
             if (i < filtered.Length && filtered[i] == '*' && originalText[i] != '*')
             {
-                // 如果这是屏蔽词的开始，添加[
+                // 屏蔽词开始, 添加染色
                 if (!insideCensored)
                 {
                     result.Add(new UIForegroundPayload(17));
@@ -371,7 +368,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             }
             else
             {
-                // 如果之前在屏蔽词内，现在离开了，添加]
+                // 屏蔽词结束, 结束染色
                 if (insideCensored)
                 {
                     result.Add(UIForegroundPayload.UIForegroundOff);
@@ -382,7 +379,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             }
         }
         
-        // 如果结束时仍在屏蔽词内，添加结束]
+        // 字符串结束了仍然在屏蔽词里, 结束染色
         if (insideCensored)
             result.Add(UIForegroundPayload.UIForegroundOff);
         
