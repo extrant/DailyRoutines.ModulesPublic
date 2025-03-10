@@ -118,7 +118,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
         foreach (var type in types)
         {
             var container = manager->GetInventoryContainer(type);
-            if (container == null || !container->IsLoaded) continue;
+            if (container == null || container->Loaded != 1) continue;
 
             for (var i = 0; i < container->Size; i++)
             {

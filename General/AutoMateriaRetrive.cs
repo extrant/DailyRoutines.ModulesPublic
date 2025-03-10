@@ -118,7 +118,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
             foreach (var inventoryType in Inventories)
             {
                 var container = instance->GetInventoryContainer(inventoryType);
-                if (container == null || !container->IsLoaded) continue;
+                if (container == null || container->Loaded != 1) continue;
                 for (var i = 0; i < container->Size; i++)
                 {
                     var slot = container->GetInventorySlot(i);
