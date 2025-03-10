@@ -11,6 +11,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Hooking;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility.Numerics;
@@ -220,7 +221,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         
         ImGui.TableSetupColumn("招募图标", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() * 3);
         ImGui.TableSetupColumn("招募详情", ImGuiTableColumnFlags.WidthStretch, 50);
-        ImGui.TableSetupColumn("招募信息", ImGuiTableColumnFlags.WidthStretch, 20);
+        ImGui.TableSetupColumn("招募信息", ImGuiTableColumnFlags.WidthStretch, 15);
         
         var startIndex = CurrentPage * ModuleConfig.PageSize;
         var pageItems = ListingsDisplay.Skip(startIndex).Take(ModuleConfig.PageSize).ToList();
@@ -246,13 +247,13 @@ public class CrossDCPartyFinder : DailyModuleBase
                 
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalFontScale));
-                ImGui.TextColored(LightSkyBlue, $"({listing.PlayerName}@{listing.HomeWorld})");
-                ImGuiOm.TooltipHover($"{listing.PlayerName}@{listing.HomeWorld}");
+                ImGui.TextColored(LightSkyBlue, $"({listing.PlayerName}@{listing.HomeWorldName})");
+                ImGuiOm.TooltipHover($"{listing.PlayerName}@{listing.HomeWorldName}");
                 if (ImGui.IsItemHovered())
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
                 if (ImGui.IsItemClicked())
                 {
-                    ImGui.SetClipboardText($"{listing.PlayerName}@{listing.HomeWorld}");
+                    ImGui.SetClipboardText($"{listing.PlayerName}@{listing.HomeWorldName}");
                     NotificationSuccess(GetLoc("CopiedToClipboard"));
                 }
                 
@@ -309,7 +310,7 @@ public class CrossDCPartyFinder : DailyModuleBase
             ImGui.TableNextColumn();
             using (FontManager.UIFont80.Push())
             {
-                ImGui.Text($"当前位于: {listing.CreatedAtWorld}");
+                ImGui.Text($"当前位于: {listing.CreatedAtWorldName}");
                 ImGui.Text($"剩余人数: {listing.SlotAvailable - listing.SlotFilled}");
                 ImGui.Text($"剩余时间: {TimeSpan.FromSeconds(listing.TimeLeft).TotalMinutes:F0} 分钟");
                 ImGui.Text($"平均品级: {(listing.MinItemLevel == 0 ? "无" : $"{listing.MinItemLevel}")}");
@@ -361,7 +362,7 @@ public class CrossDCPartyFinder : DailyModuleBase
 
             Listings = listings.OrderByDescending(x => x.TimeLeft)
                                .DistinctBy(x => x.ID)
-                               .DistinctBy(x => $"{x.PlayerName}@{x.HomeWorld}")
+                               .DistinctBy(x => $"{x.PlayerName}@{x.HomeWorldName}")
                                .ToList();
             ListingsDisplay = FilterAndSort(Listings);
         }, CancelSource.Token).ContinueWith(async _ =>
@@ -636,16 +637,25 @@ public class CrossDCPartyFinder : DailyModuleBase
             public string Description { get; set; }
             
             [JsonProperty("created_world")]
+            public string CreatedAtWorldName { get; set; }
+            
+            [JsonProperty("created_world_id")]
             public string CreatedAtWorld { get; set; }
             
             [JsonProperty("home_world")]
+            public string HomeWorldName { get; set; }
+            
+            [JsonProperty("home_world_id")]
             public string HomeWorld { get; set; }
             
             [JsonProperty("datacenter")]
             public string DataCenter { get; set; }
             
             [JsonProperty("category")]
-            public string Category { get; set; }
+            public string CategoryName { get; set; }
+            
+            [JsonProperty("category_id")]
+            public DutyCategory Category { get; set; }
             
             [JsonProperty("duty")]
             public string Duty { get; set; }
@@ -679,7 +689,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 get
                 {
                     if (categoryIcon != 0) return categoryIcon;
-                    return categoryIcon = PartyFinderRequest.ParseCategoryIDToIconID(PartyFinderRequest.ParseOnlineCategoryToID(Category));
+                    return categoryIcon = PartyFinderRequest.ParseCategoryIDToIconID(PartyFinderRequest.ParseOnlineCategoryToID(CategoryName));
                 }
             }
             
@@ -701,7 +711,7 @@ public class CrossDCPartyFinder : DailyModuleBase
             }
 
             public string GetSearchString() =>
-                $"{PlayerName}_{Description}_{PartyFinderRequest.ParseCategoryIDToLoc(PartyFinderRequest.ParseOnlineCategoryToID(Category))}_{Duty}";
+                $"{PlayerName}_{Description}_{PartyFinderRequest.ParseCategoryIDToLoc(PartyFinderRequest.ParseOnlineCategoryToID(CategoryName))}_{Duty}";
         }
 
         public class PartyFinderOverview
@@ -788,10 +798,13 @@ public class CrossDCPartyFinder : DailyModuleBase
             public bool Filled { get; set; }
 
             [JsonProperty("role")]
+            public string? RoleName { get; set; }
+            
+            [JsonProperty("role_id")]
             public string? Role { get; set; }
 
             [JsonProperty("job")]
-            public string Job { get; set; }
+            public string JobName { get; set; }
 
             public static HashSet<string> BattleJobs;
             public static HashSet<string> TankJobs;
@@ -825,13 +838,13 @@ public class CrossDCPartyFinder : DailyModuleBase
             {
                 get
                 {
-                    if (string.IsNullOrEmpty(Job)) return [];
+                    if (string.IsNullOrEmpty(JobName)) return [];
 
-                    var splited = Job.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var splited = JobName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     if (jobIcons.Count == 0)
                     {
                         if (splited.Length == 1)
-                            jobIcons = [ParseClassJobIdByName(Job)];
+                            jobIcons = [ParseClassJobIdByName(JobName)];
                         // 全战职
                         else if (splited.Length == BattleJobs.Count && splited.All(BattleJobs.Contains))
                             jobIcons = [62145];
