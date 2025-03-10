@@ -6,7 +6,11 @@ using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace DailyRoutines.Modules;
 
@@ -28,11 +32,27 @@ public class AutoFateSync : DailyModuleBase
 
     private static CancellationTokenSource? CancelSource;
 
+    private static readonly uint[] TankStanceStatuses = [79, 91, 743, 1833];
+    private static readonly Dictionary<uint, uint> TankStanceActions = new()
+    {
+        // 剑术师 / 骑士
+        { 1, 28 },
+        { 19, 28 },
+        // 斧术师 / 战士
+        { 3, 48 },
+        { 21, 48 },
+        // 暗黑骑士
+        { 32, 3629 },
+        // 绝枪战士
+        { 37, 16142 }
+    };
+    
     public override void Init()
     {
+        TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
         ModuleConfig = LoadConfig<Config>() ?? new();
         CancelSource ??= new();
-
+        
         FateDirectorSetupHook ??= 
             DService.Hook.HookFromSignature<FateDirectorSetupDelegate>(FateDirectorSetupSig.Get(), FateDirectorSetupDetour);
         FateDirectorSetupHook.Enable();
@@ -53,16 +73,18 @@ public class AutoFateSync : DailyModuleBase
         if (ImGui.Checkbox(Lang.Get("AutoFateSync-IgnoreMounting"), ref ModuleConfig.IgnoreMounting))
             SaveConfig(ModuleConfig);
         ImGuiOm.HelpMarker(Lang.Get("AutoFateSync-IgnoreMountingHelp"));
+        if (ImGui.Checkbox(Lang.Get("AutoFateSync-AutoTankStance"), ref ModuleConfig.AutoTankStance))
+            SaveConfig(ModuleConfig);
     }
 
-    private static unsafe nint FateDirectorSetupDetour(uint rowID, nint a2, nint a3)
+    private unsafe nint FateDirectorSetupDetour(uint rowID, nint a2, nint a3)
     {
         var original = FateDirectorSetupHook.Original(rowID, a2, a3);
         if (rowID == 102401 && FateManager.Instance()->CurrentFate != null) HandleFateEnter();
         return original;
     }
 
-    private static unsafe void HandleFateEnter()
+    private unsafe void HandleFateEnter()
     {
         if (ModuleConfig.IgnoreMounting && (DService.Condition[ConditionFlag.InFlight] || IsOnMount))
         {
@@ -78,15 +100,39 @@ public class AutoFateSync : DailyModuleBase
                 if (manager->CurrentFate == null || DService.ClientState.LocalPlayer == null) return;
 
                 ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.FateLevelSync, manager->CurrentFate->FateId, 1);
+                if (ModuleConfig.AutoTankStance) EnqueueStanceTask();
             }, TimeSpan.FromSeconds(ModuleConfig.Delay), 0, CancelSource.Token);
-
             return;
         }
-
+    
+        if (ModuleConfig.AutoTankStance) EnqueueStanceTask();
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.FateLevelSync, FateManager.Instance()->CurrentFate->FateId, 1);
     }
 
-    private static unsafe void OnFlying(IFramework _)
+    private unsafe void EnqueueStanceTask()
+    {
+        TaskHelper.Abort();
+        TaskHelper.DelayNext(500);
+        TaskHelper.Enqueue(() => CancelSource.Token.IsCancellationRequested || 
+                                 FateManager.Instance()->CurrentFate == null ||
+                                 (!IsOnMount && !OccupiedInEvent));
+        TaskHelper.Enqueue(() =>
+        {
+            if (CancelSource.Token.IsCancellationRequested || FateManager.Instance()->CurrentFate == null || IsOnMount || OccupiedInEvent) return;
+            if (DService.ClientState.LocalPlayer.ClassJob.RowId != 0 && DService.ClientState.LocalPlayer.IsTargetable)
+            {
+                if (TankStanceActions.TryGetValue(DService.ClientState.LocalPlayer.ClassJob.RowId, out var actionId))
+                {
+                    var battlePlayer = (BattleChara*)DService.ClientState.LocalPlayer.Address;
+                    if (!TankStanceStatuses.Any(status => battlePlayer->StatusManager.HasStatus(status)))
+                    {
+                        UseActionManager.UseAction(ActionType.Action, actionId);
+                    }
+                }
+            }
+        });
+    }
+    private unsafe void OnFlying(IFramework _)
     {
         if (!Throttler.Throttle("OnFlying")) return;
 
@@ -100,6 +146,7 @@ public class AutoFateSync : DailyModuleBase
         if (DService.Condition[ConditionFlag.InFlight] || IsOnMount) return;
 
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.FateLevelSync, currentFate->FateId, 1);
+        if (ModuleConfig.AutoTankStance) EnqueueStanceTask();
         FrameworkManager.Unregister(OnFlying);
     }
 
@@ -108,7 +155,7 @@ public class AutoFateSync : DailyModuleBase
         CancelSource?.Cancel();
         CancelSource?.Dispose();
         CancelSource = null;
-
+        
         base.Uninit();
     }
 
@@ -116,5 +163,6 @@ public class AutoFateSync : DailyModuleBase
     {
         public bool IgnoreMounting = true;
         public float Delay = 3f;
+        public bool AutoTankStance;
     }
 }
