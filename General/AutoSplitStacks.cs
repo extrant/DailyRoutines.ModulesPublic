@@ -323,7 +323,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
         var foundTypes
             = InventoryTypes.Where(type => manager->GetInventoryContainer(type) != null && 
-                                                    manager->GetInventoryContainer(type)->Loaded != 0 &&
+                                                    manager->GetInventoryContainer(type)->IsLoaded &&
                                                     manager->GetItemCountInContainer(itemID, type) + 
                                                     manager->GetItemCountInContainer(itemID, type, true) > amount)
                             .ToList();
