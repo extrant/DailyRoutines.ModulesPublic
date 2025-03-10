@@ -116,7 +116,6 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
 
         var origText = SeString.Parse(managedString);
         
-        
         var builderHandled  = new SeStringBuilder();
         foreach (var payload in origText.Payloads)
         {
