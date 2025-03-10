@@ -28,7 +28,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     public override ModuleInfo Info => new()
     {
         Title       = "跨大区队员招募",
-        Description = "允许在原有 队员招募 界面选择查看由众包网站提供的其他大区的招募信息",
+        Description = "允许在游戏原生的 队员招募 界面内选择并查看由众包网站提供的其他大区的招募信息",
         Category    = ModuleCategories.UIOptimization
     };
 
