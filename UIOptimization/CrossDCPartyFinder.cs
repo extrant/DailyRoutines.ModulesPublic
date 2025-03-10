@@ -82,9 +82,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
         
-        CancelSource?.Cancel();
-        CancelSource?.Dispose();
-        CancelSource = null;
+        ClearResources();
         
         base.Uninit();
     }
@@ -171,7 +169,8 @@ public class CrossDCPartyFinder : DailyModuleBase
                     }
                     
                     ImGui.SameLine();
-                    ImGui.Text($"{CurrentPage + 1} / {Math.Max(1, totalPages)}");
+                    ImGui.Text($" {CurrentPage + 1} / {Math.Max(1, totalPages)} ");
+                    ImGuiOm.TooltipHover($"{ListingsDisplay.Count}");
                     
                     ImGui.SameLine();
                     if (ImGui.Button(">"))
@@ -226,7 +225,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         var startIndex = CurrentPage * ModuleConfig.PageSize;
         var pageItems = ListingsDisplay.Skip(startIndex).Take(ModuleConfig.PageSize).ToList();
         
-        pageItems.ForEach(x => _ = x.RequestAsync());
+        pageItems.ForEach(x => Task.Run(async () => await x.RequestAsync(), CancelSource.Token));
 
         foreach (var listing in pageItems)
         {
@@ -322,6 +321,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     {
         CancelSource?.Cancel();
         CancelSource?.Dispose();
+        PartyFinderList.PartyFinderListing.ReleaseSlim();
         
         unsafe
         {
@@ -406,14 +406,32 @@ public class CrossDCPartyFinder : DailyModuleBase
         SendRequest(req);
         CurrentPage = 0;
     }
+
+    private static void ClearResources()
+    {
+        CancelSource?.Cancel();
+        CancelSource?.Dispose();
+        CancelSource = null;
+
+        IsNeedToDisable = false;
+
+        Listings = ListingsDisplay = [];
+        
+        PartyFinderList.PartyFinderListing.ReleaseSlim();
+
+        LastUpdate  = DateTime.MinValue;
+        LastRequest = new();
+    }
     
     private void OnAddon(AddonEvent type, AddonArgs? args)
     {
+        ClearResources();
+        
         switch (type)
         {
             case AddonEvent.PostSetup:
                 Overlay.IsOpen    = true;
-                CurrentDataCenter = DService.ClientState.LocalPlayer.HomeWorld.Value.DataCenter.Value.Name.ExtractText();
+                CurrentDataCenter = DService.ClientState.LocalPlayer?.HomeWorld.Value.DataCenter.Value.Name.ExtractText() ?? string.Empty;
                 break;
             case AddonEvent.PreFinalize:
                 Overlay.IsOpen    = false;
@@ -424,10 +442,13 @@ public class CrossDCPartyFinder : DailyModuleBase
                 break;
         }
 
-        DataCenters = LuminaCache.Get<WorldDCGroupType>()
-                                 .Where(x => x.Region == DService.ClientState.LocalPlayer.HomeWorld.Value.DataCenter.Value.Region)
-                                 .Select(x => x.Name.ExtractText())
-                                 .ToList();
+        if (DService.ClientState.LocalPlayer is { } localPlayer)
+        {
+            DataCenters = LuminaCache.Get<WorldDCGroupType>()
+                                     .Where(x => x.Region == localPlayer.HomeWorld.Value.DataCenter.Value.Region)
+                                     .Select(x => x.Name.ExtractText())
+                                     .ToList();
+        }
     }
     
     private unsafe AtkValue* AgentLookingForGroupReceiveEventDetour(
@@ -508,6 +529,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 13 => "DeepDungeons",
                 14 => "FieldOperations",
                 15 => "V&C Dungeon Finder",
+                16 => "None",
                 _  => string.Empty
             };
 
@@ -529,6 +551,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 "DeepDungeons"       => 13,
                 "FieldOperations"    => 14,
                 "V&C Dungeon Finder" => 15,
+                "None"               => 16,
                 _                    => 0
             };
 
@@ -550,6 +573,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 13 => LuminaCache.GetRow<Addon>(2304)!.Value.Text.ExtractText(),
                 14 => LuminaCache.GetRow<Addon>(2307)!.Value.Text.ExtractText(),
                 15 => LuminaCache.GetRow<ContentType>(30)!.Value.Name.ExtractText(),
+                16 => LuminaCache.GetRow<Addon>(7)!.Value.Text.ExtractText(),
                 _  => string.Empty
             };
         
@@ -571,6 +595,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 13 => 61824,
                 14 => 61837,
                 15 => 61846,
+                16 => 0,
                 _  => 0
             };
 
@@ -645,10 +670,12 @@ public class CrossDCPartyFinder : DailyModuleBase
             [JsonProperty("slots_available")]
             public int SlotAvailable { get; set; }
 
-            public PartyFinderListingDetail? Detail { get; set; }
+            public         PartyFinderListingDetail? Detail { get; set; }
+            private        Task<string>?             DetailReuqestTask;
+            private static SemaphoreSlim             detailSemaphoreSlim = new(Environment.ProcessorCount);
 
-            private Task<string>? DetailReuqestTask;
-
+            public static void ReleaseSlim() => detailSemaphoreSlim.Release();
+            
             public uint CategoryIcon
             {
                 get
@@ -858,5 +885,11 @@ public class CrossDCPartyFinder : DailyModuleBase
         {
             Position = position, SecondPosition = position + size, Visible = GetNodeVisible(node), Size = size,
         };
+    }
+    
+    private enum UpstreamUrlType
+    {
+        Listings,
+        Detail
     }
 }
