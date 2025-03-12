@@ -158,6 +158,11 @@ public class FastGrandCompanyExchange : DailyModuleBase
     public unsafe void EnqueueByName(string itemName, int itemCount = -1)
     {
         if (!IsAddonAndNodesReady(GrandCompanyExchange)) return;
+        if (itemName == "default")
+        {
+            itemName  = ModuleConfig.ExchangeItemName;
+            itemCount = ModuleConfig.ExchangeItemCount;
+        }
         
         var grandCompany = PlayerState.Instance()->GrandCompany;
         var gcRank       = PlayerState.Instance()->GetGrandCompanyRank();
@@ -245,7 +250,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
                 var numericInput = (AtkComponentNumericInput*)ShopExchangeCurrencyDialog->GetNodeById(13)->GetComponent();
                 if (numericInput == null) return true;
                 
-                numericInput->SetValue(numericInput->Data.Max);
+                numericInput->SetValue(itemCount == -1 ? numericInput->Data.Max : Math.Min(itemCount, numericInput->Data.Max));
                 
                 var buttonNode = ShopExchangeCurrencyDialog->GetButtonNodeById(17);
                 if (buttonNode == null) return true;

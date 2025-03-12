@@ -8,10 +8,12 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Infos.Clicks;
 using DailyRoutines.Managers;
+using DailyRoutines.ModulesPublic;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -37,14 +39,14 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         public bool AutoSwitchWhenOpen = true;
     }
 
-    private static readonly Dictionary<uint, uint> ZoneToEventID = new()
+    private static readonly Dictionary<uint, (uint EventID, uint DataID)> ZoneInfo = new()
     {
         // 黑涡团
-        [128] = 1441793,
+        [128] = (1441793, 1002388),
         // 双蛇党
-        [132] = 1441794,
+        [132] = (1441794, 1002394),
         // 恒辉队
-        [130] = 1441795,
+        [130] = (1441795, 1002391),
     };
 
     private static Config ModuleConfig = null!;
@@ -53,7 +55,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        TaskHelper ??= new();
+        TaskHelper ??= new() { TimeLimitMS = int.MaxValue };
         Overlay ??= new Overlay(this);
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanySupplyList", OnAddonSupplyList);
@@ -64,7 +66,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
     public override void OverlayUI()
     {
         var addon = GrandCompanySupplyList;
-        if (!IsAddonAndNodesReady(addon)) return;
+        if (!IsAddonAndNodesReady(addon) || addon->AtkValues[5].UInt != 2) return;
 
         using var font = FontManager.UIFont80.Push();
         
@@ -108,29 +110,60 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 TaskHelper.Abort();
         }
         
-        ImGui.SameLine();
         using (ImRaii.Disabled(TaskHelper.IsBusy))
         {
             if (ImGui.Button(LuminaCache.GetRow<Addon>(3280)!.Value.Text.ExtractText()))
+                EnqueueGrandCompanyExchangeOpen(false);
+
+            ImGuiOm.DisableZoneWithHelp(() =>
             {
-                if (!ZoneToEventID.TryGetValue(DService.ClientState.TerritoryType, out var eventID)) return;
+                ImGui.SameLine();
+                if (ImGui.Button($"{LuminaCache.GetRow<Addon>(3280)!.Value.Text.ExtractText()} ({GetLoc("Exchange")})"))
+                    EnqueueGrandCompanyExchangeOpen(true);
+            }, 
+            [
+                new(!ModuleManager.IsModuleEnabled(typeof(FastGrandCompanyExchange)), 
+                    $"{GetLoc("Module")}: {GetLoc("FastGrandCompanyExchangeTitle")}")
+            ],
+            GetLoc("DisableZoneHeader"));
+        }
+
+        void EnqueueGrandCompanyExchangeOpen(bool isAutoExchange)
+        {
+            if (!ZoneInfo.TryGetValue(DService.ClientState.TerritoryType, out var info)) return;
+            
+            TaskHelper.Enqueue(() =>
+            {
+                if (!OccupiedInEvent) return true;
                 
-                TaskHelper.Enqueue(() =>
-                {
-                    if (!OccupiedInEvent) return true;
-                    
-                    if (IsAddonAndNodesReady(GrandCompanySupplyList))
-                        GrandCompanySupplyList->Close(true);
-                    
-                    if (IsAddonAndNodesReady(SelectString))
-                        SelectString->Close(true);
+                if (IsAddonAndNodesReady(GrandCompanySupplyList))
+                    GrandCompanySupplyList->Close(true);
+                
+                if (IsAddonAndNodesReady(SelectString))
+                    SelectString->Close(true);
 
-                    return false;
-                });
+                return false;
+            });
 
-                TaskHelper.Enqueue(
-                    () => GamePacketManager.SendPackt(
-                        new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, eventID)));
+            TaskHelper.Enqueue(() => new EventStartPackt(DService.ClientState.LocalPlayer.GameObjectId, info.EventID).Send());
+            TaskHelper.Enqueue(() => IsAddonAndNodesReady(GrandCompanyExchange));
+
+            if (isAutoExchange && ModuleManager.IsModuleEnabled(typeof(FastGrandCompanyExchange)))
+            {
+                TaskHelper.Enqueue(() => ModuleManager.GetModule<FastGrandCompanyExchange>().EnqueueByName("default"));
+                TaskHelper.Enqueue(() => ModuleManager.GetModule<FastGrandCompanyExchange>().IsExchanging);
+                TaskHelper.Enqueue(() => !ModuleManager.GetModule<FastGrandCompanyExchange>().IsExchanging);
+                TaskHelper.Enqueue(() => GrandCompanyExchange->Close(true));
+            }
+            
+            // 还有没交的
+            if (GrandCompanySupplyList->AtkValues[8].UInt != 0)
+            {
+                TaskHelper.Enqueue(() => !IsAddonAndNodesReady(GrandCompanyExchange) && !OccupiedInEvent);
+                TaskHelper.Enqueue(() => DService.ObjectTable
+                                                 .FirstOrDefault(x => x.ObjectKind == ObjectKind.EventNpc && x.DataId == info.DataID)
+                                                 .TargetInteract());
+                TaskHelper.Enqueue(() => ClickSelectString(0));
             }
         }
     }
