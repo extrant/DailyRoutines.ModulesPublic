@@ -322,10 +322,10 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         }
 
         var foundTypes
-            = InventoryTypes.Where(type => manager->GetInventoryContainer(type) != null && 
-                                                    manager->GetInventoryContainer(type)->Loaded == 1 &&
-                                                    manager->GetItemCountInContainer(itemID, type) + 
-                                                    manager->GetItemCountInContainer(itemID, type, true) > amount)
+            = InventoryTypes.Where(type => manager->GetInventoryContainer(type) != null   &&
+                                           manager->GetInventoryContainer(type)->IsLoaded &&
+                                           manager->GetItemCountInContainer(itemID, type) +
+                                           manager->GetItemCountInContainer(itemID, type, true) > amount)
                             .ToList();
         if (foundTypes.Count <= 0)
         {
