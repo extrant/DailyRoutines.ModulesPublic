@@ -97,10 +97,10 @@ public class CrossDCPartyFinder : DailyModuleBase
             return;
         }
 
-        ImGui.SetWindowPos(new(addon->GetX() + 4f, addon->GetY() - ImGui.GetWindowSize().Y));
+        ImGui.SetWindowPos(new(addon->GetNodeById(31)->ScreenX - 4f, addon->GetY() + 4f));
 
         ImGui.AlignTextToFramePadding();
-        ImGui.Text($"当前位于:");
+        ImGui.Text($"招募大区:");
 
         using (ImRaii.Disabled(IsNeedToDisable))
         {
@@ -127,9 +127,9 @@ public class CrossDCPartyFinder : DailyModuleBase
 
         if (CurrentDataCenter == HomeDataCenter) return;
         
-        var nodeInfo0  = GetNodeState(addon->GetNodeById(38));
-        var nodeInfo1  = GetNodeState(addon->GetNodeById(31));
-        var nodeInfo2  = GetNodeState(addon->GetNodeById(41));
+        var nodeInfo0  = NodeState.Get(addon->GetNodeById(38));
+        var nodeInfo1  = NodeState.Get(addon->GetNodeById(31));
+        var nodeInfo2  = NodeState.Get(addon->GetNodeById(41));
         var size       = nodeInfo0.Size + nodeInfo1.Size.WithX(0) + nodeInfo2.Size.WithX(0);
         var sizeOffset = new Vector2(4, 4);
         ImGui.SetNextWindowPos(new(addon->GetNodeById(31)->ScreenX - 4f, addon->GetNodeById(31)->ScreenY));
@@ -368,6 +368,8 @@ public class CrossDCPartyFinder : DailyModuleBase
         }, CancelSource.Token).ContinueWith(async _ =>
         {
             IsNeedToDisable = false;
+            
+            NotificationInfo($"获取了 {ListingsDisplay.Count} 条招募信息");
             
             await DService.Framework.RunOnFrameworkThread(() =>
             {
@@ -877,30 +879,5 @@ public class CrossDCPartyFinder : DailyModuleBase
 
             private List<uint> jobIcons = [];
         }
-    }
-    
-    private class NodeState 
-    {
-        public Vector2 Position;
-        public Vector2 SecondPosition;
-        public Vector2 Size;
-        public bool    Visible;
-    }
-
-    private unsafe NodeState GetNodeState(AtkResNode* node) 
-    {
-        var position = GetNodePosition(node);
-        var scale    = GetNodeScale(node);
-        var size     = new Vector2(node->Width, node->Height) * scale;
-        return new NodeState()
-        {
-            Position = position, SecondPosition = position + size, Visible = GetNodeVisible(node), Size = size,
-        };
-    }
-    
-    private enum UpstreamUrlType
-    {
-        Listings,
-        Detail
     }
 }
