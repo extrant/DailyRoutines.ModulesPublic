@@ -188,8 +188,12 @@ public class CrossDCPartyFinder : DailyModuleBase
                     }
                 }
                 
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 ImGui.SameLine();
+                if (ImGui.Button("关闭"))
+                    CurrentDataCenter = HomeDataCenter;
+                
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 ImGui.InputTextWithHint("###SearchString", GetLoc("PleaseSearch"), ref CurrentSeach, 128);
                 if (ImGui.IsItemDeactivatedAfterEdit())
                 {
