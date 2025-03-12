@@ -184,7 +184,12 @@ public class FastGrandCompanyExchange : DailyModuleBase
         var singleCost             = result.CostGCSeals;
         var availableExchangeCount = (int)(seals / singleCost);
         var exchangeCount = Math.Min(itemCount == -1 ? availableExchangeCount : itemCount, availableExchangeCount);
-        if (exchangeCount == 0) return;
+        if (exchangeCount == 0)
+        {
+            // 不管怎么说 Delay 一下方便其他模块控制
+            TaskHelper.DelayNext(100);
+            return;
+        }
 
         var categoryData = LuminaCache.GetRow<GCScripShopCategory>(result.RowId)!.Value;
         var tier         = categoryData.Tier;
