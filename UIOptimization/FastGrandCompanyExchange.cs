@@ -61,7 +61,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("Command")}:");
         
         ImGui.SameLine();
-        ImGui.Text($"/pdr {Command} {GetLoc("FastGrandCompanyExchange-CommandHelp")}");
+        ImGui.TextWrapped($"/pdr {Command} {GetLoc("FastGrandCompanyExchange-CommandHelp")}");
     }
 
     public override unsafe void OverlayUI()
