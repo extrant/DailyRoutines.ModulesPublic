@@ -165,6 +165,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                                                  .FirstOrDefault(x => x.ObjectKind == ObjectKind.EventNpc && x.DataId == info.DataID)
                                                  .TargetInteract());
                 TaskHelper.Enqueue(() => ClickSelectString(0));
+                TaskHelper.Enqueue(EnqueueDelivery);
             }
         }
     }
