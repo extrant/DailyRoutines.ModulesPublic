@@ -122,8 +122,8 @@ public class FastGrandCompanyExchange : DailyModuleBase
         }
         
         ImGui.SameLine();
-        if (ImGuiOm.ButtonIconWithTextVertical(FontAwesomeIcon.ExchangeAlt, "交换",
-                                               new Vector2(ImGui.CalcTextSize("交互").X * 1.5f, ImGui.GetItemRectSize().Y)))
+        if (ImGuiOm.ButtonIconWithTextVertical(FontAwesomeIcon.ExchangeAlt, GetLoc("Exchange"),
+                                               new Vector2(ImGui.CalcTextSize(GetLoc("Exchange")).X * 1.5f, ImGui.GetItemRectSize().Y)))
             EnqueueByName(ModuleConfig.ExchangeItemName, ModuleConfig.ExchangeItemCount);
     }
 
