@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using DailyRoutines.Managers;
 
 namespace DailyRoutines.Modules;
 
@@ -19,9 +20,9 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoMJIWorkshopImportTitle"),
-        Description = GetLoc("AutoMJIWorkshopImportDescription"),
-        Category = ModuleCategories.UIOperation,
+        Title       = "自动无人岛工房生产计划",
+        Description = "允许从剪贴板导入外部无人岛生产计划, 并一键自动安排 (仅支持国服作业集格式)",
+        Category    = ModuleCategories.UIOperation,
     };
 
     public override ModulePermission Permission => new() { CNOnly = true };
@@ -39,11 +40,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
             // 不知道这样改对不对
             .ToDictionary(x => x.RowId, x => x);
         ItemNameMap = OriginalCraftItemsSheet.Values
-            .ToDictionary(
-                r => RemoveMJIItemPrefix(r.Item.Value.Name.ExtractText() ?? ""),
-                r => r,
-                StringComparer.OrdinalIgnoreCase
-            );
+            .ToDictionary(r => RemoveMJIItemPrefix(r.Item.Value.Name.ExtractText() ?? ""), r => r, StringComparer.OrdinalIgnoreCase);
     }
 
     public override void Init()
@@ -54,10 +51,10 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
         Overlay.Flags      &=  ~ImGuiWindowFlags.NoTitleBar;
         Overlay.Flags      &=  ~ImGuiWindowFlags.NoResize;
         Overlay.Flags      &=  ~ImGuiWindowFlags.AlwaysAutoResize;
-        Overlay.WindowName =   Lang.Get("AutoMJIWorkshopImportTitle");
+        Overlay.WindowName =   "自动无人岛工房生产计划";
         Overlay.SizeConstraints = new() { MinimumSize = new(400f * GlobalFontScale, 300f * GlobalFontScale) };
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MJICraftSchedule", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "MJICraftSchedule", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MJICraftSchedule", OnAddon);
         if (MJICraftSchedule != null) 
             OnAddon(AddonEvent.PostSetup, null);
@@ -65,38 +62,44 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
     public override void OverlayUI()
     {
+        using var font = FontManager.UIFont80.Push();
+        
         DrawImportSection();
+        
         if (Recommendations.Empty) return;
+        
         DrawBulkApplySection();
         DrawIndividualApplySection();
     }
 
     private void DrawImportSection()
     {
-        ImGui.TextColored(ImGuiColors.DalamudYellow, Lang.Get("AutoMJIWorkshopImport-ImportData"));
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextColored(LightSkyBlue, "导入数据");
         
-        ImGui.Separator();
-        ImGui.Spacing();
-
-        if (ImGui.Button(Lang.Get("ImportFromClipboard")))
-            Recommendations = Assignments.Parse(ImGui.GetClipboardText().Trim());
-
         ImGui.SameLine();
-        ImGui.TextDisabled("|");
-
+        ImGui.Text("(");
+        
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("AutoMJIWorkshopImport-CNScheduleSet")))
+        if (ImGui.SmallButton("常规作业集 (蜡笔桶)"))
             Util.OpenLink("https://docs.qq.com/doc/DTUNRZkJjTVhvT2Nv");
 
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("AutoMJIWorkshopImport-CNScheduleSetNekoMimi")))
+        if (ImGui.SmallButton("猫票作业集 (戴幽)"))
             Util.OpenLink("https://docs.qq.com/sheet/DVmxFek1pUUtmYVhl");
-
-        ImGui.SameLine();
-        ImGui.TextDisabled("|");
         
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("AutoMJIWorkshopImport-ClearImportedData"))) 
+        ImGui.Text(")");
+        
+        ImGui.Spacing();
+
+        using var indent = ImRaii.PushIndent();
+        
+        if (ImGui.Button(GetLoc("ImportFromClipboard")))
+            Recommendations = Assignments.Parse(ImGui.GetClipboardText().Trim());
+        
+        ImGui.SameLine();
+        if (ImGui.Button("清除已导入数据")) 
             Recommendations = new();
         
         ImGui.SameLine();
@@ -104,43 +107,46 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        if (ImGui.SliderInt(Lang.Get("AutoMJIWorkshopImport-WorkshopAmount"),
-                            ref ModuleConfig.WorkshopAmount, 0, 4))
+        if (ImGui.SliderInt("工房数量", ref ModuleConfig.WorkshopAmount, 0, 4))
             SaveConfig(ModuleConfig);
+        
+        ImGui.SameLine();
+        if (ImGui.Checkbox("忽略 4 号工房", ref ModuleConfig.IgnoreFourthWorkshop))
+            ModuleConfig.Save(ModuleManager.GetModule<AutoMJIWorkshopImport>());
     }
 
     private static void DrawBulkApplySection()
     {
-        ImGui.Dummy(new Vector2(12, 12));
-        ImGui.TextColored(ImGuiColors.DalamudYellow, Lang.Get("AutoMJIWorkshopImport-BulkApply"));
-        ImGui.Separator();
-
-        if (ImGui.Button(Lang.Get("AutoMJIWorkshopImport-ThisWeek"))) 
+        ScaledDummy(12);
+        
+        ImGui.TextColored(LightSkyBlue, "批量应用");
+        
+        using var indent = ImRaii.PushIndent();
+        
+        if (ImGui.Button("本周")) 
             ApplyRecommendations(false);
         
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("AutoMJIWorkshopImport-NextWeek"))) 
+        if (ImGui.Button("下周")) 
             ApplyRecommendations(true);
-        
-        ImGui.SameLine();
-        ImGui.Checkbox(Lang.Get("AutoMJIWorkshopImport-IgnoreFourthWorkshop"),
-                       ref ModuleConfig.IgnoreFourthWorkshop);
     }
 
     private static void DrawIndividualApplySection()
     {
-        ImGui.Dummy(new Vector2(12, 12));
-        ImGui.TextColored(ImGuiColors.DalamudYellow, Lang.Get("AutoMJIWorkshopImport-IndividualApply"));
+        ScaledDummy(12);
+        
+        ImGui.TextColored(LightSkyBlue, "单独应用");
+        
         ImGui.Separator();
 
         using var scrollSection = ImRaii.Child("ScrollableSection");
         foreach (var (cycle, rec) in Recommendations.Enumerate())
         {
             ImGui.AlignTextToFramePadding();
-            ImGui.Text($"{Lang.Get("AutoMJIWorkshopImport-DayCycleDisplay", cycle)}:");
+            ImGui.Text($"第 {cycle} 天:");
             
             ImGui.SameLine();
-            if (ImGui.SmallButton($"{Lang.Get("Apply")}##{cycle}"))
+            if (ImGui.SmallButton($"{GetLoc("Apply")}##{cycle}"))
                 ApplyRecommendationToCurrentCycle(rec);
 
             DrawWorkshopTable(cycle, rec);
@@ -169,7 +175,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
     private static void SetupTableColumns(int workshopCount)
     {
         for (var i = 0; i < workshopCount; ++i)
-            ImGui.TableSetupColumn($"{Lang.Get("AutoMJIWorkshopImport-Workshop")} {i + 1}");
+            ImGui.TableSetupColumn($"工房 {i + 1}");
     }
 
     private static int CalculateWorkshopLimit(int workshopCount) 
@@ -179,14 +185,15 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
     {
         if (workshop.IsRest)
         {
-            ImGui.TextColored(ImGuiColors.TankBlue, Lang.Get("AutoMJIWorkshopImport-RestCycle"));
+            ImGui.TextColored(ImGuiColors.TankBlue, "休息");
             return;
         }
 
         using var innerTable = ImRaii.Table("inner_table", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.NoKeepColumnsVisible);
         if (!innerTable) return;
 
-        ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed);
+        ImGui.TableSetupColumn("物品", ImGuiTableColumnFlags.WidthFixed);
+        
         foreach (var slot in workshop.Slots)
         {
             ImGui.TableNextRow();
@@ -231,22 +238,23 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
         {
             var agentData = AgentMJICraftSchedule.Instance()->Data;
             if (Recommendations.Schedules.Count > 7)
-                throw new Exception(Lang.Get("AutoMJIWorkshopImport-Exception-AboveSevenDays",
-                                                         Recommendations.Schedules.Count));
+                throw new Exception($"单周内天数超过七天 (现: {Recommendations.Schedules.Count})");
 
-            var forbiddenCycles = nextWeek ? 0 : (1u << (agentData->CycleInProgress + 1)) - 1;
+            var forbiddenCycles   = nextWeek ? 0 : (1u << (agentData->CycleInProgress + 1)) - 1;
             var currentRestCycles = nextWeek ? agentData->RestCycles >> 7 : agentData->RestCycles & 0x7F;
-            
+
             HandleRestCycles(currentRestCycles, forbiddenCycles, nextWeek);
 
             foreach (var (c, r) in Recommendations.Enumerate())
                 ApplyRecommendation(c - 1 + (nextWeek ? 7 : 0), r);
 
             ResetCurrentCycleToRefreshUI();
+            
+            NotificationSuccess($"已成功将数据应用至工房 {(nextWeek ? "下周" : "本周")} 的生产计划中");
         }
         catch (Exception ex)
         {
-            NotificationError($"{Lang.Get("Error")}: {ex.Message}");
+            NotificationError($"{GetLoc("Error")}: {ex.Message}");
         }
     }
 
@@ -258,11 +266,11 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
         var rest = (1u << (31 - BitOperations.LeadingZeroCount(freeCycles))) | 1;
 
         if (BitOperations.PopCount(rest) != 2)
-            throw new Exception(Lang.Get("AutoMJIWorkshopImport-Exception-FailToObtainRestDays"));
+            throw new Exception("休息日获取失败");
 
         var changedRest = rest ^ currentRestCycles;
         if ((changedRest & forbiddenCycles) != 0)
-            throw new Exception(Lang.Get("AutoMJIWorkshopImport-Exception-RestDaysFinished"));
+            throw new Exception("无法将已完成日期设置为休息日");
 
         var newRest = nextWeek
             ? (rest << 7) | (AgentMJICraftSchedule.Instance()->Data->RestCycles & 0x7F)
@@ -319,14 +327,6 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
             AddonEvent.PreFinalize => false,
             _                      => Overlay.IsOpen
         };
-    }
-
-    public override void Uninit()
-    {
-        base.Uninit();
-
-        SaveConfig(ModuleConfig);
-        Recommendations = new();
     }
 
     private class Config : ModuleConfiguration
