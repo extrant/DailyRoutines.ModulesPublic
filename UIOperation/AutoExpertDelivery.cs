@@ -27,9 +27,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title       = GetLoc("AutoExpertDeliveryTitle"),
-        Description = GetLoc("AutoExpertDeliveryDescription"),
-        Category    = ModuleCategories.UIOperation,
+        Title               = GetLoc("AutoExpertDeliveryTitle"),
+        Description         = GetLoc("AutoExpertDeliveryDescription"),
+        Category            = ModuleCategories.UIOperation,
+        ModulesPrerequisite = ["FastGrandCompanyExchange"]
     };
 
     private class Config : ModuleConfiguration
