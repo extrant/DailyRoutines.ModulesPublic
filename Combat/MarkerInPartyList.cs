@@ -124,7 +124,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             if (!member->IsVisible())
                 break;
 
-            var textNode = member->GetComponent()->UldManager.SearchNodeById(15);
+            var textNode = member->GetComponent()->UldManager.SearchNodeById(16);
             if (textNode != null && textNode->IsVisible() != visible)
                 textNode->ToggleVisibility(visible);
         }
@@ -306,11 +306,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void PartyListDrawHandle(AddonEvent type, AddonArgs args)
     {
-        lock (_lock)
-        {
             if (!_isBuilt)
                 InitImageNodes();
-        }
 
         if (_needClear && _markedObject.Count is 0)
         {
