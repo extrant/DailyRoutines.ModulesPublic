@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Plugin.Services;
 
 namespace DailyRoutines.Modules;
 
@@ -15,8 +16,8 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title       = GetLoc("AutoRecordSubTimeLeftTitle"),
-        Description = GetLoc("AutoRecordSubTimeLeftDescription"),
+        Title       = "自动记录剩余游戏时间",
+        Description = "登录时, 自动记录保存当前账号剩余的游戏时间, 并显示在服务器信息栏",
         Category    = ModuleCategories.General,
         Author      = ["Due"]
     };
@@ -45,6 +46,8 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         
         DService.ClientState.Login  += OnLogin;
         DService.ClientState.Logout += OnLogout;
+
+        FrameworkManager.Register(false, OnUpdate);
     }
 
     public override void ConfigUI()
@@ -55,28 +58,30 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
             (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
         {
-            ImGui.TextColored(Orange, GetLoc("AutoRecordSubTimeLeft-NoData"));
+            ImGui.TextColored(Orange, "暂无数据, 请重新登录游戏以记录");
             return;
         }
 
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-LastRecordTime")}:");
+        ImGui.TextColored(LightSkyBlue, $"上次记录:");
 
         ImGui.SameLine();
         ImGui.Text($"{info.Record}");
 
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-MonthSub")} {GetLoc("AutoRecordSubTimeLeft-TimeTill")}:");
+        ImGui.TextColored(LightSkyBlue, $"月卡 剩余时间:");
 
         ImGui.SameLine();
-        ImGui.Text(FormatTimeSpan(info.LeftMonth, CultureInfo.CurrentCulture));
+        ImGui.Text(FormatTimeSpan(info.LeftMonth));
         
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoRecordSubTimeLeft-TimeSub")} {GetLoc("AutoRecordSubTimeLeft-TimeTill")}:");
+        ImGui.TextColored(LightSkyBlue, $"点卡 剩余时间:");
 
         ImGui.SameLine();
-        ImGui.Text(FormatTimeSpan(info.LeftTime, CultureInfo.CurrentCulture));
+        ImGui.Text(FormatTimeSpan(info.LeftTime));
     }
 
     public override void Uninit()
     {
+        FrameworkManager.Unregister(OnUpdate);
+        
         Entry?.Remove();
         Entry = null;
         
@@ -96,6 +101,12 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
             RefreshEntry(contentID);
             return true;
         });
+    }
+
+    private void OnUpdate(IFramework _)
+    {
+        if (!Throttler.Throttle("AutoRecordSubTimeLeft-OnUpdate", 5000)) return;
+        RefreshEntry();
     }
 
     private void OnLogout(int code, int type) => TaskHelper?.Abort();
@@ -118,19 +129,20 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
                 var contentID = agent->LobbyData.ContentId;
                 if (contentID == 0) return false;
-
+                
                 var timeInfo = GetLeftTimeSecond(*info);
                 ModuleConfig.Infos[contentID]
                     = new(DateTime.Now,
                           timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
                           timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
-                ModuleConfig.Save(ModuleManager.GetModule<AutoRecordSubTimeLeft>());
+                ModuleConfig.Save(this);
 
                 RefreshEntry(contentID);
             }
             catch (Exception ex)
             {
-                Debug("更新订阅信息失败", ex);
+                Warning("更新游戏点月卡订阅信息失败", ex);
+                NotificationWarning(ex.Message, "更新游戏点月卡订阅信息失败");
             }
             
             return true;
@@ -171,19 +183,14 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         var isMonth = info.LeftMonth != TimeSpan.MinValue;
         var expireTime = info.Record + (isMonth ? info.LeftMonth : info.LeftTime);
         
-        Entry.Text =
-            $"{GetLoc($"AutoRecordSubTimeLeft-{(isMonth ? "Month" : "Time")}Sub")}: {expireTime:MM/dd HH:mm}";
-        Entry.Tooltip = $"{GetLoc("AutoRecordSubTimeLeft-ExpireTime")}:\n{expireTime}\n" +
-                        $"{GetLoc("AutoRecordSubTimeLeft-TimeTill")}:\n{FormatTimeSpan(isMonth ? info.LeftMonth : info.LeftTime, CultureInfo.CurrentCulture)}";
+        Entry.Text = $"{(isMonth ? "月卡" : "点卡")}: {expireTime:MM/dd HH:mm}";
+        Entry.Tooltip = $"过期时间:\n{expireTime}\n" +
+                        $"剩余时间:\n{FormatTimeSpan(expireTime - DateTime.Now)}";
         Entry.Shown = true;
     }
     
-    public static string FormatTimeSpan(TimeSpan timeSpan, CultureInfo culture) =>
-        culture.TwoLetterISOLanguageName switch
-        {
-            "zh" => $"{timeSpan.Days} 天 {timeSpan.Hours} 小时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒",
-            _    => $"{timeSpan.Days} d {timeSpan.Hours} h {timeSpan.Minutes} m {timeSpan.Seconds} s"
-        };
+    public static string FormatTimeSpan(TimeSpan timeSpan) =>
+        $"{timeSpan.Days} 天 {timeSpan.Hours} 小时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒";
 
     private class Config : ModuleConfiguration
     {
