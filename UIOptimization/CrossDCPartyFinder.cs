@@ -13,6 +13,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Hooking;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -140,19 +141,19 @@ public class CrossDCPartyFinder : DailyModuleBase
                         ImGuiWindowFlags.NoScrollWithMouse))
         {
             var isNeedToResetY = false;
-            
+
             using (ImRaii.Disabled(IsNeedToDisable))
             {
                 if (ImGui.Checkbox("倒序", ref ModuleConfig.OrderByDescending))
                 {
                     isNeedToResetY = true;
-                    
+
                     SaveConfig(ModuleConfig);
                     SendRequestDynamic();
                 }
 
                 var totalPages = (int)Math.Ceiling(ListingsDisplay.Count / (float)ModuleConfig.PageSize);
-                
+
                 using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(2, 0)))
                 {
                     ImGui.SameLine();
@@ -161,25 +162,25 @@ public class CrossDCPartyFinder : DailyModuleBase
                         isNeedToResetY = true;
                         CurrentPage    = 0;
                     }
-                    
+
                     ImGui.SameLine();
                     if (ImGui.Button("<"))
                     {
                         isNeedToResetY = true;
                         CurrentPage    = Math.Max(0, CurrentPage - 1);
                     }
-                    
+
                     ImGui.SameLine();
                     ImGui.Text($" {CurrentPage + 1} / {Math.Max(1, totalPages)} ");
                     ImGuiOm.TooltipHover($"{ListingsDisplay.Count}");
-                    
+
                     ImGui.SameLine();
                     if (ImGui.Button(">"))
                     {
                         isNeedToResetY = true;
                         CurrentPage    = Math.Min(totalPages - 1, CurrentPage + 1);
                     }
-                    
+
                     ImGui.SameLine();
                     if (ImGui.Button(">>"))
                     {
@@ -187,11 +188,11 @@ public class CrossDCPartyFinder : DailyModuleBase
                         CurrentPage    = Math.Max(0, totalPages - 1);
                     }
                 }
-                
+
                 ImGui.SameLine();
                 if (ImGui.Button("关闭"))
                     CurrentDataCenter = HomeDataCenter;
-                
+
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 ImGui.InputTextWithHint("###SearchString", GetLoc("PleaseSearch"), ref CurrentSeach, 128);
@@ -203,17 +204,17 @@ public class CrossDCPartyFinder : DailyModuleBase
             }
 
             var sizeAfter = size - new Vector2(0, ImGui.GetTextLineHeightWithSpacing());
-            using (var child = ImRaii.Child("Child", sizeAfter))
+            using (var child = ImRaii.Child("Child", sizeAfter, false, ImGuiWindowFlags.NoBackground))
             {
                 if (child)
                 {
                     if (isNeedToResetY) ImGui.SetScrollHereY();
                     if (!IsNeedToDisable) DrawPartyFinderList(sizeAfter);
-                    
+
                     ScaledDummy(8f);
                 }
             }
-            
+
             ImGui.End();
         }
     }
@@ -223,9 +224,10 @@ public class CrossDCPartyFinder : DailyModuleBase
         using var table = ImRaii.Table("###ListingsTable", 3, ImGuiTableFlags.BordersInnerH, size);
         if (!table) return;
         
-        ImGui.TableSetupColumn("招募图标", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() * 3);
+        ImGui.TableSetupColumn("招募图标", ImGuiTableColumnFlags.WidthFixed,   
+                               (ImGui.GetTextLineHeightWithSpacing() * 3) + ImGui.GetStyle().ItemSpacing.X);
         ImGui.TableSetupColumn("招募详情", ImGuiTableColumnFlags.WidthStretch, 50);
-        ImGui.TableSetupColumn("招募信息", ImGuiTableColumnFlags.WidthStretch, 15);
+        ImGui.TableSetupColumn("招募信息", ImGuiTableColumnFlags.WidthFixed,   ImGui.CalcTextSize("八个汉字八个汉字").X);
         
         var startIndex = CurrentPage * ModuleConfig.PageSize;
         var pageItems = ListingsDisplay.Skip(startIndex).Take(ModuleConfig.PageSize).ToList();
@@ -240,15 +242,19 @@ public class CrossDCPartyFinder : DailyModuleBase
 
             ImGui.TableNextColumn();
             if (DService.Texture.TryGetFromGameIcon(new(listing.CategoryIcon), out var categoryTexture))
-                ImGui.Image(categoryTexture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing() * 3));
+                ImGui.Image(categoryTexture.GetWrapOrEmpty().ImGuiHandle, 
+                            new Vector2(ImGui.GetTextLineHeightWithSpacing() * 3) + 
+                            new Vector2(ImGui.GetStyle().ItemSpacing.X, 2 * ImGui.GetStyle().ItemSpacing.Y));
             
             // 招募详情
             ImGui.TableNextColumn();
             using (ImRaii.Group())
             {
                 using (FontManager.UIFont120.Push())
+                {
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (4f * GlobalFontScale));
                     ImGui.TextColored(LightSkyBlue, $"{listing.Duty}");
-                
+                }                
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalFontScale));
                 ImGui.TextColored(LightSkyBlue, $"({listing.PlayerName}@{listing.HomeWorldName})");
@@ -307,6 +313,12 @@ public class CrossDCPartyFinder : DailyModuleBase
                             } 
                         }
                     }
+                    
+                    ImGui.Spacing();
+                    
+                    ImGui.SameLine(0, 4f * GlobalFontScale);
+                    using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudYellow, listing.MinItemLevel != 0))
+                        ImGui.Text($"[{(listing.MinItemLevel == 0 ? "无" : $"{listing.MinItemLevel}")}]");
                 }
             }
             
@@ -314,10 +326,22 @@ public class CrossDCPartyFinder : DailyModuleBase
             ImGui.TableNextColumn();
             using (FontManager.UIFont80.Push())
             {
-                ImGui.Text($"当前位于: {listing.CreatedAtWorldName}");
-                ImGui.Text($"剩余人数: {listing.SlotAvailable - listing.SlotFilled}");
-                ImGui.Text($"剩余时间: {TimeSpan.FromSeconds(listing.TimeLeft).TotalMinutes:F0} 分钟");
-                ImGui.Text($"平均品级: {(listing.MinItemLevel == 0 ? "无" : $"{listing.MinItemLevel}")}");
+                ImGui.NewLine();
+                
+                ImGui.TextColored(ImGuiColors.DalamudYellow, "当前位于:");
+                
+                ImGui.SameLine();
+                ImGui.Text($"{listing.CreatedAtWorldName}");
+                
+                ImGui.TextColored(ImGuiColors.DalamudYellow, "剩余人数:");
+                
+                ImGui.SameLine();
+                ImGui.Text($"{listing.SlotAvailable - listing.SlotFilled}");
+                
+                ImGui.TextColored(ImGuiColors.DalamudYellow, "剩余时间:");
+                
+                ImGui.SameLine();
+                ImGui.Text($"{TimeSpan.FromSeconds(listing.TimeLeft).TotalMinutes:F0} 分钟");
             }
         }
     }
