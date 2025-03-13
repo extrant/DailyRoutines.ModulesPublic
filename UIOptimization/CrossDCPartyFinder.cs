@@ -116,7 +116,11 @@ public class CrossDCPartyFinder : DailyModuleBase
                         if (ImGui.Selectable(dataCenter, dataCenter == CurrentDataCenter))
                         {
                             CurrentDataCenter = dataCenter;
-                            if (HomeDataCenter == dataCenter) return;
+                            if (HomeDataCenter == dataCenter)
+                            {
+                                SendEvent(AgentId.LookingForGroup, 1, 17);
+                                return;
+                            }
 
                             SendRequestDynamic();
                             IsNeedToDisable = true;

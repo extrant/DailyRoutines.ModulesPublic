@@ -8,6 +8,7 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
@@ -15,6 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.FFXIV.Component.Shell;
+using Lumina.Excel.Sheets;
 using TinyPinyin;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
@@ -84,22 +86,78 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
 
     public override void ConfigUI()
     {
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text($"{GetLoc("Seperator")}:");
-
-        var seperator = ModuleConfig.Seperator.ToString();
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        if (ImGui.InputText("###SeperatorInput", ref seperator, 1))
+        using (ImRaii.Group())
         {
-            seperator = seperator.Trim();
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text($"屏蔽词处理分隔符:");
             
-            // 我觉得真有人会输入 * 号来看看会发生什么
-            if (string.IsNullOrWhiteSpace(seperator) || seperator == "*")
-                seperator = ".";
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text("屏蔽词显示高亮颜色:");
+        }
+        
+        ImGui.SameLine();
+        using (ImRaii.Group())
+        {
+            var seperator = ModuleConfig.Seperator.ToString();
+            ImGui.SetNextItemWidth(150f * GlobalFontScale);
+            if (ImGui.InputText("###SeperatorInput", ref seperator, 1))
+            {
+                seperator = seperator.Trim();
+                
+                // 我觉得真有人会输入 * 号来看看会发生什么
+                if (string.IsNullOrWhiteSpace(seperator) || seperator == "*")
+                    seperator = ".";
+                
+                ModuleConfig.Seperator = seperator[0];
+                ModuleConfig.Save(this);
+            }
             
-            ModuleConfig.Seperator = seperator[0];
-            ModuleConfig.Save(this);
+            if (!LuminaCache.TryGetRow<UIColor>(ModuleConfig.HighlightColor, out var unitColorRow))
+            {
+                ModuleConfig.HighlightColor = 17;
+                ModuleConfig.Save(this);
+                return;
+            }
+            
+            ImGui.SetNextItemWidth(150f * GlobalFontScale);
+            if (ImGuiOm.InputUInt("###HighlightColorInput", ref ModuleConfig.HighlightColor, 1, 1))
+                SaveConfig(ModuleConfig);
+            
+            ImGui.SameLine();
+            ImGui.ColorButton("###HighlightColorPreview", UIColorToVector4Color(unitColorRow.UIForeground));
+        }
+        
+        var sheet = LuminaCache.Get<UIColor>();
+        using (var node = ImRaii.TreeNode("参考颜色表"))
+        {
+            if (node)
+            {
+                using (var table = ImRaii.Table("###ColorTable", 6))
+                {
+                    if (table)
+                    {
+                        var counter = 0;
+                        foreach (var row in sheet)
+                        {
+                            if (row.RowId        == 0) continue;
+                            if (row.UIForeground == 0) continue;
+
+                            if (counter % 5 == 0) ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            
+                            counter++;
+
+                            using (ImRaii.Group())
+                            {
+                                ImGui.ColorButton($"###ColorButtonTable{row.RowId}", UIColorToVector4Color(row.UIForeground));
+                                
+                                ImGui.SameLine();
+                                ImGui.Text($"{row.RowId}");
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -359,7 +417,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                 // 屏蔽词开始, 添加染色
                 if (!insideCensored)
                 {
-                    result.Add(new UIForegroundPayload(17));
+                    result.Add(new UIForegroundPayload((ushort)ModuleConfig.HighlightColor));
                     insideCensored = true;
                 }
                 
@@ -398,5 +456,6 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         public char Seperator = '.';
+        public uint HighlightColor   = 17;
     }
 }
