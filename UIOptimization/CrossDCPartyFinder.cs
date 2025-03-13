@@ -97,10 +97,10 @@ public class CrossDCPartyFinder : DailyModuleBase
             return;
         }
 
-        ImGui.SetWindowPos(new(addon->GetNodeById(31)->ScreenX - 4f, addon->GetY() + 4f));
+        ImGui.SetWindowPos(new(addon->GetNodeById(31)->ScreenX - 4f, addon->GetY() - ImGui.GetWindowSize().Y));
 
         ImGui.AlignTextToFramePadding();
-        ImGui.Text($"招募大区:");
+        ImGui.Text($"招募信息大区:");
 
         using (ImRaii.Disabled(IsNeedToDisable))
         {
