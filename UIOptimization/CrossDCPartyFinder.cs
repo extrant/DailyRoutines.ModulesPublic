@@ -395,6 +395,7 @@ public class CrossDCPartyFinder : DailyModuleBase
             Listings = listings.OrderByDescending(x => x.TimeLeft)
                                .DistinctBy(x => x.ID)
                                .DistinctBy(x => $"{x.PlayerName}@{x.HomeWorldName}")
+                               .Where(x => DateTime.Now - x.UpdatedAt > TimeSpan.FromMinutes(5)) // 5 分钟没更新
                                .ToList();
             ListingsDisplay = FilterAndSort(Listings);
         }, CancelSource.Token).ContinueWith(async _ =>
