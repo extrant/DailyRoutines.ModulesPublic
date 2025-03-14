@@ -165,52 +165,63 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
     // 编辑招募
     private static byte LookingForGroupConditionReceiveEventDetour(nint a1, AtkValue* values)
     {
-        if (values->Int != 15)
-            return InvokeOriginal();
-        
-        var managedString = values[1].String;
-        if (managedString == null)
-            return InvokeOriginal();
+        try
+        {
+            if (values == null || values->Int != 15)
+                return InvokeOriginal();
 
-        var origText = SeString.Parse(managedString);
-        
-        var builderHandled  = new SeStringBuilder();
-        foreach (var payload in origText.Payloads)
-        {
-            // 不处理非文本
-            if (payload is not TextPayload textPayload)
-            {
-                builderHandled.Add(payload);
-                continue;
-            }
-            
-            BypassCensorshipByTextPayload(ref textPayload);
-            builderHandled.Add(textPayload);
-        }
-        var handledText = builderHandled.Build();
-        
-        if (handledText != origText)
-        {
-            var builderHighlight  = new SeStringBuilder();
+            var managedString = values[1].String;
+            if (managedString == null)
+                return InvokeOriginal();
+
+            var origText = SeString.Parse(managedString);
+            if (origText == null || string.IsNullOrWhiteSpace(origText.TextValue))
+                return InvokeOriginal();
+
+            var builderHandled = new SeStringBuilder();
             foreach (var payload in origText.Payloads)
             {
                 // 不处理非文本
                 if (payload is not TextPayload textPayload)
                 {
-                    builderHighlight.Add(payload);
+                    builderHandled.Add(payload);
                     continue;
                 }
-                
-                builderHighlight.Append(HighlightCensorship(textPayload.Text));
+
+                BypassCensorshipByTextPayload(ref textPayload);
+                builderHandled.Add(textPayload);
             }
-            var highlightedText = builderHighlight.Build();
-            
-            values[1].SetString(*(byte**)Utf8String.FromSequence(handledText.Encode()));
-            Chat(new SeStringBuilder().Append("已对招募留言进行反屏蔽处理:\n").Append(highlightedText).Append("\n↓\n").Append(handledText).Build());
+
+            var handledText = builderHandled.Build();
+
+            if (handledText.TextValue != origText.TextValue)
+            {
+                var builderHighlight = new SeStringBuilder();
+                foreach (var payload in origText.Payloads)
+                {
+                    // 不处理非文本
+                    if (payload is not TextPayload textPayload)
+                    {
+                        builderHighlight.Add(payload);
+                        continue;
+                    }
+
+                    builderHighlight.Append(HighlightCensorship(textPayload.Text));
+                }
+
+                var highlightedText = builderHighlight.Build();
+
+                values[1].SetString(*(byte**)Utf8String.FromSequence(handledText.Encode()));
+                Chat(new SeStringBuilder().Append("已对招募留言进行反屏蔽处理:\n").Append(highlightedText).Append("\n↓\n").Append(handledText).Build());
+            }
         }
-
+        catch
+        {
+            // ignored
+        }
+        
         return InvokeOriginal();
-
+        
         byte InvokeOriginal() => LookingForGroupConditionReceiveEventHook.Original(a1, values);
     }
 
