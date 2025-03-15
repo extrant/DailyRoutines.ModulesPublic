@@ -107,10 +107,13 @@ public class AutoReuseEmote : DailyModuleBase
                 return;
             }
             
-            unsafe
+            await DService.Framework.RunOnFrameworkThread(() =>
             {
-                AgentEmote.Instance()->ExecuteEmote(id, default, false, false);
-            }
+                unsafe
+                {
+                    AgentEmote.Instance()->ExecuteEmote(id, default, false, false);
+                }
+            });
             
             await Task.Delay(interval, cts.Token);
         }
