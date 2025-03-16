@@ -5,6 +5,7 @@ using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace DailyRoutines.Modules;
@@ -24,7 +25,8 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
     private static readonly CompSig ProcessPacketActionEffectSig =
         new("40 55 56 57 41 54 41 55 41 56 48 8D AC 24 68 FF FF FF 48 81 EC 98 01 00 00");
     private delegate void ProcessPacketActionEffectDelegate(
-        uint sourceID, nint sourceCharacter, nint pos, ActionEffectHeader* effectHeader, ActionEffect* effectArray, ulong* effectTrail);
+        uint sourceID, nint sourceCharacter, nint pos, ActionEffectHandler.Header* effectHeader, ActionEffectHandler.Effect* effectArray,
+        ulong* effectTrail);
     private static Hook<ProcessPacketActionEffectDelegate> ProcessPacketActionEffectHook;
 
     private static Action? SelectedCustomAction;
@@ -171,18 +173,18 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
     }
 
     private void ProcessPacketActionEffectDetour(
-        uint   sourceID, nint sourceCharacter, nint pos, ActionEffectHeader* effectHeader, ActionEffect* effectArray,
+        uint   sourceID, nint sourceCharacter, nint pos, ActionEffectHandler.Header* effectHeader, ActionEffectHandler.Effect* effectArray,
         ulong* effectTrail)
     {
         ProcessPacketActionEffectHook.Original(sourceID, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
         Parse(sourceID, effectHeader, effectArray);
     }
     
-    public static void Parse(uint sourceEntityID, ActionEffectHeader* effectHeader, ActionEffect* effectArray)
+    public static void Parse(uint sourceEntityID, ActionEffectHandler.Header* effectHeader, ActionEffectHandler.Effect* effectArray)
     {
         try
         {
-            var targets = effectHeader->EffectCount;
+            var targets = effectHeader->NumTargets;
             if (targets < 1) return;
 
             if (DService.ClientState.LocalPlayer is not { } localPlayer) return;
@@ -234,37 +236,6 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
             // ignored
         }
         
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ActionEffectHeader
-    {
-        public uint   AnimationTargetId;
-        public uint   Unknown1;
-        public uint   ActionId;
-        public uint   GlobalEffectCounter;
-        public float  AnimationLockTime;
-        public uint   Unknown2;
-        public ushort HiddenAnimation;
-        public ushort Rotation;
-        public ushort ActionAnimationId;
-        public byte   Variation;
-        public byte   EffectDisplayType;
-        public byte   Unknown3;
-        public byte   EffectCount;
-        public ushort Unknown4;
-    }
-
-    [StructLayout(LayoutKind.Explicit, Size = 8)]
-    public struct ActionEffect
-    {
-        [FieldOffset(0)] public byte   EffectType;
-        [FieldOffset(1)] public byte   Param0;
-        [FieldOffset(2)] public byte   Param1;
-        [FieldOffset(3)] public byte   Param2;
-        [FieldOffset(4)] public byte   Flags1;
-        [FieldOffset(5)] public byte   Flags2;
-        [FieldOffset(6)] public ushort Value;
     }
     
     public class Config : ModuleConfiguration
