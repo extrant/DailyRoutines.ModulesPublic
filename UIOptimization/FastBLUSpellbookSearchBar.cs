@@ -20,12 +20,14 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
     
     public override void Init()
     {
-        TaskHelper ??= new();
-        Overlay    ??= new(this);
+        TaskHelper    ??= new();
+        Overlay       ??= new(this);
+        Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "AOZNotebook", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "AOZNotebook", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "AOZNotebook", OnAddon);
+        if (IsAddonAndNodesReady(GetAddonByName("AOZNotebook"))) OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()
@@ -44,10 +46,17 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
 
         var windowTextNode = ((AtkComponentNode*)windowComponent)->Component->GetTextNodeById(3)->GetAsAtkTextNode();
         if (windowTextNode == null) return;
+
+        var resNode = addon->GetNodeById(5);
+        if (resNode == null) return;
+
+        var nodeState = NodeState.Get(resNode);
+        if (nodeState == null) return;
         
-        ImGui.SetWindowPos(new(windowTextNode->ScreenX - 8, windowTextNode->ScreenY - 8));
+        ImGui.SetWindowPos(new(windowTextNode->ScreenX - 14, windowTextNode->ScreenY - 8));
         
-        if (ImGui.InputText("###SearchBar", ref SearchBarInput, 128))
+        ImGui.SetNextItemWidth(nodeState.Size.X);
+        if (ImGui.InputTextWithHint("###SearchBar", GetLoc("PleaseSearch"), ref SearchBarInput, 128))
         {
             if (Throttler.Throttle($"FastBLUSpellbookSearchBar-Search-{SearchBarInput}"))
                 ConductSearch(SearchBarInput);
@@ -59,7 +68,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
 
     private void OnAddon(AddonEvent type, AddonArgs args)
     {
-        var addon = args.Addon.ToAtkUnitBase();
+        var addon = GetAddonByName("AOZNotebook");
         if (addon == null) return;
         
         Overlay.IsOpen = type switch
@@ -74,7 +83,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
 
         if (type == AddonEvent.PostDraw && Throttler.Throttle("FastBLUSpellbookSearchBar-Draw"))
         {
-            if (((AddonAOZNotebook*)addon)->CursorTarget->NodeId != 4)
+            if (addon->AtkValues->Int >= 9)
                 Overlay.IsOpen = false;
             else
                 Overlay.IsOpen = true;
@@ -94,7 +103,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
             
             if (!IsAddonAndNodesReady(addon)) return false;
             // 非技能页面
-            if (((AddonAOZNotebook*)addon)->CursorTarget->NodeId != 4)
+            if (addon->AtkValues->Int >= 9)
             {
                 TaskHelper.Abort();
                 return true;
