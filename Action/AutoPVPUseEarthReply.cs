@@ -33,11 +33,11 @@ public unsafe class AutoPVPUseEarthReply : DailyModuleBase
 
     private void OnUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, uint extraParam, ActionManager.UseActionMode queueState, uint comboRouteID, bool* outOptAreaTargeted)
     {
-        if (!GameMain.IsInPvPArea() && !GameMain.IsInPvPInstance()) return;
-        if (DService.ClientState.LocalPlayer is not { ClassJob.RowId: 20 }) return;
-
-        if (result && actionType is ActionType.Action && actionID is _useAction)
+        if (actionID is _useAction && result && actionType is ActionType.Action)
         {
+            if (!GameMain.IsInPvPArea() && !GameMain.IsInPvPInstance()) return;
+            if (DService.ClientState.LocalPlayer is not { ClassJob.RowId: 20 }) return;
+
             TaskHelper.Abort();
             TaskHelper.DelayNext(8_000, $"Delay_UseAction{_afterAction}", false, 1);
             TaskHelper.Enqueue(() =>
@@ -56,10 +56,10 @@ public unsafe class AutoPVPUseEarthReply : DailyModuleBase
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("AutoPVPUseEarthReplyIsRunningUse"), ref ModuleConfig.IsRunningUse))
+        if (ImGui.Checkbox(GetLoc("AutoPVPUseEarthReply-IsRunningUse"), ref ModuleConfig.IsRunningUse))
             SaveConfig(ModuleConfig);
 
-        if (ImGui.Checkbox(GetLoc("AutoPVPUseEarthReplyIsDefendingUse"), ref ModuleConfig.IsDefendingUse))
+        if (ImGui.Checkbox(GetLoc("AutoPVPUseEarthReply-IsDefendingUse"), ref ModuleConfig.IsDefendingUse))
             SaveConfig(ModuleConfig);
     }
 
