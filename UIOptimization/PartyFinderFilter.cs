@@ -203,9 +203,7 @@ public class PartyFinderFilter : DailyModuleBase
 
         var job = (Job)index;
         if (Enum.TryParse<JobFlags>(job.ToString(), out var flag))
-        {
             return flag;
-        }
 
         return 0;
     }
