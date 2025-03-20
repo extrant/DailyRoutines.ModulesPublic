@@ -278,7 +278,7 @@ public class PartyFinderFilter : DailyModuleBase
                         // 手动模式：检查所有同类角色是否有空位
                         foreach (var playerJob in LuminaGetter.Get<ClassJob>().Where(j => j.RowId != 0 && j.Unknown11 == roleType))
                         {
-                            if (Enum.TryParse<JobFlags>(playerJob.NameEnglish.ExtractText(), out var flag) && 
+                            if (Enum.TryParse<JobFlags>(playerJob.NameEnglish.ExtractText().Replace(" ", string.Empty), out var flag) && 
                                 listing.Slots.ElementAt(i)[flag])
                             {
                                 hasSlot = true;
