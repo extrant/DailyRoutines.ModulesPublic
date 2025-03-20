@@ -64,6 +64,8 @@ public class PartyFinderFilter : DailyModuleBase
     private void DrawRoleCountSettings()
     {
         ImGui.BeginGroup();
+        ImGui.Checkbox("##HighEndDuty", ref ModuleConfig.HighEndDuty);
+        ImGui.SameLine();
         ImGui.TextColored(LightSkyBlue, Lang.Get("PartyFinderFilter-RoleCount"));
         ImGui.SetNextItemWidth(150 * GlobalFontScale);
         ImGui.InputInt3(Lang.Get("PartyFinderFilter-RoleCountTH"), ref ModuleConfig.HighEndDutyRoleCount[0]);
@@ -131,7 +133,7 @@ public class PartyFinderFilter : DailyModuleBase
             descriptionSet.Clear();
         }
 
-        args.Visible &= isSecret || HighEndDutyFilterRoles(listing);
+        args.Visible &= isSecret || !ModuleConfig.HighEndDuty || HighEndDutyFilterRoles(listing);
         args.Visible &= isSecret || Verify(listing);
     }
 
