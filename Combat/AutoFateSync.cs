@@ -137,7 +137,7 @@ public class AutoFateSync : DailyModuleBase
                                      ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) == 0);
             TaskHelper.Enqueue(() =>
             {
-                if (FateManager.Instance()->CurrentFate == null || !LuminaCache.TryGetRow<Fate>(fateID, out var data)) return true;
+                if (FateManager.Instance()->CurrentFate == null || !LuminaGetter.TryGetRow<Fate>(fateID, out var data)) return true;
                 if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
                 if (!TankStanceActions.TryGetValue(localPlayer.ClassJob.RowId, out var actionID)) return false;
                 if (localPlayer.Level > data.ClassJobLevelMax) return false;

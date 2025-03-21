@@ -91,7 +91,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
         }
 
         var position = *(uint*)(agentData + 0x12c);
-        var positionStr = $"{LuminaCache.GetRow<Addon>(10988)!.Value.Text.ExtractText()}: #{position}";
+        var positionStr = $"{LuminaGetter.GetRow<Addon>(10988)!.Value.Text.ExtractText()}: #{position}";
         a3->SetValue(index, positionStr);
         
         var queueTime = TimeSpan.FromSeconds(*(int*)(agentData + 0x128));

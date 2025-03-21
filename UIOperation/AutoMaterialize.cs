@@ -126,7 +126,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
                 if (slot == null || slot->ItemId == 0) continue;
                 if (slot->Spiritbond != 10_000) continue;
 
-                if (!LuminaCache.TryGetRow<Item>(slot->ItemId, out var itemData)) continue;
+                if (!LuminaGetter.TryGetRow<Item>(slot->ItemId, out var itemData)) continue;
 
                 var itemName = itemData.Name.ExtractText();
                 TaskHelper.Enqueue(() => ExtractMateria(type, (uint)i) == 0, $"开始精炼单件装备 {itemName}({slot->ItemId})");

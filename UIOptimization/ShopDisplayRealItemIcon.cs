@@ -61,7 +61,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         {
             var itemID = addon->AtkValues[65 + i].UInt;
             if (itemID == 0) continue;
-            if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
             
             addon->AtkValues[126 + i].SetUInt(itemRow.Icon);
         }
@@ -89,7 +89,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             {
                 var itemID = addon->AtkValues[34 + (11 * i)].UInt % 50_0000;
                 if (itemID == 0) continue;
-                if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+                if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
                 
                 itemDatas.Add(new(itemID, itemRow.Icon, itemRow.Name.ExtractText()));
             }
@@ -134,7 +134,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         {
             var itemID = addon->AtkValues[1063 + i].UInt;
             if (itemID == 0) continue;
-            if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
             
             addon->AtkValues[209 + i].SetUInt(itemRow.Icon);
         }
@@ -154,7 +154,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         {
             var itemID = addon->AtkValues[317 + i].UInt;
             if (itemID == 0) continue;
-            if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
             
             addon->AtkValues[167 + i].SetUInt(itemRow.Icon);
         }
@@ -174,7 +174,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         {
             var itemID = addon->AtkValues[300 + (i * 18)].UInt;
             if (itemID == 0) continue;
-            if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
             
             addon->AtkValues[301 + (i * 18)].SetUInt(itemRow.Icon);
         }
@@ -210,7 +210,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             }
             
             if (itemID == 0) continue;
-            if (!LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
             
             addon->AtkValues[197 + i].SetUInt(itemRow.Icon + (isItemHQ ? 100_0000U : 0U));
         }

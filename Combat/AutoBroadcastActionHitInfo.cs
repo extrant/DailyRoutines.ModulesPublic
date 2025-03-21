@@ -133,7 +133,7 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
             {
                 using var id = ImRaii.PushId($"ActionCustomName_{actionNamePair.Key}");
 
-                if (!LuminaCache.TryGetRow<Action>(actionNamePair.Key, out var data)) continue;
+                if (!LuminaGetter.TryGetRow<Action>(actionNamePair.Key, out var data)) continue;
                 var actionIcon = DService.Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
                 if (actionIcon == null) continue;
 
@@ -191,7 +191,7 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
             if (localPlayer.EntityId != sourceEntityID) return;
 
             var actionID   = effectHeader->ActionId;
-            var actionData = LuminaCache.GetRow<Action>(actionID);
+            var actionData = LuminaGetter.GetRow<Action>(actionID);
             if (actionData == null || actionData.Value.ActionCategory.RowId == 1) return; // 自动攻击
 
             switch (ModuleConfig.WorkMode)

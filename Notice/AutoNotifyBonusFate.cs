@@ -27,7 +27,7 @@ public class AutoNotifyBonusFate : DailyModuleBase
 
     static AutoNotifyBonusFate()
     {
-        ValidTerritory = LuminaCache.Get<TerritoryType>()
+        ValidTerritory = LuminaGetter.Get<TerritoryType>()
                                     .Where(x => x.TerritoryIntendedUse.RowId == 1)
                                     .Where(x => x.ExVersion.Value.RowId      >= 2)
                                     .Select(x => (ushort)x.RowId)
@@ -86,7 +86,7 @@ public class AutoNotifyBonusFate : DailyModuleBase
         var newFates = LastFates.Count == 0 ? fateTable : fateTable.Except(LastFates);
         
         var mapID  = DService.ClientState.MapId;
-        if (!LuminaCache.TryGetRow<Map>(mapID, out var mapRow)) return;
+        if (!LuminaGetter.TryGetRow<Map>(mapID, out var mapRow)) return;
         
         foreach (var fate in newFates)
         {

@@ -27,7 +27,7 @@ public class AutoNotifyCountdown : DailyModuleBase
         AddConfig("OnlyNotifyWhenBackground", true);
         ConfigOnlyNotifyWhenBackground = GetConfig<bool>("OnlyNotifyWhenBackground");
 
-        Countdown ??= LuminaCache.GetRow<LogMessage>(5255)!.Value.Text.ToDalamudString().Payloads
+        Countdown ??= LuminaGetter.GetRow<LogMessage>(5255)!.Value.Text.ToDalamudString().Payloads
                                  .Where(x => x.Type == PayloadType.RawText)
                                  .Select(text => text.ToString()??string.Empty).ToList();
 

@@ -79,7 +79,7 @@ public class SastashaHelper : DailyModuleBase
 
         Chat(GetSLoc("SastashaHelper-Message",
                      new SeStringBuilder()
-                         .AddUiForeground(LuminaCache.GetRow<EObjName>(info.CoralDataID)!.Value.Singular.ExtractText(),
+                         .AddUiForeground(LuminaGetter.GetRow<EObjName>(info.CoralDataID)!.Value.Singular.ExtractText(),
                                           info.UIColor).Build()));
         
         CorrectCoralDataID         = info.CoralDataID;

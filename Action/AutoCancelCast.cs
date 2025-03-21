@@ -39,7 +39,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
     {
         CancelCast ??= Marshal.GetDelegateForFunctionPointer<Action>(CancelCastSig.ScanText());
 
-        TargetAreaActions ??= LuminaCache.Get<Lumina.Excel.Sheets.Action>()
+        TargetAreaActions ??= LuminaGetter.Get<Lumina.Excel.Sheets.Action>()
                                          .Where(x => x.TargetArea)
                                          .Select(x => x.RowId).ToHashSet();
 

@@ -35,7 +35,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
     static AutoMJIWorkshopImport()
     {
-        OriginalCraftItemsSheet = LuminaCache.Get<MJICraftworksObject>()
+        OriginalCraftItemsSheet = LuminaGetter.Get<MJICraftworksObject>()
             .Where(x => x.Item.RowId != 0 && x.Item.IsValid)
             // 不知道这样改对不对
             .ToDictionary(x => x.RowId, x => x);

@@ -112,7 +112,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                 ModuleConfig.Save(this);
             }
             
-            if (!LuminaCache.TryGetRow<UIColor>(ModuleConfig.HighlightColor, out var unitColorRow))
+            if (!LuminaGetter.TryGetRow<UIColor>(ModuleConfig.HighlightColor, out var unitColorRow))
             {
                 ModuleConfig.HighlightColor = 17;
                 ModuleConfig.Save(this);
@@ -127,7 +127,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             ImGui.ColorButton("###HighlightColorPreview", UIColorToVector4Color(unitColorRow.UIForeground));
         }
         
-        var sheet = LuminaCache.Get<UIColor>();
+        var sheet = LuminaGetter.Get<UIColor>();
         using (var node = ImRaii.TreeNode("参考颜色表"))
         {
             if (node)

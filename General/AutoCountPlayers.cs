@@ -83,7 +83,7 @@ public class AutoCountPlayers : DailyModuleBase
             using var id = ImRaii.PushId($"{playerAround.GameObjectID}");
             if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("AutoCountPlayers-Locate")))
             {
-                if (LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
+                if (LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var map))
                 {
                     var mapPos = WorldToMap(playerAround.Character.Position.ToVector2(), map);
                     var message = new SeStringBuilder()

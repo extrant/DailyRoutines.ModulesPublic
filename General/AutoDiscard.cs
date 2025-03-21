@@ -49,7 +49,7 @@ public unsafe class AutoDiscard : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        var itemNames = LuminaCache.Get<Item>()
+        var itemNames = LuminaGetter.Get<Item>()
                                  .Where(x => !string.IsNullOrEmpty(x.Name.ExtractText()) &&
                                              x.ItemSortCategory.RowId != 3 && x.ItemSortCategory.RowId != 4)
                                  .GroupBy(x => x.Name.ExtractText())
@@ -268,7 +268,7 @@ public unsafe class AutoDiscard : DailyModuleBase
             switch (Behaviour)
             {
                 case DiscardBehaviour.Discard:
-                    if (!ClickContextMenu(LuminaCache.GetRow<Addon>(91)!.Value.Text.ExtractText()))
+                    if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(91)!.Value.Text.ExtractText()))
                     {
                         ContextMenu->Close(true);
                         break;
@@ -279,7 +279,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                 case DiscardBehaviour.Sell:
                     if (IsAddonAndNodesReady(GetAddonByName("RetainerGrid0")) || IsAddonAndNodesReady(RetainerSellList))
                     {
-                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(5480)!.Value.Text.ExtractText()))
+                        if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(5480)!.Value.Text.ExtractText()))
                         {
                             ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
@@ -292,7 +292,7 @@ public unsafe class AutoDiscard : DailyModuleBase
 
                     if (IsAddonAndNodesReady(Shop))
                     {
-                        if (!ClickContextMenu(LuminaCache.GetRow<Addon>(93)!.Value.Text.ExtractText()))
+                        if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(93)!.Value.Text.ExtractText()))
                         {
                             ContextMenu->Close(true);
                             ChatError(GetLoc("AutoDiscard-NoSellPage"));
@@ -430,7 +430,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                     {
                         foreach (var item in group.Items.TakeLast(15))
                         {
-                            var itemData = LuminaCache.GetRow<Item>(item);
+                            var itemData = LuminaGetter.GetRow<Item>(item);
                             if (itemData == null) continue;
 
                             var itemIcon = DService.Texture.GetFromGameIcon(new(itemData.Value.Icon)).GetWrapOrDefault();
@@ -463,7 +463,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                 ImGui.Separator();
                 foreach (var item in group.Items)
                 {
-                    var specificItemNullable = LuminaCache.GetRow<Item>(item);
+                    var specificItemNullable = LuminaGetter.GetRow<Item>(item);
                     if (specificItemNullable == null) continue;
                     var specificItem = specificItemNullable.Value;
                     var specificItemIcon = DService.Texture.GetFromGameIcon(new(specificItem.Icon)).GetWrapOrDefault();

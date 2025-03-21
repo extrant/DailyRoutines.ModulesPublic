@@ -40,7 +40,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
     static AutoReplaceLocationAction()
     {
-        LuminaCache.Get<Map>()
+        LuminaGetter.Get<Map>()
                    .Where(x => x.TerritoryType.RowId > 0 && x.TerritoryType.Value.ContentFinderCondition.RowId > 0)
                    .ForEach(map =>
                    {
@@ -132,7 +132,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         // 技能启用情况
         foreach (var actionPair in ModuleConfig.EnabledActions)
         {
-            if (!LuminaCache.TryGetRow<Action>(actionPair.Key, out var action)) continue;
+            if (!LuminaGetter.TryGetRow<Action>(actionPair.Key, out var action)) continue;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -147,7 +147,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
         {
-            if (!LuminaCache.TryGetRow<PetAction>(actionPair.Key, out var action)) continue;
+            if (!LuminaGetter.TryGetRow<PetAction>(actionPair.Key, out var action)) continue;
             var state = actionPair.Value;
 
             if (ImGui.Checkbox($"###{actionPair.Key}_{action.Name.ExtractText()}", ref state))
@@ -169,7 +169,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.TextColored(LightSteelBlue1, $"{GetLoc("AutoReplaceLocationAction-CenterPointData")}");
         using var indent = ImRaii.PushIndent();
 
-        var isMapValid = LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var currentMapData) && currentMapData.TerritoryType.RowId > 0 &&
+        var isMapValid = LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var currentMapData) && currentMapData.TerritoryType.RowId > 0 &&
                          currentMapData.TerritoryType.Value.ContentFinderCondition.RowId > 0;
         var currentMapPlaceName = isMapValid ? currentMapData.PlaceName.Value.Name.ExtractText() : "";
         var currentMapPlaceNameSub = isMapValid ? currentMapData.PlaceNameSub.Value.Name.ExtractText() : "";
@@ -376,10 +376,10 @@ public class AutoReplaceLocationAction : DailyModuleBase
     // 预设场中
     private static unsafe bool HandlePresetCenterLocation(ref Vector3 sourceLocation)
     {
-        if (!LuminaCache.TryGetRow<ContentFinderCondition>
+        if (!LuminaGetter.TryGetRow<ContentFinderCondition>
                 (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
             content.ContentType.RowId is not (4 or 5)                                     ||
-            !LuminaCache.TryGetRow<Map>(DService.ClientState.MapId, out var map))
+            !LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var map))
             return false;
         
         var modifiedLocation = TextureToWorld(new(1024f), map).ToVector3();

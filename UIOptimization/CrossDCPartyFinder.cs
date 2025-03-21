@@ -272,7 +272,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 }
                 
                 var isDescEmpty = string.IsNullOrWhiteSpace(listing.Description);
-                ImGui.Text(isDescEmpty ? $"({LuminaCache.GetRow<Addon>(11100)!.Value.Text.ExtractText()})" : $"{listing.Description}");
+                ImGui.Text(isDescEmpty ? $"({LuminaGetter.GetRow<Addon>(11100)!.Value.Text.ExtractText()})" : $"{listing.Description}");
                 if (!isDescEmpty) ImGuiOm.TooltipHover(listing.Description);
                 if (ImGui.IsItemHovered() && !isDescEmpty)
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
@@ -478,7 +478,7 @@ public class CrossDCPartyFinder : DailyModuleBase
 
         if (DService.ClientState.LocalPlayer is { } localPlayer)
         {
-            DataCenters = LuminaCache.Get<WorldDCGroupType>()
+            DataCenters = LuminaGetter.Get<WorldDCGroupType>()
                                      .Where(x => x.Region == localPlayer.HomeWorld.Value.DataCenter.Value.Region)
                                      .Select(x => x.Name.ExtractText())
                                      .ToList();
@@ -592,22 +592,22 @@ public class CrossDCPartyFinder : DailyModuleBase
         public static string ParseCategoryIDToLoc(uint categoryID) =>
             categoryID switch
             {
-                1  => LuminaCache.GetRow<Addon>(8605)!.Value.Text.ExtractText(),
-                2  => LuminaCache.GetRow<Addon>(8607)!.Value.Text.ExtractText(),
-                3  => LuminaCache.GetRow<Addon>(8606)!.Value.Text.ExtractText(),
-                4  => LuminaCache.GetRow<Addon>(8608)!.Value.Text.ExtractText(),
-                5  => LuminaCache.GetRow<Addon>(8609)!.Value.Text.ExtractText(),
-                6  => LuminaCache.GetRow<Addon>(10822)!.Value.Text.ExtractText(),
-                7  => LuminaCache.GetRow<Addon>(8610)!.Value.Text.ExtractText(),
-                8  => LuminaCache.GetRow<Addon>(8612)!.Value.Text.ExtractText(),
-                9  => LuminaCache.GetRow<Addon>(8601)!.Value.Text.ExtractText(),
-                10 => LuminaCache.GetRow<Addon>(8107)!.Value.Text.ExtractText(),
-                11 => LuminaCache.GetRow<Addon>(8613)!.Value.Text.ExtractText(),
-                12 => LuminaCache.GetRow<Addon>(2306)!.Value.Text.ExtractText(),
-                13 => LuminaCache.GetRow<Addon>(2304)!.Value.Text.ExtractText(),
-                14 => LuminaCache.GetRow<Addon>(2307)!.Value.Text.ExtractText(),
-                15 => LuminaCache.GetRow<ContentType>(30)!.Value.Name.ExtractText(),
-                16 => LuminaCache.GetRow<Addon>(7)!.Value.Text.ExtractText(),
+                1  => LuminaGetter.GetRow<Addon>(8605)!.Value.Text.ExtractText(),
+                2  => LuminaGetter.GetRow<Addon>(8607)!.Value.Text.ExtractText(),
+                3  => LuminaGetter.GetRow<Addon>(8606)!.Value.Text.ExtractText(),
+                4  => LuminaGetter.GetRow<Addon>(8608)!.Value.Text.ExtractText(),
+                5  => LuminaGetter.GetRow<Addon>(8609)!.Value.Text.ExtractText(),
+                6  => LuminaGetter.GetRow<Addon>(10822)!.Value.Text.ExtractText(),
+                7  => LuminaGetter.GetRow<Addon>(8610)!.Value.Text.ExtractText(),
+                8  => LuminaGetter.GetRow<Addon>(8612)!.Value.Text.ExtractText(),
+                9  => LuminaGetter.GetRow<Addon>(8601)!.Value.Text.ExtractText(),
+                10 => LuminaGetter.GetRow<Addon>(8107)!.Value.Text.ExtractText(),
+                11 => LuminaGetter.GetRow<Addon>(8613)!.Value.Text.ExtractText(),
+                12 => LuminaGetter.GetRow<Addon>(2306)!.Value.Text.ExtractText(),
+                13 => LuminaGetter.GetRow<Addon>(2304)!.Value.Text.ExtractText(),
+                14 => LuminaGetter.GetRow<Addon>(2307)!.Value.Text.ExtractText(),
+                15 => LuminaGetter.GetRow<ContentType>(30)!.Value.Name.ExtractText(),
+                16 => LuminaGetter.GetRow<Addon>(7)!.Value.Text.ExtractText(),
                 _  => string.Empty
             };
         
@@ -848,22 +848,22 @@ public class CrossDCPartyFinder : DailyModuleBase
 
             static Slot()
             {
-                BattleJobs = LuminaCache.Get<ClassJob>()
+                BattleJobs = LuminaGetter.Get<ClassJob>()
                                         .Where(x => x.RowId != 0 && x.DohDolJobIndex == -1)
                                         .Select(x => x.Abbreviation.ExtractText())
                                         .ToHashSet();
                 
-                TankJobs = LuminaCache.Get<ClassJob>()
+                TankJobs = LuminaGetter.Get<ClassJob>()
                                      .Where(x => x.RowId != 0 && x.Role is 1)
                                      .Select(x => x.Abbreviation.ExtractText())
                                      .ToHashSet();
                 
-                DPSJobs = LuminaCache.Get<ClassJob>()
+                DPSJobs = LuminaGetter.Get<ClassJob>()
                                      .Where(x => x.RowId != 0 && (x.Role == 2 || x.Role == 3))
                                      .Select(x => x.Abbreviation.ExtractText())
                                      .ToHashSet();
                 
-                HealerJobs = LuminaCache.Get<ClassJob>()
+                HealerJobs = LuminaGetter.Get<ClassJob>()
                                         .Where(x => x.RowId != 0 && x.Role is 4)
                                         .Select(x => x.Abbreviation.ExtractText())
                                         .ToHashSet();
@@ -904,7 +904,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                     
                     uint ParseClassJobIdByName(string job)
                     {
-                        var rowID = LuminaCache.Get<ClassJob>().FirstOrDefault(x => x.Abbreviation.ExtractText() == job).RowId;
+                        var rowID = LuminaGetter.Get<ClassJob>().FirstOrDefault(x => x.Abbreviation.ExtractText() == job).RowId;
                         return rowID == 0 ? 62145 : 62100 + rowID;
                     }
                 }

@@ -157,7 +157,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
         foreach (var memberInfo in playersToCommend)
         {
             if (!TryFindPlayerIndex(memberInfo.Name, memberInfo.ClassJob, out var playerIndex)) continue;
-            if (!LuminaCache.TryGetRow<ClassJob>(memberInfo.ClassJob, out var job)) continue;
+            if (!LuminaGetter.TryGetRow<ClassJob>(memberInfo.ClassJob, out var job)) continue;
             
             SendEvent(AgentId.ContentsMvp, 0, 0, playerIndex);
             Chat(GetSLoc("AutoPlayerCommend-NoticeMessage", 

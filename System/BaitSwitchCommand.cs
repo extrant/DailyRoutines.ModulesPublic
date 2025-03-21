@@ -27,12 +27,12 @@ public class BaitSwitchCommand : DailyModuleBase
 
     static BaitSwitchCommand()
     {
-        Baits = LuminaCache.Get<Item>()
+        Baits = LuminaGetter.Get<Item>()
                            .Where(x => x.FilterGroup is 17 && !string.IsNullOrWhiteSpace(x.Name.ExtractText()))
                            .ToDictionary(x => x.RowId, x => (x.Name.ExtractText().ToLower(),
                                                                 PinyinHelper.GetPinyin(x.Name.ExtractText(), "")));
 
-        Fishes = LuminaCache.Get<Item>()
+        Fishes = LuminaGetter.Get<Item>()
                             .Where(x => x.FilterGroup is 16 && !string.IsNullOrWhiteSpace(x.Name.ExtractText()))
                             .ToDictionary(x => x.RowId, x => (x.Name.ExtractText().ToLower(),
                                                                  PinyinHelper.GetPinyin(x.Name.ExtractText(), "")));
@@ -125,7 +125,7 @@ public class BaitSwitchCommand : DailyModuleBase
             return false;
         }
 
-        var itemName = LuminaCache.GetRow<Item>(itemID)?.Name.ExtractText();
+        var itemName = LuminaGetter.GetRow<Item>(itemID)?.Name.ExtractText();
 
         if (Baits.ContainsKey(itemID))
         {

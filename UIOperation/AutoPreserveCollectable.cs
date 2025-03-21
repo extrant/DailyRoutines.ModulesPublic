@@ -25,7 +25,7 @@ public class AutoPreserveCollectable : DailyModuleBase
 
     public override void Init()
     {
-        PreserveMessage = (LuminaCache.GetRow<Addon>(1463)!.Value.Text.ToDalamudString().Payloads[0] as TextPayload).Text;
+        PreserveMessage = (LuminaGetter.GetRow<Addon>(1463)!.Value.Text.ToDalamudString().Payloads[0] as TextPayload).Text;
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddon);
     }

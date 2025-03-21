@@ -73,7 +73,7 @@ public class ASTHelper : DailyModuleBase
     {
         // auto play card
         ImGui.TextColored(LightSkyBlue, GetLoc("ASTHelper-AutoPlayCardTitle"));
-        ImGuiOm.HelpMarker(GetLoc("ASTHelper-AutoPlayCardDescription", LuminaCache.GetRow<LuminaAction>(17055)!.Value.Name.ExtractText()));
+        ImGuiOm.HelpMarker(GetLoc("ASTHelper-AutoPlayCardDescription", LuminaGetter.GetRow<LuminaAction>(17055)!.Value.Name.ExtractText()));
 
         ImGui.Spacing();
 
@@ -210,7 +210,7 @@ public class ASTHelper : DailyModuleBase
                 if (ImGui.SliderFloat("##MarkScale", ref ModuleConfig.MarkScale, 0.1f, 1.0f, "%.2f"))
                 {
                     SaveConfig(ModuleConfig);
-                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
+                    NewMark(0, LuminaGetter.GetRow<LuminaAction>(37023)!.Value.Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
                     RefreshMarks(true);
                 }
@@ -220,7 +220,7 @@ public class ASTHelper : DailyModuleBase
                 if (ImGui.SliderFloat2("##MarkMargin", ref ModuleConfig.MarkOffset, -50f, 50f, "%.2f"))
                 {
                     SaveConfig(ModuleConfig);
-                    NewMark(0, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
+                    NewMark(0, LuminaGetter.GetRow<LuminaAction>(37023)!.Value.Icon);
                     DService.Framework.RunOnTick(async () => await PreviewTimer(() => DelMark(0), 6000));
                     RefreshMarks(true);
                 }
@@ -308,7 +308,7 @@ public class ASTHelper : DailyModuleBase
                     if (ModuleConfig.OverlayMark)
                     {
                         var idx = FetchMemberIndex((uint)targetID) ?? 0;
-                        if (!LuminaCache.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
+                        if (!LuminaGetter.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
                         NewMark(idx, actionRow.Icon);
                         DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
                     }
@@ -387,7 +387,7 @@ public class ASTHelper : DailyModuleBase
                     if (meleeIdx != MeleeCandidateIdxCache)
                     {
                         DelMark(MeleeCandidateIdxCache);
-                        NewMark(meleeIdx, LuminaCache.GetRow<LuminaAction>(37023)!.Value.Icon);
+                        NewMark(meleeIdx, LuminaGetter.GetRow<LuminaAction>(37023)!.Value.Icon);
                         MeleeCandidateIdxCache = meleeIdx;
                     }
 
@@ -397,7 +397,7 @@ public class ASTHelper : DailyModuleBase
                     if (rangeIdx != RangeCandidateIdxCache)
                     {
                         DelMark(RangeCandidateIdxCache);
-                        NewMark(rangeIdx, LuminaCache.GetRow<LuminaAction>(37026)!.Value.Icon);
+                        NewMark(rangeIdx, LuminaGetter.GetRow<LuminaAction>(37026)!.Value.Icon);
                         RangeCandidateIdxCache = rangeIdx;
                     }
                 }

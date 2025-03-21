@@ -97,16 +97,16 @@ public class FastGrandCompanyExchange : DailyModuleBase
                 var grandCompany = PlayerState.Instance()->GrandCompany;
                 var gcRank       = PlayerState.Instance()->GetGrandCompanyRank();
                 
-                var result = LuminaCache.GetSub<GCScripShopItem>()
+                var result = LuminaGetter.GetSub<GCScripShopItem>()
                                         .SelectMany(x => x)
-                                        .Where(x => LuminaCache.GetRow<GCScripShopCategory>(x.RowId)!.Value.GrandCompany.RowId == grandCompany)
+                                        .Where(x => LuminaGetter.GetRow<GCScripShopCategory>(x.RowId)!.Value.GrandCompany.RowId == grandCompany)
                                         .Where(x => gcRank >= x.RequiredGrandCompanyRank.RowId)
                                         .Where(x => (x.Item.ValueNullable?.Name.ExtractText() ?? string.Empty)
                                                    .Contains(ModuleConfig.ExchangeItemName, StringComparison.OrdinalIgnoreCase))
                                         .OrderBy(x => (x.Item.ValueNullable?.Name.ExtractText() ?? string.Empty).Length)
                                         .FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(ModuleConfig.ExchangeItemName) || result.RowId == 0)
-                    ModuleConfig.ExchangeItemName = LuminaCache.GetRow<Item>(21072)!.Value.Name.ExtractText();
+                    ModuleConfig.ExchangeItemName = LuminaGetter.GetRow<Item>(21072)!.Value.Name.ExtractText();
                 else if (result.RowId != 0) 
                     ModuleConfig.ExchangeItemName = result.Item.Value.Name.ExtractText();
                 ModuleConfig.Save(this);
@@ -169,9 +169,9 @@ public class FastGrandCompanyExchange : DailyModuleBase
         var seals        = InventoryManager.Instance()->GetCompanySeals(grandCompany);
         if (seals == 0) return;
 
-        var result = LuminaCache.GetSub<GCScripShopItem>()
+        var result = LuminaGetter.GetSub<GCScripShopItem>()
                                 .SelectMany(x => x)
-                                .Where(x => LuminaCache.GetRow<GCScripShopCategory>(x.RowId)!.Value.GrandCompany.RowId == grandCompany)
+                                .Where(x => LuminaGetter.GetRow<GCScripShopCategory>(x.RowId)!.Value.GrandCompany.RowId == grandCompany)
                                 .Where(x => gcRank >= x.RequiredGrandCompanyRank.RowId)
                                 .Where(x => (x.Item.ValueNullable?.Name.ExtractText() ?? string.Empty)
                                            .Contains(itemName, StringComparison.OrdinalIgnoreCase))
@@ -191,7 +191,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
             return;
         }
 
-        var categoryData = LuminaCache.GetRow<GCScripShopCategory>(result.RowId)!.Value;
+        var categoryData = LuminaGetter.GetRow<GCScripShopCategory>(result.RowId)!.Value;
         var tier         = categoryData.Tier;
         var subCategory  = categoryData.SubCategory;
 

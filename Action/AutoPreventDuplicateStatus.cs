@@ -213,7 +213,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
                 foreach (var actionInfo in DuplicateActions)
                 {
-                    if (!LuminaCache.TryGetRow<Action>(actionInfo.Key, out var result)) continue;
+                    if (!LuminaGetter.TryGetRow<Action>(actionInfo.Key, out var result)) continue;
                     ImGui.TableNextRow();
                     ImGui.TableNextColumn();
                     var isActionEnabled = ModuleConfig.EnabledActions[actionInfo.Key];
@@ -273,7 +273,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         if (ActionManager.Instance()->GetActionStatus(actionType, adjustedActionID) != 0) return;
 
-        var actionData = LuminaCache.GetRow<Action>(adjustedActionID);
+        var actionData = LuminaGetter.GetRow<Action>(adjustedActionID);
         if (actionData == null) return;
 
         var canTargetSelf = actionData.Value.CanTargetSelf;

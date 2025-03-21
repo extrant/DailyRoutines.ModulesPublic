@@ -80,7 +80,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 {
                     var slot = list[i];
                     var itemID = slot.ItemId;
-                    var itemData = LuminaCache.GetRow<Item>(itemID);
+                    var itemData = LuminaGetter.GetRow<Item>(itemID);
                     if (itemData == null) continue;
                     switch (i)
                     {

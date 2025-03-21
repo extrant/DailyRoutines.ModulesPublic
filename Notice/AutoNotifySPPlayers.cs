@@ -46,7 +46,7 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
 
     static AutoNotifySPPlayers()
     {
-        OnlineStatuses = LuminaCache.Get<OnlineStatus>()
+        OnlineStatuses = LuminaGetter.Get<OnlineStatus>()
                                     .Where(x => x.RowId != 0 && x.RowId != 47)
                                     .ToDictionary(x => x.RowId, x => x);
 
@@ -234,7 +234,7 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
             {
                 foreach (var zone in preset.Zone)
                 {
-                    if (!LuminaCache.TryGetRow<TerritoryType>(zone, out var zoneData)) continue;
+                    if (!LuminaGetter.TryGetRow<TerritoryType>(zone, out var zoneData)) continue;
 
                     ImGui.Text($"{zoneData.ExtractPlaceName()}({zoneData.RowId})");
                     ImGui.SameLine();
@@ -276,7 +276,7 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
             using var group = ImRaii.Group();
             foreach (var status in onlineStatus)
             {
-                if (LuminaCache.TryGetRow<OnlineStatus>(status, out var row)) continue;
+                if (LuminaGetter.TryGetRow<OnlineStatus>(status, out var row)) continue;
                 if (!DService.Texture.TryGetFromGameIcon(new(row.Icon), out var texture)) continue;
 
                 using (ImRaii.Group())

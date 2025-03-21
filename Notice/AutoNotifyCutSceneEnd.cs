@@ -61,7 +61,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         Stopwatch = null;
         IsDutyEnd = false;
         
-        if (!LuminaCache.TryGetRow<TerritoryType>(zone, out var zoneRow) ||
+        if (!LuminaGetter.TryGetRow<TerritoryType>(zone, out var zoneRow) ||
             zoneRow.ContentFinderCondition.ValueNullable == null) return;
         
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty");

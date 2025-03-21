@@ -37,12 +37,12 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
 
     static AutoUseCrafterGathererManual()
     {
-        Gatherers = LuminaCache.Get<ClassJob>()
+        Gatherers = LuminaGetter.Get<ClassJob>()
                                .Where(x => x.ClassJobCategory.RowId == 32)
                                .Select(x => x.RowId)
                                .ToHashSet();
         
-        Crafters = LuminaCache.Get<ClassJob>()
+        Crafters = LuminaGetter.Get<ClassJob>()
                               .Where(x => x.ClassJobCategory.RowId == 33)
                               .Select(x => x.RowId)
                               .ToHashSet();
@@ -113,7 +113,7 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
                 itemID = gathererManual;
             if (isCrafter && TryGetFirstValidItem(CrafterManuals, out var crafterManual))
                 itemID = crafterManual;
-            if (itemID == 0 || !LuminaCache.TryGetRow<Item>(itemID, out var itemRow)) return true;
+            if (itemID == 0 || !LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) return true;
             
             UseActionManager.UseActionLocation(ActionType.Item, itemID, 0xE0000000, default, 0xFFFF);
             if (ModuleConfig.SendNotification)

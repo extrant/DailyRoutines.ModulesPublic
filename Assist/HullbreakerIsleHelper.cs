@@ -31,15 +31,15 @@ public class HullbreakerIsleHelper : DailyModuleBase
         TrapNames = new(StringComparer.OrdinalIgnoreCase)
         {
             // 捕兽夹
-            LuminaCache.GetRow<EObjName>(2000947)!.Value.Singular.ExtractText(),
-            LuminaCache.GetRow<EObjName>(2000947)!.Value.Plural.ExtractText(),
+            LuminaGetter.GetRow<EObjName>(2000947)!.Value.Singular.ExtractText(),
+            LuminaGetter.GetRow<EObjName>(2000947)!.Value.Plural.ExtractText(),
         };
 
         FakeTreasureNames = new(StringComparer.OrdinalIgnoreCase)
         {
             // 宝箱
-            LuminaCache.GetRow<EObjName>(2002491)!.Value.Singular.ExtractText(),
-            LuminaCache.GetRow<EObjName>(2002491)!.Value.Plural.ExtractText()
+            LuminaGetter.GetRow<EObjName>(2002491)!.Value.Singular.ExtractText(),
+            LuminaGetter.GetRow<EObjName>(2002491)!.Value.Plural.ExtractText()
         };
     }
 

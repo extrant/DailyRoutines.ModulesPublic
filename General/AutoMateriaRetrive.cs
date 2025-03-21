@@ -40,7 +40,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
 
     public override void Init()
     {
-        ItemNames ??= LuminaCache.Get<Item>()
+        ItemNames ??= LuminaGetter.Get<Item>()
                                  .Where(x => x.MateriaSlotCount > 0 && !string.IsNullOrEmpty(x.Name.ExtractText()))
                                  .GroupBy(x => x.Name.ExtractText())
                                  .ToDictionary(x => x.Key, x => x.First());

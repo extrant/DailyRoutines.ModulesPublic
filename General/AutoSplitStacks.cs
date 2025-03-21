@@ -52,7 +52,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         TaskHelper   = new();
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        ItemSearcher ??= new(LuminaCache.Get<Item>()
+        ItemSearcher ??= new(LuminaGetter.Get<Item>()
                                         .Where(x => x.FilterGroup != 16 &&
                                                     x.StackSize   > 1   &&
                                                     !string.IsNullOrEmpty(x.Name.ExtractText()))
@@ -169,7 +169,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             }
 
             ImGui.TableNextColumn();
-            if (!LuminaCache.TryGetRow<Item>(group.ItemID, out var item)) continue;
+            if (!LuminaGetter.TryGetRow<Item>(group.ItemID, out var item)) continue;
             var icon = ImageHelper.GetIcon(item.Icon);
             var name = item.Name.ExtractText();
             ImGuiOm.TextImage(name, icon.ImGuiHandle, ScaledVector2(24f));
@@ -265,7 +265,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             return;
         }
 
-        var item = LuminaCache.Get<Item>()
+        var item = LuminaGetter.Get<Item>()
                               .Where(x => x.Name.ExtractText().Contains(args, StringComparison.OrdinalIgnoreCase))
                               .MinBy(x => x.Name.ExtractText().Length);
         if (!item.Equals(null))
@@ -368,7 +368,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         TaskHelper.DelayNext(20, $"ContextMenu_{itemID}_{foundType}_{foundSlot}", false, 2);
         TaskHelper.Enqueue(() =>
         {
-            ClickContextMenu(LuminaCache.GetRow<Addon>(92)!.Value.Text.ExtractText());
+            ClickContextMenu(LuminaGetter.GetRow<Addon>(92)!.Value.Text.ExtractText());
             return true;
         }, null, null, null, 2);
 

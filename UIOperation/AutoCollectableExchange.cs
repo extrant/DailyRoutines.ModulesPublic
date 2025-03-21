@@ -82,12 +82,12 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
             ImGui.SameLine();
             using (ImRaii.Disabled(!buttonNode->NodeFlags.HasFlag(NodeFlags.Enabled)))
             {
-                if (ImGui.Button(LuminaCache.GetRow<Addon>(531)!.Value.Text.ExtractText()))
+                if (ImGui.Button(LuminaGetter.GetRow<Addon>(531)!.Value.Text.ExtractText()))
                     HandInCollectables(AgentModule.Instance()->GetAgentByInternalId(AgentId.CollectablesShop));
             }
             
             ImGui.SameLine();
-            if (ImGui.Button(LuminaCache.GetRow<InclusionShop>(3801094)!.Value.Unknown0.ExtractText()))
+            if (ImGui.Button(LuminaGetter.GetRow<InclusionShop>(3801094)!.Value.Unknown0.ExtractText()))
             {
                 TaskHelper.Enqueue(() =>
                 {

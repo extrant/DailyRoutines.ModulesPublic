@@ -271,7 +271,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
 
             ImGui.TableNextColumn();
             ImGui.Selectable(
-                $"{LuminaCache.GetRow<Item>(preset.ItemID)!.Value.Name.ExtractText()} {(preset.IsHQ ? "(HQ)" : "")}");
+                $"{LuminaGetter.GetRow<Item>(preset.ItemID)!.Value.Name.ExtractText()} {(preset.IsHQ ? "(HQ)" : "")}");
 
             using (var context = ImRaii.ContextPopupItem("PresetContextMenu"))
             {
@@ -488,7 +488,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         => (DateTime.Now - LastFoodUsageTime).TotalSeconds >= FoodUsageCooldownSeconds;
     
     private static uint ToFoodRowID(uint id) 
-        => LuminaCache.GetRow<ItemFood>(LuminaCache.GetRow<Item>(id)!.Value.ItemAction.Value.Data[1])?.RowId ?? 0;
+        => LuminaGetter.GetRow<ItemFood>(LuminaGetter.GetRow<Item>(id)!.Value.ItemAction.Value.Data[1])?.RowId ?? 0;
 
     private static unsafe List<FoodUsagePreset> GetValidPresets()
     {

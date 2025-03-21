@@ -35,7 +35,7 @@ public class AutoSoulsow : DailyModuleBase
     // 进入副本
     private void OnZoneChanged(ushort zone)
     {
-        if (LuminaCache.GetRow<TerritoryType>(zone) is not { ContentFinderCondition.RowId: > 0 }) return;
+        if (LuminaGetter.GetRow<TerritoryType>(zone) is not { ContentFinderCondition.RowId: > 0 }) return;
 
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
@@ -89,7 +89,7 @@ public class AutoSoulsow : DailyModuleBase
 
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
 
-        var contentData = LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
+        var contentData = LuminaGetter.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
         
         return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }

@@ -43,7 +43,7 @@ public class AutoStoreToCabinet : DailyModuleBase
 
     public override void Init()
     {
-        CabinetItems ??= LuminaCache.Get<Cabinet>()
+        CabinetItems ??= LuminaGetter.Get<Cabinet>()
                                     .Where(x => x.Item.RowId > 0)
                                     .ToDictionary(x => x.Item.RowId, x => x.RowId);
 

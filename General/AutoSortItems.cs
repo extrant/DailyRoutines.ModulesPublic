@@ -54,9 +54,9 @@ public class AutoSortItems : DailyModuleBase
         
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         ImGui.TableNextColumn();
-        ImGui.Text(LuminaCache.GetRow<Addon>(12210)!.Value.Text.ExtractText());
+        ImGui.Text(LuminaGetter.GetRow<Addon>(12210)!.Value.Text.ExtractText());
 
-        var typeText = LuminaCache.GetRow<Addon>(9448)!.Value.Text.ExtractText();
+        var typeText = LuminaGetter.GetRow<Addon>(9448)!.Value.Text.ExtractText();
         
         DrawTableRow("兵装库 ID", "ID", ref ModuleConfig.ArmouryChestId, sortOptions);
         DrawTableRow("兵装库等级", GetLoc("Level"), ref ModuleConfig.ArmouryItemLevel, sortOptions);
@@ -64,7 +64,7 @@ public class AutoSortItems : DailyModuleBase
         
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         ImGui.TableNextColumn();
-        ImGui.Text(LuminaCache.GetRow<Addon>(12209)!.Value.Text.ExtractText());
+        ImGui.Text(LuminaGetter.GetRow<Addon>(12209)!.Value.Text.ExtractText());
         
         DrawTableRow("背包 HQ", "HQ", ref ModuleConfig.InventoryHq, sortOptions);
         DrawTableRow("背包 ID", "ID", ref ModuleConfig.InventoryId, sortOptions);
@@ -124,7 +124,7 @@ public class AutoSortItems : DailyModuleBase
 
     private static unsafe bool IsInNormalMap()
     {
-        var currentMapDataNullable = LuminaCache.GetRow<Map>(DService.ClientState.MapId);
+        var currentMapDataNullable = LuminaGetter.GetRow<Map>(DService.ClientState.MapId);
         if (currentMapDataNullable == null) return false;
         var currentMapData = currentMapDataNullable.Value;
         if (currentMapData.TerritoryType.RowId == 0 ||
@@ -132,7 +132,7 @@ public class AutoSortItems : DailyModuleBase
 
         var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
         var contentData =
-            LuminaCache.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
+            LuminaGetter.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
 
         return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }

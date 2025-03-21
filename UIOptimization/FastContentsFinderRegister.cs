@@ -130,7 +130,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(explorerTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
                                             ChatHelper.Instance.SendMessage($"/pdrduty n {name} explorer");
-                                        ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaCache.GetRow<Addon>(13038)!.Value.Text.ExtractText()})");
+                                        ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaGetter.GetRow<Addon>(13038)!.Value.Text.ExtractText()})");
                                     }
                                 }
                                 else
@@ -140,7 +140,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(unrestTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
                                             ChatHelper.Instance.SendMessage($"/pdrduty n {name} unrest");
-                                        ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaCache.GetRow<Addon>(10008)!.Value.Text.ExtractText()})\n" +
+                                        ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaGetter.GetRow<Addon>(10008)!.Value.Text.ExtractText()})\n" +
                                                              $"[{GetLoc("FastContentsFinderRegister-HoldConflictKeyToToggle")}]");
                                     }
                                 }

@@ -133,7 +133,7 @@ public unsafe class AutoLogin : DailyModuleBase
                 for (var i = 0; i < ModuleConfig.LoginInfos.Count; i++)
                 {
                     var info  = ModuleConfig.LoginInfos[i];
-                    var worldNullable = LuminaCache.GetRow<World>(info.WorldID);
+                    var worldNullable = LuminaGetter.GetRow<World>(info.WorldID);
                     if (worldNullable == null) continue;
                     var world = worldNullable.Value;
                     using (ImRaii.PushColor(ImGuiCol.Text, i % 2 == 0 ? ImGuiColors.TankBlue : ImGuiColors.DalamudWhite))
@@ -270,7 +270,7 @@ public unsafe class AutoLogin : DailyModuleBase
 
         var click = new ClickSelectYesNo();
         var title = Marshal.PtrToStringUTF8((nint)SelectYesno->AtkValues[0].String);
-        if (!title.Contains(LuminaCache.GetRow<Addon>(115)!.Value.Text.ExtractText()))
+        if (!title.Contains(LuminaGetter.GetRow<Addon>(115)!.Value.Text.ExtractText()))
         {
             click.No();
             return false;

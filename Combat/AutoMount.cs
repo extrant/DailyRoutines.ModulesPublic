@@ -29,7 +29,7 @@ public unsafe class AutoMount : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         if (ModuleConfig.SelectedMount != 0)
-            SelectedMountRow = LuminaCache.GetRow<Mount>(ModuleConfig.SelectedMount);
+            SelectedMountRow = LuminaGetter.GetRow<Mount>(ModuleConfig.SelectedMount);
 
         TaskHelper ??= new TaskHelper { AbortOnTimeout = true, TimeLimitMS = 20000, ShowDebug = false };
 
@@ -44,7 +44,7 @@ public unsafe class AutoMount : DailyModuleBase
         ImGui.SameLine();
         ImGui.Text(ModuleConfig.SelectedMount == 0
                        ? GetLoc("AutoMount-RandomMount")
-                       : LuminaCache.GetRow<Mount>(ModuleConfig.SelectedMount)!.Value.Singular.ExtractText());
+                       : LuminaGetter.GetRow<Mount>(ModuleConfig.SelectedMount)!.Value.Singular.ExtractText());
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoMount-SelecteMount")}:");
@@ -145,7 +145,7 @@ public unsafe class AutoMount : DailyModuleBase
         if (zone == 0) zone = DService.ClientState.TerritoryType;
         if (zone == 0) return false;
 
-        var zoneData = LuminaCache.GetRow<TerritoryType>(zone);
+        var zoneData = LuminaGetter.GetRow<TerritoryType>(zone);
         return zoneData is { Mount: true };
     }
 

@@ -113,13 +113,13 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         
         using (ImRaii.Disabled(TaskHelper.IsBusy))
         {
-            if (ImGui.Button(LuminaCache.GetRow<Addon>(3280)!.Value.Text.ExtractText()))
+            if (ImGui.Button(LuminaGetter.GetRow<Addon>(3280)!.Value.Text.ExtractText()))
                 EnqueueGrandCompanyExchangeOpen(false);
 
             ImGuiOm.DisableZoneWithHelp(() =>
             {
                 ImGui.SameLine();
-                if (ImGui.Button($"{LuminaCache.GetRow<Addon>(3280)!.Value.Text.ExtractText()} ({GetLoc("Exchange")})"))
+                if (ImGui.Button($"{LuminaGetter.GetRow<Addon>(3280)!.Value.Text.ExtractText()} ({GetLoc("Exchange")})"))
                     EnqueueGrandCompanyExchangeOpen(true);
             }, 
             [
@@ -176,14 +176,14 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         var rank        = playerState->GetGrandCompanyRank();
         var rankText = (GrandCompany)playerState->GrandCompany switch
         {
-            GrandCompany.Maelstrom      => LuminaCache.GetRow<GCRankLimsaMaleText>(rank)?.Singular.ExtractText(),
-            GrandCompany.TwinAdder      => LuminaCache.GetRow<GCRankGridaniaMaleText>(rank)?.Singular.ExtractText(),
-            GrandCompany.ImmortalFlames => LuminaCache.GetRow<GCRankUldahMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.Maelstrom      => LuminaGetter.GetRow<GCRankLimsaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.TwinAdder      => LuminaGetter.GetRow<GCRankGridaniaMaleText>(rank)?.Singular.ExtractText(),
+            GrandCompany.ImmortalFlames => LuminaGetter.GetRow<GCRankUldahMaleText>(rank)?.Singular.ExtractText(),
             _                           => string.Empty,
         };
         if (string.IsNullOrEmpty(rankText)) return;
 
-        if (!LuminaCache.TryGetRow<GrandCompanyRank>(rank, out var rankData)) return;
+        if (!LuminaGetter.TryGetRow<GrandCompanyRank>(rank, out var rankData)) return;
         var iconID = (GrandCompany)playerState->GrandCompany switch
         {
             GrandCompany.Maelstrom      => rankData.IconMaelstrom,
@@ -318,7 +318,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             var grandCompany = PlayerState.Instance()->GrandCompany;
             if ((GrandCompany)grandCompany == GrandCompany.None) return true;
 
-            if (!LuminaCache.TryGetRow<GrandCompanyRank>(PlayerState.Instance()->GetGrandCompanyRank(), out var rank))
+            if (!LuminaGetter.TryGetRow<GrandCompanyRank>(PlayerState.Instance()->GetGrandCompanyRank(), out var rank))
                 return true;
 
             var companySeals = InventoryManager.Instance()->GetCompanySeals(grandCompany);
@@ -366,7 +366,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 
         public bool HasMateria()
         {
-            if (!LuminaCache.TryGetRow<Item>(ItemID, out var row)) return false;
+            if (!LuminaGetter.TryGetRow<Item>(ItemID, out var row)) return false;
             if (row.MateriaSlotCount <= 0) return false;
 
             for (var i = 0; i < Math.Min(row.MateriaSlotCount, GetSlot()->Materia.Length); i++)

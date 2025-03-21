@@ -79,8 +79,8 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
 
         foreach (var (action0, action1) in ActionReplacements)
         {
-            var action0Data = LuminaCache.GetRow<Action>(action0);
-            var action1Data = LuminaCache.GetRow<Action>(action1);
+            var action0Data = LuminaGetter.GetRow<Action>(action0);
+            var action1Data = LuminaGetter.GetRow<Action>(action1);
             if (action0Data == null || action1Data == null) continue;
 
             var action0Icon = DService.Texture.GetFromGameIcon(new(action0Data.Value.Icon)).GetWrapOrDefault();
@@ -130,7 +130,7 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
             return GetIconIDForSlotHook.Original(slot, type, actionID);
         return !TryGetReplacement(actionID, out var adjustedActionID)
                    ? GetIconIDForSlotHook.Original(slot, type, actionID)
-                   : LuminaCache.TryGetRow<Action>(adjustedActionID, out var row)
+                   : LuminaGetter.TryGetRow<Action>(adjustedActionID, out var row)
                        ? row.Icon
                        : 0u;
     }

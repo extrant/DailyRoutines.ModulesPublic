@@ -338,7 +338,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
     private static string GetGeneralInfoText(float percentage, int enmity) =>
         ModuleConfig.UseCustomizeText
             ? string.Format(ModuleConfig.CustomizeTextPattern, percentage.ToString("F1"), enmity)
-            : $"{LuminaCache.GetRow<Addon>(232)!.Value.Text.ExtractText()}: {percentage:F1}% / {LuminaCache.GetRow<Addon>(721)!.Value.Text.ExtractText()}: {enmity}%";
+            : $"{LuminaGetter.GetRow<Addon>(232)!.Value.Text.ExtractText()}: {percentage:F1}% / {LuminaGetter.GetRow<Addon>(721)!.Value.Text.ExtractText()}: {enmity}%";
 
     private static string GetCastInfoText(ActionType type, uint actionID)
     {
@@ -347,13 +347,13 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         switch (type)
         {
             case ActionType.Action:
-                if (!LuminaCache.TryGetRow<Action>(actionID, out var row)) break;
+                if (!LuminaGetter.TryGetRow<Action>(actionID, out var row)) break;
                 result = row.Name.ExtractText();
                 break;
         }
 
         if (string.IsNullOrWhiteSpace(result))
-            result = LuminaCache.GetRow<Addon>(1032)!.Value.Text.ExtractText();
+            result = LuminaGetter.GetRow<Addon>(1032)!.Value.Text.ExtractText();
         
         return result;
     }
