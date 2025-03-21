@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Dalamud.Interface.Utility.Raii;
 
 namespace DailyRoutines.ModulesPublic.UIOptimization;
 
@@ -36,26 +37,26 @@ public class PartyFinderFilter : DailyModuleBase
 
     public override void ConfigUI()
     {
-        ImGui.TextColored(LightSkyBlue, $"{Lang.Get("WorkTheory")}:");
-        ImGuiOm.HelpMarker(Lang.Get("PartyFinderFilter-WorkTheoryHelp"));
+        ImGui.TextColored(LightSkyBlue, $"{GetLoc("WorkTheory")}:");
+        ImGuiOm.HelpMarker(GetLoc("PartyFinderFilter-WorkTheoryHelp"));
 
         ImGui.Spacing();
 
         DrawRoleCountSettings();
         ImGui.AlignTextToFramePadding();
-        ImGui.TextColored(LightSkyBlue, $"{Lang.Get("PartyFinderFilter-CurrentMode")}:");
+        ImGui.TextColored(LightSkyBlue, $"{GetLoc("PartyFinderFilter-CurrentMode")}:");
 
         ImGui.SameLine();
         if (ImGuiComponents.ToggleButton("ModeToggle", ref ModuleConfig.IsWhiteList))
             SaveConfig(ModuleConfig);
 
         ImGui.SameLine();
-        ImGui.Text(ModuleConfig.IsWhiteList ? Lang.Get("Whitelist") : Lang.Get("Blacklist"));
+        ImGui.Text(ModuleConfig.IsWhiteList ? GetLoc("Whitelist") : GetLoc("Blacklist"));
 
-        if (ImGui.Checkbox(Lang.Get("PartyFinderFilter-FilterDuplicate"), ref ModuleConfig.NeedFilterDuplicate))
+        if (ImGui.Checkbox(GetLoc("PartyFinderFilter-FilterDuplicate"), ref ModuleConfig.NeedFilterDuplicate))
             SaveConfig(ModuleConfig);
 
-        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, Lang.Get("PartyFinderFilter-AddPreset")))
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, GetLoc("PartyFinderFilter-AddPreset")))
             ModuleConfig.BlackList.Add(new(true, string.Empty));
 
         DrawBlacklistEditor();
@@ -63,15 +64,20 @@ public class PartyFinderFilter : DailyModuleBase
 
     private void DrawRoleCountSettings()
     {
-        ImGui.BeginGroup();
-        ImGui.Checkbox("##HighEndDuty", ref ModuleConfig.HighEndDuty);
-        ImGui.SameLine();
-        ImGui.TextColored(LightSkyBlue, Lang.Get("PartyFinderFilter-RoleCount"));
-        ImGui.SetNextItemWidth(150 * GlobalFontScale);
-        ImGui.InputInt3(Lang.Get("PartyFinderFilter-RoleCountTH"), ref ModuleConfig.HighEndDutyRoleCount[0]);
-        ImGui.SetNextItemWidth(150 * GlobalFontScale);
-        ImGui.InputInt3(Lang.Get("PartyFinderFilter-RoleCountDPS"), ref ModuleConfig.HighEndDutyRoleCount[3]);
-        ImGui.EndGroup();
+        using (ImRaii.Group())
+        {
+            ImGui.Checkbox("##HighEndDuty", ref ModuleConfig.HighEndDuty);
+            
+            ImGui.SameLine();
+            ImGui.TextColored(LightSkyBlue, GetLoc("PartyFinderFilter-RoleCount"));
+            
+            ImGui.SetNextItemWidth(150 * GlobalFontScale);
+            ImGui.InputInt3(GetLoc("PartyFinderFilter-RoleCountTH"), ref ModuleConfig.HighEndDutyRoleCount[0]);
+            
+            ImGui.SetNextItemWidth(150 * GlobalFontScale);
+            ImGui.InputInt3(GetLoc("PartyFinderFilter-RoleCountDPS"), ref ModuleConfig.HighEndDutyRoleCount[3]);
+        }
+        
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
     }
@@ -103,7 +109,7 @@ public class PartyFinderFilter : DailyModuleBase
             HandleRegexUpdate(index, item.Key, value);
 
         ImGui.SameLine();
-        if (ImGuiOm.ButtonIcon($"##delete{index}", FontAwesomeIcon.Trash))
+        if (ImGuiOm.ButtonIcon($"##Delete{index}", FontAwesomeIcon.Trash))
             ModuleConfig.BlackList.RemoveAt(index);
         return true;
     }
@@ -118,7 +124,7 @@ public class PartyFinderFilter : DailyModuleBase
         }
         catch (ArgumentException)
         {
-            NotificationWarning(Lang.Get("PartyFinderFilter-RegexError"));
+            NotificationWarning(GetLoc("PartyFinderFilter-RegexError"));
             ModuleConfig = LoadConfig<Config>() ?? new Config();
         }
     }
@@ -188,24 +194,12 @@ public class PartyFinderFilter : DailyModuleBase
                     if (listing.JobsPresent.ElementAt(i).Value.Unknown11 == job.Unknown11)
                         count++;
                 }
-                else if (listing.Slots.ElementAt(i)[ClassJobFlag(job.RowId)])
+                else if (listing.Slots.ElementAt(i)[Enum.TryParse<JobFlags>(job.NameEnglish.ExtractText(), out var flag) ? flag : 0])
                     hasSlot = true;
             }
 
             return count < maxCount && hasSlot;
         }
-    }
-
-    private static JobFlags ClassJobFlag(uint index)
-    {
-        if (!Enum.IsDefined(typeof(Job), index))
-            return 0;
-
-        var job = (Job)index;
-        if (Enum.TryParse<JobFlags>(job.ToString(), out var flag))
-            return flag;
-
-        return 0;
     }
 
     public override void Uninit()
@@ -222,165 +216,4 @@ public class PartyFinderFilter : DailyModuleBase
         public bool HighEndDuty = true;
         public int[] HighEndDutyRoleCount = { 2, 1, 1, 2, 1, 2 }; // T2, 血奶1, 盾奶1, 近2, 远1, 法2
     }
-
-    #region enum
-    private enum Job : uint
-    {
-
-        /// <summary>
-        /// Gladiator (GLD).
-        /// </summary>
-        Gladiator = 1,
-
-        /// <summary>
-        /// Pugilist (PGL).
-        /// </summary>
-        Pugilist,
-
-        /// <summary>
-        /// Marauder (MRD).
-        /// </summary>
-        Marauder,
-
-        /// <summary>
-        /// Lancer (LNC).
-        /// </summary>
-        Lancer,
-
-        /// <summary>
-        /// Archer (ARC).
-        /// </summary>
-        Archer,
-
-        /// <summary>
-        /// Conjurer (CNJ).
-        /// </summary>
-        Conjurer,
-
-        /// <summary>
-        /// Thaumaturge (THM).
-        /// </summary>
-        Thaumaturge,
-
-        /// <summary>
-        /// Paladin (PLD).
-        /// </summary>
-        Paladin = 19,
-
-        /// <summary>
-        /// Monk (MNK).
-        /// </summary>
-        Monk,
-
-        /// <summary>
-        /// Warrior (WAR).
-        /// </summary>
-        Warrior,
-
-        /// <summary>
-        /// Dragoon (DRG).
-        /// </summary>
-        Dragoon,
-
-        /// <summary>
-        /// Bard (BRD).
-        /// </summary>
-        Bard,
-
-        /// <summary>
-        /// White mage (WHM).
-        /// </summary>
-        WhiteMage,
-
-        /// <summary>
-        /// Black mage (BLM).
-        /// </summary>
-        BlackMage,
-
-        /// <summary>
-        /// Arcanist (ACN).
-        /// </summary>
-        Arcanist,
-
-        /// <summary>
-        /// Summoner (SMN).
-        /// </summary>
-        Summoner,
-
-        /// <summary>
-        /// Scholar (SCH).
-        /// </summary>
-        Scholar,
-
-        /// <summary>
-        /// Rogue (ROG).
-        /// </summary>
-        Rogue,
-
-        /// <summary>
-        /// Ninja (NIN).
-        /// </summary>
-        Ninja,
-
-        /// <summary>
-        /// Machinist (MCH).
-        /// </summary>
-        Machinist,
-
-        /// <summary>
-        /// Dark Knight (DRK).
-        /// </summary>
-        DarkKnight,
-
-        /// <summary>
-        /// Astrologian (AST).
-        /// </summary>
-        Astrologian,
-
-        /// <summary>
-        /// Samurai (SAM).
-        /// </summary>
-        Samurai,
-
-        /// <summary>
-        /// Red mage (RDM).
-        /// </summary>
-        RedMage,
-
-        /// <summary>
-        /// Blue mage (BLU).
-        /// </summary>
-        BlueMage,
-
-        /// <summary>
-        /// Gunbreaker (GNB).
-        /// </summary>
-        Gunbreaker,
-
-        /// <summary>
-        /// Dancer (DNC).
-        /// </summary>
-        Dancer,
-
-        /// <summary>
-        /// Reaper (RPR).
-        /// </summary>
-        Reaper,
-
-        /// <summary>
-        /// Sage (SGE).
-        /// </summary>
-        Sage,
-
-        /// <summary>
-        /// Viper (VPR).
-        /// </summary>
-        Viper,
-
-        /// <summary>
-        /// Pictomancer (PCT).
-        /// </summary>
-        Pictomancer,
-    }
-    #endregion
 }
