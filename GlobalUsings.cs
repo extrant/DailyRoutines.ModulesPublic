@@ -7,7 +7,7 @@ global using static DailyRoutines.Managers.Configuration;
 global using static DailyRoutines.Managers.LanguageManagerExtensions;
 global using static DailyRoutines.Helpers.NotifyHelper;
 global using static OmenTools.Helpers.ContentsFinderHelper;
-global using static Dalamud.Interface.Utility.Raii.ImRaii;
+global using Dalamud.Interface.Utility.Raii;
 global using OmenTools.Infos;
 global using OmenTools.ImGuiOm;
 global using OmenTools.Helpers;
