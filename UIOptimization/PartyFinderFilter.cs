@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Utility.Raii;
 using Lumina.Excel.Sheets;
 
@@ -30,12 +32,16 @@ public class PartyFinderFilter : DailyModuleBase
     private static readonly HashSet<(ushort, string)> descriptionSet = [];
     private static          bool                      ManualMode;
 
-    public override void Init()
+    public override unsafe void Init()
     {
         ModuleConfig =   LoadConfig<Config>() ?? new Config();
         Overlay      ??= new Overlay(this);
 
         DService.PartyFinder.ReceiveListing += OnReceiveListing;
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroup", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddon);
+        if (IsAddonAndNodesReady(LookingForGroup)) OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -297,9 +303,14 @@ public class PartyFinderFilter : DailyModuleBase
             return count < maxCount && hasSlot;
         }
     }
+    
+    
+    private void OnAddon(AddonEvent type, AddonArgs? args) => 
+        ToggleOverlayConfig(type == AddonEvent.PostSetup);
 
     public override void Uninit()
     {
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
         DService.PartyFinder.ReceiveListing -= OnReceiveListing;
         base.Uninit();
     }
