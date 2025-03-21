@@ -182,8 +182,7 @@ public class PartyFinderFilter : DailyModuleBase
         args.Visible &= FilterBySameDescription(listing);
         args.Visible &= FilterByRegexList(listing);
         args.Visible &= FilterByHighEndSameJob(listing);
-        
-        args.Visible &= isSecret || !ModuleConfig.HighEndFilterRoleCount || HighEndDutyFilterRoles(listing);
+        args.Visible &= FilterByHighEndSameRole(listing);
     }
 
     private static bool FilterBySameDescription(IPartyFinderListing listing)
@@ -223,7 +222,7 @@ public class PartyFinderFilter : DailyModuleBase
         return true;
     }
 
-    private static bool HighEndDutyFilterRoles(IPartyFinderListing listing)
+    private static bool FilterByHighEndSameRole(IPartyFinderListing listing)
     {
         if (!ModuleConfig.HighEndFilterRoleCount) return true;
         if (!isRaid || DService.ClientState.LocalPlayer is not { } localPlayer) return true;
