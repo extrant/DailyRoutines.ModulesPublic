@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Dalamud.Interface.Utility.Raii;
+using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.ModulesPublic.UIOptimization;
+namespace DailyRoutines.ModulesPublic;
 
 public class PartyFinderFilter : DailyModuleBase
 {
@@ -20,12 +21,14 @@ public class PartyFinderFilter : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         Author      = ["status102"]
     };
-
-    private int batchIndex;
-    private bool isSecret;
-    private bool isRaid;
-    private readonly HashSet<(ushort, string)> descriptionSet = [];
+    
     private static Config ModuleConfig = null!;
+    
+    private static          int                       batchIndex;
+    private static          bool                      isSecret;
+    private static          bool                      isRaid;
+    private static readonly HashSet<(ushort, string)> descriptionSet = [];
+    private static          bool                      ManualMode;
 
     public override void Init()
     {
@@ -37,53 +40,69 @@ public class PartyFinderFilter : DailyModuleBase
 
     public override void ConfigUI()
     {
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("WorkTheory")}:");
-        ImGuiOm.HelpMarker(GetLoc("PartyFinderFilter-WorkTheoryHelp"));
-
+        if (ImGui.Checkbox(GetLoc("PartyFinderFilter-FilterDuplicate"), ref ModuleConfig.FilterSameDescription))
+            SaveConfig(ModuleConfig);
+        
+        ImGui.Spacing();
+        
+        DrawHighEndSettings();
+        
         ImGui.Spacing();
 
-        DrawRoleCountSettings();
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("PartyFinderFilter-CurrentMode")}:");
-
-        ImGui.SameLine();
-        if (ImGuiComponents.ToggleButton("ModeToggle", ref ModuleConfig.IsWhiteList))
-            SaveConfig(ModuleConfig);
-
-        ImGui.SameLine();
-        ImGui.Text(ModuleConfig.IsWhiteList ? GetLoc("Whitelist") : GetLoc("Blacklist"));
-
-        if (ImGui.Checkbox(GetLoc("PartyFinderFilter-FilterDuplicate"), ref ModuleConfig.NeedFilterDuplicate))
-            SaveConfig(ModuleConfig);
-
-        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, GetLoc("PartyFinderFilter-AddPreset")))
-            ModuleConfig.BlackList.Add(new(true, string.Empty));
-
-        DrawBlacklistEditor();
-    }
-
-    private void DrawRoleCountSettings()
-    {
-        using (ImRaii.Group())
-        {
-            ImGui.Checkbox("##HighEndDuty", ref ModuleConfig.HighEndDuty);
-            
-            ImGui.SameLine();
-            ImGui.TextColored(LightSkyBlue, GetLoc("PartyFinderFilter-RoleCount"));
-            
-            ImGui.SetNextItemWidth(150 * GlobalFontScale);
-            ImGui.InputInt3(GetLoc("PartyFinderFilter-RoleCountTH"), ref ModuleConfig.HighEndDutyRoleCount[0]);
-            
-            ImGui.SetNextItemWidth(150 * GlobalFontScale);
-            ImGui.InputInt3(GetLoc("PartyFinderFilter-RoleCountDPS"), ref ModuleConfig.HighEndDutyRoleCount[3]);
-        }
+        ImGui.TextColored(LightSkyBlue, GetLoc("PartyFinderFilter-DescriptionRegexFilter"));
         
+        ImGui.Spacing();
+
+        DrawRegexFilterSettings();
+    }
+    
+    private void DrawHighEndSettings()
+    {
+        using var group  = ImRaii.Group();
+        
+        ImGui.TextColored(LightSkyBlue, GetLoc("PartyFinderFilter-HighEndFilter"));
+        
+        using var indent = ImRaii.PushIndent();
+        
+        if (ImGui.Checkbox(GetLoc("PartyFinderFilter-HighEndFilterSameJob"), ref ModuleConfig.HighEndFilterSameJob))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox($"{GetLoc("PartyFinderFilter-HighEndFilterRoleCount")}", ref ModuleConfig.HighEndFilterRoleCount))
+            SaveConfig(ModuleConfig);
+        ImGuiOm.HelpMarker(GetLoc("PartyFinderFilter-HighEndFilterRoleCountHelp"), 20f * GlobalFontScale);
+
+        ImGui.SameLine();
+        ImGuiComponents.ToggleButton("###IsHighEndRoleCountFilterManualMode", ref ManualMode);
+        
+        ImGui.SameLine();
+        ImGui.Text(GetLoc(ManualMode ? "ManualMode" : "AutoMode"));
+
+        if (!ModuleConfig.HighEndFilterRoleCount) return;
+        
+        using var pushIndent = ImRaii.PushIndent();
+        ImGui.SetNextItemWidth(150f * GlobalFontScale);
+        ImGui.InputInt3($"{LuminaWarpper.GetAddonText(1082)} / {LuminaWarpper.GetAddonText(11300)} / {LuminaWarpper.GetAddonText(11301)}",
+                        ref ModuleConfig.HighEndFilterRoleCountData[0]);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            SaveConfig(ModuleConfig);
+        
+        ImGui.SetNextItemWidth(150f * GlobalFontScale);
+        ImGui.InputInt3($"{LuminaWarpper.GetAddonText(1084)} / {LuminaWarpper.GetAddonText(1085)} / {LuminaWarpper.GetAddonText(1086)}",
+                        ref ModuleConfig.HighEndFilterRoleCountData[3]);
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
     }
 
-    private void DrawBlacklistEditor()
+    private void DrawRegexFilterSettings()
     {
+        using var indent = ImRaii.PushIndent();
+        
+        if (ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Plus, GetLoc("PartyFinderFilter-AddPreset")))
+            ModuleConfig.BlackList.Add(new(true, string.Empty));
+        
+        ImGui.SameLine();
+        DrawWorkModeSettings();
+        
         var index = 0;
         foreach (var item in ModuleConfig.BlackList.ToList())
         {
@@ -95,12 +114,30 @@ public class PartyFinderFilter : DailyModuleBase
             }
 
             ImGui.SameLine();
-            if (DrawBlacklistItemText(index, item))
+            if (DrawRegexFilterItemText(index, item))
                 index++;
         }
     }
+    
+    private void DrawWorkModeSettings()
+    {
+        using var group = ImRaii.Group();
+        
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextColored(LightSkyBlue, $"{GetLoc("WorkMode")}:");
 
-    private bool DrawBlacklistItemText(int index, KeyValuePair<bool, string> item)
+        ImGui.SameLine();
+        if (ImGuiComponents.ToggleButton("ModeToggle", ref ModuleConfig.IsWhiteList))
+            SaveConfig(ModuleConfig);
+
+        ImGui.SameLine();
+        ImGui.Text(ModuleConfig.IsWhiteList ? GetLoc("Whitelist") : GetLoc("Blacklist"));
+        
+        ImGui.SameLine();
+        ImGuiOm.HelpMarker(GetLoc("PartyFinderFilter-WorkModeHelp"), 20f * GlobalFontScale);
+    }
+    
+    private bool DrawRegexFilterItemText(int index, KeyValuePair<bool, string> item)
     {
         var value = item.Value;
         ImGui.InputText($"##{index}", ref value, 500);
@@ -128,8 +165,9 @@ public class PartyFinderFilter : DailyModuleBase
             ModuleConfig = LoadConfig<Config>() ?? new Config();
         }
     }
+    
 
-    private void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
+    private static void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
     {
         if (batchIndex != args.BatchNumber)
         {
@@ -139,63 +177,122 @@ public class PartyFinderFilter : DailyModuleBase
             descriptionSet.Clear();
         }
 
-        args.Visible &= isSecret || !ModuleConfig.HighEndDuty || HighEndDutyFilterRoles(listing);
-        args.Visible &= isSecret || Verify(listing);
+        if (isSecret) return;
+
+        args.Visible &= FilterBySameDescription(listing);
+        args.Visible &= FilterByRegexList(listing);
+        args.Visible &= FilterByHighEndSameJob(listing);
+        
+        args.Visible &= isSecret || !ModuleConfig.HighEndFilterRoleCount || HighEndDutyFilterRoles(listing);
     }
 
-    private bool Verify(IPartyFinderListing listing)
+    private static bool FilterBySameDescription(IPartyFinderListing listing)
+    {
+        if (!ModuleConfig.FilterSameDescription) return true;
+        
+        var description = listing.Description.ExtractText();
+        if (string.IsNullOrWhiteSpace(description)) return true;
+
+        return descriptionSet.Add((listing.RawDuty, description));
+    }
+
+    private static bool FilterByRegexList(IPartyFinderListing listing)
     {
         var description = listing.Description.ToString();
-
-        if (!string.IsNullOrEmpty(description) && ModuleConfig.NeedFilterDuplicate && !descriptionSet.Add((listing.RawDuty, description)))
-            return false;
+        if (string.IsNullOrEmpty(description)) return true;
 
         var isMatch = ModuleConfig.BlackList
                                   .Where(i => i.Key)
-                                  .Any(item => Regex.IsMatch(listing.Name.ToString(), item.Value) ||
-                                               Regex.IsMatch(description, item.Value));
+                                  .Any(item => Regex.IsMatch(listing.Name.ExtractText(), item.Value) ||
+                                               Regex.IsMatch(description,                item.Value));
 
         return ModuleConfig.IsWhiteList ? isMatch : !isMatch;
     }
 
-    private bool HighEndDutyFilterRoles(IPartyFinderListing listing)
+    private static bool FilterByHighEndSameJob(IPartyFinderListing listing)
     {
-        if (!isRaid)
-            return true;
+        if (!ModuleConfig.HighEndFilterSameJob) return true;
+        if (!isRaid || DService.ClientState.LocalPlayer is not { } localPlayer) return true;
 
-        var j = DService.ClientState.LocalPlayer?.ClassJob.ValueNullable;
-        if (j is null)
-            return true;
+        var job = localPlayer.ClassJob.Value;
+        if (job.Unknown11 == 0) return true; // 生产职业 / 基础职业
 
-        var job = j.Value;
-        return job.Unknown11 switch // PartyBonus 下一个
+        foreach (var present in listing.JobsPresent)
+            if (present.RowId == localPlayer.ClassJob.RowId) return false;
+
+        return true;
+    }
+
+    private static bool HighEndDutyFilterRoles(IPartyFinderListing listing)
+    {
+        if (!ModuleConfig.HighEndFilterRoleCount) return true;
+        if (!isRaid || DService.ClientState.LocalPlayer is not { } localPlayer) return true;
+
+        var job = localPlayer.ClassJob.Value;
+        
+        if (ManualMode)
         {
-            0 => true, // 生产职业 or 基础职业
-            1 => RoleCounter(ModuleConfig.HighEndDutyRoleCount[0]), // T
-            2 => RoleCounter(ModuleConfig.HighEndDutyRoleCount[1]), // 血奶
-            6 => RoleCounter(ModuleConfig.HighEndDutyRoleCount[2]), // 盾奶
-            3 or 4 or 5 => RoleCounter(ModuleConfig.HighEndDutyRoleCount[job.Unknown11]), // 3近 4远敏 5法
-            _ => true,
-        };
+            var filter0 = RoleCounter(1, ModuleConfig.HighEndFilterRoleCountData[0], job);
+            var filter1 = RoleCounter(2, ModuleConfig.HighEndFilterRoleCountData[1], job);
+            var filter2 = RoleCounter(6, ModuleConfig.HighEndFilterRoleCountData[2], job);
+            var filter3 = RoleCounter(3, ModuleConfig.HighEndFilterRoleCountData[3], job);
+            var filter4 = RoleCounter(4, ModuleConfig.HighEndFilterRoleCountData[4], job);
+            var filter5 = RoleCounter(5, ModuleConfig.HighEndFilterRoleCountData[5], job);
+            
+            return filter0 && filter1 && filter2 && filter3 && filter4 && filter5;
+        }
+        else
+        {
+            return job.Unknown11 switch
+            {
+                0           => true,
+                1           => RoleCounter(1,             ModuleConfig.HighEndFilterRoleCountData[0],             job),
+                2           => RoleCounter(2,             ModuleConfig.HighEndFilterRoleCountData[1],             job),
+                6           => RoleCounter(6,             ModuleConfig.HighEndFilterRoleCountData[2],             job),
+                3 or 4 or 5 => RoleCounter(job.Unknown11, ModuleConfig.HighEndFilterRoleCountData[job.Unknown11], job),
+                _           => true,
+            };
+        }
 
-        bool RoleCounter(int maxCount)
+        bool RoleCounter(int roleType, int maxCount, ClassJob currentJob)
         {
             var count = 0;
             var hasSlot = false;
+            
             foreach (var i in Enumerable.Range(0, 8))
             {
                 if (listing.Slots.Count <= i || listing.JobsPresent.Count <= i || count >= maxCount)
                     break;
 
-                if (listing.JobsPresent.ElementAt(i).Value.RowId == job.RowId)
-                    return false;
-                else if (listing.JobsPresent.ElementAt(i).Value.RowId != 0)
+                if (listing.JobsPresent.ElementAt(i).Value.RowId != 0)
                 {
-                    if (listing.JobsPresent.ElementAt(i).Value.Unknown11 == job.Unknown11)
+                    // 如果该位置已有玩家，检查职业类型
+                    if (listing.JobsPresent.ElementAt(i).Value.Unknown11 == roleType)
                         count++;
                 }
-                else if (listing.Slots.ElementAt(i)[Enum.TryParse<JobFlags>(job.NameEnglish.ExtractText(), out var flag) ? flag : 0])
-                    hasSlot = true;
+                else
+                {
+                    // 检查空位是否允许当前角色类型
+                    if (ManualMode)
+                    {
+                        // 手动模式：检查所有同类角色是否有空位
+                        foreach (var playerJob in LuminaGetter.Get<ClassJob>().Where(j => j.RowId != 0 && j.Unknown11 == roleType))
+                        {
+                            if (Enum.TryParse<JobFlags>(playerJob.NameEnglish.ExtractText(), out var flag) && 
+                                listing.Slots.ElementAt(i)[flag])
+                            {
+                                hasSlot = true;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (listing.Slots.ElementAt(i)[
+                                Enum.TryParse<JobFlags>(currentJob.NameEnglish.ExtractText().Replace(" ", string.Empty), out var flag) ? flag : 0])
+                            hasSlot = true;
+                    }
+                }
             }
 
             return count < maxCount && hasSlot;
@@ -211,9 +308,13 @@ public class PartyFinderFilter : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         public List<KeyValuePair<bool, string>> BlackList = [];
-        public bool IsWhiteList;
-        public bool NeedFilterDuplicate = true;
-        public bool HighEndDuty = true;
-        public int[] HighEndDutyRoleCount = { 2, 1, 1, 2, 1, 2 }; // T2, 血奶1, 盾奶1, 近2, 远1, 法2
+        
+        public bool  IsWhiteList;
+        
+        public bool FilterSameDescription = true;
+        public bool HighEndFilterSameJob  = true;
+        
+        public bool  HighEndFilterRoleCount     = true;
+        public int[] HighEndFilterRoleCountData = [2, 1, 1, 2, 1, 2]; // T2, 血奶1, 盾奶1, 近2, 远1, 法2
     }
 }
