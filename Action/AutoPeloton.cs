@@ -41,7 +41,7 @@ public class AutoPeloton : DailyModuleBase
     
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("AutoPeloton-OnlyInDuty"), ref Config.OnlyInDuty)) // "只在副本中使用"
+        if (ImGui.Checkbox(GetLoc("OnlyInDuty"), ref Config.OnlyInDuty)) // "只在副本中使用"
         {
             SaveConfig(Config);
             

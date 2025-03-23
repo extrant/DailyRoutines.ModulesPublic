@@ -13,63 +13,54 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoLucidDreamingTitle"),
+        Title       = GetLoc("AutoLucidDreamingTitle"),
         Description = GetLoc("AutoLucidDreamingDescription"),
-        Category = ModuleCategories.Action,
-        Author = ["qingsiweisan"]
+        Category    = ModuleCategories.Action,
+        Author      = ["qingsiweisan"]
     };
+    
+    private const int   AbilityLockTimeMs       = 800;
+    private const int   PlayerInputIgnoreTimeMs = 300;
+    private const int   GcdStartThresholdMs     = 200;
+    private const int   GcdEndThresholdMs       = 500;
+    private const float UseInGcdWindowStart     = 60;
+    private const float UseInGcdWindowEnd       = 95;
+    
+    private static readonly HashSet<uint> ClassJobArr     = [6, 7, 15, 19, 20, 21, 23, 24, 26, 27, 28, 33, 35, 36, 40];
+    private static readonly uint          LucidDreamingID = 7562;
 
-    // 字段定义
-    private static readonly HashSet<uint> ClassJobArr = [6, 7, 15, 19, 20, 21, 23, 24, 26, 27, 28, 33, 35, 36, 40];
-    private static readonly uint LucidDreamingActionId = 7562;
+    private static Configs ModuleConfig = null!;
+    
     private static DateTime LastLucidDreamingUseTime = DateTime.MinValue;
-    private static DateTime LastPlayerActionTime = DateTime.MinValue;
-    private Configs Config = null!;
-    private static bool IsAbilityLocked = false;
-    
-    // 常量定义
-    private const int AbilityLockTimeMs = 800;
-    private const int PlayerInputIgnoreTimeMs = 300;
-    private const int GcdStartThresholdMs = 200;
-    private const int GcdEndThresholdMs = 500;
-    private const float UseInGcdWindowStart = 60;
-    private const float UseInGcdWindowEnd = 95;
-
-    // 辅助工具方法
-    private static void SetAbilityLock(bool locked) => IsAbilityLocked = locked;
-    
-    // 配置类定义
-    private class Configs : ModuleConfiguration
-    {
-        public bool OnlyInDuty = true;
-        public int MpThreshold = 7000;
-    }
+    private static DateTime LastPlayerActionTime     = DateTime.MinValue;
+    private static bool     IsAbilityLocked;
     
     public override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
-        Config = LoadConfig<Configs>() ?? new();
+        TaskHelper   ??= new TaskHelper { TimeLimitMS = 30_000 };
+        ModuleConfig =   LoadConfig<Configs>() ?? new();
 
         DService.ClientState.TerritoryChanged += OnTerritoryChanged;
-        DService.DutyState.DutyRecommenced += OnDutyRecommenced;
-        DService.Condition.ConditionChange += OnConditionChanged;
-        DService.ClientState.LevelChanged += OnLevelChanged;
-        DService.ClientState.ClassJobChanged += OnClassJobChanged;
+        DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
+        DService.Condition.ConditionChange    += OnConditionChanged;
+        DService.ClientState.LevelChanged     += OnLevelChanged;
+        DService.ClientState.ClassJobChanged  += OnClassJobChanged;
 
         TaskHelper.Enqueue(OneTimeConditionCheck);
     }
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("AutoLucidDreaming-OnlyInDuty"), ref Config.OnlyInDuty))
+        if (ImGui.Checkbox(GetLoc("OnlyInDuty"), ref ModuleConfig.OnlyInDuty))
         {
-            SaveConfig(Config);
+            SaveConfig(ModuleConfig);
             TaskHelper.Abort();
             TaskHelper.Enqueue(OneTimeConditionCheck);
         }
 
-        if (ImGui.DragInt("##MpThresholdSlider", ref Config.MpThreshold, 100f, 3000, 9000, $"{GetLoc("AutoLucidDreaming-MpThreshold")}: %d"))
-            SaveConfig(Config);
+        ImGui.SetNextItemWidth(250f * GlobalFontScale);
+        if (ImGui.DragInt("##MpThresholdSlider", ref ModuleConfig.MpThreshold, 100f, 3000, 9000, $"{LuminaWarpper.GetAddonText(233)}: %d"))
+            SaveConfig(ModuleConfig);
     }
 
     public override void Uninit()
@@ -80,18 +71,18 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
         DService.ClientState.LevelChanged -= OnLevelChanged;
         DService.ClientState.ClassJobChanged -= OnClassJobChanged;
 
-        if (Config != null) SaveConfig(Config);
+        if (ModuleConfig != null) SaveConfig(ModuleConfig);
         base.Uninit();
     }
 
-    // 事件处理方法
     private void OnDutyRecommenced(object? sender, ushort e) => ResetTaskHelperAndCheck();
-    private void OnLevelChanged(uint classJobId, uint level) => ResetTaskHelperAndCheck();
+    
+    private void OnLevelChanged(uint classJobID, uint level) => ResetTaskHelperAndCheck();
     
     private void OnTerritoryChanged(ushort zone)
     {
         TaskHelper.Abort();
-        if (Config.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+        if (ModuleConfig.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
         TaskHelper.Enqueue(OneTimeConditionCheck);
     }
 
@@ -119,7 +110,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
     private bool? OneTimeConditionCheck()
     {
         // 快速返回条件检查
-        if ((Config.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) ||
+        if ((ModuleConfig.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) ||
             GameMain.IsInPvPArea() || GameMain.IsInPvPInstance() ||
             !DService.Condition[ConditionFlag.InCombat])
             return true;
@@ -145,7 +136,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
             
         // 职业和技能检查
         if (!ClassJobArr.Contains(localPlayer.ClassJob.RowId) ||
-            !IsActionUnlocked(LucidDreamingActionId))
+            !IsActionUnlocked(LucidDreamingID))
             return true;
 
         TaskHelper.Enqueue(PreventAbilityUse, "PreventAbilityUse", 5_000, true, 1);
@@ -185,12 +176,12 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
         // 快速返回条件检查
         if (timeSinceLastAction < PlayerInputIgnoreTimeMs ||
             timeSinceLastUse < AbilityLockTimeMs ||
-            currentMp >= Config.MpThreshold)
+            currentMp >= ModuleConfig.MpThreshold)
             return true;
             
         // 检查技能状态
         var actionManager = ActionManager.Instance();
-        if (actionManager->GetActionStatus(ActionType.Action, LucidDreamingActionId) != 0 ||
+        if (actionManager->GetActionStatus(ActionType.Action, LucidDreamingID) != 0 ||
             statusManager.HasStatus(1204) ||
             character->Mode == CharacterModes.AnimLock ||
             character->IsCasting ||
@@ -215,18 +206,25 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
         TaskHelper.Enqueue(() =>
         {
             // 更新LastPlayerActionTime（原UseAction方法中的逻辑）
-            if (LucidDreamingActionId != 7562) LastPlayerActionTime = DateTime.Now;
+            if (LucidDreamingID != 7562) LastPlayerActionTime = DateTime.Now;
             
             // 检查技能锁定
             if (IsAbilityLocked)
                 return false;
             
             // 使用UseActionManager
-            var result = UseActionManager.UseAction(ActionType.Action, LucidDreamingActionId);
+            var result = UseActionManager.UseAction(ActionType.Action, LucidDreamingID);
             if (result) LastLucidDreamingUseTime = capturedTime;
             return result;
-        }, $"UseAction_{LucidDreamingActionId}", 5_000, true, 1);
+        }, $"UseAction_{LucidDreamingID}", 5_000, true, 1);
         return true;
     }
     
+    private static void SetAbilityLock(bool locked) => IsAbilityLocked = locked;
+    
+    private class Configs : ModuleConfiguration
+    {
+        public bool OnlyInDuty;
+        public int  MpThreshold = 7000;
+    }
 }
