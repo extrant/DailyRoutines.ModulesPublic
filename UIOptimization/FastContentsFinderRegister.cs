@@ -28,7 +28,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         Overlay       ??= new(this);
         Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinder", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "ContentsFinder", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "ContentsFinder", OnAddon);
         if (ContentsFinder != null) OnAddon(AddonEvent.PostSetup, null);
     }
@@ -106,7 +106,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                 {
                     var sharedPrefix = $"{levelNode->NodeText.ExtractText()} {name}";
 
-                    name = name.Split(' ').LastOrDefault();
+                    name = name.Replace(" ", string.Empty);
                     using (ImRaii.Group())
                     {
                         using (ImRaii.Disabled(lockNode->IsVisible()))
