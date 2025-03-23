@@ -261,6 +261,8 @@ public class PartyFinderFilter : DailyModuleBase
 
         bool RoleCounter(int roleType, int maxCount, ClassJob currentJob)
         {
+            if (maxCount == -1) return true;
+            
             var count = 0;
             var hasSlot = false;
             
