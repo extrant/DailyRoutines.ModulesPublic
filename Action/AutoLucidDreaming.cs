@@ -154,7 +154,6 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
         if (shouldLock)
         {
             var remainingLockTime = AbilityLockTimeMs - (int)timeSinceLastUse;
-            DService.Chat?.PrintError($"能力技已锁定 ({remainingLockTime}ms)");
             TaskHelper.DelayNext(Math.Min(remainingLockTime, 100));
         }
         
