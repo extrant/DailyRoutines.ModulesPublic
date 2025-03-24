@@ -1,3 +1,4 @@
+// Original Author: Asvel
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -84,7 +85,7 @@ public class AutoConvertMapLink : DailyModuleBase
 
                 var (territoryId, mapId) = (zone.Value.RowId, zone.Value.Map.RowId);
 
-                if (!PresetSheet.Maps.TryGetValue(mapId, out var map))
+                if (!LuminaGetter.TryGetRow<Lumina.Excel.Sheets.Map>(mapId, out var map))
                 {
                     continue;
                 }
