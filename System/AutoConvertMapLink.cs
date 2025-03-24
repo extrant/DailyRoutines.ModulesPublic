@@ -12,12 +12,12 @@ using System.Text.RegularExpressions;
 
 namespace DailyRoutines.Modules;
 
-public class BetterCoordsSender : DailyModuleBase
+public class AutoConvertMapLink : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("BetterCoordsSenderTitle"),
-        Description = GetLoc("BetterCoordsSenderDescription"),
+        Title = GetLoc("AutoConvertMapLinkTitle"),
+        Description = GetLoc("AutoConvertMapLinkDescription"),
         Category = ModuleCategories.System,
         Author = ["KirisameVanilla"],
     };
