@@ -22,8 +22,7 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
     
     private static Config ModuleConfig = null!;
 
-    private static readonly CompSig ProcessPacketActionEffectSig =
-        new("40 55 56 57 41 54 41 55 41 56 48 8D AC 24 68 FF FF FF 48 81 EC 98 01 00 00");
+    private static readonly CompSig ProcessPacketActionEffectSig = new("E8 ?? ?? ?? ?? 48 8B 8D F0 03 00 00");
     private delegate void ProcessPacketActionEffectDelegate(
         uint sourceID, nint sourceCharacter, nint pos, ActionEffectHandler.Header* effectHeader, ActionEffectHandler.Effect* effectArray,
         ulong* effectTrail);

@@ -13,10 +13,10 @@ public unsafe class RealQueuePosition : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("RealQueuePositionTitle"),
+        Title       = GetLoc("RealQueuePositionTitle"),
         Description = GetLoc("RealQueuePositionDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["逆光", "Nukoooo"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["逆光", "Nukoooo"]
     };
 
     private DateTime ETA = DateTime.Now;

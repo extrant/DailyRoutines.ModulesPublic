@@ -26,7 +26,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     };
 
     // 返回值为 GameObject*, 无对象则为 0
-    private static readonly CompSig ParseActionCommandArgSig = new("E8 ?? ?? ?? ?? 45 33 E4 4C 8B F8 48 85 C0 74 ?? 48 8B 00");
+    private static readonly CompSig ParseActionCommandArgSig = new("E8 ?? ?? ?? ?? 48 8B 5C 24 30 EB 0C");
     private delegate nint ParseActionCommandArgDelegate(nint a1, nint arg, bool a3, bool a4);
     private static Hook<ParseActionCommandArgDelegate>? ParseActionCommandArgHook;
 

@@ -9,10 +9,10 @@ public class PFPageSizeCustomize : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("PFPageSizeCustomizeTitle"),
+        Title       = GetLoc("PFPageSizeCustomizeTitle"),
         Description = GetLoc("PFPageSizeCustomizeDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["逆光"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["逆光"]
     };
 
     private static readonly CompSig PartyFinderDisplayAmountSig = new("48 89 5C 24 ?? 55 56 57 48 ?? ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? 48 89 85 ?? ?? ?? ?? 48 ?? ?? 0F");

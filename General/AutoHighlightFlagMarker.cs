@@ -23,7 +23,7 @@ public unsafe class AutoHighlightFlagMarker : DailyModuleBase
         ModulesConflict = ["MultiTargetTracker"],
     };
 
-    private static readonly CompSig SetFlagMarkerSig = new("40 56 48 83 EC 40 80 B9 DE 5A 00 00 01");
+    private static readonly CompSig SetFlagMarkerSig = new("E8 ?? ?? ?? ?? 48 8B 06 48 8B CE FF 50 ?? 84 C0 74 ?? 48 8B 8B");
     private delegate void SetFlagMarkerDelegate(AgentMap* agent, uint zoneID, uint mapID, float worldX, float worldZ, uint iconID = 60561);
     private static Hook<SetFlagMarkerDelegate>? SetFlagMarkerHook;
 

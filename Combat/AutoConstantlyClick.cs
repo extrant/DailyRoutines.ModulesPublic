@@ -29,11 +29,11 @@ public class AutoConstantlyClick : DailyModuleBase
     private static readonly CompSig IsIDKeyPressedSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? BA ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ?? 48 8D 4C 24 ?? 0F 29 BC 24");
     private static IDKeyDelegate? IsIDKeyPressed;
 
-    private static readonly CompSig GamepadPollSig = new("40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24");
+    private static readonly CompSig GamepadPollSig = new("40 55 53 57 41 57 48 8D AC 24 58 FC FF FF ", "40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24");
     private static Hook<ControllerPoll>? GamepadPollHook;
     private delegate int ControllerPoll(IntPtr controllerInput);
 
-    private static readonly CompSig CheckHotbarClickedSig = new("48 89 4C 24 08 53 41 55 41 57");
+    private static readonly CompSig CheckHotbarClickedSig = new("E8 ?? ?? ?? ?? 48 8B 4F ?? 48 8B 01 FF 50 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 74");
     private delegate void CheckHotbarClickedDelegate(nint a1, byte a2);
     private static Hook<CheckHotbarClickedDelegate>? CheckHotbarClickedHook;
 

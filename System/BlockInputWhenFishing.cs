@@ -9,9 +9,9 @@ public unsafe class BlockInputWhenFishing : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("BlockInputWhenFishingTitle"),
+        Title       = GetLoc("BlockInputWhenFishingTitle"),
         Description = GetLoc("BlockInputWhenFishingDescription"),
-        Category = ModuleCategories.System,
+        Category    = ModuleCategories.System,
     };
 
     private static readonly CompSig IsKeyDownSig =

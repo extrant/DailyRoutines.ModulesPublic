@@ -8,9 +8,9 @@ public class SoundEffectThrottler : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("SoundEffectThrottlerTitle"),
+        Title       = GetLoc("SoundEffectThrottlerTitle"),
         Description = GetLoc("SoundEffectThrottlerDescription"),
-        Category = ModuleCategories.System,
+        Category    = ModuleCategories.System,
     };
 
     private static readonly CompSig PlaySoundEffectSig =

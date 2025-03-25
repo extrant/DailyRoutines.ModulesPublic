@@ -23,10 +23,9 @@ public class AutoCheckFoodUsage : DailyModuleBase
         Category = ModuleCategories.Combat,
     };
 
-    private static readonly CompSig CountdownInitSig = 
-        new("E9 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 53 48 83 EC ?? 48 8B 0D");
-    public delegate nint CountdownInitDelegate(nint a1, nint a2);
-    private static Hook<CountdownInitDelegate>? CountdownInitHook;
+    private static readonly CompSig                      CountdownInitSig = new("48 89 5C 24 10 57 48 83 EC 40 48 8B DA 48 8B F9 48 8B 49 08");
+    public delegate         nint                         CountdownInitDelegate(nint a1, nint a2);
+    private static          Hook<CountdownInitDelegate>? CountdownInitHook;
 
     private static Config ModuleConfig = null!;
 
