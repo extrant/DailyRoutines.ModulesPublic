@@ -1,7 +1,5 @@
-﻿// Copied from HaselTweaks
-using System;
+﻿using System;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -17,62 +15,35 @@ public unsafe class ScrollableTabs : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("ScrollableTabsTitle"),
-        Author = ["Cyf5119"],
-        Category = ModuleCategories.UIOperation,
-        Description = GetLoc("ScrollableTabsDescription")
+        Title       = GetLoc("ScrollableTabsTitle"),
+        Description = GetLoc("ScrollableTabsDescription"),
+        Category    = ModuleCategories.UIOperation,
+        Author      = ["Cyf5119"],
     };
-
-    private class Config : ModuleConfiguration
-    {
-        public bool Invert = true;
-        public bool HandleAetherCurrent = true;
-        public bool HandleArmouryBoard = true;
-        public bool HandleAOZNotebook = true;
-        public bool HandleCharacter = true;
-        public bool HandleCharacterClass = true;
-        public bool HandleCharacterRepute = true;
-        public bool HandleInventoryBuddy = true;
-        public bool HandleBuddy = true;
-        // public bool HandleCurrency = true;
-        // TODO 国服FFCS还没更这个
-        public bool HandleOrnamentNoteBook = true;
-        public bool HandleFieldRecord = true;
-        public bool HandleFishGuide = true;
-        public bool HandleMiragePrismPrismBox = true;
-        public bool HandleGoldSaucerCardList = true;
-        public bool HandleGoldSaucerCardDeckEdit = true;
-        public bool HandleLovmPaletteEdit = true;
-        public bool HandleInventory = true;
-        public bool HandleMJIMinionNoteBook = true;
-        public bool HandleMinionNoteBook = true;
-        public bool HandleMountNoteBook = true;
-        public bool HandleRetainer = true;
-        public bool HandleFateProgress = true;
-        public bool HandleAdventureNoteBook = true;
-    }
-
-    private const int NumArmouryBoardTabs = 12;
-    private const int NumInventoryTabs = 5;
-    private const int NumInventoryLargeTabs = 4;
-    private const int NumInventoryExpansionTabs = 2;
-    private const int NumInventoryRetainerTabs = 6;
+    
+    private const int NumArmouryBoardTabs           = 12;
+    private const int NumInventoryTabs              = 5;
+    private const int NumInventoryLargeTabs         = 4;
+    private const int NumInventoryExpansionTabs     = 2;
+    private const int NumInventoryRetainerTabs      = 6;
     private const int NumInventoryRetainerLargeTabs = 3;
-    private const int NumBuddyTabs = 3;
+    private const int NumBuddyTabs                  = 3;
 
-    private static Config _moduleConfig = null!;
-    private static int _wheelState;
+    private static Config ModuleConfig = null!;
+    private static int    WheelState;
 
     private static AtkCollisionNode* IntersectingCollisionNode =>
         RaptureAtkModule.Instance()->AtkCollisionManager.IntersectingCollisionNode;
+
     private static bool IsNext =>
-        _wheelState == (!_moduleConfig.Invert ? 1 : -1);
+        WheelState == (!ModuleConfig.Invert ? 1 : -1);
+
     private static bool IsPrev =>
-        _wheelState == (!_moduleConfig.Invert ? -1 : 1);
+        WheelState == (!ModuleConfig.Invert ? -1 : 1);
 
     public override void Init()
     {
-        _moduleConfig = LoadConfig<Config>() ?? new Config();
+        ModuleConfig = LoadConfig<Config>() ?? new Config();
 
         FrameworkManager.Register(true, OnUpdate);
     }
@@ -85,52 +56,76 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("ScrollableTabs-Invert"), ref _moduleConfig.Invert))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(1370), ref _moduleConfig.HandleArmouryBoard))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(12250), ref _moduleConfig.HandleAOZNotebook))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230), ref _moduleConfig.HandleCharacter))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230) + "->" + LuminaWarpper.GetAddonText(760), ref _moduleConfig.HandleCharacterClass))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230) + "->" + LuminaWarpper.GetAddonText(102512), ref _moduleConfig.HandleCharacterRepute))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(882), ref _moduleConfig.HandleInventoryBuddy))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3511), ref _moduleConfig.HandleBuddy))
-            SaveConfig(_moduleConfig);
+        if (ImGui.Checkbox(GetLoc("ScrollableTabs-Invert"), ref ModuleConfig.Invert))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(1370), ref ModuleConfig.HandleArmouryBoard))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(12250), ref ModuleConfig.HandleAOZNotebook))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230), ref ModuleConfig.HandleCharacter))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230) + "->" + LuminaWarpper.GetAddonText(760), ref ModuleConfig.HandleCharacterClass))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(230) + "->" + LuminaWarpper.GetAddonText(102512), ref ModuleConfig.HandleCharacterRepute))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(882), ref ModuleConfig.HandleInventoryBuddy))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3511), ref ModuleConfig.HandleBuddy))
+            SaveConfig(ModuleConfig);
+        
         // if(ImGui.Checkbox(LuminaWarpper.GetAddonText(3660), ref ModuleConfig.HandleCurrency))
         // SaveConfig(ModuleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(13671), ref _moduleConfig.HandleOrnamentNoteBook))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(13802), ref _moduleConfig.HandleFieldRecord))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3804), ref _moduleConfig.HandleFishGuide))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3735), ref _moduleConfig.HandleMiragePrismPrismBox))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9339), ref _moduleConfig.HandleGoldSaucerCardList))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9340) + "->" + LuminaWarpper.GetAddonText(9425), ref _moduleConfig.HandleGoldSaucerCardDeckEdit))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9550) + "->" + LuminaWarpper.GetAddonText(9594), ref _moduleConfig.HandleLovmPaletteEdit))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(520), ref _moduleConfig.HandleInventory))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(15321), ref _moduleConfig.HandleMJIMinionNoteBook))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(7595), ref _moduleConfig.HandleMinionNoteBook))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(4964), ref _moduleConfig.HandleMountNoteBook))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(6941), ref _moduleConfig.HandleRetainer))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3933), ref _moduleConfig.HandleFateProgress))
-            SaveConfig(_moduleConfig);
-        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(8140), ref _moduleConfig.HandleAdventureNoteBook))
-            SaveConfig(_moduleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(13671), ref ModuleConfig.HandleOrnamentNoteBook))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(13802), ref ModuleConfig.HandleFieldRecord))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3804), ref ModuleConfig.HandleFishGuide))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3735), ref ModuleConfig.HandleMiragePrismPrismBox))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9339), ref ModuleConfig.HandleGoldSaucerCardList))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9340) + "->" + LuminaWarpper.GetAddonText(9425),
+                           ref ModuleConfig.HandleGoldSaucerCardDeckEdit))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(9335) + "->" + LuminaWarpper.GetAddonText(9550) + "->" + LuminaWarpper.GetAddonText(9594),
+                           ref ModuleConfig.HandleLovmPaletteEdit))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(520), ref ModuleConfig.HandleInventory))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(15321), ref ModuleConfig.HandleMJIMinionNoteBook))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(7595), ref ModuleConfig.HandleMinionNoteBook))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(4964), ref ModuleConfig.HandleMountNoteBook))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(6941), ref ModuleConfig.HandleRetainer))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(3933), ref ModuleConfig.HandleFateProgress))
+            SaveConfig(ModuleConfig);
+        
+        if (ImGui.Checkbox(LuminaWarpper.GetAddonText(8140), ref ModuleConfig.HandleAdventureNoteBook))
+            SaveConfig(ModuleConfig);
     }
 
     private static void OnUpdate(IFramework _)
@@ -138,24 +133,24 @@ public unsafe class ScrollableTabs : DailyModuleBase
         if (!DService.ClientState.IsLoggedIn)
             return;
 
-        _wheelState = System.Math.Clamp(UIInputData.Instance()->CursorInputs.MouseWheel, -1, 1);
-        if (_wheelState == 0)
+        WheelState = Math.Clamp(UIInputData.Instance()->CursorInputs.MouseWheel, -1, 1);
+        if (WheelState == 0)
             return;
 
-        if (_moduleConfig.Invert)
-            _wheelState *= -1;
+        if (ModuleConfig.Invert)
+            WheelState *= -1;
 
         var hoveredUnitBase = RaptureAtkModule.Instance()->AtkCollisionManager.IntersectingAddon;
         if (hoveredUnitBase == null)
         {
-            _wheelState = 0;
+            WheelState = 0;
             return;
         }
 
         var name = hoveredUnitBase->NameString;
         if (string.IsNullOrEmpty(name))
         {
-            _wheelState = 0;
+            WheelState = 0;
             return;
         }
 
@@ -183,13 +178,13 @@ public unsafe class ScrollableTabs : DailyModuleBase
             case "AdventureNoteBook":      // Sightseeing Log
             case "MJIMinionNoteBook":      // Island Minion Guide
             // case "Currency":               // Currency
-            case "InventoryBuddy":         // Chocobo Saddlebag
-            case "InventoryBuddy2":        // Chocobo Saddlebag (when in Retainer Inventory)
-            case "Character":              // Character
-            case "CharacterClass":         // Character -> Classes/Jobs
-            case "CharacterRepute":        // Character -> Reputation
-            case "Buddy":                  // Companion
-            case "MiragePrismPrismBox":    // Glamours
+            case "InventoryBuddy":      // Chocobo Saddlebag
+            case "InventoryBuddy2":     // Chocobo Saddlebag (when in Retainer Inventory)
+            case "Character":           // Character
+            case "CharacterClass":      // Character -> Classes/Jobs
+            case "CharacterRepute":     // Character -> Reputation
+            case "Buddy":               // Companion
+            case "MiragePrismPrismBox": // Glamours
                 break;
 
             // used by Inventory
@@ -261,25 +256,20 @@ public unsafe class ScrollableTabs : DailyModuleBase
                 break;
 
             default:
-#if DEBUG
-                Debug($"Unhandled AtkUnitBase: {name}");
-#endif
-                _wheelState = 0;
+                WheelState = 0;
                 return;
         }
 
         // if (!TryGetAddon<AtkUnitBase>(name, out var unitBase)) // 使用 Omen牌 方法替代
         if (!TryGetAddonByName<AtkUnitBase>(name, out var unitBase))
         {
-            _wheelState = 0;
+            WheelState = 0;
             return;
         }
 
-        if (_moduleConfig.HandleArmouryBoard && name == "ArmouryBoard")
-        {
+        if (ModuleConfig.HandleArmouryBoard && name == "ArmouryBoard")
             UpdateArmouryBoard((AddonArmouryBoard*)unitBase);
-        }
-        else if (_moduleConfig.HandleInventory && name is "Inventory" or "InventoryEvent" or "InventoryLarge" or "InventoryExpansion")
+        else if (ModuleConfig.HandleInventory && name is "Inventory" or "InventoryEvent" or "InventoryLarge" or "InventoryExpansion")
         {
             switch (name)
             {
@@ -297,7 +287,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
                     break;
             }
         }
-        else if (_moduleConfig.HandleRetainer && name is "InventoryRetainer" or "InventoryRetainerLarge")
+        else if (ModuleConfig.HandleRetainer && name is "InventoryRetainer" or "InventoryRetainerLarge")
         {
             switch (name)
             {
@@ -309,104 +299,75 @@ public unsafe class ScrollableTabs : DailyModuleBase
                     break;
             }
         }
-        else if ((_moduleConfig.HandleMinionNoteBook && name == "MinionNoteBook") || (_moduleConfig.HandleMountNoteBook && name == "MountNoteBook"))
-        {
+        else if ((ModuleConfig.HandleMinionNoteBook && name == "MinionNoteBook") || (ModuleConfig.HandleMountNoteBook && name == "MountNoteBook"))
             UpdateMountMinion((AddonMinionMountBase*)unitBase);
-        }
-        else if (_moduleConfig.HandleFishGuide && name == "FishGuide2")
-        {
+        else if (ModuleConfig.HandleFishGuide && name == "FishGuide2")
             UpdateTabController(unitBase, &((AddonFishGuide2*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleAdventureNoteBook && name == "AdventureNoteBook")
-        {
+        else if (ModuleConfig.HandleAdventureNoteBook && name == "AdventureNoteBook")
             UpdateTabController(unitBase, &((AddonAdventureNoteBook*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleOrnamentNoteBook && name == "OrnamentNoteBook")
-        {
+        else if (ModuleConfig.HandleOrnamentNoteBook && name == "OrnamentNoteBook")
             UpdateTabController(unitBase, &((AddonOrnamentNoteBook*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleGoldSaucerCardList && name == "GSInfoCardList")
-        {
+        else if (ModuleConfig.HandleGoldSaucerCardList && name == "GSInfoCardList")
             UpdateTabController(unitBase, &((AddonGSInfoCardList*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleGoldSaucerCardDeckEdit && name == "GSInfoEditDeck")
-        {
+        else if (ModuleConfig.HandleGoldSaucerCardDeckEdit && name == "GSInfoEditDeck")
             UpdateTabController(unitBase, &((AddonGSInfoEditDeck*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleLovmPaletteEdit && name == "LovmPaletteEdit")
-        {
+        else if (ModuleConfig.HandleLovmPaletteEdit && name == "LovmPaletteEdit")
             UpdateTabController(unitBase, &((AddonLovmPaletteEdit*)unitBase)->TabController);
-        }
-        else if (_moduleConfig.HandleAOZNotebook && name == "AOZNotebook")
-        {
+        else if (ModuleConfig.HandleAOZNotebook && name == "AOZNotebook")
             UpdateAOZNotebook((AddonAOZNotebook*)unitBase);
-        }
-        else if (_moduleConfig.HandleAetherCurrent && name == "AetherCurrent")
-        {
+        else if (ModuleConfig.HandleAetherCurrent && name == "AetherCurrent")
             UpdateAetherCurrent((AddonAetherCurrent*)unitBase);
-        }
-        else if (_moduleConfig.HandleFateProgress && name == "FateProgress")
-        {
+        else if (ModuleConfig.HandleFateProgress && name == "FateProgress")
             UpdateFateProgress((AddonFateProgress*)unitBase);
-        }
-        else if (_moduleConfig.HandleFieldRecord && name == "MYCWarResultNotebook")
-        {
+        else if (ModuleConfig.HandleFieldRecord && name == "MYCWarResultNotebook")
             UpdateFieldNotes((AddonMYCWarResultNotebook*)unitBase);
-        }
-        else if (_moduleConfig.HandleMJIMinionNoteBook && name == "MJIMinionNoteBook")
-        {
+        else if (ModuleConfig.HandleMJIMinionNoteBook && name == "MJIMinionNoteBook")
             UpdateMJIMinionNoteBook((AddonMJIMinionNoteBook*)unitBase);
-        }
         // else if (ModuleConfig.HandleCurrency && name == "Currency")
         // {
         // UpdateCurrency((AddonCurrency*)unitBase);
         // }
-        else if (_moduleConfig.HandleInventoryBuddy && name is "InventoryBuddy" or "InventoryBuddy2")
-        {
+        else if (ModuleConfig.HandleInventoryBuddy && name is "InventoryBuddy" or "InventoryBuddy2")
             UpdateInventoryBuddy((AddonInventoryBuddy*)unitBase);
-        }
-        else if (_moduleConfig.HandleBuddy && name == "Buddy")
-        {
+        else if (ModuleConfig.HandleBuddy && name == "Buddy")
             UpdateBuddy((AddonBuddy*)unitBase);
-        }
-        else if (_moduleConfig.HandleMiragePrismPrismBox && name == "MiragePrismPrismBox")
-        {
+        else if (ModuleConfig.HandleMiragePrismPrismBox && name == "MiragePrismPrismBox")
             UpdateMiragePrismPrismBox((AddonMiragePrismPrismBox*)unitBase);
-        }
         else if (name is "Character" or "CharacterClass" or "CharacterRepute")
         {
             var addonCharacter = name == "Character" ? (AddonCharacter*)unitBase : GetAddonByName<AddonCharacter>("Character");
 
-            if (addonCharacter == null || !addonCharacter->AddonControl.IsChildSetupComplete || IntersectingCollisionNode == addonCharacter->CharacterPreviewCollisionNode)
+            if (addonCharacter            == null || !addonCharacter->AddonControl.IsChildSetupComplete ||
+                IntersectingCollisionNode == addonCharacter->CharacterPreviewCollisionNode)
             {
-                _wheelState = 0;
+                WheelState = 0;
                 return;
             }
 
             switch (name)
             {
-                case "Character" when _moduleConfig.HandleCharacter:
+                case "Character" when ModuleConfig.HandleCharacter:
                     UpdateCharacter(addonCharacter);
                     break;
-                case "CharacterClass" when _moduleConfig.HandleCharacter && !_moduleConfig.HandleCharacterClass:
+                case "CharacterClass" when ModuleConfig.HandleCharacter && !ModuleConfig.HandleCharacterClass:
                     UpdateCharacter(addonCharacter);
                     break;
-                case "CharacterClass" when _moduleConfig.HandleCharacterClass:
+                case "CharacterClass" when ModuleConfig.HandleCharacterClass:
                     UpdateCharacterClass(addonCharacter, (AddonCharacterClass*)unitBase);
                     break;
-                case "CharacterRepute" when _moduleConfig.HandleCharacter && !_moduleConfig.HandleCharacterRepute:
+                case "CharacterRepute" when ModuleConfig.HandleCharacter && !ModuleConfig.HandleCharacterRepute:
                     UpdateCharacter(addonCharacter);
                     break;
-                case "CharacterRepute" when _moduleConfig.HandleCharacterRepute:
+                case "CharacterRepute" when ModuleConfig.HandleCharacterRepute:
                     UpdateCharacterRepute(addonCharacter, (AddonCharacterRepute*)unitBase);
                     break;
             }
         }
 
-        _wheelState = 0;
+        WheelState = 0;
     }
 
-    private static int GetTabIndex(int currentTabIndex, int numTabs) => Math.Clamp(currentTabIndex + _wheelState, 0, numTabs - 1);
+    private static int GetTabIndex(int currentTabIndex, int numTabs) => Math.Clamp(currentTabIndex + WheelState, 0, numTabs - 1);
 
     private static void UpdateArmouryBoard(AddonArmouryBoard* addon)
     {
@@ -420,17 +381,17 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
     private static void UpdateInventory(AddonInventory* addon)
     {
-        if (addon->TabIndex == NumInventoryTabs - 1 && _wheelState > 0)
+        if (addon->TabIndex == NumInventoryTabs - 1 && WheelState > 0)
         {
             var values = stackalloc AtkValue[3];
 
             values[0].Ctor();
             values[0].Type = ValueType.Int;
-            values[0].Int = 22;
+            values[0].Int  = 22;
 
             values[1].Ctor();
             values[1].Type = ValueType.Int;
-            values[1].Int = *(int*)((nint)addon + 0x228);
+            values[1].Int  = *(int*)((nint)addon + 0x228);
 
             values[2].Ctor();
             values[2].Type = ValueType.UInt;
@@ -451,18 +412,18 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
     private static void UpdateInventoryEvent(AddonInventoryEvent* addon)
     {
-        if (addon->TabIndex == 0 && _wheelState < 0)
+        if (addon->TabIndex == 0 && WheelState < 0)
         {
             // inside Vf68, fn call before return with a2 being 2
             var values = stackalloc AtkValue[3];
 
             values[0].Ctor();
             values[0].Type = ValueType.Int;
-            values[0].Int = 22;
+            values[0].Int  = 22;
 
             values[1].Ctor();
             values[1].Type = ValueType.Int;
-            values[1].Int = *(int*)((nint)addon + 0x280);
+            values[1].Int  = *(int*)((nint)addon + 0x280);
 
             values[2].Ctor();
             values[2].Type = ValueType.UInt;
@@ -474,10 +435,8 @@ public unsafe class ScrollableTabs : DailyModuleBase
         {
             var numEnabledButtons = 0;
             foreach (ref var button in addon->Buttons)
-            {
                 if ((button.Value->AtkComponentButton.Flags & 0x40000) != 0)
                     numEnabledButtons++;
-            }
 
             var tabIndex = GetTabIndex(addon->TabIndex, numEnabledButtons);
 
@@ -556,10 +515,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         addon->SetTab(tabIndex);
 
-        for (var i = 0; i < addon->Tabs.Length; i++)
-        {
-            addon->Tabs[i].Value->IsSelected = i == tabIndex;
-        }
+        for (var i = 0; i < addon->Tabs.Length; i++) addon->Tabs[i].Value->IsSelected = i == tabIndex;
     }
 
     private static void UpdateFateProgress(AddonFateProgress* addon)
@@ -578,49 +534,40 @@ public unsafe class ScrollableTabs : DailyModuleBase
         if (IntersectingCollisionNode == addon->DescriptionCollisionNode)
             return;
 
-        var atkEvent = new AtkEvent();
-        var eventParam = Math.Clamp(addon->CurrentNoteIndex % 10 + _wheelState, -1, addon->MaxNoteIndex - 1);
+        var atkEvent   = new AtkEvent();
+        var eventParam = Math.Clamp((addon->CurrentNoteIndex % 10) + WheelState, -1, addon->MaxNoteIndex - 1);
 
         if (eventParam == -1)
         {
             if (addon->CurrentPageIndex > 0)
             {
-                var page = addon->CurrentPageIndex - 1;
+                var page = addon->CurrentPageIndex                             - 1;
                 addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, page + 10, &atkEvent);
-                addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, 9, &atkEvent);
+                addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, 9,         &atkEvent);
             }
         }
         else if (eventParam == 10)
         {
             if (addon->CurrentPageIndex < 4)
             {
-                var page = addon->CurrentPageIndex + 1;
+                var page = addon->CurrentPageIndex                             + 1;
                 addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, page + 10, &atkEvent);
             }
         }
         else
-        {
             addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, eventParam, &atkEvent);
-        }
     }
 
     private static void UpdateMountMinion(AddonMinionMountBase* addon)
     {
         if (addon->CurrentView == AddonMinionMountBase.ViewType.Normal)
         {
-            if (addon->TabController.TabIndex == 0 && _wheelState < 0)
-            {
+            if (addon->TabController.TabIndex == 0 && WheelState < 0)
                 addon->SwitchToFavorites();
-            }
             else
-            {
                 UpdateTabController((AtkUnitBase*)addon, &addon->TabController);
-            }
         }
-        else if (addon->CurrentView == AddonMinionMountBase.ViewType.Favorites && _wheelState > 0)
-        {
-            addon->TabController.CallbackFunction(0, (AtkUnitBase*)addon);
-        }
+        else if (addon->CurrentView == AddonMinionMountBase.ViewType.Favorites && WheelState > 0) addon->TabController.CallbackFunction(0, (AtkUnitBase*)addon);
     }
 
     private static void UpdateMJIMinionNoteBook(AddonMJIMinionNoteBook* addon)
@@ -629,13 +576,13 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         if (agent->CurrentView == AgentMJIMinionNoteBook.ViewType.Normal)
         {
-            if (addon->TabController.TabIndex == 0 && _wheelState < 0)
+            if (addon->TabController.TabIndex == 0 && WheelState < 0)
             {
-                agent->CurrentView = AgentMJIMinionNoteBook.ViewType.Favorites;
-                agent->SelectedFavoriteMinion.TabIndex = 0;
+                agent->CurrentView                      = AgentMJIMinionNoteBook.ViewType.Favorites;
+                agent->SelectedFavoriteMinion.TabIndex  = 0;
                 agent->SelectedFavoriteMinion.SlotIndex = agent->SelectedNormalMinion.SlotIndex;
-                agent->SelectedFavoriteMinion.MinionId = agent->GetSelectedMinionId();
-                agent->SelectedMinion = &agent->SelectedFavoriteMinion;
+                agent->SelectedFavoriteMinion.MinionId  = agent->GetSelectedMinionId();
+                agent->SelectedMinion                   = &agent->SelectedFavoriteMinion;
                 agent->HandleCommand(0x407);
             }
             else
@@ -644,13 +591,13 @@ public unsafe class ScrollableTabs : DailyModuleBase
                 agent->HandleCommand(0x40B);
             }
         }
-        else if (agent->CurrentView == AgentMJIMinionNoteBook.ViewType.Favorites && _wheelState > 0)
+        else if (agent->CurrentView == AgentMJIMinionNoteBook.ViewType.Favorites && WheelState > 0)
         {
-            agent->CurrentView = AgentMJIMinionNoteBook.ViewType.Normal;
-            agent->SelectedNormalMinion.TabIndex = 0;
+            agent->CurrentView                    = AgentMJIMinionNoteBook.ViewType.Normal;
+            agent->SelectedNormalMinion.TabIndex  = 0;
             agent->SelectedNormalMinion.SlotIndex = agent->SelectedFavoriteMinion.SlotIndex;
-            agent->SelectedNormalMinion.MinionId = agent->GetSelectedMinionId();
-            agent->SelectedMinion = &agent->SelectedNormalMinion;
+            agent->SelectedNormalMinion.MinionId  = agent->GetSelectedMinionId();
+            agent->SelectedMinion                 = &agent->SelectedNormalMinion;
 
             addon->TabController.TabIndex = 0;
             addon->TabController.CallbackFunction(0, (AtkUnitBase*)addon);
@@ -726,34 +673,27 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         for (var i = 0; i < NumBuddyTabs; i++)
         {
-            var button = addon->RadioButtons.GetPointer(i);
-            if (button->Value != null)
-            {
-                button->Value->IsSelected = i == addon->TabIndex;
-            }
+            var button                                           = addon->RadioButtons.GetPointer(i);
+            if (button->Value != null) button->Value->IsSelected = i == addon->TabIndex;
         }
     }
 
     private static void UpdateMiragePrismPrismBox(AddonMiragePrismPrismBox* addon)
     {
-        if (addon->JobDropdown == null ||
-            addon->JobDropdown->List == null ||
+        if (addon->JobDropdown                                   == null ||
+            addon->JobDropdown->List                             == null ||
             addon->JobDropdown->List->AtkComponentBase.OwnerNode == null ||
             addon->JobDropdown->List->AtkComponentBase.OwnerNode->AtkResNode.IsVisible())
-        {
             return;
-        }
 
-        if (addon->OrderDropdown == null ||
-            addon->OrderDropdown->List == null ||
+        if (addon->OrderDropdown                                   == null ||
+            addon->OrderDropdown->List                             == null ||
             addon->OrderDropdown->List->AtkComponentBase.OwnerNode == null ||
             addon->OrderDropdown->List->AtkComponentBase.OwnerNode->AtkResNode.IsVisible())
-        {
             return;
-        }
 
-        var prevButton = !_moduleConfig.Invert ? addon->PrevButton : addon->NextButton;
-        var nextButton = !_moduleConfig.Invert ? addon->NextButton : addon->PrevButton;
+        var prevButton = !ModuleConfig.Invert ? addon->PrevButton : addon->NextButton;
+        var nextButton = !ModuleConfig.Invert ? addon->NextButton : addon->PrevButton;
 
         if (prevButton == null || (IsPrev && !prevButton->IsEnabled))
             return;
@@ -768,7 +708,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
             return;
 
         var agent = AgentMiragePrismPrismBox.Instance();
-        agent->PageIndex += (byte)_wheelState;
+        agent->PageIndex += (byte)WheelState;
         agent->UpdateItems(false, false);
     }
 
@@ -783,18 +723,15 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         for (var i = 0; i < addon->TabCount; i++)
         {
-            var button = addon->Tabs.GetPointer(i);
-            if (button->Value != null)
-            {
-                button->Value->IsSelected = i == addon->TabIndex;
-            }
+            var button                                           = addon->Tabs.GetPointer(i);
+            if (button->Value != null) button->Value->IsSelected = i == addon->TabIndex;
         }
     }
 
     private static void UpdateCharacterClass(AddonCharacter* addonCharacter, AddonCharacterClass* addon)
     {
         // prev or next embedded addon
-        if (_moduleConfig.HandleCharacter && (addon->TabIndex + _wheelState < 0 || addon->TabIndex + _wheelState > 1))
+        if (ModuleConfig.HandleCharacter && (addon->TabIndex + WheelState < 0 || addon->TabIndex + WheelState > 1))
         {
             UpdateCharacter(addonCharacter);
             return;
@@ -811,7 +748,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
     private static void UpdateCharacterRepute(AddonCharacter* addonCharacter, AddonCharacterRepute* addon)
     {
         // prev embedded addon
-        if (_moduleConfig.HandleCharacter && (addon->SelectedExpansion + _wheelState < 0))
+        if (ModuleConfig.HandleCharacter && addon->SelectedExpansion + WheelState < 0)
         {
             UpdateCharacter(addonCharacter);
             return;
@@ -823,8 +760,39 @@ public unsafe class ScrollableTabs : DailyModuleBase
             return;
 
         var atkEvent = new AtkEvent();
-        var data = new AtkEventData();
+        var data     = new AtkEventData();
         data.ListItemData.SelectedIndex = tabIndex; // technically the index of an id array, but it's literally the same value
         addon->AtkUnitBase.ReceiveEvent((AtkEventType)37, 0, &atkEvent, &data);
+    }
+    
+    private class Config : ModuleConfiguration
+    {
+        public          bool Invert                = true;
+        public readonly bool HandleAetherCurrent   = true;
+        public          bool HandleArmouryBoard    = true;
+        public          bool HandleAOZNotebook     = true;
+        public          bool HandleCharacter       = true;
+        public          bool HandleCharacterClass  = true;
+        public          bool HandleCharacterRepute = true;
+        public          bool HandleInventoryBuddy  = true;
+
+        public bool HandleBuddy = true;
+
+        // public bool HandleCurrency = true;
+        // TODO 国服FFCS还没更这个
+        public bool HandleOrnamentNoteBook       = true;
+        public bool HandleFieldRecord            = true;
+        public bool HandleFishGuide              = true;
+        public bool HandleMiragePrismPrismBox    = true;
+        public bool HandleGoldSaucerCardList     = true;
+        public bool HandleGoldSaucerCardDeckEdit = true;
+        public bool HandleLovmPaletteEdit        = true;
+        public bool HandleInventory              = true;
+        public bool HandleMJIMinionNoteBook      = true;
+        public bool HandleMinionNoteBook         = true;
+        public bool HandleMountNoteBook          = true;
+        public bool HandleRetainer               = true;
+        public bool HandleFateProgress           = true;
+        public bool HandleAdventureNoteBook      = true;
     }
 }
