@@ -43,8 +43,8 @@ public unsafe class ScrollableTabs : DailyModuleBase
         WheelState == (!ModuleConfig.Invert ? -1 : 1);
 
     private delegate        void                                   AddonUpdateHandler(AtkUnitBase* unitBase);
-    private static readonly Dictionary<string, AddonUpdateHandler> UiHandlerMapping = new();
-    private static readonly Dictionary<string, string>             UiNameMapping    = new();
+    private static readonly Dictionary<string, AddonUpdateHandler> UIHandlerMapping = new();
+    private static readonly Dictionary<string, string>             UINameMapping    = new();
 
     static ScrollableTabs()
     {
@@ -65,22 +65,22 @@ public unsafe class ScrollableTabs : DailyModuleBase
             };
 
             foreach (var name in directUseNames)
-                UiNameMapping[name] = name;
+                UINameMapping[name] = name;
 
             // Inventory
             foreach (var name in new[] { "InventoryGrid", "InventoryGridCrystal" })
-                UiNameMapping[name] = "Inventory";
+                UINameMapping[name] = "Inventory";
 
             // InventoryEvent
             foreach (var name in new[] { "InventoryEventGrid" })
-                UiNameMapping[name] = "InventoryEvent";
+                UINameMapping[name] = "InventoryEvent";
 
             // InventoryLarge / InventoryExpansion
-            UiNameMapping["InventoryCrystalGrid"] = "InventoryLarge";
+            UINameMapping["InventoryCrystalGrid"] = "InventoryLarge";
 
             // InventoryLarge 相关映射
             foreach (var name in new[] { "InventoryEventGrid0", "InventoryEventGrid1", "InventoryEventGrid2", "InventoryGrid0", "InventoryGrid1" })
-                UiNameMapping[name] = "InventoryLarge";
+                UINameMapping[name] = "InventoryLarge";
 
             // InventoryExpansion
             foreach (var name in new[]
@@ -88,69 +88,69 @@ public unsafe class ScrollableTabs : DailyModuleBase
                          "InventoryEventGrid0E", "InventoryEventGrid1E", "InventoryEventGrid2E", "InventoryGrid0E", "InventoryGrid1E", "InventoryGrid2E",
                          "InventoryGrid3E"
                      })
-                UiNameMapping[name] = "InventoryExpansion";
+                UINameMapping[name] = "InventoryExpansion";
 
             // InventoryRetainer
             foreach (var name in new[] { "RetainerGridCrystal", "RetainerGrid" })
-                UiNameMapping[name] = "InventoryRetainer";
+                UINameMapping[name] = "InventoryRetainer";
 
             // InventoryRetainerLarge
             foreach (var name in new[] { "RetainerCrystalGrid", "RetainerGrid0", "RetainerGrid1", "RetainerGrid2", "RetainerGrid3", "RetainerGrid4" })
-                UiNameMapping[name] = "InventoryRetainerLarge";
+                UINameMapping[name] = "InventoryRetainerLarge";
 
             // Character
             foreach (var name in new[] { "CharacterStatus", "CharacterProfile" })
-                UiNameMapping[name] = "Character";
+                UINameMapping[name] = "Character";
 
             // Buddy
             foreach (var name in new[] { "BuddyAction", "BuddySkill", "BuddyAppearance" })
-                UiNameMapping[name] = "Buddy";
+                UINameMapping[name] = "Buddy";
         }
 
         static void InitUIHandlerMapping()
         {
-            UiHandlerMapping["ArmouryBoard"] = unitBase => UpdateArmouryBoard((AddonArmouryBoard*)unitBase);
+            UIHandlerMapping["ArmouryBoard"] = unitBase => UpdateArmouryBoard((AddonArmouryBoard*)unitBase);
 
             // Inventory
-            UiHandlerMapping["Inventory"]          = unitBase => UpdateInventory((AddonInventory*)unitBase);
-            UiHandlerMapping["InventoryEvent"]     = unitBase => UpdateInventoryEvent((AddonInventoryEvent*)unitBase);
-            UiHandlerMapping["InventoryLarge"]     = unitBase => UpdateInventoryLarge((AddonInventoryLarge*)unitBase);
-            UiHandlerMapping["InventoryExpansion"] = unitBase => UpdateInventoryExpansion((AddonInventoryExpansion*)unitBase);
+            UIHandlerMapping["Inventory"]          = unitBase => UpdateInventory((AddonInventory*)unitBase);
+            UIHandlerMapping["InventoryEvent"]     = unitBase => UpdateInventoryEvent((AddonInventoryEvent*)unitBase);
+            UIHandlerMapping["InventoryLarge"]     = unitBase => UpdateInventoryLarge((AddonInventoryLarge*)unitBase);
+            UIHandlerMapping["InventoryExpansion"] = unitBase => UpdateInventoryExpansion((AddonInventoryExpansion*)unitBase);
 
             // Retainer
-            UiHandlerMapping["InventoryRetainer"]      = unitBase => UpdateInventoryRetainer((AddonInventoryRetainer*)unitBase);
-            UiHandlerMapping["InventoryRetainerLarge"] = unitBase => UpdateInventoryRetainerLarge((AddonInventoryRetainerLarge*)unitBase);
+            UIHandlerMapping["InventoryRetainer"]      = unitBase => UpdateInventoryRetainer((AddonInventoryRetainer*)unitBase);
+            UIHandlerMapping["InventoryRetainerLarge"] = unitBase => UpdateInventoryRetainerLarge((AddonInventoryRetainerLarge*)unitBase);
 
             // NoteBook
-            UiHandlerMapping["MinionNoteBook"] = unitBase => UpdateMountMinion((AddonMinionMountBase*)unitBase);
-            UiHandlerMapping["MountNoteBook"]  = unitBase => UpdateMountMinion((AddonMinionMountBase*)unitBase);
+            UIHandlerMapping["MinionNoteBook"] = unitBase => UpdateMountMinion((AddonMinionMountBase*)unitBase);
+            UIHandlerMapping["MountNoteBook"]  = unitBase => UpdateMountMinion((AddonMinionMountBase*)unitBase);
 
             // TabController
-            UiHandlerMapping["FishGuide2"]        = unitBase => UpdateTabController(unitBase, &((AddonFishGuide2*)unitBase)->TabController);
-            UiHandlerMapping["AdventureNoteBook"] = unitBase => UpdateTabController(unitBase, &((AddonAdventureNoteBook*)unitBase)->TabController);
-            UiHandlerMapping["OrnamentNoteBook"]  = unitBase => UpdateTabController(unitBase, &((AddonOrnamentNoteBook*)unitBase)->TabController);
-            UiHandlerMapping["GSInfoCardList"]    = unitBase => UpdateTabController(unitBase, &((AddonGSInfoCardList*)unitBase)->TabController);
-            UiHandlerMapping["GSInfoEditDeck"]    = unitBase => UpdateTabController(unitBase, &((AddonGSInfoEditDeck*)unitBase)->TabController);
-            UiHandlerMapping["LovmPaletteEdit"]   = unitBase => UpdateTabController(unitBase, &((AddonLovmPaletteEdit*)unitBase)->TabController);
+            UIHandlerMapping["FishGuide2"]        = unitBase => UpdateTabController(unitBase, &((AddonFishGuide2*)unitBase)->TabController);
+            UIHandlerMapping["AdventureNoteBook"] = unitBase => UpdateTabController(unitBase, &((AddonAdventureNoteBook*)unitBase)->TabController);
+            UIHandlerMapping["OrnamentNoteBook"]  = unitBase => UpdateTabController(unitBase, &((AddonOrnamentNoteBook*)unitBase)->TabController);
+            UIHandlerMapping["GSInfoCardList"]    = unitBase => UpdateTabController(unitBase, &((AddonGSInfoCardList*)unitBase)->TabController);
+            UIHandlerMapping["GSInfoEditDeck"]    = unitBase => UpdateTabController(unitBase, &((AddonGSInfoEditDeck*)unitBase)->TabController);
+            UIHandlerMapping["LovmPaletteEdit"]   = unitBase => UpdateTabController(unitBase, &((AddonLovmPaletteEdit*)unitBase)->TabController);
 
             // 其他
-            UiHandlerMapping["AOZNotebook"]          = unitBase => UpdateAOZNotebook((AddonAOZNotebook*)unitBase);
-            UiHandlerMapping["AetherCurrent"]        = unitBase => UpdateAetherCurrent((AddonAetherCurrent*)unitBase);
-            UiHandlerMapping["FateProgress"]         = unitBase => UpdateFateProgress((AddonFateProgress*)unitBase);
-            UiHandlerMapping["MYCWarResultNotebook"] = unitBase => UpdateFieldNotes((AddonMYCWarResultNotebook*)unitBase);
-            UiHandlerMapping["MJIMinionNoteBook"]    = unitBase => UpdateMJIMinionNoteBook((AddonMJIMinionNoteBook*)unitBase);
-            UiHandlerMapping["InventoryBuddy"]       = unitBase => UpdateInventoryBuddy((AddonInventoryBuddy*)unitBase);
-            UiHandlerMapping["InventoryBuddy2"]      = unitBase => UpdateInventoryBuddy((AddonInventoryBuddy*)unitBase);
-            UiHandlerMapping["Buddy"]                = unitBase => UpdateBuddy((AddonBuddy*)unitBase);
-            UiHandlerMapping["MiragePrismPrismBox"]  = unitBase => UpdateMiragePrismPrismBox((AddonMiragePrismPrismBox*)unitBase);
+            UIHandlerMapping["AOZNotebook"]          = unitBase => UpdateAOZNotebook((AddonAOZNotebook*)unitBase);
+            UIHandlerMapping["AetherCurrent"]        = unitBase => UpdateAetherCurrent((AddonAetherCurrent*)unitBase);
+            UIHandlerMapping["FateProgress"]         = unitBase => UpdateFateProgress((AddonFateProgress*)unitBase);
+            UIHandlerMapping["MYCWarResultNotebook"] = unitBase => UpdateFieldNotes((AddonMYCWarResultNotebook*)unitBase);
+            UIHandlerMapping["MJIMinionNoteBook"]    = unitBase => UpdateMJIMinionNoteBook((AddonMJIMinionNoteBook*)unitBase);
+            UIHandlerMapping["InventoryBuddy"]       = unitBase => UpdateInventoryBuddy((AddonInventoryBuddy*)unitBase);
+            UIHandlerMapping["InventoryBuddy2"]      = unitBase => UpdateInventoryBuddy((AddonInventoryBuddy*)unitBase);
+            UIHandlerMapping["Buddy"]                = unitBase => UpdateBuddy((AddonBuddy*)unitBase);
+            UIHandlerMapping["MiragePrismPrismBox"]  = unitBase => UpdateMiragePrismPrismBox((AddonMiragePrismPrismBox*)unitBase);
 
             // Currency
             // UiHandlerMapping["Currency"] = unitBase => UpdateCurrency((AddonCurrency*)unitBase);
 
             // Character
-            UiHandlerMapping["Character"]       = unitBase => UpdateCharacter((AddonCharacter*)unitBase);
-            UiHandlerMapping["CharacterClass"]  = HandleCharacterUI;
-            UiHandlerMapping["CharacterRepute"] = HandleCharacterUI;
+            UIHandlerMapping["Character"]       = unitBase => UpdateCharacter((AddonCharacter*)unitBase);
+            UIHandlerMapping["CharacterClass"]  = HandleCharacterUI;
+            UIHandlerMapping["CharacterRepute"] = HandleCharacterUI;
         }
     }
 
@@ -199,7 +199,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
             return;
         }
 
-        if (!UiNameMapping.TryGetValue(originalName, out var mappedName))
+        if (!UINameMapping.TryGetValue(originalName, out var mappedName))
         {
             WheelState = 0;
             return;
@@ -219,13 +219,12 @@ public unsafe class ScrollableTabs : DailyModuleBase
             return;
         }
 
-        if (UiHandlerMapping.TryGetValue(mappedName, out var handler))
+        if (UIHandlerMapping.TryGetValue(mappedName, out var handler))
             handler(unitBase);
 
         WheelState = 0;
     }
 
-    // 处理Character相关UI的特殊函数
     private static void HandleCharacterUI(AtkUnitBase* unitBase)
     {
         var name = unitBase->NameString;
@@ -503,7 +502,6 @@ public unsafe class ScrollableTabs : DailyModuleBase
         addon->SetTab((byte)tabIndex);
     }
 
-    // 保留原始注释的UpdateCurrency方法
     // private static void UpdateCurrency(AddonCurrency* addon)
     // {
     //     var atkStage = AtkStage.Instance();
