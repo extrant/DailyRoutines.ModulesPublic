@@ -1,3 +1,8 @@
+using DailyRoutines.Abstracts;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Hooking;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -5,12 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using DailyRoutines.Abstracts;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Hooking;
-using Lumina.Excel.Sheets;
-using Lumina.Extensions;
 
 namespace DailyRoutines.Modules;
 
