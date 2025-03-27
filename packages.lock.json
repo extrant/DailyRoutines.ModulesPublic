@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0-windows7.0": {
+    "net9.0-windows7.0": {
       "System.CodeDom": {
         "type": "Direct",
         "requested": "[9.0.1, )",
