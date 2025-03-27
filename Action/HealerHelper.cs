@@ -200,7 +200,6 @@ public class HealerHelper : DailyModuleBase
 
             if (ImGui.Checkbox(GetLoc("HealerHelper-MarkOnPartyList"), ref ModuleConfig.OverlayMark))
                 SaveConfig(ModuleConfig);
-            ImGuiOm.HelpMarker(GetLoc("Deprecated"));
 
             if (ModuleConfig.OverlayMark)
             {
