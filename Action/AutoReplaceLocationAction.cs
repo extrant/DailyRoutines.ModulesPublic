@@ -212,7 +212,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             }
         }
 
-        var localPlayer = DService.ClientState.LocalPlayer;
+        var localPlayer = DService.ObjectTable.LocalPlayer;
         using (ImRaii.Disabled(localPlayer == null))
         {
             ImGui.SameLine();
@@ -352,7 +352,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         var modifiedLocation = markers
                                .MinBy(x => Vector2.DistanceSquared(
-                                            DService.ClientState.LocalPlayer.Position.ToVector2(), x))
+                                            DService.ObjectTable.LocalPlayer.Position.ToVector2(), x))
                                .ToVector3();
 
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);

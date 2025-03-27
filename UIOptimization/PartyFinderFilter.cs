@@ -217,7 +217,7 @@ public class PartyFinderFilter : DailyModuleBase
     private static bool FilterByHighEndSameJob(IPartyFinderListing listing)
     {
         if (!ModuleConfig.HighEndFilterSameJob) return true;
-        if (!isRaid || DService.ClientState.LocalPlayer is not { } localPlayer) return true;
+        if (!isRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var job = localPlayer.ClassJob.Value;
         if (job.Unknown11 == 0) return true; // 生产职业 / 基础职业
@@ -231,7 +231,7 @@ public class PartyFinderFilter : DailyModuleBase
     private static bool FilterByHighEndSameRole(IPartyFinderListing listing)
     {
         if (!ModuleConfig.HighEndFilterRoleCount) return true;
-        if (!isRaid || DService.ClientState.LocalPlayer is not { } localPlayer) return true;
+        if (!isRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var job = localPlayer.ClassJob.Value;
         

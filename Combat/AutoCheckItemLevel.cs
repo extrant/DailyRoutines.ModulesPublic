@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 using System.Linq;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace DailyRoutines.Modules;
 
@@ -45,7 +46,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         if (IsAddonAndNodesReady(CharacterInspect))
             CharacterInspect->Close(true);
 
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
 
         if (checkedMembers.Count == 0)
             checkedMembers = [localPlayer.GameObjectId];
@@ -108,7 +109,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var content = PresetSheet.Contents[DService.ClientState.TerritoryType];
                 var ssb = new SeStringBuilder();
                 ssb.AddUiForeground(25);
-                ssb.Add(new PlayerPayload(partyMember.Name.TextValue, partyMember.GameObject.ToBCStruct()->HomeWorld));
+                ssb.Add(new PlayerPayload(partyMember.Name.TextValue, ((BattleChara*)partyMember.GameObject.Address)->HomeWorld));
                 ssb.AddUiForegroundOff();
                 ssb.Append($" ({partyMember.ClassJob.Value.Name.ExtractText()})");
 

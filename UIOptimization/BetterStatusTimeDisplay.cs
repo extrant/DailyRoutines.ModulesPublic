@@ -73,7 +73,7 @@ public class BetterStatusTimeDisplay : DailyModuleBase
     {
         if (!Throttler.Throttle("ShowRemainingTimeOnUpdate", 1_000)) return;
 
-        if (DService.ClientState.LocalPlayer is not { } localPlayer ||
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer ||
             DService.Condition[ConditionFlag.InCombat]) return;
 
         var atkStage = AtkStage.Instance();

@@ -54,7 +54,7 @@ public class AutoSoulsow : DailyModuleBase
     {
         if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return false;
         if (DService.Condition[ConditionFlag.InCombat] || 
-            DService.ClientState.LocalPlayer is not { ClassJob.RowId: 39 } || !IsValidPVEDuty())
+            DService.ObjectTable.LocalPlayer is not { ClassJob.RowId: 39 } || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -66,7 +66,7 @@ public class AutoSoulsow : DailyModuleBase
     
     private unsafe bool? UseRelatedActions()
     {
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         var statusManager = localPlayer.ToBCStruct()->StatusManager;
 
         // 播魂种

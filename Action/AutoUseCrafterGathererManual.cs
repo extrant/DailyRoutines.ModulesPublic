@@ -94,7 +94,7 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
         TaskHelper.Abort();
         TaskHelper.Enqueue(() =>
         {
-            if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+            if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
             if (localPlayer.Level >= PlayerState.Instance()->MaxLevel) return true;
             if (BetweenAreas || OccupiedInEvent || IsCasting || !IsScreenReady() ||
                 ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) != 0)

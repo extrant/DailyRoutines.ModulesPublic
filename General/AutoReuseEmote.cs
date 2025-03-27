@@ -100,7 +100,7 @@ public class AutoReuseEmote : DailyModuleBase
                 }
             }
             
-            if (DService.ClientState.LocalPlayer == null ||
+            if (DService.ObjectTable.LocalPlayer == null ||
                 BetweenAreas || OccupiedInEvent || DService.Condition[ConditionFlag.InCombat])
             {
                 CancelTokenAndNullify();

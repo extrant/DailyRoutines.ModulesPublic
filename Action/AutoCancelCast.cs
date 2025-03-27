@@ -64,7 +64,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
             return;
         }
 
-        var player = DService.ClientState.LocalPlayer;
+        var player = DService.ObjectTable.LocalPlayer;
         if (player.CastActionType != 1 || TargetAreaActions.Contains(player.CastActionId))
         {
             IsOnCasting = false;

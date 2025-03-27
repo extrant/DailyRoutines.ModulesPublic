@@ -72,7 +72,7 @@ public class AutoDrawMotifs : DailyModuleBase
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || OccupiedInEvent) return false;
-        if (DService.ClientState.LocalPlayer is not { ClassJob.RowId: 42, Level: >= 30 } || !IsValidPVEDuty())
+        if (DService.ObjectTable.LocalPlayer is not { ClassJob.RowId: 42, Level: >= 30 } || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -85,7 +85,7 @@ public class AutoDrawMotifs : DailyModuleBase
     private unsafe bool? DrawNeededMotif()
     {
         var gauge         = DService.JobGauges.Get<PCTGauge>();
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         var statusManager = localPlayer.ToBCStruct()->StatusManager;
 
         var motifAction = 0U;

@@ -38,7 +38,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
         TaskHelper.DelayNext(8_000, $"Delay_UseAction{EarthsReplyAction}", false, 1);
         TaskHelper.Enqueue(() =>
                            {
-                               if (DService.ClientState.LocalPlayer is not { } localPlayer) return;
+                               if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
                                
                                var statusManager = localPlayer.ToBCStruct()->StatusManager;
                                if (!ModuleConfig.UseWhenSprint && statusManager.HasStatus(SprintStatus)) return;

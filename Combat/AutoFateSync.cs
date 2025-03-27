@@ -100,7 +100,7 @@ public class AutoFateSync : DailyModuleBase
         {
             DService.Framework.RunOnTick(() =>
             {
-                if (manager->CurrentFate == null || DService.ClientState.LocalPlayer == null) return;
+                if (manager->CurrentFate == null || DService.ObjectTable.LocalPlayer == null) return;
 
                 ExecuteFateLevelSync(manager->CurrentFate->FateId);
             }, TimeSpan.FromSeconds(ModuleConfig.Delay), 0, CancelSource.Token);
@@ -115,7 +115,7 @@ public class AutoFateSync : DailyModuleBase
         if (!Throttler.Throttle("OnFlying")) return;
 
         var currentFate = FateManager.Instance()->CurrentFate;
-        if (currentFate == null || DService.ClientState.LocalPlayer == null)
+        if (currentFate == null || DService.ObjectTable.LocalPlayer == null)
         {
             FrameworkManager.Unregister(OnFlying);
             return;
@@ -138,7 +138,7 @@ public class AutoFateSync : DailyModuleBase
             TaskHelper.Enqueue(() =>
             {
                 if (FateManager.Instance()->CurrentFate == null || !LuminaGetter.TryGetRow<Fate>(fateID, out var data)) return true;
-                if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+                if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
                 if (!TankStanceActions.TryGetValue(localPlayer.ClassJob.RowId, out var actionID)) return false;
                 if (localPlayer.Level > data.ClassJobLevelMax) return false;
                 

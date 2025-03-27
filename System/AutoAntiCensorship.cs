@@ -164,7 +164,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                 return InvokeOriginal();
 
             var managedString = values[1].String;
-            if (managedString == null)
+            if (managedString.Value == null)
                 return InvokeOriginal();
 
             var origText = SeString.Parse(managedString.Value);

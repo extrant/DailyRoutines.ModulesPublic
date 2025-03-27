@@ -98,7 +98,7 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
         if (!Throttler.Throttle("AutoCountBlacks-OnUpdate")) return;
         
         if (DtrEntry is null) return;
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
 
         var tooltip = new StringBuilder();
         var blackNum = 0;

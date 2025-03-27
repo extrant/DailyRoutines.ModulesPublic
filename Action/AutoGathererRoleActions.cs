@@ -38,8 +38,8 @@ public class AutoGathererRoleActions : DailyModuleBase
         TaskHelper ??= new() { TimeLimitMS = 5_000 };
 
         DService.ClientState.ClassJobChanged += OnJobChanged;
-        if (DService.ClientState.LocalPlayer != null)
-            OnJobChanged(DService.ClientState.LocalPlayer.ClassJob.RowId);
+        if (DService.ObjectTable.LocalPlayer != null)
+            OnJobChanged(DService.ObjectTable.LocalPlayer.ClassJob.RowId);
     }
 
     private unsafe void OnJobChanged(uint jobID)
@@ -47,7 +47,7 @@ public class AutoGathererRoleActions : DailyModuleBase
         TaskHelper.Abort();
         if (!ValidJobs.Contains(jobID)) return;
 
-        var localPlayer = DService.ClientState.LocalPlayer.ToBCStruct();
+        var localPlayer = DService.ObjectTable.LocalPlayer.ToBCStruct();
         if (localPlayer == null) return;
 
         TaskHelper.DelayNext(5_00);

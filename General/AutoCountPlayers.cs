@@ -69,7 +69,7 @@ public class AutoCountPlayers : DailyModuleBase
         ImGui.SetNextItemWidth(-1f);
         ImGui.InputText("###Search", ref SearchInput, 128);
 
-        if (BetweenAreas || DService.ClientState.LocalPlayer is not { } localPlayer) return;
+        if (BetweenAreas || DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
 
         var source = PlayersAroundManager.CurrentPlayers.Where(x => string.IsNullOrWhiteSpace(SearchInput) ||
                                                x.ToString().Contains(SearchInput, StringComparison.OrdinalIgnoreCase))

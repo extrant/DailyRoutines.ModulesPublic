@@ -48,7 +48,7 @@ public unsafe class AutoNotifyLeveUpdate : DailyModuleBase
     private static void OnUpdate(IFramework _)
     {
         if (!Throttler.Throttle("AutoNotifyLeveUpdate", 5000) || 
-            !DService.ClientState.IsLoggedIn || DService.ClientState.LocalPlayer == null)
+            !DService.ClientState.IsLoggedIn || DService.ObjectTable.LocalPlayer == null)
             return;
 
         var nowUtc = DateTime.UtcNow;

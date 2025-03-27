@@ -72,10 +72,10 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
     {
         if (!Throttler.Throttle("AutoGysahlGreens-OnUpdate", 5_000)) return;
         if (PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable)) return;
-        if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
+        if (DService.ObjectTable.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
-        var classJobData = DService.ClientState.LocalPlayer.ClassJob.ValueNullable;
+        var classJobData = DService.ObjectTable.LocalPlayer.ClassJob.ValueNullable;
         if (classJobData == null) return;
         if (!ModuleConfig.NotBattleJobUsingGysahl && (classJobData?.DohDolJobIndex ?? 0) != -1) return;
 

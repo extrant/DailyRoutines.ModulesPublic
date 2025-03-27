@@ -68,7 +68,7 @@ public class SastashaHelper : DailyModuleBase
     
     private static bool? GetCorrectCoral()
     {
-        if (DService.ClientState.LocalPlayer is null || BetweenAreas || !IsScreenReady()) return false;
+        if (DService.ObjectTable.LocalPlayer is null || BetweenAreas || !IsScreenReady()) return false;
         
         var book = DService.ObjectTable
                            .FirstOrDefault(x => x.IsTargetable && x.ObjectKind == ObjectKind.EventObj && 

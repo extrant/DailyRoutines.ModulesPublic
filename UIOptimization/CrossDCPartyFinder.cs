@@ -42,7 +42,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     private static readonly HttpClient HttpClient = new();
 
     private static string HomeDataCenter => 
-        DService.ClientState.LocalPlayer.HomeWorld.Value.DataCenter.Value.Name.ExtractText();
+        DService.ObjectTable.LocalPlayer.HomeWorld.Value.DataCenter.Value.Name.ExtractText();
     
     private static readonly CompSig AgentLookingForGroupReceiveEventSig =
         new("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC ?? 45 8B D1");
@@ -465,7 +465,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         {
             case AddonEvent.PostSetup:
                 Overlay.IsOpen    = true;
-                CurrentDataCenter = DService.ClientState.LocalPlayer?.HomeWorld.Value.DataCenter.Value.Name.ExtractText() ?? string.Empty;
+                CurrentDataCenter = DService.ObjectTable.LocalPlayer?.HomeWorld.Value.DataCenter.Value.Name.ExtractText() ?? string.Empty;
                 break;
             case AddonEvent.PreFinalize:
                 Overlay.IsOpen    = false;
@@ -476,7 +476,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                 break;
         }
 
-        if (DService.ClientState.LocalPlayer is { } localPlayer)
+        if (DService.ObjectTable.LocalPlayer is { } localPlayer)
         {
             DataCenters = LuminaGetter.Get<WorldDCGroupType>()
                                      .Where(x => x.Region == localPlayer.HomeWorld.Value.DataCenter.Value.Region)

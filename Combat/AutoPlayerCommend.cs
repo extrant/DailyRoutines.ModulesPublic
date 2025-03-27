@@ -94,7 +94,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
     {
         if (!IsAddonAndNodesReady(VoteMvp)) return false;
         if (!AgentModule.Instance()->GetAgentByInternalId(AgentId.ContentsMvp)->IsAgentActive()) return false;
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         
         var hudMembers = AgentHUD.Instance()->PartyMembers.ToArray();
         Dictionary<(string Name, uint HomeWorld, uint ClassJob, byte RoleRaw, PlayerRole Role, ulong ContentID), int>

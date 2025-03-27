@@ -442,7 +442,7 @@ public class HealerHelper : DailyModuleBase
 
         // find card candidates
         var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
-        if (partyList.Length is 0 || DService.ClientState.LocalPlayer.ClassJob.Value.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.ClientState.IsPvP)
+        if (partyList.Length is 0 || DService.ObjectTable.LocalPlayer.ClassJob.Value.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.ClientState.IsPvP)
             return;
 
         // advance fallback when no valid zone id or invalid key
@@ -564,7 +564,7 @@ public class HealerHelper : DailyModuleBase
             }
 
             // skip member out of range for this action
-            if (Vector3.Distance(candidate.Position, DService.ClientState.LocalPlayer.Position) > 30)
+            if (Vector3.Distance(candidate.Position, DService.ObjectTable.LocalPlayer.Position) > 30)
                 continue;
 
             return member.id;
@@ -573,7 +573,7 @@ public class HealerHelper : DailyModuleBase
         if (needResort)
             candidates.Sort((a, b) => b.priority.CompareTo(a.priority));
 
-        return DService.ClientState.LocalPlayer.EntityId;
+        return DService.ObjectTable.LocalPlayer.EntityId;
     }
 
     #endregion
@@ -587,7 +587,7 @@ public class HealerHelper : DailyModuleBase
         var needHealId = UnspecificTargetId;
         foreach (var member in partyList)
         {
-            if (member.CurrentHP <= 0 || Vector3.Distance(member.Position, DService.ClientState.LocalPlayer.Position) > 30)
+            if (member.CurrentHP <= 0 || Vector3.Distance(member.Position, DService.ObjectTable.LocalPlayer.Position) > 30)
                 continue;
 
             var ratio = member.CurrentHP / (float)member.MaxHP;
@@ -633,7 +633,7 @@ public class HealerHelper : DailyModuleBase
 
     private static string GetRegion()
     {
-        return DService.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Region switch
+        return DService.ObjectTable.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Region switch
         {
             1 => "JP",
             2 => "NA",

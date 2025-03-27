@@ -227,7 +227,7 @@ public unsafe class AutoLogin : DailyModuleBase
     {
         args = args.Trim();
         if (string.IsNullOrWhiteSpace(args)) return;
-        if (!DService.ClientState.IsLoggedIn || DService.ClientState.LocalPlayer == null || 
+        if (!DService.ClientState.IsLoggedIn || DService.ObjectTable.LocalPlayer == null || 
             BoundByDuty) return;
 
         var parts = args.Split(' ');
@@ -236,7 +236,7 @@ public unsafe class AutoLogin : DailyModuleBase
             case 1:
                 if (!int.TryParse(args, out var charaIndex0) || charaIndex0 < 0 || charaIndex0 > 8) return;
 
-                ManualWorldID = (ushort)DService.ClientState.LocalPlayer.HomeWorld.RowId;
+                ManualWorldID = (ushort)DService.ObjectTable.LocalPlayer.HomeWorld.RowId;
                 ManualCharaIndex = charaIndex0;
                 break;
             case 2:

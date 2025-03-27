@@ -43,7 +43,7 @@ public unsafe class AutoMovePetCenter : DailyModuleBase
         ProcessPacketSpawnNPCHook.Original(a1, packetData);
         
         var npcEntityID = *(uint*)(packetData + 84);
-        if (npcEntityID != (DService.ClientState.LocalPlayer?.EntityId ?? 0)) return;
+        if (npcEntityID != (DService.ObjectTable.LocalPlayer?.EntityId ?? 0)) return;
 
         MovePetToMapCenter();
     }
@@ -53,7 +53,7 @@ public unsafe class AutoMovePetCenter : DailyModuleBase
         if (!LuminaGetter.TryGetRow<ContentFinderCondition>
                 (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
             content.ContentType.RowId is not (4 or 5)                                     ||
-            DService.ClientState.LocalPlayer is null                                    ||
+            DService.ObjectTable.LocalPlayer is null                                    ||
             !LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var map))
             return;
         

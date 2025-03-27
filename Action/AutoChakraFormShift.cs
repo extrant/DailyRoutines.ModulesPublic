@@ -29,7 +29,7 @@ public class AutoChakraFormShift : DailyModuleBase
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || OccupiedInEvent) return false;
-        if (DService.ClientState.LocalPlayer is not { ClassJob.RowId: 20 } || !IsValidPVEDuty())
+        if (DService.ObjectTable.LocalPlayer is not { ClassJob.RowId: 20 } || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -52,7 +52,7 @@ public class AutoChakraFormShift : DailyModuleBase
     private unsafe bool? UseRelatedActions()
     {
         var gauge = DService.JobGauges.Get<MNKGauge>();
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         var statusManager = localPlayer.ToBCStruct()->StatusManager;
 
         const uint SteeledMeditation = 36940;

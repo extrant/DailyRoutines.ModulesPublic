@@ -54,7 +54,7 @@ public class AutoSummonPet : DailyModuleBase
     private unsafe bool? CheckCurrentJob()
     {
         if (BetweenAreas || !IsScreenReady() || DService.Condition[ConditionFlag.Casting] ||
-            DService.ClientState.LocalPlayer is not { IsTargetable: true } localPlayer) return false;
+            DService.ObjectTable.LocalPlayer is not { IsTargetable: true } localPlayer) return false;
 
         if (!SummonActions.TryGetValue(localPlayer.ClassJob.RowId, out var actionID))
         {

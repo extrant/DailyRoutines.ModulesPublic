@@ -284,7 +284,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         var targetIDDetection = targetID;
         if (canTargetSelf && !ActionManager.CanUseActionOnTarget(adjustedActionID, gameObj))
-            targetIDDetection = DService.ClientState.LocalPlayer.EntityId;
+            targetIDDetection = DService.ObjectTable.LocalPlayer.EntityId;
 
         if (info.ShouldPrevent(targetIDDetection))
         {
@@ -385,7 +385,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         public bool HasStatus(ulong gameObjectID)
         {
-            var localPlayer = DService.ClientState.LocalPlayer;
+            var localPlayer = DService.ObjectTable.LocalPlayer;
             if (localPlayer == null) return false;
             var localPlayerGameObjectID = localPlayer.GameObjectId;
 

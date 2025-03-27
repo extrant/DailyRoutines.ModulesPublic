@@ -136,7 +136,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
     {
         // 基本状态检查
         if (BetweenAreas || !IsScreenReady() || OccupiedInEvent ||
-            DService.ClientState.LocalPlayer is not { } localPlayer ||
+            DService.ObjectTable.LocalPlayer is not { } localPlayer ||
             !DService.Condition[ConditionFlag.InCombat])
             return Cycle(1_000);
             
@@ -169,7 +169,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
     private bool? UseLucidDreaming()
     {
         // 基础状态检查
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         var character = localPlayer.ToBCStruct();
         if (character == null) return true;
         
