@@ -632,7 +632,7 @@ public class HealerHelper : DailyModuleBase
 
         // first dispel local player
         var localPlayer       = DService.ObjectTable.LocalPlayer;
-        var localPlayerStatus = localPlayer.StatusList;
+        var localPlayerStatus = localPlayer.ToBCStruct()->StatusManager.Status;
         foreach (var status in localPlayerStatus)
             if (DispellableStatus.ContainsKey(status.StatusId))
                 return localPlayer.EntityId;
