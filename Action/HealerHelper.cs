@@ -14,8 +14,10 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Newtonsoft.Json;
@@ -29,10 +31,10 @@ public class HealerHelper : DailyModuleBase
 
     public override ModuleInfo Info => new()
     {
-        Author      = ["HaKu"],
         Title       = GetLoc("HealerHelperTitle"),
         Description = GetLoc("HealerHelperDescription"),
-        Category    = ModuleCategories.Action
+        Category    = ModuleCategories.Action,
+        Author      = ["HaKu"]
     };
 
     private static Config? ModuleConfig;
@@ -46,6 +48,11 @@ public class HealerHelper : DailyModuleBase
 
         // mark nodes
         MarkIsBuild = false;
+
+        // build dispellable status dict
+        DispellableStatus = LuminaGetter.Get<Lumina.Excel.Sheets.Status>()
+                                        .Where(s => s is { CanDispel: true, Name.IsEmpty: false })
+                                        .ToDictionary(s => s.RowId, s => s.Name.ExtractText().ToLowerInvariant());
 
         // life cycle hooks
         UseActionManager.Register(OnPreUseAction);
@@ -73,7 +80,7 @@ public class HealerHelper : DailyModuleBase
     {
         // auto play card
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-AutoPlayCardTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-AutoPlayCardDescription", LuminaGetter.GetRow<LuminaAction>(17055)!.Value.Name.ExtractText()));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(17055)));
 
         ImGui.Spacing();
 
@@ -146,7 +153,7 @@ public class HealerHelper : DailyModuleBase
 
         // easy heal
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-EasyHealTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyHealDescription"));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", GetLoc("HealerHelper-SingleTargetHeal")));
 
         ImGui.Spacing();
 
@@ -186,6 +193,44 @@ public class HealerHelper : DailyModuleBase
                     ImGui.TextColored(Orange, GetLoc("HealerHelper-EasyHeal-OverhealWarning"));
                 }
             }
+        }
+
+        ImGui.NewLine();
+
+        // easy dispel
+        ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-EasyDispelTitle"));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(7568)));
+
+        ImGui.Spacing();
+
+        using (ImRaii.PushIndent())
+        {
+            if (ImGui.RadioButton($"{GetLoc("Disable")}##easydispel",
+                                  ModuleConfig.EasyDispel == EasyDispelStatus.Disable))
+            {
+                ModuleConfig.EasyDispel = EasyDispelStatus.Disable;
+                SaveConfig(ModuleConfig);
+            }
+
+            using (ImRaii.Group())
+            {
+                if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("InOrder")}]",
+                                      ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Order }))
+                {
+                    ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
+                    ModuleConfig.DispelOrder = DispelOrderStatus.Order;
+                    SaveConfig(ModuleConfig);
+                }
+
+                if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("InReverseOrder")}]",
+                                      ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Reverse }))
+                {
+                    ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
+                    ModuleConfig.DispelOrder = DispelOrderStatus.Reverse;
+                    SaveConfig(ModuleConfig);
+                }
+            }
+            ImGuiOm.TooltipHover(GetLoc("HealerHelper-EasyDispel-OrderHelp"), 20f * GlobalFontScale);
         }
 
         ImGui.NewLine();
@@ -237,84 +282,22 @@ public class HealerHelper : DailyModuleBase
         ref bool  isPrevented, ref ActionType type,     ref uint actionID,
         ref ulong targetID,    ref Vector3    location, ref uint extraParam)
     {
-        if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length == 0) return;
+        if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length < 2) return;
+        if (DService.ClientState.LocalPlayer is not { ClassJob.Value.Role: 4 } localPlayer) return;
+
+        var isAST = localPlayer.ClassJob.RowId is 33;
 
         // auto play card
-        if (actionID is (37023 or 37026) && ModuleConfig.AutoPlayCard != AutoPlayCardStatus.Disable)
-        {
-            var partyMemberIds = DService.PartyList.Select(m => m.ObjectId).ToHashSet();
-            if (!partyMemberIds.Contains((uint)targetID))
-            {
-                targetID = actionID switch
-                {
-                    37023 => FetchCandidateId("Melee"),
-                    37026 => FetchCandidateId("Range"),
-                };
-
-                var member = FetchMember((uint)targetID);
-                if (member != null)
-                {
-                    var name         = member.Name.ExtractText();
-                    var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
-                    var classJobName = member.ClassJob.Value.Name.ExtractText();
-
-                    var locKey = actionID switch
-                    {
-                        37023 => "Melee",
-                        37026 => "Range",
-                    };
-
-                    if (ModuleConfig.SendChat)
-                        Chat(GetSLoc($"HealerHelper-AutoPlayCard-Message-{locKey}", name, classJobIcon, classJobName));
-                    if (ModuleConfig.SendNotification)
-                        NotificationInfo(GetLoc($"HealerHelper-AutoPlayCard-Message-{locKey}", name, string.Empty, classJobName));
-                }
-            }
-
-            // mark opener end
-            if (actionID is 37026 && IsOpener)
-            {
-                IsOpener    = false;
-                NeedReorder = true;
-            }
-        }
+        if (isAST && !PlayCardActions.Contains(actionID) && ModuleConfig.AutoPlayCard != AutoPlayCardStatus.Disable)
+            OnPrePlayCard(ref targetID, ref actionID);
 
         // easy heal
         if (ModuleConfig.EasyHeal == EasyHealStatus.Enable && TargetHealActions.Contains(actionID))
-        {
-            // replace target when target is non-specific or target is battle npc
-            var currentTarget = DService.ObjectTable.SearchById(targetID);
-            if (currentTarget is IBattleNpc || targetID == UnspecificTargetId)
-            {
-                // find target with the lowest HP ratio within range and satisfy threshold
-                targetID = TargetNeedHeal();
-                if (targetID == UnspecificTargetId)
-                {
-                    isPrevented = true;
-                    return;
-                }
+            OnPreHeal(ref targetID, ref actionID, ref isPrevented);
 
-                var member = FetchMember((uint)targetID);
-                if (member != null)
-                {
-                    var name         = member.Name.ExtractText();
-                    var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
-                    var classJobName = member.ClassJob.Value.Name.ExtractText();
-
-                    if (ModuleConfig.SendChat)
-                        Chat(GetSLoc("ASTHealer-EasyHeal-Message", name, classJobIcon, classJobName));
-                    if (ModuleConfig.SendNotification)
-                        NotificationInfo(GetLoc("ASTHealer-EasyHeal-Message", name, string.Empty, classJobName));
-                    if (ModuleConfig.OverlayMark)
-                    {
-                        var idx = FetchMemberIndex((uint)targetID) ?? 0;
-                        if (!LuminaGetter.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
-                        NewMark(idx, actionRow.Icon);
-                        DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
-                    }
-                }
-            }
-        }
+        // easy dispel
+        if (ModuleConfig.EasyDispel == EasyDispelStatus.Enable && actionID is 7568)
+            OnPreDispel(ref targetID, ref actionID, ref isPrevented);
     }
 
     private static void OnZoneChanged(ushort zone)
@@ -422,12 +405,13 @@ public class HealerHelper : DailyModuleBase
 
     #region AutoPlayCard
 
-    private const uint UnspecificTargetId = 0xE000_0000;
+    private const           uint          UnspecificTargetId = 0xE000_0000;
+    private static readonly HashSet<uint> PlayCardActions    = [37023, 37026];
 
-    private static HashSet<uint> PartyMemberIdsCache = new(); // check party member changed or not
+    private static HashSet<uint> PartyMemberIdsCache = []; // check party member changed or not
 
-    private static readonly List<(uint id, double priority)> MeleeCandidateOrder = new();
-    private static readonly List<(uint id, double priority)> RangeCandidateOrder = new();
+    private static readonly List<(uint id, double priority)> MeleeCandidateOrder = [];
+    private static readonly List<(uint id, double priority)> RangeCandidateOrder = [];
     private static          uint                             MeleeCandidateIdxCache;
     private static          uint                             RangeCandidateIdxCache;
 
@@ -442,15 +426,16 @@ public class HealerHelper : DailyModuleBase
 
         // find card candidates
         var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
-        if (partyList.Length is 0 || DService.ObjectTable.LocalPlayer.ClassJob.Value.Abbreviation != "AST" || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.ClientState.IsPvP)
+        var isAST     = DService.ClientState.LocalPlayer.ClassJob.RowId is 33;
+        if (partyList.Length is 0 || isAST is false || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.ClientState.IsPvP)
             return;
 
         // advance fallback when no valid zone id or invalid key
-        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) && ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Advance && !ModuleConfig.KeyValid)
+        if (!Dal2LogsZoneMap.ContainsKey(DService.ClientState.TerritoryType) && ModuleConfig is { AutoPlayCard: AutoPlayCardStatus.Advance, KeyValid: false })
         {
             if (FirstTimeFallback)
             {
-                Chat(GetLoc("ASTHealer-AutoPlayCard-AdvanceFallback"));
+                Chat(GetLoc("HealerHelper-AutoPlayCard-AdvanceFallback"));
                 FirstTimeFallback = false;
             }
 
@@ -536,7 +521,7 @@ public class HealerHelper : DailyModuleBase
         {
             "Melee" => MeleeCandidateOrder,
             "Range" => RangeCandidateOrder,
-            _ => throw new ArgumentOutOfRangeException(nameof(role))
+            _       => throw new ArgumentOutOfRangeException(nameof(role))
         };
 
         var needResort = false;
@@ -576,6 +561,45 @@ public class HealerHelper : DailyModuleBase
         return DService.ObjectTable.LocalPlayer.EntityId;
     }
 
+    private static void OnPrePlayCard(ref ulong targetID, ref uint actionID)
+    {
+        var partyMemberIds = DService.PartyList.Select(m => m.ObjectId).ToHashSet();
+        if (!partyMemberIds.Contains((uint)targetID))
+        {
+            targetID = actionID switch
+            {
+                37023 => FetchCandidateId("Melee"),
+                37026 => FetchCandidateId("Range"),
+            };
+
+            var member = FetchMember((uint)targetID);
+            if (member != null)
+            {
+                var name         = member.Name.ExtractText();
+                var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
+                var classJobName = member.ClassJob.Value.Name.ExtractText();
+
+                var locKey = actionID switch
+                {
+                    37023 => "Melee",
+                    37026 => "Range",
+                };
+
+                if (ModuleConfig.SendChat)
+                    Chat(GetSLoc($"HealerHelper-AutoPlayCard-Message-{locKey}", name, classJobIcon, classJobName));
+                if (ModuleConfig.SendNotification)
+                    NotificationInfo(GetLoc($"HealerHelper-AutoPlayCard-Message-{locKey}", name, string.Empty, classJobName));
+            }
+        }
+
+        // mark opener end
+        if (actionID is 37026 && IsOpener)
+        {
+            IsOpener    = false;
+            NeedReorder = true;
+        }
+    }
+
     #endregion
 
     #region EasyHeal
@@ -599,6 +623,107 @@ public class HealerHelper : DailyModuleBase
         }
 
         return needHealId;
+    }
+
+    private static unsafe uint TargetNeedDispel(bool reverse = false)
+    {
+        var partyList    = DService.PartyList;
+        var needDispelId = UnspecificTargetId;
+
+        // first dispel local player
+        var localPlayer = DService.ClientState.LocalPlayer;
+        foreach (var status in DispellableStatus.Keys)
+            if (((BattleChara*)localPlayer.Address)->GetStatusManager()->HasStatus(status))
+                return localPlayer.EntityId;
+
+        // dispel in order (or reverse order)
+        var sortedPartyList = reverse
+                                  ? partyList.OrderByDescending(member => FetchMemberIndex(member.ObjectId)).ToList()
+                                  : partyList.OrderBy(member => FetchMemberIndex(member.ObjectId)).ToList();
+        foreach (var status in DispellableStatus.Keys)
+        {
+            foreach (var member in sortedPartyList)
+            {
+                if (member.CurrentHP <= 0 || Vector3.Distance(member.Position, DService.ClientState.LocalPlayer.Position) > 30)
+                    continue;
+
+                if (((BattleChara*)member.Address)->GetStatusManager()->HasStatus(status))
+                    return member.ObjectId;
+            }
+        }
+
+        return needDispelId;
+    }
+
+    private static void OnPreHeal(ref ulong targetID, ref uint actionID, ref bool isPrevented)
+    {
+        var currentTarget = DService.ObjectTable.SearchById(targetID);
+        if (currentTarget is IBattleNpc || targetID == UnspecificTargetId)
+        {
+            // find target with the lowest HP ratio within range and satisfy threshold
+            targetID = TargetNeedHeal();
+            if (targetID == UnspecificTargetId)
+            {
+                isPrevented = true;
+                return;
+            }
+
+            var member = FetchMember((uint)targetID);
+            if (member != null)
+            {
+                var name         = member.Name.ExtractText();
+                var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
+                var classJobName = member.ClassJob.Value.Name.ExtractText();
+
+                if (ModuleConfig.SendChat)
+                    Chat(GetSLoc("HealerHelper-EasyHeal-Message", name, classJobIcon, classJobName));
+                if (ModuleConfig.SendNotification)
+                    NotificationInfo(GetLoc("HealerHelper-EasyHeal-Message", name, string.Empty, classJobName));
+                if (ModuleConfig.OverlayMark)
+                {
+                    var idx = FetchMemberIndex((uint)targetID) ?? 0;
+                    if (!LuminaGetter.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
+                    NewMark(idx, actionRow.Icon);
+                    DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
+                }
+            }
+        }
+    }
+
+    private static void OnPreDispel(ref ulong targetID, ref uint actionID, ref bool isPrevented)
+    {
+        var currentTarget = DService.ObjectTable.SearchById(targetID);
+        if (currentTarget is IBattleNpc || targetID == UnspecificTargetId)
+        {
+            // find target with dispellable status within range
+            targetID = TargetNeedDispel(reverse: ModuleConfig.DispelOrder is DispelOrderStatus.Reverse);
+            if (targetID == UnspecificTargetId)
+            {
+                isPrevented = true;
+                return;
+            }
+
+            // dispel target
+            var member = FetchMember((uint)targetID);
+            if (member != null)
+            {
+                var name         = member.Name.ExtractText();
+                var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
+                var classJobName = member.ClassJob.Value.Name.ExtractText();
+
+                if (ModuleConfig.SendChat)
+                    Chat(GetSLoc("HealerHelper-EasyDispel-Message", name, classJobIcon, classJobName));
+                if (ModuleConfig.SendNotification)
+                    NotificationInfo(GetLoc("HealerHelper-EasyDispel-Message", name, string.Empty, classJobName));
+                if (ModuleConfig.OverlayMark)
+                {
+                    var idx = FetchMemberIndex((uint)targetID) ?? 0;
+                    if (!LuminaGetter.TryGetRow<LuminaAction>(actionID, out var actionRow)) return;
+                    NewMark(idx, actionRow.Icon);
+                    DService.Framework.RunOnTick(async () => await MarkTimer(() => DelMark(idx), 6000));
+                }
+            }
+        }
     }
 
     #endregion
@@ -854,7 +979,7 @@ public class HealerHelper : DailyModuleBase
     private static void DelMark(uint idx)
     {
         var first = MarkedStatus.FirstOrDefault(x => x.Value == idx);
-        if (first.Key != default && MarkedStatus.TryRemove(first.Key, out _))
+        if (first.Key != 0 && MarkedStatus.TryRemove(first.Key, out _))
             HideImageNode(idx);
 
         if (MarkedStatus.Count is 0)
@@ -887,6 +1012,10 @@ public class HealerHelper : DailyModuleBase
         // easy heal
         public EasyHealStatus EasyHeal          = EasyHealStatus.Enable;
         public float          NeedHealThreshold = 0.8f;
+
+        // easy dispel
+        public EasyDispelStatus  EasyDispel  = EasyDispelStatus.Enable;
+        public DispelOrderStatus DispelOrder = DispelOrderStatus.Order;
 
         // notification
         public bool SendChat;
@@ -949,6 +1078,18 @@ public class HealerHelper : DailyModuleBase
         Enable   // select target with the lowest HP ratio within range when no target selected
     }
 
+    public enum EasyDispelStatus
+    {
+        Disable, // disable easy dispel
+        Enable   // select target with dispellable status within range when no target selected
+    }
+
+    public enum DispelOrderStatus
+    {
+        Order,  // local -> party list (0 -> 7)
+        Reverse // local -> party list (7 -> 0)
+    }
+
     // predefined card priority, arranged based on the guidance in The Balance
     // https://www.thebalanceffxiv.com/
     public static readonly Dictionary<string, string[]> MeleeOrder = new()
@@ -1005,6 +1146,9 @@ public class HealerHelper : DailyModuleBase
         // 24305, // haima
         24291, // eukrasian diagnosis
     ];
+
+    // list of dispellable status
+    public static Dictionary<uint, string> DispellableStatus = new();
 
     #endregion
 }
