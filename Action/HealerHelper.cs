@@ -631,24 +631,25 @@ public class HealerHelper : DailyModuleBase
         var needDispelId = UnspecificTargetId;
 
         // first dispel local player
-        var localPlayer = DService.ClientState.LocalPlayer;
-        foreach (var status in DispellableStatus.Keys)
-            if (((BattleChara*)localPlayer.Address)->GetStatusManager()->HasStatus(status))
+        var localPlayer       = DService.ClientState.LocalPlayer;
+        var localPlayerStatus = localPlayer.StatusList;
+        foreach (var status in localPlayerStatus)
+            if (DispellableStatus.ContainsKey(status.StatusId))
                 return localPlayer.EntityId;
 
         // dispel in order (or reverse order)
         var sortedPartyList = reverse
-                                  ? partyList.OrderByDescending(member => FetchMemberIndex(member.ObjectId)).ToList()
-                                  : partyList.OrderBy(member => FetchMemberIndex(member.ObjectId)).ToList();
-        foreach (var status in DispellableStatus.Keys)
+                                  ? partyList.OrderByDescending(member => FetchMemberIndex(member.ObjectId) ?? 0).ToList()
+                                  : partyList.OrderBy(member => FetchMemberIndex(member.ObjectId) ?? 0).ToList();
+        foreach (var member in sortedPartyList)
         {
-            foreach (var member in sortedPartyList)
+            if (member.CurrentHP <= 0 || Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) > 900)
+                continue;
+            
+            foreach (var status in member.Statuses)
             {
-                if (member.CurrentHP <= 0 || Vector3.Distance(member.Position, DService.ClientState.LocalPlayer.Position) > 30)
-                    continue;
-
-                if (((BattleChara*)member.Address)->GetStatusManager()->HasStatus(status))
-                    return member.ObjectId;
+                if (DispellableStatus.ContainsKey(status.StatusId))
+                    return member.ToStruct()->EntityId;
             }
         }
 
