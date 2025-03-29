@@ -14,8 +14,10 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Newtonsoft.Json;
@@ -29,10 +31,10 @@ public class HealerHelper : DailyModuleBase
 
     public override ModuleInfo Info => new()
     {
-        Author      = ["HaKu"],
         Title       = GetLoc("HealerHelperTitle"),
         Description = GetLoc("HealerHelperDescription"),
-        Category    = ModuleCategories.Action
+        Category    = ModuleCategories.Action,
+        Author      = ["HaKu"]
     };
 
     private static Config? ModuleConfig;
@@ -50,7 +52,7 @@ public class HealerHelper : DailyModuleBase
         // build dispellable status dict
         DispellableStatus = LuminaGetter.Get<Lumina.Excel.Sheets.Status>()
                                         .Where(s => s is { CanDispel: true, Name.IsEmpty: false })
-                                        .ToDictionary(s => (uint)s.RowId, s => s.Name.ToString().ToString().ToLowerInvariant());
+                                        .ToDictionary(s => s.RowId, s => s.Name.ExtractText().ToLowerInvariant());
 
         // life cycle hooks
         UseActionManager.Register(OnPreUseAction);
@@ -78,7 +80,7 @@ public class HealerHelper : DailyModuleBase
     {
         // auto play card
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-AutoPlayCardTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaGetter.GetRow<LuminaAction>(17055)!.Value.Name.ExtractText()));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(17055)));
 
         ImGui.Spacing();
 
@@ -197,7 +199,7 @@ public class HealerHelper : DailyModuleBase
 
         // easy dispel
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-EasyDispelTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaGetter.GetRow<LuminaAction>(7568)!.Value.Name.ExtractText()));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(7568)));
 
         ImGui.Spacing();
 
@@ -210,21 +212,25 @@ public class HealerHelper : DailyModuleBase
                 SaveConfig(ModuleConfig);
             }
 
-            if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("Ordered")}] ({GetLoc("HealerHelper-EasyDispel-OrderedDescription")})",
-                                  ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Order }))
+            using (ImRaii.Group())
             {
-                ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
-                ModuleConfig.DispelOrder = DispelOrderStatus.Order;
-                SaveConfig(ModuleConfig);
-            }
+                if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("InOrder")}]",
+                                      ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Order }))
+                {
+                    ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
+                    ModuleConfig.DispelOrder = DispelOrderStatus.Order;
+                    SaveConfig(ModuleConfig);
+                }
 
-            if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("Reversed")}] ({GetLoc("HealerHelper-EasyDispel-ReversedDescription")})",
-                                  ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Reverse }))
-            {
-                ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
-                ModuleConfig.DispelOrder = DispelOrderStatus.Reverse;
-                SaveConfig(ModuleConfig);
+                if (ImGui.RadioButton($"{GetLoc("Enable")} [{GetLoc("InReverseOrder")}]",
+                                      ModuleConfig is { EasyDispel: EasyDispelStatus.Enable, DispelOrder: DispelOrderStatus.Reverse }))
+                {
+                    ModuleConfig.EasyDispel  = EasyDispelStatus.Enable;
+                    ModuleConfig.DispelOrder = DispelOrderStatus.Reverse;
+                    SaveConfig(ModuleConfig);
+                }
             }
+            ImGuiOm.TooltipHover(GetLoc("HealerHelper-EasyDispel-OrderHelp"), 20f * GlobalFontScale);
         }
 
         ImGui.NewLine();
@@ -239,7 +245,6 @@ public class HealerHelper : DailyModuleBase
 
             if (ImGui.Checkbox(GetLoc("HealerHelper-MarkOnPartyList"), ref ModuleConfig.OverlayMark))
                 SaveConfig(ModuleConfig);
-            ImGuiOm.HelpMarker(GetLoc("Deprecated"));
 
             if (ModuleConfig.OverlayMark)
             {
@@ -277,23 +282,21 @@ public class HealerHelper : DailyModuleBase
         ref bool  isPrevented, ref ActionType type,     ref uint actionID,
         ref ulong targetID,    ref Vector3    location, ref uint extraParam)
     {
-        if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length == 0) return;
+        if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length < 2) return;
+        if (DService.ClientState.LocalPlayer is not { ClassJob.Value.Role: 4 } localPlayer) return;
 
-        // check job
-        var localPlayer = DService.ClientState.LocalPlayer;
-        var isAST       = localPlayer.ClassJob.RowId is 33;
-        var isHealer    = localPlayer.ClassJob.Value.Role is 4;
+        var isAST = localPlayer.ClassJob.RowId is 33;
 
         // auto play card
-        if (isAST && actionID is (37023 or 37026) && ModuleConfig.AutoPlayCard != AutoPlayCardStatus.Disable)
+        if (isAST && !PlayCardActions.Contains(actionID) && ModuleConfig.AutoPlayCard != AutoPlayCardStatus.Disable)
             OnPrePlayCard(ref targetID, ref actionID);
 
         // easy heal
-        if (isHealer && ModuleConfig.EasyHeal == EasyHealStatus.Enable && TargetHealActions.Contains(actionID))
+        if (ModuleConfig.EasyHeal == EasyHealStatus.Enable && TargetHealActions.Contains(actionID))
             OnPreHeal(ref targetID, ref actionID, ref isPrevented);
 
         // easy dispel
-        if (isHealer && ModuleConfig.EasyDispel == EasyDispelStatus.Enable && actionID is 7568)
+        if (ModuleConfig.EasyDispel == EasyDispelStatus.Enable && actionID is 7568)
             OnPreDispel(ref targetID, ref actionID, ref isPrevented);
     }
 
@@ -402,12 +405,13 @@ public class HealerHelper : DailyModuleBase
 
     #region AutoPlayCard
 
-    private const uint UnspecificTargetId = 0xE000_0000;
+    private const           uint          UnspecificTargetId = 0xE000_0000;
+    private static readonly HashSet<uint> PlayCardActions    = [37023, 37026];
 
-    private static HashSet<uint> PartyMemberIdsCache = new(); // check party member changed or not
+    private static HashSet<uint> PartyMemberIdsCache = []; // check party member changed or not
 
-    private static readonly List<(uint id, double priority)> MeleeCandidateOrder = new();
-    private static readonly List<(uint id, double priority)> RangeCandidateOrder = new();
+    private static readonly List<(uint id, double priority)> MeleeCandidateOrder = [];
+    private static readonly List<(uint id, double priority)> RangeCandidateOrder = [];
     private static          uint                             MeleeCandidateIdxCache;
     private static          uint                             RangeCandidateIdxCache;
 
