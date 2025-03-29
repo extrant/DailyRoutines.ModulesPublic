@@ -283,7 +283,7 @@ public class HealerHelper : DailyModuleBase
         ref ulong targetID,    ref Vector3    location, ref uint extraParam)
     {
         if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length < 2) return;
-        if (DService.ClientState.LocalPlayer is not { ClassJob.Value.Role: 4 } localPlayer) return;
+        if (DService.ObjectTable.LocalPlayer is not { ClassJob.Value.Role: 4 } localPlayer) return;
 
         var isAST = localPlayer.ClassJob.RowId is 33;
 
@@ -426,7 +426,7 @@ public class HealerHelper : DailyModuleBase
 
         // find card candidates
         var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
-        var isAST     = DService.ClientState.LocalPlayer.ClassJob.RowId is 33;
+        var isAST     = DService.ObjectTable.LocalPlayer.ClassJob.RowId is 33;
         if (partyList.Length is 0 || isAST is false || ModuleConfig.AutoPlayCard == AutoPlayCardStatus.Disable || DService.ClientState.IsPvP)
             return;
 
@@ -631,7 +631,7 @@ public class HealerHelper : DailyModuleBase
         var needDispelId = UnspecificTargetId;
 
         // first dispel local player
-        var localPlayer = DService.ClientState.LocalPlayer;
+        var localPlayer = DService.ObjectTable.LocalPlayer;
         foreach (var status in DispellableStatus.Keys)
             if (((BattleChara*)localPlayer.Address)->GetStatusManager()->HasStatus(status))
                 return localPlayer.EntityId;
@@ -644,7 +644,7 @@ public class HealerHelper : DailyModuleBase
         {
             foreach (var member in sortedPartyList)
             {
-                if (member.CurrentHP <= 0 || Vector3.Distance(member.Position, DService.ClientState.LocalPlayer.Position) > 30)
+                if (member.CurrentHP <= 0 || Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > 900)
                     continue;
 
                 if (((BattleChara*)member.Address)->GetStatusManager()->HasStatus(status))
