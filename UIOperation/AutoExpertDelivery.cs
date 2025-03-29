@@ -214,15 +214,18 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             if (!IsAddonAndNodesReady(GrandCompanySupplyReward)) return false;
             
             ((AddonGrandCompanySupplyReward*)GrandCompanySupplyReward)->DeliverButton->ClickAddonButton(GrandCompanySupplyReward);
+
+            TaskHelper.Abort();
             TaskHelper.Enqueue(EnqueueRefresh);
             TaskHelper.Enqueue(EnqueueDelivery);
             return true;
         }
         else if (SelectYesno != null)
         {
-            if (!IsAddonAndNodesReady(SelectYesno)) return false;
+            var state = ClickSelectYesnoYes();
+            if (!state) return false;
             
-            ClickSelectYesnoYes();
+            TaskHelper.Abort();
             TaskHelper.Enqueue(EnqueueDelivery);
             return true;
         }
@@ -237,6 +240,8 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             if (items.Count > 0)
             {
                 items.First().HandIn();
+                
+                TaskHelper.Abort();
                 TaskHelper.Enqueue(EnqueueDelivery);
                 return true;
             }
