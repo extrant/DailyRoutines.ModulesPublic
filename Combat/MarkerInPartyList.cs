@@ -2,13 +2,13 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -35,7 +35,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static Config? _config;
     private static readonly List<nint> _imageNodes = new(8);
-    private static readonly Dictionary<int, int> _markedObject = new(8);
+    private static readonly Dictionary<int, int> _markedObject = new(8); // markId, memberIndex
     private static bool _isBuilt, _needClear;
     private static readonly object _lock = new();
 
@@ -44,6 +44,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         _isBuilt = false;
         _config = LoadConfig<Config>() ?? new();
 
+        TaskHelper ??= new();
         MarkerSheet ??= DService.Data.GetExcelSheet<Marker>();
 
         LocalMarkingHook = DService.Hook.HookFromSignature<LocalMarkingFunc>(LocalMarkingSig.Get(), DetourLocalMarkingFunc);
@@ -122,7 +123,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
                 continue;
 
             if (!member->IsVisible())
-                break;
+                continue;
 
             var textNode = member->GetComponent()->UldManager.SearchNodeById(16);
             if (textNode != null && textNode->IsVisible() != visible)
@@ -227,7 +228,22 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             }
             _isBuilt = true;
         }
+    }
 
+    private void InitMarkedObject()
+    {
+        if (MarkingController.Instance() is null)
+            return;
+
+        var markers = MarkingController.Instance()->Markers;
+        for (var i = 0; i < markers.Length; i++)
+        {
+            var gameObjectID = markers[i].ObjectId;
+            if (gameObjectID == 0 || gameObjectID == 0xE0000000)
+                continue;
+            var index = (uint)i;
+            TaskHelper.Insert(() => ProcMarkIconSetted(index, gameObjectID));
+        }
     }
 
     private static void ReleaseImageNodes()
@@ -304,12 +320,15 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     #region Handle
 
-    private static void PartyListDrawHandle(AddonEvent type, AddonArgs args)
+    private void PartyListDrawHandle(AddonEvent type, AddonArgs args)
     {
-            if (!_isBuilt)
-                InitImageNodes();
+        if (!_isBuilt)
+        {
+            InitImageNodes();
+            InitMarkedObject();
+        }
 
-        if (_needClear && _markedObject.Count is 0)
+        if (_needClear && _markedObject.Count is 0 && IsScreenReady())
         {
             ResetPartyMemberList((AtkUnitBase*)args.Addon);
             _needClear = false;
@@ -326,31 +345,38 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         if (AgentHUD.Instance() is null || InfoProxyCrossRealm.Instance() is null)
             return;
 
+        int index;
         var mark = (int)(markIndex + 1);
         if (mark <= 0 || mark > MarkerSheet.Count)
         {
-            FindMember(entityId, RemoveMemberMark);
+            if (FindMember(entityId, out index))
+            {
+                RemoveMemberMark(index);
+            }
             return;
         }
 
         var icon = MarkerSheet.ElementAt(mark);
-
         if (entityId is 0xE000_0000 or 0xE00_0000)
         {
             RemoveMark(icon.Icon);
             return;
         }
 
-        if (FindMember(entityId, index =>
+        if (!FindMember(entityId, out index))
+        {
+            // 标到了boss / 其他小队成员
+            RemoveMark(icon.Icon);
+        }
+        else if (_markedObject.TryGetValue(icon.Icon, out var outValue) && outValue == index)
+        {
+            // 对同一个成员重复标记
+        }
+        else
         {
             RemoveMemberMark(index);
             AddMemberMark(index, icon.Icon);
-        }))
-        {
-            return;
         }
-
-        RemoveMark(icon.Icon);
     }
 
     private static void AddMemberMark(int memberIndex, int markId)
@@ -380,15 +406,15 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             _needClear = true;
     }
 
-    private static bool FindMember(uint entityId, Action<int> predicate)
+    private static bool FindMember(uint entityId, out int index)
     {
         var pAgentHUD = AgentHUD.Instance();
-        for (var i = 0; i < 8; ++i)
+        for (var i = 0; i < pAgentHUD->PartyMemberCount; ++i)
         {
             var charData = pAgentHUD->PartyMembers[i];
             if (entityId == charData.EntityId)
             {
-                predicate.Invoke(i);
+                index = i;
                 return true;
             }
         }
@@ -398,12 +424,13 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             var pGroupMember = InfoProxyCrossRealm.GetMemberByEntityId(entityId);
             if (pGroupMember is not null && pGroupMember->GroupIndex == 0)
             {
-                predicate.Invoke(pGroupMember->MemberIndex);
+                index = pGroupMember->MemberIndex;
                 return true;
             }
 
         }
 
+        index = -1;
         return false;
     }
 
@@ -411,10 +438,14 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     #region Hook
 
-    private static void DetourLocalMarkingFunc(nint manager, uint markingType, nint objectId, nint a4)
+    private void DetourLocalMarkingFunc(nint manager, uint markingType, nint objectId, nint a4)
     {
-        ProcMarkIconSetted(markingType, (uint)objectId);
+        // 自身标记会触发两回，第一次a4: E000_0000, 第二次a4: 自身GameObjectId
+        // 队友标记只会触发一回，a4: 队友GameObjectId
+        // 鲶鱼精local a4: 0
+        // if (a4 != (nint?)DService.ClientState.LocalPlayer?.GameObjectId)
 
+        TaskHelper.Insert(() => ProcMarkIconSetted(markingType, (uint)objectId));
         LocalMarkingHook!.Original(manager, markingType, objectId, a4);
     }
 
