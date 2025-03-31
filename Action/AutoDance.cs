@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.JobGauge.Types;
@@ -9,39 +11,34 @@ public unsafe class AutoDance : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoDanceTitle"),
+        Title       = GetLoc("AutoDanceTitle"),
         Description = GetLoc("AutoDanceDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
+
+    private static HashSet<uint> DanceActions = [15997, 15998];
 
     public override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 5000 };
+        TaskHelper ??= new TaskHelper { TimeLimitMS = 5_000 };
 
         UseActionManager.Register(OnPostUseAction);
     }
 
     private void OnPostUseAction(
-        bool result, ActionType actionType, uint actionID, ulong targetID, uint extraParam,
-        ActionManager.UseActionMode queueState, uint comboRouteID, bool* outOptAreaTargeted)
+        bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam)
     {
-        if (result && actionType is ActionType.Action && actionID is 15997 or 15998)
-        {
-            var gauge = DService.JobGauges.Get<DNCGauge>();
-            if (gauge.IsDancing) return;
-            
-            TaskHelper.Enqueue(() => gauge.IsDancing);
-            TaskHelper.Enqueue(actionID == 15997 ? DanceStandardStep : DanceTechnicalStep);
-        }
+        if (!result || actionType != ActionType.Action || !DanceActions.Contains(actionID)) return;
+        
+        var gauge = DService.JobGauges.Get<DNCGauge>();
+        if (gauge.IsDancing) return;
+        
+        TaskHelper.Enqueue(() => gauge.IsDancing);
+        TaskHelper.Enqueue(() => DanceStep(actionID != 15997));
     }
-
-    private bool? DanceStandardStep() => DanceStep(false);
-
-    private bool? DanceTechnicalStep() => DanceStep(true);
 
     private bool? DanceStep(bool isTechnicalStep)
     {
-        if (!Throttler.Throttle("AutoDance", 200)) return false;
         var gauge = DService.JobGauges.Get<DNCGauge>();
         if (!gauge.IsDancing)
         {
@@ -49,11 +46,11 @@ public unsafe class AutoDance : DailyModuleBase
             return true;
         }
 
-        var nextStep = gauge.NextStep;
         if (gauge.CompletedSteps < (isTechnicalStep ? 4 : 2))
         {
-            if (UseActionManager.UseAction(ActionType.Action, nextStep, 0xE0000000, 0U,
-                                                   ActionManager.UseActionMode.Queue))
+            var nextStep = gauge.NextStep;
+            if (ActionManager.Instance()->GetActionStatus(ActionType.Action, nextStep) != 0) return false;
+            if (UseActionManager.UseActionLocation(ActionType.Action, nextStep))
             {
                 TaskHelper.Enqueue(() => DanceStep(isTechnicalStep));
                 return true;
