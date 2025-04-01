@@ -23,6 +23,8 @@ public unsafe class AutoRaise : DailyModuleBase
         Author      = ["qingsiweisan"]
     };
 
+    public override ModulePermission Permission => new() { CNPremium = true, GlobalPremium = true };
+
     private static Config ModuleConfig = null!;
 
     private const uint WhiteMageJobID    = 24;
