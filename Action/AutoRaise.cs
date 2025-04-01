@@ -36,7 +36,7 @@ public unsafe class AutoRaise : DailyModuleBase
         [33] = 3603,  // 生辰
         [40] = 24287, // 复苏
         [27] = 7670,  // 复生
-        [35] = 7523,  // 赤复活
+        // [35] = 7523,  // 赤复活
     };
 
     private const int   AbilityLockTimeMs       = 800;
