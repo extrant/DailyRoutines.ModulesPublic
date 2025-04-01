@@ -25,8 +25,7 @@ public unsafe class AutoRaise : DailyModuleBase
 
     private static Config ModuleConfig = null!;
 
-    private static readonly uint WhiteMageJobID = 24;
-
+    private const uint WhiteMageJobID    = 24;
     private const uint SwiftcastActionID = 7561; // 即刻咏唱
     private const uint ThinAirActionID   = 7430; // 无中生有(白魔)
 
