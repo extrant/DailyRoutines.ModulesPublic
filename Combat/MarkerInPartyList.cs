@@ -203,11 +203,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     private static void InitImageNodes()
     {
         var partylist = (AtkUnitBase*)DService.Gui.GetAddonByName("_PartyList");
-        if (partylist is null)
-        {
-            DService.Log.Error("Failed to get partylist");
-            return;
-        }
+        if (partylist is null) return;
+        
         lock (_lock)
         {
             if (_isBuilt)
@@ -250,14 +247,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     {
         lock (_lock)
         {
-            if (!_isBuilt)
-                return;
-
-            if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded)
-            {
-                Error("Failed to get partylist");
-                return;
-            }
+            if (!_isBuilt) return;
+            if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded) return;
 
             foreach (var item in _imageNodes)
             {
