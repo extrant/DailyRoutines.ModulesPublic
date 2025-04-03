@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
+using Dalamud.Game.Addon.Events;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -29,7 +30,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
     private static Config ModuleConfig = null!;
 
     private static string CastInfoTargetBlacklistInput = string.Empty;
-
+    
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
@@ -38,7 +39,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,          "_EnemyList", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_EnemyList", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,           "_EnemyList", OnAddon);
     }
 
     public override void ConfigUI()
@@ -301,13 +302,12 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             
             var textNode = MakeTextNode(10001);
             
-            textNode->NodeFlags = NodeFlags.Visible | NodeFlags.Enabled | NodeFlags.AnchorTop | NodeFlags.AnchorLeft;
-            textNode->DrawFlags = castTextNode->DrawFlags;
-            textNode->Alpha_2   = 255;
+            textNode->NodeFlags   = NodeFlags.Visible | NodeFlags.Enabled | NodeFlags.AnchorTop | NodeFlags.AnchorLeft;
+            textNode->DrawFlags   = castTextNode->DrawFlags;
+            textNode->Alpha_2     = 255;
             textNode->LineSpacing = 20;
-            textNode->FontSize = ModuleConfig.FontSize;
-            textNode->TextFlags =
-                (byte)(TextFlags.AutoAdjustNodeSize | TextFlags.Edge | TextFlags.Bold | TextFlags.Emboss);
+            textNode->FontSize    = ModuleConfig.FontSize;
+            textNode->TextFlags   = (byte)(TextFlags.AutoAdjustNodeSize | TextFlags.Edge | TextFlags.Bold | TextFlags.Emboss);
             
             textNode->SetPositionFloat(80, 5);
             textNode->SetAlignment(AlignmentType.TopLeft);
@@ -315,12 +315,12 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             LinkNodeAtEnd((AtkResNode*)textNode, node->Component);
         }
     }
-    
+
     private static void FreeNodes()
     {
         if (EnemyList == null) return;
         if (!TryFindMadeTextNodes(out var nodes)) return;
-
+        
         foreach (var node in nodes)
         {
             var textNode      = (AtkTextNode*)node.TextNodePtr;

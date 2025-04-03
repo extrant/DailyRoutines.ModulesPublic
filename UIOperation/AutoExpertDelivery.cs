@@ -283,11 +283,8 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             _ => Overlay.IsOpen,
         };
 
-        if (ModuleConfig.AutoSwitchWhenOpen && type == AddonEvent.PostSetup)
-        {
-            var buttonNode = GrandCompanySupplyList->GetNodeById(13)->GetAsAtkComponentRadioButton();
-            buttonNode->ClickAddonRadioButton(GrandCompanySupplyList, 4);
-        }
+        if (ModuleConfig.AutoSwitchWhenOpen && type == AddonEvent.PostSetup && GrandCompanySupplyList != null)
+            Callback(GrandCompanySupplyList, true, 0, 2);
     }
     
     public override void Uninit()
