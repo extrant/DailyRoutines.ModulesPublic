@@ -47,7 +47,7 @@ public class AutoGathererRoleActions : DailyModuleBase
         TaskHelper.Abort();
         if (!ValidJobs.Contains(jobID)) return;
 
-        var localPlayer = DService.ObjectTable.LocalPlayer.ToBCStruct();
+        var localPlayer = DService.ObjectTable.LocalPlayer.ToStruct();
         if (localPlayer == null) return;
 
         TaskHelper.DelayNext(5_00);

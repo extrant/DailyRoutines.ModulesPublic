@@ -443,7 +443,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         // 自身标记会触发两回，第一次a4: E000_0000, 第二次a4: 自身GameObjectId
         // 队友标记只会触发一回，a4: 队友GameObjectId
         // 鲶鱼精local a4: 0
-        // if (a4 != (nint?)DService.ClientState.LocalPlayer?.GameObjectId)
+        // if (a4 != (nint?)DService.ObjectTable.LocalPlayer?.GameObjectId)
 
         TaskHelper.Insert(() => ProcMarkIconSetted(markingType, (uint)objectId));
         LocalMarkingHook!.Original(manager, markingType, objectId, a4);

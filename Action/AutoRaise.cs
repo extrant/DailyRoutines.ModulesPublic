@@ -183,10 +183,10 @@ public unsafe class AutoRaise : DailyModuleBase
     private bool? MainProcess()
     {
         if (BetweenAreas                             || !IsScreenReady() || OccupiedInEvent ||
-            DService.ClientState.LocalPlayer is null || !DService.Condition[ConditionFlag.InCombat])
+            DService.ObjectTable.LocalPlayer is null || !DService.Condition[ConditionFlag.InCombat])
             return Cycle(1000);
 
-        var localPlayer = DService.ClientState.LocalPlayer;
+        var localPlayer = DService.ObjectTable.LocalPlayer;
 
         if (GetRaiseActionID(localPlayer.ClassJob.RowId) == 0 ||
             !IsActionUnlocked(SwiftcastActionID))
@@ -230,10 +230,10 @@ public unsafe class AutoRaise : DailyModuleBase
 
     private bool? CheckBasicConditions()
     {
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return true;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var actionManager             = ActionManager.Instance();
-        var character                 = localPlayer.ToBCStruct();
+        var character                 = localPlayer.ToStruct();
         var statusManager             = character->StatusManager;
         var currentMp                 = localPlayer.CurrentMp;
         var timeSinceLastAction       = (DateTime.Now - LastPlayerActionTime).TotalMilliseconds;
@@ -265,10 +265,10 @@ public unsafe class AutoRaise : DailyModuleBase
 
     private bool? ProcessRaiseSequence(Character* deadPartyMember)
     {
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         
         var actionManager = ActionManager.Instance();
-        var character     = localPlayer.ToBCStruct();
+        var character     = localPlayer.ToStruct();
         var statusManager = character->StatusManager;
 
         var hasSwiftcast = statusManager.HasStatus(167);
@@ -368,7 +368,7 @@ public unsafe class AutoRaise : DailyModuleBase
     {
         try
         {
-            if (DService.ClientState.LocalPlayer is not { } localPlayer) return null;
+            if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return null;
             if (DService.PartyList is not { Length: > 1 } partyList) return null;
 
             var playerPosition = localPlayer.Position;

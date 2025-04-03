@@ -62,7 +62,7 @@ public class AutoSummonPet : DailyModuleBase
             return true;
         }
         
-        var state = CharacterManager.Instance()->LookupPetByOwnerObject(localPlayer.ToBCStruct()) != null;
+        var state = CharacterManager.Instance()->LookupPetByOwnerObject(localPlayer.ToStruct()) != null;
         if (state)
         {
             TaskHelper.Abort();

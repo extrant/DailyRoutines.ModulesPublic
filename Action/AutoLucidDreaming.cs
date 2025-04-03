@@ -170,7 +170,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
     {
         // 基础状态检查
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-        var character = localPlayer.ToBCStruct();
+        var character = localPlayer.ToStruct();
         if (character == null) return true;
         
         var statusManager = character->StatusManager;

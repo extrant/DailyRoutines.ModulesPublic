@@ -142,7 +142,7 @@ public class AutoFateSync : DailyModuleBase
                 if (!TankStanceActions.TryGetValue(localPlayer.ClassJob.RowId, out var actionID)) return false;
                 if (localPlayer.Level > data.ClassJobLevelMax) return false;
                 
-                var battlePlayer = localPlayer.ToBCStruct();
+                var battlePlayer = localPlayer.ToStruct();
                 if (!TankStanceStatuses.Any(status => battlePlayer->StatusManager.HasStatus(status)))
                     UseActionManager.UseAction(ActionType.Action, actionID);
 

@@ -390,7 +390,7 @@ public class AutoMovePetPosition : DailyModuleBase
         if (DService.ObjectTable.LocalPlayer is not { } player) return;
         if (!ValidJobs.Contains(player.ClassJob.RowId)) return;
         
-        var pet = CharacterManager.Instance()->LookupPetByOwnerObject(player.ToBCStruct());
+        var pet = CharacterManager.Instance()->LookupPetByOwnerObject(player.ToStruct());
         if (pet == null) return;
 
         var groundY  = pet->Position.Y;

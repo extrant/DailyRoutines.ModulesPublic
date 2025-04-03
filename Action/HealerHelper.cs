@@ -632,7 +632,7 @@ public class HealerHelper : DailyModuleBase
 
         // first dispel local player
         var localPlayer       = DService.ObjectTable.LocalPlayer;
-        var localPlayerStatus = localPlayer.ToBCStruct()->StatusManager.Status;
+        var localPlayerStatus = localPlayer.ToStruct()->StatusManager.Status;
         foreach (var status in localPlayerStatus)
             if (DispellableStatus.ContainsKey(status.StatusId))
                 return localPlayer.EntityId;
@@ -643,7 +643,7 @@ public class HealerHelper : DailyModuleBase
                                   : partyList.OrderBy(member => FetchMemberIndex(member.ObjectId) ?? 0).ToList();
         foreach (var member in sortedPartyList)
         {
-            if (member.CurrentHP <= 0 || Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) > 900)
+            if (member.CurrentHP <= 0 || Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > 900)
                 continue;
             
             foreach (var status in member.Statuses)

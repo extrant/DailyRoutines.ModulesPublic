@@ -86,7 +86,7 @@ public class AutoDrawMotifs : DailyModuleBase
     {
         var gauge         = DService.JobGauges.Get<PCTGauge>();
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-        var statusManager = localPlayer.ToBCStruct()->StatusManager;
+        var statusManager = localPlayer.ToStruct()->StatusManager;
 
         var motifAction = 0U;
         if (!gauge.CreatureMotifDrawn && IsActionUnlocked(34689))

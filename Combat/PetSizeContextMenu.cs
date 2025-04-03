@@ -66,7 +66,7 @@ public unsafe class PetSizeContextMenu : DailyModuleBase
             if (args.Target is not MenuTargetDefault defautTarget) return false;
             if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
 
-            var pet = CharacterManager.Instance()->LookupPetByOwnerObject(localPlayer.ToBCStruct());
+            var pet = CharacterManager.Instance()->LookupPetByOwnerObject(localPlayer.ToStruct());
             if (pet == null || defautTarget.TargetObjectId != pet->GetGameObjectId()) return false;
             
             return true;

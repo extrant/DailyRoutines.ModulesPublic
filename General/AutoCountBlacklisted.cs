@@ -106,22 +106,18 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
         var checkRange = ModuleConfig.CheckRange * ModuleConfig.CheckRange;
         foreach (var obj in DService.ObjectTable)
         {
-            if (obj.ObjectKind is ObjectKind.Player)
+            if (obj.ObjectKind != ObjectKind.Player || obj is not IPlayerCharacter chara) continue;
+            
+            var needCheckPos = obj.Position;
+            if (Vector3.DistanceSquared(myPos, needCheckPos) <= checkRange)
             {
-                var needCheckPos = obj.Position;
-                if (Vector3.DistanceSquared(myPos, needCheckPos) <= checkRange)
+                if (!PresetSheet.Worlds.TryGetValue(chara.HomeWorld.RowId, out var world)) continue;
+
+                // Character.Id = accountId for new, contentId for old
+                if (BlacklistHashSet.Contains(chara.ContentId) || BlacklistHashSet.Contains(chara.AccountId))
                 {
-                    var chara = obj.ToBCStruct();
-                    if (chara is null) continue;
-
-                    if (!PresetSheet.Worlds.TryGetValue(chara->HomeWorld, out var world)) continue;
-
-                    // Character.Id = accountId for new, contentId for old
-                    if (BlacklistHashSet.Contains(chara->Character.ContentId) || BlacklistHashSet.Contains(chara->Character.AccountId))
-                    {
-                        tooltip.AppendLine($"{obj.Name}@{world.Name.ToString()}");
-                        blackNum++;
-                    }
+                    tooltip.AppendLine($"{obj.Name}@{world.Name.ToString()}");
+                    blackNum++;
                 }
             }
         }

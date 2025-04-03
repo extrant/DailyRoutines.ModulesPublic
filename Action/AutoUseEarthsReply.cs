@@ -40,7 +40,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
                            {
                                if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
                                
-                               var statusManager = localPlayer.ToBCStruct()->StatusManager;
+                               var statusManager = localPlayer.ToStruct()->StatusManager;
                                if (!ModuleConfig.UseWhenSprint && statusManager.HasStatus(SprintStatus)) return;
                                if (!ModuleConfig.UseWhenGuard  && statusManager.HasStatus(GuardStatus)) return;
                                

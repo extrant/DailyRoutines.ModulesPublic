@@ -67,7 +67,7 @@ public class AutoSoulsow : DailyModuleBase
     private unsafe bool? UseRelatedActions()
     {
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-        var statusManager = localPlayer.ToBCStruct()->StatusManager;
+        var statusManager = localPlayer.ToStruct()->StatusManager;
 
         // 播魂种
         if (statusManager.HasStatus(2594) || !IsActionUnlocked(24387))

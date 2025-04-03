@@ -426,11 +426,11 @@ public class AutoCheckFoodUsage : DailyModuleBase
 
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
 
-        var statusManager = localPlayer.ToBCStruct()->GetStatusManager();
-        var statusIndex   = statusManager->GetStatusIndex(48);
+        var statusManager = localPlayer.ToStruct()->StatusManager;
+        var statusIndex   = statusManager.GetStatusIndex(48);
         if (statusIndex == -1) return false;
 
-        var status = statusManager->Status[statusIndex];
+        var status = statusManager.Status[statusIndex];
         itemFoodRowID = (uint)status.Param % 10_000;
         remainingTime = TimeSpan.FromSeconds(status.RemainingTime);
         return true;

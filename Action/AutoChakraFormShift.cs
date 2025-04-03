@@ -53,7 +53,7 @@ public class AutoChakraFormShift : DailyModuleBase
     {
         var gauge = DService.JobGauges.Get<MNKGauge>();
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-        var statusManager = localPlayer.ToBCStruct()->StatusManager;
+        var statusManager = localPlayer.ToStruct()->StatusManager;
 
         const uint SteeledMeditation = 36940;
         const uint FormShift = 4262;

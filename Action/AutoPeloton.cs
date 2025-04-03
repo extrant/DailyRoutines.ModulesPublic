@@ -143,7 +143,7 @@ public class AutoPeloton : DailyModuleBase
     {
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
         var actionManager = ActionManager.Instance();
-        var statusManager = localPlayer.ToBCStruct()->StatusManager;
+        var statusManager = localPlayer.ToStruct()->StatusManager;
 
         // PeletonNotReady
         if (actionManager->GetActionStatus(ActionType.Action, s_PelotoningActionId) != 0) return true;

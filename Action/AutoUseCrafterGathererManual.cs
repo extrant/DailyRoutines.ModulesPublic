@@ -104,7 +104,7 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
             var isCrafter  = Crafters.Contains(localPlayer.ClassJob.RowId);
             if (!isGatherer && !isCrafter) return true;
 
-            var statusManager = localPlayer.ToBCStruct()->StatusManager;
+            var statusManager = localPlayer.ToStruct()->StatusManager;
             var statusIndex   = statusManager.GetStatusIndex(isGatherer ? 46U : 45U);
             if (statusIndex != -1) return true;
 
