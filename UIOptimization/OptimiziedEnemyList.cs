@@ -279,7 +279,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             
             textNode->FontSize = ModuleConfig.FontSize;
             textNode->SetText(bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName)
-                                  ? $"{GetCastInfoText((ActionType)bc.CastActionType, bc.CastActionId)}: {bc.CurrentCastTime:F1}/{bc.TotalCastTime:F1}"
+                                  ? $"{GetCastInfoText((ActionType)bc.CastActionType, bc.CastActionId)}: {bc.TotalCastTime - bc.CurrentCastTime:F1}"
                                   : GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity));
             
             textNode->GetTextDrawSize(infoWidth, infoHeight);
