@@ -17,9 +17,9 @@ public unsafe class AutoCancelCast : DailyModuleBase
 {
     public override ModuleInfo Info => new()
     {
-        Title = GetLoc("AutoCancelCastTitle"),
+        Title       = GetLoc("AutoCancelCastTitle"),
         Description = GetLoc("AutoCancelCastDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
 
     private static readonly CompSig CancelCastSig = new("48 83 EC 38 33 D2 C7 44 24 20 00 00 00 00 45 33 C9");
@@ -37,7 +37,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
 
     public override void Init()
     {
-        CancelCast ??= Marshal.GetDelegateForFunctionPointer<Action>(CancelCastSig.ScanText());
+        CancelCast ??= CancelCastSig.GetDelegate<Action>();
 
         TargetAreaActions ??= LuminaGetter.Get<Lumina.Excel.Sheets.Action>()
                                          .Where(x => x.TargetArea)
@@ -80,8 +80,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
 
     private static void CancelCastCombined()
     {
-        CancelCast();
-        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
+        if (!Throttler.Throttle("AutoCancelCast-CancelCast")) return;
         CancelCast();
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
     }
