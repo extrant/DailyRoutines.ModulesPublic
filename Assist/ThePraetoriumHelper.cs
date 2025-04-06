@@ -39,7 +39,7 @@ public unsafe class ThePraetoriumHelper : DailyModuleBase
         if (!Throttler.Throttle("ThePraetoriumHelper-OnUpdate", 1_000)) return;
         if (DService.ClientState.TerritoryType != 1044)
         {
-            FrameworkManager.Register(false, OnUpdate);
+            FrameworkManager.Unregister(OnUpdate);
             return;
         }
         
