@@ -7,115 +7,80 @@ using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.Utility;
+using Dalamud.Plugin.Services;
 
 namespace DailyRoutines.Modules;
 
-public class MitigationCounter : DailyModuleBase
+public class AutoDisplayMitigationInfo : DailyModuleBase
 {
-    #region Core
-
     public override ModuleInfo Info => new()
     {
-        Title       = GetLoc("MitigationCounterTitle"),
-        Description = GetLoc("MitigationCounterDescription"),
+        Title       = GetLoc("AutoDisplayMitigationInfoTitle"),
+        Description = GetLoc("AutoDisplayMitigationInfoDescription"),
         Category    = ModuleCategories.Combat,
         Author      = ["HaKu"]
     };
+    
+    public static Dictionary<uint, MitigationStatus> MitigationStatusMap;
 
-    private static Config?       ModuleConfig;
+    private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? BarEntry;
+
+    static AutoDisplayMitigationInfo() => MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        // init hash map
-        MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
-
-        // status bar
-        BarEntry         ??= DService.DtrBar.Get("DailyRoutines-MitigationCounter");
+        BarEntry         ??= DService.DtrBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
         BarEntry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
-
-        RefreshBarEntry();
-
-        // life cycle hooks
+        
         FrameworkManager.Register(false, OnFrameworkUpdate);
     }
+    
+    public override void ConfigUI()
+    {
+        if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
+            SaveConfig(ModuleConfig);
+    }
 
-    public override unsafe void Uninit()
+    public override void Uninit()
     {
         FrameworkManager.Unregister(OnFrameworkUpdate);
+        
+        BarEntry?.Remove();
+        BarEntry = null;
 
         base.Uninit();
     }
 
-    public override void ConfigUI()
-    {
-        ImGui.TextColored(LightSkyBlue, GetLoc("MitigationCounter-AccumulationMethod"));
-
-        ImGui.Spacing();
-
-        using (ImRaii.PushIndent())
-        {
-            if (ImGui.RadioButton($"{GetLoc("MitigationCounter-AdditiveTitle")} ({GetLoc("MitigationCounter-AdditiveDescription")})",
-                                  ModuleConfig.AccumulationMethod == AccumulationMethodSet.Additive))
-            {
-                ModuleConfig.AccumulationMethod = AccumulationMethodSet.Additive;
-                SaveConfig(ModuleConfig);
-            }
-
-            if (ImGui.RadioButton($"{GetLoc("MitigationCounter-MultiplicativeTitle")} ({GetLoc("MitigationCounter-MultiplicativeDescription")})",
-                                  ModuleConfig.AccumulationMethod == AccumulationMethodSet.Multiplicative))
-            {
-                ModuleConfig.AccumulationMethod = AccumulationMethodSet.Multiplicative;
-                SaveConfig(ModuleConfig);
-            }
-        }
-
-        ImGui.NewLine();
-
-        using (ImRaii.PushIndent())
-        {
-            if (ImGui.Checkbox(GetLoc("MitigationCounter-OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
-                SaveConfig(ModuleConfig);
-        }
-    }
-
-    #endregion
-
-    #region Hooks
-
-    public static Dictionary<uint, MitigationStatus>? MitigationStatusMap;
-
     public static unsafe void OnFrameworkUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("MitigationCounter-OnFrameworkUpdate", 200)) return;
+        if (!Throttler.Throttle("AutoDisplayMitigationInfo-OnFrameworkUpdate")) return;
 
-        // only available in combat and not in pvp
         if (DService.ClientState.IsPvP || (ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat]))
         {
             BarEntry.Shown = false;
             return;
         }
 
-        // fetch local player (null when zone changed)
         if (DService.ClientState.LocalPlayer is not { } localPlayer)
         {
             BarEntry.Shown = false;
             return;
         }
 
-        // count mitigation on local player
-        var                    localPlayerStatus = localPlayer.StatusList;
         List<MitigationStatus> activeMitigation  = [];
 
+        var localPlayerStatus = localPlayer.StatusList;
         foreach (var status in localPlayerStatus)
             if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
                 activeMitigation.Add(mitigation);
 
-        // count mitigation on battle npc
         var currentTarget = DService.Targets.Target;
-
         if (currentTarget is IBattleNpc battleNpc)
         {
             var statusList = battleNpc.ToBCStruct()->StatusManager.Status;
@@ -124,36 +89,33 @@ public class MitigationCounter : DailyModuleBase
                     activeMitigation.Add(mitigation);
         }
 
-        // count mitigation on party members
         var setActiveMitigation = activeMitigation.DistinctBy(m => m.Id).ToList();
-
-        var physical = MitigationReduction(setActiveMitigation.Select(m => m.Mitigation.Physical).ToList());
-        var magical  = MitigationReduction(setActiveMitigation.Select(m => m.Mitigation.Magical).ToList());
-        var special  = MitigationReduction(setActiveMitigation.Select(m => m.Mitigation.Special).ToList());
-
-        // update status bar
-        RefreshBarEntry(physical * 100, magical * 100, special * 100);
+        if (setActiveMitigation.Count == 0)
+        {
+            BarEntry.Shown = false;
+            return;
+        }
+        
+        RefreshBarEntry(setActiveMitigation);
     }
 
-    #endregion
-
-    #region Logics
-
-    private static void RefreshBarEntry(float physical = 0, float magical = 0, float special = 0)
+    private static void RefreshBarEntry(List<MitigationStatus> statuses)
     {
-        if (BarEntry is null)
-            return;
+        if (BarEntry == null) return;
 
-        // build mitigation description
-        var builder = new SeStringBuilder();
-        var values  = new[] { physical, magical, special };
-
-        var firstElement = true;
-        for (var idx = 0; idx < values.Length; idx++)
+        var textBuildr = new SeStringBuilder();
+        var values = new[]
         {
-            if (values[idx] <= 0) continue;
+            MitigationReduction(statuses.Select(x => x.Mitigation.Physical)),
+            MitigationReduction(statuses.Select(x => x.Mitigation.Magical)),
+            MitigationReduction(statuses.Select(x => x.Mitigation.Special))
+        };
 
-            var icon = idx switch
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (values[i] <= 0) continue;
+
+            var icon = i switch
             {
                 0 => BitmapFontIcon.DamagePhysical,
                 1 => BitmapFontIcon.DamageMagical,
@@ -161,41 +123,38 @@ public class MitigationCounter : DailyModuleBase
                 _ => BitmapFontIcon.None,
             };
 
-            if (!firstElement)
-                builder.AddText(" ");
+            textBuildr.AddIcon(icon);
+            textBuildr.Append($"{values[i]:0.0}%");
+            if (i != 0) textBuildr.Append(" ");
+        }
+        textBuildr.Append($" ({statuses.Count})");
+        BarEntry.Text = textBuildr.Build();
 
-            builder.AddIcon(icon);
-            builder.AddText($"{values[idx]:0.0}%");
-            firstElement = false;
+        var tooltipBuilder = new SeStringBuilder();
+        for (var i = 0; i < statuses.Count; i++)
+        {
+            var status = statuses[i];
+            tooltipBuilder.Append($"{LuminaWarpper.GetStatusName(status.Id)} ({status.Id}):");
+            tooltipBuilder.AddIcon(BitmapFontIcon.DamagePhysical);
+            tooltipBuilder.Append($"{status.Mitigation.Physical}% ");
+            tooltipBuilder.AddIcon(BitmapFontIcon.DamageMagical);
+            tooltipBuilder.Append($"{status.Mitigation.Magical}% ");
+            tooltipBuilder.AddIcon(BitmapFontIcon.DamageSpecial);
+            tooltipBuilder.Append($"{status.Mitigation.Special}%");
+            if (i < statuses.Count - 1) tooltipBuilder.Append("\n");
         }
 
-        // update status bar
-        BarEntry.Text  = builder.Build();
+        BarEntry.Tooltip = tooltipBuilder.Build();
+        
         BarEntry.Shown = true;
     }
 
-    private static float MitigationReduction(List<float> mitigations) =>
-        1f - ModuleConfig.AccumulationMethod switch
-        {
-            AccumulationMethodSet.Multiplicative => mitigations.Aggregate(1f, (acc, m) => acc * (1f - (m / 100f))),
-            AccumulationMethodSet.Additive       => 1f - Math.Clamp(mitigations.Sum(m => m / 100f), 0, 1),
-            _                                    => 0
-        };
-
-    #endregion
-
-    #region Structs
+    private static float MitigationReduction(IEnumerable<float> mitigations) =>
+        (1f - mitigations.Aggregate(1f, (acc, m) => acc * (1f - (m / 100f)))) * 100f;
 
     private class Config : ModuleConfiguration
     {
-        public AccumulationMethodSet AccumulationMethod = AccumulationMethodSet.Multiplicative;
-        public bool                  OnlyInCombat       = true;
-    }
-
-    public enum AccumulationMethodSet
-    {
-        Additive,
-        Multiplicative,
+        public bool OnlyInCombat = true;
     }
 
     public struct MitigationDetail
@@ -212,10 +171,6 @@ public class MitigationCounter : DailyModuleBase
         public MitigationDetail Mitigation;
         public bool             OnMember;
     }
-
-    #endregion
-
-    #region Storage
 
     public static readonly List<MitigationStatus> MitigationStatuses =
     [
@@ -934,6 +889,4 @@ public class MitigationCounter : DailyModuleBase
             OnMember   = true
         }
     ];
-
-    #endregion
 }
