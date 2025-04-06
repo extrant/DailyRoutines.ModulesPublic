@@ -67,7 +67,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             return;
         }
 
-        if (DService.ClientState.LocalPlayer is not { } localPlayer)
+        if (DService.ObjectTable.LocalPlayer is not { } localPlayer)
         {
             BarEntry.Shown = false;
             return;
@@ -83,7 +83,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         var currentTarget = DService.Targets.Target;
         if (currentTarget is IBattleNpc battleNpc)
         {
-            var statusList = battleNpc.ToBCStruct()->StatusManager.Status;
+            var statusList = battleNpc.StatusList;
             foreach (var status in statusList)
                 if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
                     activeMitigation.Add(mitigation);
