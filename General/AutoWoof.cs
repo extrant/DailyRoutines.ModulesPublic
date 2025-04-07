@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoWoof : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoWoofTitle"),
         Description = GetLoc("AutoWoofDescription"),

@@ -32,7 +32,7 @@ public class AutoMovePetPosition : DailyModuleBase
                                   .ToDictionary(pair => pair.Key, pair => pair.Value);
     }
 
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Author = ["Wotou"],
         Title = GetLoc("AutoMovePetPositionTitle"),

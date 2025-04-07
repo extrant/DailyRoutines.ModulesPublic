@@ -18,7 +18,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoStoreToCabinet : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoStoreToCabinetTitle"),
         Description = GetLoc("AutoStoreToCabinetDescription"),

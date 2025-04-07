@@ -18,7 +18,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = "自动无人岛工房生产计划",
         Description = "允许从剪贴板导入外部无人岛生产计划, 并一键自动安排 (仅支持国服作业集格式)",

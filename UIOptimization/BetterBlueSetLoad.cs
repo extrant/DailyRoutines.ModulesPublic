@@ -17,7 +17,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class BetterBlueSetLoad : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("BetterBlueSetLoadTitle"),
         Description = GetLoc("BetterBlueSetLoadDescription"),

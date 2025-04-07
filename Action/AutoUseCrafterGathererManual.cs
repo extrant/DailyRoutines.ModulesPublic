@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoUseCrafterGathererManualTitle"),
         Description = GetLoc("AutoUseCrafterGathererManualDescription"),

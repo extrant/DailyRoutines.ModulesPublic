@@ -16,7 +16,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoCountPlayers : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoCountPlayersTitle"),
         Description = GetLoc("AutoCountPlayersDescription"),

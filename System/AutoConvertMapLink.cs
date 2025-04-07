@@ -16,7 +16,7 @@ namespace DailyRoutines.Modules;
 // From Asvel
 public class AutoConvertMapLink : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoConvertMapLinkTitle"),
         Description = GetLoc("AutoConvertMapLinkDescription"),

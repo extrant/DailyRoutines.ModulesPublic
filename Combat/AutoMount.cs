@@ -12,7 +12,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoMount : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoMountTitle"),
         Description = GetLoc("AutoMountDescription"),

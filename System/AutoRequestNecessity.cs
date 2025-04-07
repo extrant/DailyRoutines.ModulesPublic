@@ -5,7 +5,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoRequestNecessity : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoRequestNecessityTitle"),
         Description = GetLoc("AutoRequestNecessityDescription"),

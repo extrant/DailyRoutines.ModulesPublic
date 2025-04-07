@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoUseEarthsReply : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoUseEarthsReplyTitle"),
         Description = GetLoc("AutoUseEarthsReplyDescription"),

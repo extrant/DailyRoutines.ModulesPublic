@@ -18,7 +18,7 @@ namespace DailyRoutines.ModulesPublic;
 
 public class FastGrandCompanyExchange : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("FastGrandCompanyExchangeTitle"),
         Description = GetLoc("FastGrandCompanyExchangeDescription"),

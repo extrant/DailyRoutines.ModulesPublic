@@ -6,7 +6,7 @@ namespace DailyRoutines.Modules;
 
 public class SoundEffectThrottler : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("SoundEffectThrottlerTitle"),
         Description = GetLoc("SoundEffectThrottlerDescription"),

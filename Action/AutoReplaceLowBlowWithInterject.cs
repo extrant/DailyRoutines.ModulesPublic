@@ -9,7 +9,7 @@ namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoReplaceLowBlowWithInterject : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoReplaceLowBlowWithInterjectTitle"),
         Description = GetLoc("AutoReplaceLowBlowWithInterjectDescription"),

@@ -18,7 +18,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoSplitStacks : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoSplitStacksTitle"),
         Description = GetLoc("AutoSplitStacksDescription"),

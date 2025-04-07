@@ -12,7 +12,7 @@ namespace DailyRoutines.ModulesPublic.Assist;
 
 public class SastashaHelper : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("SastashaHelperTitle"),
         Description = GetLoc("SastashaHelperDescription"),

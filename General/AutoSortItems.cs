@@ -17,7 +17,7 @@ public class AutoSortItems : DailyModuleBase
 
     private static Config ModuleConfig = null!;
 
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Author = ["那年雪落"],
         Title = GetLoc("AutoSortItemsTitle"),

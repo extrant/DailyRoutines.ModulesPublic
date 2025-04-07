@@ -11,7 +11,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoReplaceActionLowLevelTitle"),
         Description = GetLoc("AutoReplaceActionLowLevelDescription"),

@@ -10,7 +10,7 @@ namespace DailyRoutines.AutoPeloton;
 
 public class AutoPeloton : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoPelotonTitle"),       // "自动释放速行"
         Description = GetLoc("AutoPelotonDescription"), // "使用远敏职业时，自动尝试释放速行"

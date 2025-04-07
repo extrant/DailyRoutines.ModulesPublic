@@ -16,7 +16,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoCheckFoodUsage : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoCheckFoodUsageTitle"),
         Description = GetLoc("AutoCheckFoodUsageDescription"),

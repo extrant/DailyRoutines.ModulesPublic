@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class DisplayTargetHP : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("DisplayTargetHPTitle"),
         Description = GetLoc("DisplayTargetHPDescription"),

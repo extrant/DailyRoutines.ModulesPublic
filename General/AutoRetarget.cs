@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 public class AutoRetarget : DailyModuleBase
 {
     private static Config ModuleConfig = null!;
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoRetargetTitle"),
         Description = GetLoc("AutoRetargetDescription"),

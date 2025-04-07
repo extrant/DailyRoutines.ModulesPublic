@@ -6,7 +6,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoHolmgangSelf : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoHolmgangSelfTitle"),
         Description = GetLoc("AutoHolmgangSelfDescription"),

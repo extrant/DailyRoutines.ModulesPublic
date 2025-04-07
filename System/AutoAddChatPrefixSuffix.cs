@@ -12,7 +12,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoAddChatPrefixSuffixTitle"),
         Description = GetLoc("AutoAddChatPrefixSuffixDescription"),

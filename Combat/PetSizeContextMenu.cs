@@ -9,7 +9,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class PetSizeContextMenu : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("PetSizeContextMenuTitle"),
         Description = GetLoc("PetSizeContextMenuDescription"),

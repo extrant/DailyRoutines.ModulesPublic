@@ -20,7 +20,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class OptimiziedEnemyList : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("OptimiziedEnemyListTitle"),
         Description = GetLoc("OptimiziedEnemyListDescription"),

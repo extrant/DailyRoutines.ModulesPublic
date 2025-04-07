@@ -17,7 +17,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoFateSync : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoFateSyncTitle"),
         Description = GetLoc("AutoFateSyncDescription"),

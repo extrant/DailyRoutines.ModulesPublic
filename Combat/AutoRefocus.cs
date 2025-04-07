@@ -8,7 +8,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoRefocus : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoRefocusTitle"),
         Description = GetLoc("AutoRefocusDescription"),

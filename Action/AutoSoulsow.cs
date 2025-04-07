@@ -9,7 +9,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoSoulsow : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoSoulsowTitle"),
         Description = GetLoc("AutoSoulsowDescription"),

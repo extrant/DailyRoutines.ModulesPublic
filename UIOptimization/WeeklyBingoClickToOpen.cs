@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 
 public class WeeklyBingoClickToOpen : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("WeeklyBingoClickToOpenTitle"),
         Description = GetLoc("WeeklyBingoClickToOpenDescription"),

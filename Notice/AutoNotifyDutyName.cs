@@ -4,7 +4,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoNotifyDutyName : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoNotifyDutyNameTitle"),
         Description = GetLoc("AutoNotifyDutyNameDescription"),

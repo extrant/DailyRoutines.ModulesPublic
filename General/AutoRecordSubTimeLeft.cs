@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = "自动记录剩余游戏时间",
         Description = "登录时, 自动记录保存当前账号剩余的游戏时间, 并显示在服务器信息栏",

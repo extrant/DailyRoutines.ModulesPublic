@@ -13,7 +13,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoRefreshPartyFinder : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoRefreshPartyFinderTitle"),
         Description = GetLoc("AutoRefreshPartyFinderDescription"),

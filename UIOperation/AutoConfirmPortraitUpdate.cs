@@ -6,7 +6,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoConfirmPortraitUpdate : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoConfirmPortraitUpdateTitle"),
         Description = GetLoc("AutoConfirmPortraitUpdateDescription"),

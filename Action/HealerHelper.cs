@@ -29,7 +29,7 @@ public class HealerHelper : DailyModuleBase
 {
     #region Core
 
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("HealerHelperTitle"),
         Description = GetLoc("HealerHelperDescription"),

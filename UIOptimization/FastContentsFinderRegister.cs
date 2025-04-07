@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class FastContentsFinderRegister : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("FastContentsFinderRegisterTitle"),
         Description = GetLoc("FastContentsFinderRegisterDescription"),

@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class PartyFinderSettingRecord : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("PartyFinderSettingRecordTitle"),
         Description = GetLoc("PartyFinderSettingRecordDescription"),

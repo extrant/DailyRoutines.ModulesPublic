@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class BlockInputWhenFishing : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("BlockInputWhenFishingTitle"),
         Description = GetLoc("BlockInputWhenFishingDescription"),
