@@ -16,17 +16,17 @@ public unsafe class AutoDiscard : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoDiscardTitle"),
+        Title       = GetLoc("AutoDiscardTitle"),
         Description = GetLoc("AutoDiscardDescription"),
-        Category = ModuleCategories.General,
+        Category    = ModuleCategories.General,
     };
 
     private const string ModuleCommand = "/pdrdiscard";
 
     private static readonly Dictionary<DiscardBehaviour, string> DiscardBehaviourLoc = new()
     {
-        { DiscardBehaviour.Discard, GetLoc("AutoDiscard-Discard") },
-        { DiscardBehaviour.Sell, GetLoc("AutoDiscard-Sell") },
+        [DiscardBehaviour.Discard] = LuminaWarpper.GetAddonText(91),
+        [DiscardBehaviour.Sell]    = LuminaWarpper.GetAddonText(93),
     };
 
     private static readonly InventoryType[] InventoryTypes =
@@ -35,16 +35,15 @@ public unsafe class AutoDiscard : DailyModuleBase
         InventoryType.Inventory4,
     ];
 
-    private static Config ModuleConfig = null!;
+    private static LuminaSearcher<Item>? ItemSearcher;
+    private static Config                ModuleConfig = null!;
 
     private static string NewGroupNameInput = string.Empty;
     private static string EditGroupNameInput = string.Empty;
 
     private static string ItemSearchInput = string.Empty;
     private static string SelectedItemSearchInput = string.Empty;
-
-    private static LuminaSearcher<Item>? ItemSearcher;
-
+    
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
@@ -57,7 +56,7 @@ public unsafe class AutoDiscard : DailyModuleBase
                                  .ToList();
         ItemSearcher ??= new(itemNames, [x => x.Name.ExtractText(), x => x.RowId.ToString()], x => x.Name.ExtractText());
 
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 10_000 };
+        TaskHelper ??= new TaskHelper { TimeLimitMS = 5_000 };
 
         CommandManager.AddCommand(ModuleCommand,
                                           new CommandInfo(OnCommand) { HelpMessage = GetLoc("AutoDiscard-CommandHelp") });
@@ -176,16 +175,7 @@ public unsafe class AutoDiscard : DailyModuleBase
 
         return foundItem.Count > 0;
     }
-
-    private static bool? ConfirmDiscard()
-    {
-        if (!Throttler.Throttle("AutoDiscard", 100)) return false;
-        if (SelectYesno == null || !IsAddonAndNodesReady(SelectYesno)) return false;
-
-        Callback(SelectYesno, true, 0);
-        return true;
-    }
-
+    
     private static string GenerateUniqueName(string baseName)
     {
         var existingNames = ModuleConfig.DiscardGroups.Select(x => x.UniqueName).ToHashSet();
@@ -255,58 +245,34 @@ public unsafe class AutoDiscard : DailyModuleBase
                 {
                     taskHelper.Enqueue(() => OpenInventoryItemContext(fItem));
                     taskHelper.Enqueue(() => ClickDiscardContextMenu(taskHelper));
-                    taskHelper.DelayNext(500);
                 }
             }
         }
 
         private bool? ClickDiscardContextMenu(TaskHelper? taskHelper)
         {
-            if (!Throttler.Throttle("AutoDiscard", 100)) return false;
-            if (ContextMenu == null || !IsAddonAndNodesReady(ContextMenu)) return false;
+            if (!IsAddonAndNodesReady(ContextMenu)) return false;
 
             switch (Behaviour)
             {
                 case DiscardBehaviour.Discard:
-                    if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(91)!.Value.Text.ExtractText()))
+                    if (!ClickContextMenu(LuminaWarpper.GetAddonText(91)))
                     {
                         ContextMenu->Close(true);
                         break;
                     }
 
-                    taskHelper.Enqueue(ConfirmDiscard, "ConfirmDiscard", null, null, 1);
+                    taskHelper.Enqueue(() => ClickSelectYesnoYes(), "ConfirmDiscard", null, null, 1);
                     break;
                 case DiscardBehaviour.Sell:
-                    if (IsAddonAndNodesReady(GetAddonByName("RetainerGrid0")) || IsAddonAndNodesReady(RetainerSellList))
+                    if (!ClickContextMenu([LuminaWarpper.GetAddonText(5480), LuminaWarpper.GetAddonText(93)]))
                     {
-                        if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(5480)!.Value.Text.ExtractText()))
-                        {
-                            ContextMenu->Close(true);
-                            ChatError(GetLoc("AutoDiscard-NoSellPage"));
+                        ContextMenu->Close(true);
+                        ChatError(GetLoc("AutoDiscard-NoSellPage"));
 
-                            taskHelper.Abort();
-                        }
-
-                        break;
+                        taskHelper.Abort();
                     }
 
-                    if (IsAddonAndNodesReady(Shop))
-                    {
-                        if (!ClickContextMenu(LuminaGetter.GetRow<Addon>(93)!.Value.Text.ExtractText()))
-                        {
-                            ContextMenu->Close(true);
-                            ChatError(GetLoc("AutoDiscard-NoSellPage"));
-
-                            taskHelper.Abort();
-                        }
-
-                        break;
-                    }
-
-                    ContextMenu->Close(true);
-                    ChatError(GetLoc("AutoDiscard-NoSellPage"));
-
-                    taskHelper.Abort();
                     break;
             }
 
@@ -331,7 +297,7 @@ public unsafe class AutoDiscard : DailyModuleBase
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(DiscardItemsGroup lhs, DiscardItemsGroup rhs) { return !(lhs == rhs); }
+        public static bool operator !=(DiscardItemsGroup lhs, DiscardItemsGroup rhs) => !(lhs == rhs);
     }
 
     private class Config : ModuleConfiguration
