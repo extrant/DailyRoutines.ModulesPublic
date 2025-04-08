@@ -265,7 +265,8 @@ public unsafe class AutoDiscard : DailyModuleBase
                     taskHelper.Enqueue(() => ClickSelectYesnoYes(), "ConfirmDiscard", null, null, 1);
                     break;
                 case DiscardBehaviour.Sell:
-                    if (!ClickContextMenu([LuminaWarpper.GetAddonText(5480), LuminaWarpper.GetAddonText(93)]))
+                    if (!ClickContextMenu(LuminaWarpper.GetAddonText(5480)) &&
+                        !ClickContextMenu(LuminaWarpper.GetAddonText(93)))
                     {
                         ContextMenu->Close(true);
                         ChatError(GetLoc("AutoDiscard-NoSellPage"));
