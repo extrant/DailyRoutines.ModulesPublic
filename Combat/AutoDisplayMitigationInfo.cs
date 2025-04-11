@@ -28,14 +28,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Author      = ["HaKu"]
     };
     
-    public static Dictionary<uint, MitigationStatus> MitigationStatusMap;
+    private static readonly Dictionary<uint, MitigationStatus> MitigationStatusMap;
+    private static readonly byte[]                             DamagePhysicalStr;
+    private static readonly byte[]                             DamageMagicalStr;
 
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? BarEntry;
 
     private static Dictionary<MitigationStatus, float> LastMitigationStatus = [];
 
-    static AutoDisplayMitigationInfo() => MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
+    static AutoDisplayMitigationInfo()
+    {
+        MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
+        
+        DamagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
+        DamageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
+    }
 
     public override void Init()
     {
@@ -79,9 +87,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             ImGui.TableSetupColumn("图标", ImGuiTableColumnFlags.WidthFixed,   24f * GlobalFontScale);
             ImGui.TableSetupColumn("名字", ImGuiTableColumnFlags.WidthStretch, 20);
             ImGui.TableSetupColumn("数字", ImGuiTableColumnFlags.WidthStretch, 20);
-
-            var damagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
-            var damageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
+            
+            if (!DService.Texture.TryGetFromGameIcon(new(210405), out var barrierIcon)) return;
             
             foreach (var status in LastMitigationStatus)
             {
@@ -94,17 +101,18 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                 ImGui.Image(icon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
                 
                 ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
                 ImGui.Text($"{row.Name} ({status.Value:F1}s)");
                 ImGuiOm.TooltipHover($"{status.Key.Id}");
                 
                 ImGui.TableNextColumn();
-                ImGuiHelpers.SeStringWrapped(damagePhysicalStr);
+                ImGuiHelpers.SeStringWrapped(DamagePhysicalStr);
                 
                 ImGui.SameLine();
                 ImGui.Text($"{status.Key.Mitigation.Physical}% ");
                 
                 ImGui.SameLine();
-                ImGuiHelpers.SeStringWrapped(damageMagicalStr);
+                ImGuiHelpers.SeStringWrapped(DamageMagicalStr);
                 
                 ImGui.SameLine();
                 ImGui.Text($"{status.Key.Mitigation.Magical}% ");
@@ -113,11 +121,15 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             var shieldValue = localPlayer->ShieldValue;
             if (shieldValue > 0)
             {
+                if (LastMitigationStatus.Count > 0)
+                    ImGui.TableNextRow();
+
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGuiHelpers.SeStringWrapped(new SeString(new IconPayload(BitmapFontIcon.Tank)).Encode());
+                ImGui.Image(barrierIcon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
                 
                 ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
                 ImGui.Text($"{GetLoc("Shield")}");
                 
                 ImGui.TableNextColumn();
