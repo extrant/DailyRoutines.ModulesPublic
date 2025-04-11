@@ -9,8 +9,12 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
@@ -29,14 +33,26 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? BarEntry;
 
+    private static Dictionary<MitigationStatus, float> LastMitigationStatus = [];
+
     static AutoDisplayMitigationInfo() => MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
+        Overlay            ??= new(this);
+        Overlay.WindowName =   GetLoc("AutoDisplayMitigationInfoTitle");
+        Overlay.Flags      &=  ~ImGuiWindowFlags.NoTitleBar;
+        Overlay.Flags      &=  ~ImGuiWindowFlags.NoResize;
+        Overlay.Flags      &=  ~ImGuiWindowFlags.AlwaysAutoResize;
+        
         BarEntry         ??= DService.DtrBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
-        BarEntry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
+        BarEntry.OnClick = () =>
+        {
+            if (Overlay == null) return;
+            Overlay.IsOpen ^= true;
+        };
         
         FrameworkManager.Register(false, OnFrameworkUpdate);
     }
@@ -45,6 +61,70 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     {
         if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
             SaveConfig(ModuleConfig);
+    }
+
+    public override unsafe void OverlayUI()
+    {
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null) return;
+        
+        ImGuiHelpers.SeStringWrapped(BarEntry?.Text?.Encode() ?? []);
+
+        ImGui.Separator();
+
+        using (var table = ImRaii.Table("StatusTable", 3))
+        {
+            if (!table) return;
+            
+            ImGui.TableSetupColumn("图标", ImGuiTableColumnFlags.WidthFixed,   24f * GlobalFontScale);
+            ImGui.TableSetupColumn("名字", ImGuiTableColumnFlags.WidthStretch, 20);
+            ImGui.TableSetupColumn("数字", ImGuiTableColumnFlags.WidthStretch, 20);
+
+            var damagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
+            var damageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
+            
+            foreach (var status in LastMitigationStatus)
+            {
+                if (!LuminaGetter.TryGetRow<Status>(status.Key.Id, out var row)) continue;
+                if (!DService.Texture.TryGetFromGameIcon(new(row.Icon), out var icon)) continue;
+                
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGui.Image(icon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
+                
+                ImGui.TableNextColumn();
+                ImGui.Text($"{row.Name} ({status.Value:F1}s)");
+                ImGuiOm.TooltipHover($"{status.Key.Id}");
+                
+                ImGui.TableNextColumn();
+                ImGuiHelpers.SeStringWrapped(damagePhysicalStr);
+                
+                ImGui.SameLine();
+                ImGui.Text($"{status.Key.Mitigation.Physical}% ");
+                
+                ImGui.SameLine();
+                ImGuiHelpers.SeStringWrapped(damageMagicalStr);
+                
+                ImGui.SameLine();
+                ImGui.Text($"{status.Key.Mitigation.Magical}% ");
+            }
+
+            var shieldValue = localPlayer->ShieldValue;
+            if (shieldValue > 0)
+            {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGuiHelpers.SeStringWrapped(new SeString(new IconPayload(BitmapFontIcon.Tank)).Encode());
+                
+                ImGui.TableNextColumn();
+                ImGui.Text($"{GetLoc("Shield")}");
+                
+                ImGui.TableNextColumn();
+                var shieldPercentage = (double)shieldValue / 100;
+                ImGui.Text($"{shieldValue}%% ({localPlayer->Health * shieldPercentage:F0})");
+            }
+        }
     }
 
     public override void Uninit()
@@ -63,22 +143,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         if (DService.ClientState.IsPvP || (ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat]))
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
 
         if (DService.ClientState.LocalPlayer is not { } localPlayer)
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
 
-        List<MitigationStatus> activeMitigation  = [];
+        Dictionary<MitigationStatus, float> lastMitigationStatus = [];
 
         var localPlayerStatus = localPlayer.StatusList;
         foreach (var status in localPlayerStatus)
             if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
-                activeMitigation.Add(mitigation);
+                lastMitigationStatus.Add(mitigation, status.RemainingTime);
 
         var currentTarget = DService.Targets.Target;
         if (currentTarget is IBattleNpc battleNpc)
@@ -86,29 +166,32 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             var statusList = battleNpc.ToBCStruct()->StatusManager.Status;
             foreach (var status in statusList)
                 if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
-                    activeMitigation.Add(mitigation);
+                    lastMitigationStatus.Add(mitigation, status.RemainingTime);
         }
 
-        var setActiveMitigation = activeMitigation.DistinctBy(m => m.Id).ToList();
-        if (setActiveMitigation.Count == 0)
+        LastMitigationStatus = lastMitigationStatus.ToDictionary(x => x.Key, x => x.Value);
+        if (LastMitigationStatus.Count == 0 && localPlayer.ShieldPercentage == 0)
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
         
-        RefreshBarEntry(setActiveMitigation);
+        RefreshBarEntry(LastMitigationStatus);
     }
 
-    private static void RefreshBarEntry(List<MitigationStatus> statuses)
+    private static unsafe void RefreshBarEntry(Dictionary<MitigationStatus, float> statuses)
     {
         if (BarEntry == null) return;
+        
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null) return;
 
         var textBuildr = new SeStringBuilder();
         var values = new[]
         {
-            MitigationReduction(statuses.Select(x => x.Mitigation.Physical)),
-            MitigationReduction(statuses.Select(x => x.Mitigation.Magical)),
-            MitigationReduction(statuses.Select(x => x.Mitigation.Special))
+            MitigationReduction(statuses.Keys.Select(x => x.Mitigation.Physical)),
+            MitigationReduction(statuses.Keys.Select(x => x.Mitigation.Magical)),
+            localPlayer->Character.ShieldValue,
         };
 
         for (var i = 0; i < values.Length; i++)
@@ -119,7 +202,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             {
                 0 => BitmapFontIcon.DamagePhysical,
                 1 => BitmapFontIcon.DamageMagical,
-                2 => BitmapFontIcon.DamageSpecial,
+                2 => BitmapFontIcon.Tank,
                 _ => BitmapFontIcon.None,
             };
 
@@ -131,22 +214,43 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         BarEntry.Text = textBuildr.Build();
 
         var tooltipBuilder = new SeStringBuilder();
-        for (var i = 0; i < statuses.Count; i++)
+        foreach (var (status, _) in LastMitigationStatus)
         {
-            var status = statuses[i];
             tooltipBuilder.Append($"{LuminaWarpper.GetStatusName(status.Id)} ({status.Id}):");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamagePhysical);
             tooltipBuilder.Append($"{status.Mitigation.Physical}% ");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamageMagical);
             tooltipBuilder.Append($"{status.Mitigation.Magical}% ");
-            tooltipBuilder.AddIcon(BitmapFontIcon.DamageSpecial);
-            tooltipBuilder.Append($"{status.Mitigation.Special}%");
-            if (i < statuses.Count - 1) tooltipBuilder.Append("\n");
+            tooltipBuilder.Append("\n");
+        }
+        
+        var shieldPercentage = (double)localPlayer->ShieldValue / 100;
+        if (localPlayer->ShieldValue > 0)
+        {
+            if (statuses.Count > 0)
+                tooltipBuilder.Append("\n");
+            
+            tooltipBuilder.AddIcon(BitmapFontIcon.Tank);
+            tooltipBuilder.Append($"{GetLoc("Shield")}: {values[2]}% ({localPlayer->Health * shieldPercentage:F0})");
         }
 
+        var built = tooltipBuilder.Build();
+        // 无盾则移除最后一个换行符
+        if (localPlayer->ShieldValue == 0)
+            built.Payloads.RemoveAt(built.Payloads.Count - 1);
+        
         BarEntry.Tooltip = tooltipBuilder.Build();
         
         BarEntry.Shown = true;
+    }
+
+    private static void ClearAndCloseBarEntry()
+    {
+        if (BarEntry == null) return;
+        
+        BarEntry.Shown   = false;
+        BarEntry.Tooltip = null;
+        BarEntry.Text    = null;
     }
 
     private static float MitigationReduction(IEnumerable<float> mitigations) =>
@@ -164,12 +268,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         public float Special;
     }
 
-    public struct MitigationStatus
+    public struct MitigationStatus : IEquatable<MitigationStatus>
     {
         public uint             Id;
         public string           Name;
         public MitigationDetail Mitigation;
         public bool             OnMember;
+
+        public bool Equals(MitigationStatus other) => Id == other.Id;
+
+        public override bool Equals(object? obj) => obj is MitigationStatus other && Equals(other);
+
+        public override int GetHashCode() => (int)Id;
+
+        public static bool operator ==(MitigationStatus left, MitigationStatus right) => left.Equals(right);
+
+        public static bool operator !=(MitigationStatus left, MitigationStatus right) => !left.Equals(right);
     }
 
     public static readonly List<MitigationStatus> MitigationStatuses =
