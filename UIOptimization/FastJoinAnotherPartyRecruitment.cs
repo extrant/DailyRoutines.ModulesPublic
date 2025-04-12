@@ -13,7 +13,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("FastJoinAnotherPartyRecruitmentTitle"),
         Description = GetLoc("FastJoinAnotherPartyRecruitmentDescription"),

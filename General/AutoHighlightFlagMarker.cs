@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoHighlightFlagMarker : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoHighlightFlagMarkerTitle"),
         Description = GetLoc("AutoHighlightFlagMarkerDescription"),

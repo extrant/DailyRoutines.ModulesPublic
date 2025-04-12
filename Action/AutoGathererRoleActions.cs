@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoGathererRoleActions : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoGathererRoleActionsTitle"),
         Description = GetLoc("AutoGathererRoleActionsDescription"),

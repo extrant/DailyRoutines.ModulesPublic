@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoQTE : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoQTETitle"),
         Description = GetLoc("AutoQTEDescription"),

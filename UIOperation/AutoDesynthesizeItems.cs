@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoDesynthesizeItems : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoDesynthesizeItemsTitle"),
         Description = GetLoc("AutoDesynthesizeItemsDescription"),

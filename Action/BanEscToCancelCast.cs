@@ -6,7 +6,7 @@ namespace DailyRoutines.Modules;
 
 public class BanEscToCancelCast : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("BanEscToCancelCastTitle"),
         Description = GetLoc("BanEscToCancelCastDescription"),

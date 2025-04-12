@@ -12,7 +12,7 @@ public class FriendlistTeleporter : DailyModuleBase
     private static readonly TeleportMenuItem TeleportItem = new();
     private static readonly CrossWorldMenuItem CrossWorldItem = new();
 
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("FriendlistTeleporterTitle"),
         Description = GetLoc("FriendlistTeleporterDescription"),

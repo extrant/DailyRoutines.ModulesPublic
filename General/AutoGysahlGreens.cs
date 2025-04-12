@@ -10,7 +10,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoGysahlGreens : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoGysahlGreensTitle"),
         Description = GetLoc("AutoGysahlGreensDescription"),

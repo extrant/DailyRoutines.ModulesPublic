@@ -10,7 +10,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoConstantlyClick : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoConstantlyClickTitle"),
         Description = GetLoc("AutoConstantlyClickDescription"),

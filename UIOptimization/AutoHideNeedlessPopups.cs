@@ -7,11 +7,11 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoHideNeedlessPopups : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoHideNeedlessPopupsTitle"),
+        Title       = GetLoc("AutoHideNeedlessPopupsTitle"),
         Description = GetLoc("AutoHideNeedlessPopupsDescription"),
-        Category = ModuleCategories.UIOptimization,
+        Category    = ModuleCategories.UIOptimization,
     };
 
     private static readonly HashSet<string> AddonNames = 

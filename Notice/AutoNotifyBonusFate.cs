@@ -12,7 +12,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoNotifyBonusFate : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoNotifyBonusFateTitle"),
         Description = GetLoc("AutoNotifyBonusFateDescription"),

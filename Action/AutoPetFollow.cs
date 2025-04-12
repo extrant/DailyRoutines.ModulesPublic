@@ -8,7 +8,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoPetFollow : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoPetFollowTitle"),
         Description = GetLoc("AutoPetFollowDescription"),

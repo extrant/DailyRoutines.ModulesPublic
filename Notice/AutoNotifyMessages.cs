@@ -11,7 +11,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoNotifyMessages : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoNotifyMessagesTitle"),
         Description = GetLoc("AutoNotifyMessagesDescription"),

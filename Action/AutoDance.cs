@@ -9,7 +9,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoDance : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoDanceTitle"),
         Description = GetLoc("AutoDanceDescription"),

@@ -9,14 +9,18 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.Modules;
 
 public class AutoDisplayMitigationInfo : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoDisplayMitigationInfoTitle"),
         Description = GetLoc("AutoDisplayMitigationInfoDescription"),
@@ -24,19 +28,39 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Author      = ["HaKu"]
     };
     
-    public static Dictionary<uint, MitigationStatus> MitigationStatusMap;
+    private static readonly Dictionary<uint, MitigationStatus> MitigationStatusMap;
+    private static readonly byte[]                             DamagePhysicalStr;
+    private static readonly byte[]                             DamageMagicalStr;
 
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? BarEntry;
 
-    static AutoDisplayMitigationInfo() => MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
+    private static Dictionary<MitigationStatus, float> LastMitigationStatus = [];
+
+    static AutoDisplayMitigationInfo()
+    {
+        MitigationStatusMap = MitigationStatuses.ToDictionary(s => s.Id);
+        
+        DamagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
+        DamageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
+    }
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
+        Overlay            ??= new(this);
+        Overlay.WindowName =   GetLoc("AutoDisplayMitigationInfoTitle");
+        Overlay.Flags      &=  ~ImGuiWindowFlags.NoTitleBar;
+        Overlay.Flags      &=  ~ImGuiWindowFlags.NoResize;
+        Overlay.Flags      &=  ~ImGuiWindowFlags.AlwaysAutoResize;
+        
         BarEntry         ??= DService.DtrBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
-        BarEntry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
+        BarEntry.OnClick = () =>
+        {
+            if (Overlay == null) return;
+            Overlay.IsOpen ^= true;
+        };
         
         FrameworkManager.Register(false, OnFrameworkUpdate);
     }
@@ -45,6 +69,74 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     {
         if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
             SaveConfig(ModuleConfig);
+    }
+
+    public override unsafe void OverlayUI()
+    {
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null) return;
+        
+        ImGuiHelpers.SeStringWrapped(BarEntry?.Text?.Encode() ?? []);
+
+        ImGui.Separator();
+
+        using (var table = ImRaii.Table("StatusTable", 3))
+        {
+            if (!table) return;
+            
+            ImGui.TableSetupColumn("图标", ImGuiTableColumnFlags.WidthFixed,   24f * GlobalFontScale);
+            ImGui.TableSetupColumn("名字", ImGuiTableColumnFlags.WidthStretch, 20);
+            ImGui.TableSetupColumn("数字", ImGuiTableColumnFlags.WidthStretch, 20);
+            
+            if (!DService.Texture.TryGetFromGameIcon(new(210405), out var barrierIcon)) return;
+            
+            foreach (var status in LastMitigationStatus)
+            {
+                if (!LuminaGetter.TryGetRow<Status>(status.Key.Id, out var row)) continue;
+                if (!DService.Texture.TryGetFromGameIcon(new(row.Icon), out var icon)) continue;
+                
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGui.Image(icon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
+                
+                ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text($"{row.Name} ({status.Value:F1}s)");
+                ImGuiOm.TooltipHover($"{status.Key.Id}");
+                
+                ImGui.TableNextColumn();
+                ImGuiHelpers.SeStringWrapped(DamagePhysicalStr);
+                
+                ImGui.SameLine();
+                ImGui.Text($"{status.Key.Mitigation.Physical}% ");
+                
+                ImGui.SameLine();
+                ImGuiHelpers.SeStringWrapped(DamageMagicalStr);
+                
+                ImGui.SameLine();
+                ImGui.Text($"{status.Key.Mitigation.Magical}% ");
+            }
+
+            var shieldValue = localPlayer->ShieldValue;
+            if (shieldValue > 0)
+            {
+                if (LastMitigationStatus.Count > 0)
+                    ImGui.TableNextRow();
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.Image(barrierIcon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
+                
+                ImGui.TableNextColumn();
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text($"{GetLoc("Shield")}");
+                
+                ImGui.TableNextColumn();
+                var shieldPercentage = (double)shieldValue / 100;
+                ImGui.Text($"{shieldValue}%% ({localPlayer->Health * shieldPercentage:F0})");
+            }
+        }
     }
 
     public override void Uninit()
@@ -63,22 +155,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         if (DService.ClientState.IsPvP || (ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat]))
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
 
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer)
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
 
-        List<MitigationStatus> activeMitigation  = [];
+        Dictionary<MitigationStatus, float> lastMitigationStatus = [];
 
         var localPlayerStatus = localPlayer.StatusList;
         foreach (var status in localPlayerStatus)
             if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
-                activeMitigation.Add(mitigation);
+                lastMitigationStatus.Add(mitigation, status.RemainingTime);
 
         var currentTarget = DService.Targets.Target;
         if (currentTarget is IBattleNpc battleNpc)
@@ -86,29 +178,32 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             var statusList = battleNpc.StatusList;
             foreach (var status in statusList)
                 if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
-                    activeMitigation.Add(mitigation);
+                    lastMitigationStatus.Add(mitigation, status.RemainingTime);
         }
 
-        var setActiveMitigation = activeMitigation.DistinctBy(m => m.Id).ToList();
-        if (setActiveMitigation.Count == 0)
+        LastMitigationStatus = lastMitigationStatus.ToDictionary(x => x.Key, x => x.Value);
+        if (LastMitigationStatus.Count == 0 && localPlayer.ShieldPercentage == 0)
         {
-            BarEntry.Shown = false;
+            ClearAndCloseBarEntry();
             return;
         }
         
-        RefreshBarEntry(setActiveMitigation);
+        RefreshBarEntry(LastMitigationStatus);
     }
 
-    private static void RefreshBarEntry(List<MitigationStatus> statuses)
+    private static unsafe void RefreshBarEntry(Dictionary<MitigationStatus, float> statuses)
     {
         if (BarEntry == null) return;
+        
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null) return;
 
         var textBuildr = new SeStringBuilder();
         var values = new[]
         {
-            MitigationReduction(statuses.Select(x => x.Mitigation.Physical)),
-            MitigationReduction(statuses.Select(x => x.Mitigation.Magical)),
-            MitigationReduction(statuses.Select(x => x.Mitigation.Special))
+            MitigationReduction(statuses.Keys.Select(x => x.Mitigation.Physical)),
+            MitigationReduction(statuses.Keys.Select(x => x.Mitigation.Magical)),
+            localPlayer->Character.ShieldValue,
         };
 
         for (var i = 0; i < values.Length; i++)
@@ -119,7 +214,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             {
                 0 => BitmapFontIcon.DamagePhysical,
                 1 => BitmapFontIcon.DamageMagical,
-                2 => BitmapFontIcon.DamageSpecial,
+                2 => BitmapFontIcon.Tank,
                 _ => BitmapFontIcon.None,
             };
 
@@ -131,22 +226,43 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         BarEntry.Text = textBuildr.Build();
 
         var tooltipBuilder = new SeStringBuilder();
-        for (var i = 0; i < statuses.Count; i++)
+        foreach (var (status, _) in LastMitigationStatus)
         {
-            var status = statuses[i];
             tooltipBuilder.Append($"{LuminaWarpper.GetStatusName(status.Id)} ({status.Id}):");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamagePhysical);
             tooltipBuilder.Append($"{status.Mitigation.Physical}% ");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamageMagical);
             tooltipBuilder.Append($"{status.Mitigation.Magical}% ");
-            tooltipBuilder.AddIcon(BitmapFontIcon.DamageSpecial);
-            tooltipBuilder.Append($"{status.Mitigation.Special}%");
-            if (i < statuses.Count - 1) tooltipBuilder.Append("\n");
+            tooltipBuilder.Append("\n");
+        }
+        
+        var shieldPercentage = (double)localPlayer->ShieldValue / 100;
+        if (localPlayer->ShieldValue > 0)
+        {
+            if (statuses.Count > 0)
+                tooltipBuilder.Append("\n");
+            
+            tooltipBuilder.AddIcon(BitmapFontIcon.Tank);
+            tooltipBuilder.Append($"{GetLoc("Shield")}: {values[2]}% ({localPlayer->Health * shieldPercentage:F0})");
         }
 
+        var built = tooltipBuilder.Build();
+        // 无盾则移除最后一个换行符
+        if (localPlayer->ShieldValue == 0)
+            built.Payloads.RemoveAt(built.Payloads.Count - 1);
+        
         BarEntry.Tooltip = tooltipBuilder.Build();
         
         BarEntry.Shown = true;
+    }
+
+    private static void ClearAndCloseBarEntry()
+    {
+        if (BarEntry == null) return;
+        
+        BarEntry.Shown   = false;
+        BarEntry.Tooltip = null;
+        BarEntry.Text    = null;
     }
 
     private static float MitigationReduction(IEnumerable<float> mitigations) =>
@@ -164,12 +280,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         public float Special;
     }
 
-    public struct MitigationStatus
+    public struct MitigationStatus : IEquatable<MitigationStatus>
     {
         public uint             Id;
         public string           Name;
         public MitigationDetail Mitigation;
         public bool             OnMember;
+
+        public bool Equals(MitigationStatus other) => Id == other.Id;
+
+        public override bool Equals(object? obj) => obj is MitigationStatus other && Equals(other);
+
+        public override int GetHashCode() => (int)Id;
+
+        public static bool operator ==(MitigationStatus left, MitigationStatus right) => left.Equals(right);
+
+        public static bool operator !=(MitigationStatus left, MitigationStatus right) => !left.Equals(right);
     }
 
     public static readonly List<MitigationStatus> MitigationStatuses =
@@ -178,15 +304,15 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 1191,
             Name       = "铁壁",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 20, Magical = 20, Special = 20 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1856,
             Name       = "盾阵",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
+            OnMember   = false
         },
         new()
         {
@@ -199,43 +325,43 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 74,
             Name       = "预警",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1176,
             Name       = "武装",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
+        },
+        new()
+        {
+            Id         = 1175,
+            Name       = "武装戍卫",
+            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            OnMember   = false
         },
         new()
         {
             Id         = 82,
             Name       = "神圣领域",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1362,
-            Name       = "圣光幕帘",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 100, Magical = 100, Special = 100 },
             OnMember   = true
         },
         new()
         {
             Id         = 2674,
             Name       = "圣盾阵",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
         {
             Id         = 2675,
             Name       = "骑士的坚守",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
+            OnMember   = false
         },
         new()
         {
@@ -267,38 +393,17 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 87,
-            Name       = "战栗",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 89,
             Name       = "复仇",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1457,
-            Name       = "摆脱",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 409,
-            Name       = "死斗",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
+            OnMember   = false
         },
         new()
         {
             Id         = 2678,
             Name       = "原初的血气",
             Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            OnMember   = false
         },
         new()
         {
@@ -309,58 +414,23 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 2680,
-            Name       = "原初的血烟",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1178,
-            Name       = "至黑之夜",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 746,
             Name       = "弃明投暗",
-            Mitigation = new MitigationDetail { Physical = 0, Magical = 10, Special = 0 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 10, Magical = 20, Special = 0 },
+            OnMember   = false
         },
         new()
         {
             Id         = 747,
             Name       = "暗影墙",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 10 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1894,
             Name       = "暗黑布道",
-            Mitigation = new MitigationDetail { Physical = 0, Magical = 10, Special = 0 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 810,
-            Name       = "行尸走肉",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 811,
-            Name       = "死而不僵",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 3255,
-            Name       = "出死入生",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 5, Magical = 10, Special = 0 },
             OnMember   = true
         },
         new()
@@ -374,63 +444,42 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 1840,
             Name       = "石之心",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1898,
-            Name       = "残暴弹",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
         {
             Id         = 1832,
             Name       = "伪装",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 10, Special = 10 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1834,
             Name       = "星云",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 30, Magical = 30, Special = 30 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1839,
             Name       = "光之心",
-            Mitigation = new MitigationDetail { Physical = 0, Magical = 10, Special = 0 },
+            Mitigation = new MitigationDetail { Physical = 5, Magical = 10, Special = 0 },
             OnMember   = true
         },
         new()
         {
             Id         = 1836,
             Name       = "超火流星",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2683,
-            Name       = "刚玉之心",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 100, Magical = 100, Special = 100 },
+            OnMember   = false
         },
         new()
         {
             Id         = 2684,
             Name       = "刚玉之清",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1218,
-            Name       = "神祝祷",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
@@ -444,35 +493,35 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 2708,
             Name       = "水流幕",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
         {
             Id         = 297,
             Name       = "鼓舞",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 0, Magical = 0, Special = 180 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1918,
             Name       = "激励",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 0, Magical = 0, Special = 180 },
+            OnMember   = false
         },
         new()
         {
             Id         = 1917,
             Name       = "炽天的幕帘",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
+            Mitigation = new MitigationDetail { Physical = 0, Magical = 0, Special = 250 },
+            OnMember   = false
         },
         new()
         {
             Id         = 299,
             Name       = "野战治疗阵",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 500 },
             OnMember   = true
         },
         new()
@@ -491,16 +540,9 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 2710,
-            Name       = "生命回生法",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 2711,
             Name       = "怒涛之计",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 0 },
             OnMember   = true
         },
         new()
@@ -512,43 +554,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 1889,
-            Name       = "天星交错",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 2717,
             Name       = "擢升",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 1921,
-            Name       = "中间学派",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2607,
-            Name       = "均衡诊断",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2608,
-            Name       = "齐衡诊断",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2609,
-            Name       = "均衡预后",
             Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
             OnMember   = true
         },
@@ -575,27 +582,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 3365,
-            Name       = "整体盾",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2612,
-            Name       = "输血",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2613,
-            Name       = "泛输血",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 1232,
             Name       = "心眼",
             Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
@@ -605,63 +591,28 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 1179,
             Name       = "金刚极意",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 20, Magical = 20, Special = 20 },
             OnMember   = true
         },
         new()
         {
             Id         = 1934,
             Name       = "行吟",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
         {
             Id         = 1951,
             Name       = "策动",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
         {
             Id         = 1826,
             Name       = "防守之桑巴",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2697,
-            Name       = "即兴表演结束",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 488,
-            Name       = "残影",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 168,
-            Name       = "魔罩",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2702,
-            Name       = "守护之光",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2597,
-            Name       = "守护纹",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 15, Magical = 15, Special = 15 },
             OnMember   = true
         },
         new()
@@ -708,13 +659,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         },
         new()
         {
-            Id         = 2120,
-            Name       = "体力增加",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
             Id         = 1715,
             Name       = "腐臭",
             Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
@@ -731,133 +675,105 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 2500,
             Name       = "龙之力",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 20, Magical = 20, Special = 20 },
             OnMember   = true
         },
         new()
         {
             Id         = 1722,
             Name       = "超硬化",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 90, Magical = 90, Special = 90 },
             OnMember   = true
         },
         new()
         {
             Id         = 2496,
             Name       = "玄结界",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 20, Magical = 20, Special = 20 },
             OnMember   = true
         },
         new()
         {
             Id         = 2119,
             Name       = "仙人盾",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 5, Magical = 5, Special = 5 },
             OnMember   = true
         },
         new()
         {
             Id         = 1719,
             Name       = "强力守护",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 2114,
-            Name       = "哥布防御",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
         {
             Id         = 194,
             Name       = "铜墙铁盾",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 20, Magical = 20, Special = 20 },
             OnMember   = true
         },
         new()
         {
             Id         = 195,
             Name       = "坚守要塞",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
         {
             Id         = 196,
             Name       = "终极堡垒",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 80, Magical = 80, Special = 80 },
             OnMember   = true
         },
         new()
         {
             Id         = 863,
             Name       = "原初大地",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 80, Magical = 80, Special = 80 },
             OnMember   = true
         },
         new()
         {
             Id         = 864,
             Name       = "暗黑之力",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 80, Magical = 80, Special = 80 },
             OnMember   = true
         },
         new()
         {
             Id         = 1931,
             Name       = "灵魂之青",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 80, Magical = 80, Special = 80 },
             OnMember   = true
         },
         new()
         {
             Id         = 3829,
             Name       = "极致防御",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 3830,
-            Name       = "极致护盾",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
         {
             Id         = 3832,
             Name       = "戮罪",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
         {
             Id         = 3835,
             Name       = "暗影卫",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
         {
             Id         = 3838,
             Name       = "大星云",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 3686,
-            Name       = "坦培拉涂层",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 3687,
-            Name       = "油性坦培拉涂层",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
+            Mitigation = new MitigationDetail { Physical = 40, Magical = 40, Special = 40 },
             OnMember   = true
         },
         new()
@@ -878,13 +794,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             Id         = 3896,
             Name       = "太阳星座",
-            Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
-            OnMember   = true
-        },
-        new()
-        {
-            Id         = 3903,
-            Name       = "神爱抚",
             Mitigation = new MitigationDetail { Physical = 10, Magical = 10, Special = 10 },
             OnMember   = true
         }

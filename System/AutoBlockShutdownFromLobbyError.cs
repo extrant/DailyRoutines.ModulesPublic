@@ -6,7 +6,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoBlockShutdownFromLobbyError : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoBlockShutdownFromLobbyErrorTitle"),
         Description = GetLoc("AutoBlockShutdownFromLobbyErrorDescription"),

@@ -8,7 +8,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoConstantlyInspect : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoConstantlyInspectTitle"),
         Description = GetLoc("AutoConstantlyInspectDescription"),

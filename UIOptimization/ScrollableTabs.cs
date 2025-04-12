@@ -14,7 +14,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class ScrollableTabs : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("ScrollableTabsTitle"),
         Description = GetLoc("ScrollableTabsDescription"),

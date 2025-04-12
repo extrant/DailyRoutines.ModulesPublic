@@ -27,7 +27,7 @@ public class MultiTargetTracker : DailyModuleBase
 
     #region ModuleBase
 
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title           = GetLoc("MultiTargetTrackerTitle"),
         Description     = GetLoc("MultiTargetTrackerDescription"),

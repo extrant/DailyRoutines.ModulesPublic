@@ -15,7 +15,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoCancelCast : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("AutoCancelCastTitle"),
         Description = GetLoc("AutoCancelCastDescription"),

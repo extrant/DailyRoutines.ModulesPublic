@@ -13,7 +13,7 @@ namespace DailyRoutines.ModulesPublic.Assist;
 
 public class HullbreakerIsleHelper : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("HullbreakerIsleHelperTitle"),
         Description = GetLoc("HullbreakerIsleHelperDescription"),

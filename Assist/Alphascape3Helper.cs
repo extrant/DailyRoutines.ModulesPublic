@@ -14,7 +14,7 @@ namespace DailyRoutines.ModulesPublic;
 
 public unsafe class Alphascape3Helper : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("Alphascape3HelperTitle"),
         Description = GetLoc("Alphascape3HelperDescription"),

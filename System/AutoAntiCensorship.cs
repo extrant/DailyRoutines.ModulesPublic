@@ -17,7 +17,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoAntiCensorship : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = "自动反屏蔽词",
         Description = "发送消息/编辑招募描述时, 自动在屏蔽词内部加点, 或是将其转成拼音以防止屏蔽\n接收消息时, 自动阻止屏蔽词系统工作, 显示消息原文",

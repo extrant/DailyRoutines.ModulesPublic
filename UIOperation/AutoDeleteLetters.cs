@@ -11,7 +11,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoDeleteLetters : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoDeleteLettersTitle"),
         Description = GetLoc("AutoDeleteLettersDescription"),

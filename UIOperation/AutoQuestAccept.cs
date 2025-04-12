@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoQuestAccept : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoQuestAcceptTitle"),
         Description = GetLoc("AutoQuestAcceptDescription"),

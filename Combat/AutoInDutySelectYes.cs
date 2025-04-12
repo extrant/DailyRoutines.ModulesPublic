@@ -8,7 +8,7 @@ namespace DailyRoutines.Modules;
 
 public class AutoInDutySelectYes : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoInDutySelectYesTitle"),
         Description = GetLoc("AutoInDutySelectYesDescription"),

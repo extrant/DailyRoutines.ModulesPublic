@@ -9,7 +9,7 @@ namespace DailyRoutines.Modules;
 
 public unsafe class AutoEnableAttack : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("AutoEnableAttackTitle"),
         Description = GetLoc("AutoEnableAttackDescription"),

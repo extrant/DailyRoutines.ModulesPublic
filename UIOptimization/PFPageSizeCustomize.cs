@@ -7,7 +7,7 @@ namespace DailyRoutines.Modules;
 
 public class PFPageSizeCustomize : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("PFPageSizeCustomizeTitle"),
         Description = GetLoc("PFPageSizeCustomizeDescription"),

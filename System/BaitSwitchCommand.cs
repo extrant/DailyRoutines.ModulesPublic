@@ -13,7 +13,7 @@ namespace DailyRoutines.Modules;
 
 public class BaitSwitchCommand : DailyModuleBase
 {
-    public override ModuleInfo Info => new()
+    public override ModuleInfo Info { get; } = new()
     {
         Title = GetLoc("BaitSwitchCommandTitle"),
         Description = GetLoc("BaitSwitchCommandDescription"),
