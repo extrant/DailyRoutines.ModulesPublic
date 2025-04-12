@@ -15,6 +15,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.Sheets;
+using Status = Lumina.Excel.Sheets.Status;
 
 namespace DailyRoutines.Modules;
 
