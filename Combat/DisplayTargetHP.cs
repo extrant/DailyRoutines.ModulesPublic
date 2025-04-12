@@ -331,7 +331,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
             case DisplayFormat.FullNumberSeparators:
                 return num.ToString("N0");
             case DisplayFormat.ChineseFull:
-                return FormatNumberByChineseNotation((int)num, currentLang)->ToString();
+                return FormatUtf8NumberByChineseNotation((int)num, currentLang)->ToString();
             case DisplayFormat.ChineseZeroPrecision:
             case DisplayFormat.ChineseOnePrecision:
             case DisplayFormat.ChineseTwoPrecision:
