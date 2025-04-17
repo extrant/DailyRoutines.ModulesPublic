@@ -14,10 +14,10 @@ public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoAddChatPrefixSuffixTitle"),
+        Title       = GetLoc("AutoAddChatPrefixSuffixTitle"),
         Description = GetLoc("AutoAddChatPrefixSuffixDescription"),
-        Author = ["那年雪落"],
-        Category = ModuleCategories.System,
+        Author      = ["那年雪落"],
+        Category    = ModuleCategories.System,
     };
 
     private static readonly CompSig ProcessSendedChatSig = new("E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??");

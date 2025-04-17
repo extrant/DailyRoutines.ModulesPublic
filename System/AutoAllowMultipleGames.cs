@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DailyRoutines.Abstracts;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoAllowMultipleGames : DailyModuleBase
 {
@@ -79,15 +79,15 @@ public unsafe class AutoAllowMultipleGames : DailyModuleBase
 
     private static string ObjectNameOrTypeName(ulong handle, bool typeName)
     {
-        uint bufferSize = 1024;
-        var  buffer     = new byte[bufferSize];
-        fixed (byte* pbuf = &buffer[0])
+        const uint bufferSize = 1024;
+        var        buffer     = new byte[bufferSize];
+        fixed (byte* pBuf = &buffer[0])
         {
             uint retSize = 0;
-            var  status  = NtQueryObject(handle, typeName ? 2 : 1, pbuf, bufferSize, &retSize);
+            var  status  = NtQueryObject(handle, typeName ? 2 : 1, pBuf, bufferSize, &retSize);
             if (status >= 0)
             {
-                var name = (UnicodeString*)pbuf;
+                var name = (UnicodeString*)pBuf;
                 if (name->Buffer != null)
                     return Encoding.Unicode.GetString(name->Buffer, name->Length);
             }
