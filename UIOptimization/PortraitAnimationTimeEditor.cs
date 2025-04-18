@@ -89,7 +89,10 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
             var isPlaying = control->PlaybackSpeed > 0;
             ImGui.SameLine(0, 8f * GlobalFontScale);
             if (ImGuiOm.ButtonIcon("PauseAndPlay", isPlaying ? FontAwesomeIcon.Pause : FontAwesomeIcon.Play))
+            {
                 CharaView->ToggleAnimationPlayback(isPlaying);
+                ((AddonBannerEditor*)BannerEditor)->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
+            }
 
             ImGui.SameLine();
             if (ImGuiOm.ButtonIcon("Ceiling", FontAwesomeIcon.GripLines))
