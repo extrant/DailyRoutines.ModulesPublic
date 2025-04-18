@@ -43,14 +43,17 @@ public unsafe class AdventurerPlateThroughInspect : DailyModuleBase
             return;
         }
 
-        var baseNode = addon->GetComponentNodeById(34);
+        var baseNode = addon->GetNodeById(21);
         if (baseNode == null) return;
 
-        var nodeState = NodeState.Get((AtkResNode*)baseNode->Component->OwnerNode);
-        ImGui.SetWindowPos(nodeState.Position with { Y = nodeState.Position2.Y });
+        var nodeState = NodeState.Get(baseNode);
+        ImGui.SetWindowPos(nodeState.Position2 - ImGui.GetWindowSize());
         
-        if (ImGui.Button(LuminaWarpper.GetAddonText(15083)))
+        if (!DService.Texture.TryGetFromGameIcon(new(66469), out var texture)) return;
+        
+        if (ImGui.ImageButton(texture.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f)))
             new CharaCardOpenPacket(AgentInspect.Instance()->CurrentEntityId).Send();
+        ImGuiOm.TooltipHover($"{LuminaWarpper.GetAddonText(15083)}");
     }
 
     public override void Uninit()
