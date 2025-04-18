@@ -1,25 +1,25 @@
+using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoCheckItemLevel : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoCheckItemLevelTitle"),
+        Title       = GetLoc("AutoCheckItemLevelTitle"),
         Description = GetLoc("AutoCheckItemLevelDescription"),
-        Category = ModuleCategories.Combat,
+        Category    = ModuleCategories.Combat,
     };
 
     private static readonly HashSet<uint> ValidContentJobCategories = [108, 142, 146];
-    private static readonly HashSet<uint> HaveOffHandJobCategories = [2, 7, 8, 20];
+    private static readonly HashSet<uint> HaveOffHandJobCategories  = [2, 7, 8, 20];
     
     public override void Init()
     {
@@ -59,7 +59,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
         foreach (var partyMember in DService.PartyList)
         {
-            if (partyMember == null || partyMember.GameObject == null) continue;
+            if (partyMember?.GameObject == null) continue;
             if (!checkedMembers.Add(partyMember.GameObject.GameObjectId)) continue;
 
             TaskHelper.Enqueue(() =>
