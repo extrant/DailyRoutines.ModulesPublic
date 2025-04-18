@@ -1,14 +1,17 @@
+using System.Linq;
 using DailyRoutines.Abstracts;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoNotifyDutyName : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoNotifyDutyNameTitle"),
+        Title       = GetLoc("AutoNotifyDutyNameTitle"),
         Description = GetLoc("AutoNotifyDutyNameDescription"),
-        Category = ModuleCategories.Notice,
+        Category    = ModuleCategories.Notice,
     };
 
     private static Config ModuleConfig = null!;
@@ -16,6 +19,7 @@ public class AutoNotifyDutyName : DailyModuleBase
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
+        
         DService.ClientState.TerritoryChanged += OnZoneChange;
     }
 
@@ -31,32 +35,39 @@ public class AutoNotifyDutyName : DailyModuleBase
             SaveConfig(ModuleConfig);
     }
 
-    private static void OnZoneChange(ushort territory)
+    private static unsafe void OnZoneChange(ushort territory)
     {
-        if (!PresetSheet.Contents.TryGetValue(territory, out var content)) return;
+        if (GameMain.Instance()->CurrentContentFinderConditionId == 0 ||
+            !LuminaGetter.TryGetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId, out var content))
+            return;
 
         var levelText = content.ClassJobLevelRequired == content.ClassJobLevelSync ||
                         content.ClassJobLevelRequired > content.ClassJobLevelSync
                             ? content.ClassJobLevelSync.ToString()
                             : $"{content.ClassJobLevelRequired}-{content.ClassJobLevelSync}";
+
+        var maxILGearIL = content.ClassJobLevelSync == 0
+                            ? 0
+                            : PresetSheet.Gears.Values
+                                         .Where(x => x.LevelEquip != 1 && x.LevelEquip <= content.ClassJobLevelSync)
+                                         .OrderByDescending(x => x.LevelItem.RowId)
+                                         .FirstOrDefault().LevelItem.RowId;
+        
         var message = GetLoc("AutoNotifyDutyName-NoticeMessage", levelText, content.Name.ExtractText(),
                              GetLoc("ILMinimum"), content.ItemLevelRequired,          
-                             GetLoc("ILMaximum"), content.ItemLevelSync);
+                             GetLoc("ILMaximum"), content.ItemLevelSync != 0 ? content.ItemLevelSync : maxILGearIL);
         
         if (ModuleConfig.SendTTS) Speak(message);
         if (ModuleConfig.SendChat) Chat(message);
         if (ModuleConfig.SendNotification) NotificationInfo(message);
     }
 
-    public override void Uninit()
-    {
-        DService.ClientState.TerritoryChanged -= OnZoneChange;
-    }
+    public override void Uninit() => DService.ClientState.TerritoryChanged -= OnZoneChange;
 
     private class Config : ModuleConfiguration
     {
-        public bool SendTTS = true;
+        public bool SendTTS          = true;
         public bool SendNotification = true;
-        public bool SendChat = true;
+        public bool SendChat         = true;
     }
 }

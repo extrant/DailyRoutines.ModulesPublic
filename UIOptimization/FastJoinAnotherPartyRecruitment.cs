@@ -26,7 +26,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
     {
         TaskHelper    ??= new() { TimeLimitMS = 10_000 };
         Overlay       ??= new(this);
-        Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
+        Overlay.Flags |=  ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove;
         
         CIDToListingID.Clear();
         DService.PartyFinder.ReceiveListing += OnListing;
@@ -41,7 +41,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
     {
         Overlay.IsOpen = type switch
         {
-            AddonEvent.PostDraw   => true,
+            AddonEvent.PostDraw    => true,
             AddonEvent.PreFinalize => false,
             _                      => Overlay.IsOpen
         };
@@ -58,6 +58,19 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
 
         var buttonNode = addon->GetButtonNodeById(109);
         if (buttonNode == null) return;
+
+        if (DService.PartyList.Length < 2)
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+
+        if (!buttonNode->IsEnabled || buttonNode->ButtonTextNode == null ||
+            buttonNode->ButtonTextNode->NodeText.ExtractText()   != LuminaWarpper.GetAddonText(2219))
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
 
         var windowSize = ImGui.GetWindowSize();
         var nodeState  = NodeState.Get((AtkResNode*)buttonNode->OwnerNode);
