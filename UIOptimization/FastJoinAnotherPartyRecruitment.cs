@@ -66,7 +66,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         }
 
         if (!buttonNode->IsEnabled || buttonNode->ButtonTextNode == null ||
-            buttonNode->ButtonTextNode->NodeText.ExtractText()   != LuminaWarpper.GetAddonText(2219))
+            buttonNode->ButtonTextNode->NodeText.ExtractText()   != LuminaWrapper.GetAddonText(2219))
         {
             Overlay.IsOpen = false;
             return;

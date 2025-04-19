@@ -88,13 +88,13 @@ public class PartyFinderFilter : DailyModuleBase
 
         using var pushIndent = ImRaii.PushIndent();
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.InputInt3($"{LuminaWarpper.GetAddonText(1082)} / {LuminaWarpper.GetAddonText(11300)} / {LuminaWarpper.GetAddonText(11301)}",
+        ImGui.InputInt3($"{LuminaWrapper.GetAddonText(1082)} / {LuminaWrapper.GetAddonText(11300)} / {LuminaWrapper.GetAddonText(11301)}",
                         ref ModuleConfig.HighEndFilterRoleCountData[0]);
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
 
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.InputInt3($"{LuminaWarpper.GetAddonText(1084)} / {LuminaWarpper.GetAddonText(1085)} / {LuminaWarpper.GetAddonText(1086)}",
+        ImGui.InputInt3($"{LuminaWrapper.GetAddonText(1084)} / {LuminaWrapper.GetAddonText(1085)} / {LuminaWrapper.GetAddonText(1086)}",
                         ref ModuleConfig.HighEndFilterRoleCountData[3]);
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
