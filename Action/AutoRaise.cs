@@ -23,7 +23,7 @@ public unsafe class AutoRaise : DailyModuleBase
         Author      = ["qingsiweisan"]
     };
 
-    public override ModulePermission Permission => new() { CNPremium = true, GlobalPremium = true };
+    public override ModulePermission Permission { get; } = new() { CNPremium = true, GlobalPremium = true };
 
     private static Config ModuleConfig = null!;
 
