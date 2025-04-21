@@ -270,7 +270,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
             }, "交换货币");
         }
         
-        TaskHelper.Enqueue(() => EnqueueByName(itemName, itemCount));
         return true;
     }
 
