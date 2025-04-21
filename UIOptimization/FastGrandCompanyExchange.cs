@@ -154,9 +154,15 @@ public class FastGrandCompanyExchange : DailyModuleBase
         EnqueueByName(splited[0], itemCount);
     }
 
-    public unsafe void EnqueueByName(string itemName, int itemCount = -1)
+    public unsafe bool? EnqueueByName(string itemName, int itemCount = -1)
     {
-        if (!IsAddonAndNodesReady(GrandCompanyExchange)) return;
+        if (!IsAddonAndNodesReady(GrandCompanyExchange)) return false;
+        if (IsAddonAndNodesReady(SelectYesno))
+        {
+            ClickSelectYesnoYes();
+            return false;
+        }
+        
         if (itemName == "default")
         {
             itemName  = ModuleConfig.ExchangeItemName;
@@ -166,7 +172,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
         var grandCompany = PlayerState.Instance()->GrandCompany;
         var gcRank       = PlayerState.Instance()->GetGrandCompanyRank();
         var seals        = InventoryManager.Instance()->GetCompanySeals(grandCompany);
-        if (seals == 0) return;
+        if (seals == 0) return true;
 
         var result = LuminaGetter.GetSub<GCScripShopItem>()
                                 .SelectMany(x => x)
@@ -176,7 +182,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
                                            .Contains(itemName, StringComparison.OrdinalIgnoreCase))
                                 .OrderBy(x => (x.Item.ValueNullable?.Name.ExtractText() ?? string.Empty).Length)
                                 .FirstOrDefault();
-        if (result.RowId == 0) return;
+        if (result.RowId == 0) return true;
 
         var isVenture = result.Item.RowId == 21072;
 
@@ -187,7 +193,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
         {
             // 不管怎么说 Delay 一下方便其他模块控制
             TaskHelper.DelayNext(100);
-            return;
+            return true;
         }
 
         var categoryData = LuminaGetter.GetRow<GCScripShopCategory>(result.RowId)!.Value;
@@ -264,7 +270,8 @@ public class FastGrandCompanyExchange : DailyModuleBase
             }, "交换货币");
         }
         
-        TaskHelper.Enqueue(() => ClickSelectYesnoYes());
+        TaskHelper.Enqueue(() => EnqueueByName(itemName, itemCount));
+        return true;
     }
 
     private class Config : ModuleConfiguration
