@@ -11,6 +11,7 @@ using Dalamud.Memory;
 using Dalamud.Plugin.Ipc;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 
@@ -226,19 +227,8 @@ public class FastGrandCompanyExchange : DailyModuleBase
                     var name     = MemoryHelper.ReadSeStringNullTerminated((nint)atkValue.String);
                     if (string.IsNullOrWhiteSpace(name.ExtractText()) || name.ExtractText() != result.Item.Value.Name.ExtractText()) continue;
 
-                    var listComponent = (AtkComponentList*)listNode->Component;
-                    if (listComponent->GetItemDisabledState(i)) continue;
-
-                    var numericInputNode = (AtkComponentNumericInput*)listComponent->GetItemRenderer(i)->UldManager.SearchNodeById(6)->GetComponent();
-                    if (numericInputNode == null) continue;
-
-                    var maxExchangeCount = Math.Min(numericInputNode->Data.Max, exchangeCount);
-                    listComponent->SetItemCount(maxExchangeCount);
-                    numericInputNode->SetValue(maxExchangeCount);
+                    SendEvent(AgentId.GrandCompanyExchange, 0, 0, i, exchangeCount, 0, true, false);
                     
-                    listComponent->SelectItem(i, true);
-                    listComponent->DispatchItemEvent(i, AtkEventType.ListItemToggle);
-
                     if (!isVenture && itemCount == -1)
                         TaskHelper.Enqueue(() => EnqueueByName(itemName, itemCount));
 
