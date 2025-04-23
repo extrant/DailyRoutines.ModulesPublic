@@ -35,7 +35,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
 
-    public override ModulePermission Permission => new() { CNOnly = true };
+    public override ModulePermission Permission { get; } = new() { CNOnly = true };
 
     private const string BASE_URL        = "https://xivpf.littlenightmare.top/api/listings?";
     private const string BASE_DETAIL_URL = "https://xivpf.littlenightmare.top/api/listing/";
