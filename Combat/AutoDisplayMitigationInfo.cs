@@ -39,7 +39,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     private static IDtrBarEntry? BarEntry;
 
     // cache variables
-    private static Dictionary<uint, MitigationStatus>  MitigationStatusMap;
+    private static Dictionary<uint, MitigationStatus>  MitigationStatusMap  = [];
     private static Dictionary<MitigationStatus, float> LastMitigationStatus = [];
 
     static AutoDisplayMitigationInfo()
