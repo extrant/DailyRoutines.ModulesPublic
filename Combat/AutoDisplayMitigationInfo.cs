@@ -1,26 +1,22 @@
-﻿using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Gui.Dtr;
-using Dalamud.Interface.Utility.Raii;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using DailyRoutines.Abstracts;
+using DailyRoutines.Helpers;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Gui.Dtr;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoDisplayMitigationInfo : DailyModuleBase
 {
@@ -60,9 +56,35 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Overlay            ??= new(this);
         Overlay.WindowName =   GetLoc("AutoDisplayMitigationInfoTitle");
         Overlay.Flags      &=  ~ImGuiWindowFlags.NoTitleBar;
-        Overlay.Flags      &=  ~ImGuiWindowFlags.NoResize;
         Overlay.Flags      &=  ~ImGuiWindowFlags.AlwaysAutoResize;
+        
+        if (ModuleConfig.TransparentOverlay)
+        {
+            Overlay.Flags |= ImGuiWindowFlags.NoBackground;
+            Overlay.Flags |= ImGuiWindowFlags.NoTitleBar;
+        }
+        else
+        {
+            Overlay.Flags &= ~ImGuiWindowFlags.NoBackground;
+            Overlay.Flags &= ~ImGuiWindowFlags.NoTitleBar;
+        }
 
+        if (ModuleConfig.ResizeableOverlay)
+            Overlay.Flags &= ~ImGuiWindowFlags.NoResize;
+        else
+            Overlay.Flags |= ImGuiWindowFlags.NoResize;
+
+        if (!ModuleConfig.MoveableOverlay)
+        {
+            Overlay.Flags |= ImGuiWindowFlags.NoMove;
+            Overlay.Flags |= ImGuiWindowFlags.NoInputs;
+        }
+        else
+        {
+            Overlay.Flags &= ~ImGuiWindowFlags.NoMove;
+            Overlay.Flags &= ~ImGuiWindowFlags.NoInputs;
+        }
+        
         // status bar
         BarEntry ??= DService.DtrBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
         BarEntry.OnClick = () =>
@@ -86,12 +108,56 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     {
         if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
             SaveConfig(ModuleConfig);
+
+        if (ImGui.Checkbox(GetLoc("TransparentOverlay"), ref ModuleConfig.TransparentOverlay))
+        {
+            SaveConfig(ModuleConfig);
+
+            if (ModuleConfig.TransparentOverlay)
+            {
+                Overlay.Flags |= ImGuiWindowFlags.NoBackground;
+                Overlay.Flags |= ImGuiWindowFlags.NoTitleBar;
+            }
+            else
+            {
+                Overlay.Flags &= ~ImGuiWindowFlags.NoBackground;
+                Overlay.Flags &= ~ImGuiWindowFlags.NoTitleBar;
+            }
+        }
+        
+        if (ImGui.Checkbox(GetLoc("ResizeableOverlay"), ref ModuleConfig.ResizeableOverlay))
+        {
+            SaveConfig(ModuleConfig);
+
+            if (ModuleConfig.ResizeableOverlay)
+                Overlay.Flags &= ~ImGuiWindowFlags.NoResize;
+            else
+                Overlay.Flags |= ImGuiWindowFlags.NoResize;
+        }
+        
+        if (ImGui.Checkbox(GetLoc("MoveableOverlay"), ref ModuleConfig.MoveableOverlay))
+        {
+            SaveConfig(ModuleConfig);
+
+            if (!ModuleConfig.MoveableOverlay)
+            {
+                Overlay.Flags |= ImGuiWindowFlags.NoMove;
+                Overlay.Flags |= ImGuiWindowFlags.NoInputs;
+            }
+            else
+            {
+                Overlay.Flags &= ~ImGuiWindowFlags.NoMove;
+                Overlay.Flags &= ~ImGuiWindowFlags.NoInputs;
+            }
+        }
     }
 
     public override unsafe void OverlayUI()
     {
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return;
+        
+        if (LastMitigationStatus.Count == 0 && localPlayer->ShieldValue == 0) return;
 
         ImGuiHelpers.SeStringWrapped(BarEntry?.Text?.Encode() ?? []);
 
@@ -253,7 +319,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         var tooltipBuilder = new SeStringBuilder();
         foreach (var (status, _) in LastMitigationStatus)
         {
-            tooltipBuilder.Append($"{LuminaWarpper.GetStatusName(status.Id)} ({status.Id}):");
+            tooltipBuilder.Append($"{LuminaWrapper.GetStatusName(status.Id)} ({status.Id}):");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamagePhysical);
             tooltipBuilder.Append($"{status.Mitigation.Physical}% ");
             tooltipBuilder.AddIcon(BitmapFontIcon.DamageMagical);
@@ -367,6 +433,10 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         public bool OnlyInCombat = true;
+        
+        public bool TransparentOverlay;
+        public bool ResizeableOverlay = true;
+        public bool MoveableOverlay = true;
 
         // remote cache
         public string             LocalCacheVersion  = "0.0.0";
