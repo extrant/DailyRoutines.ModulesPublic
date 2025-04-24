@@ -327,6 +327,10 @@ public class HealerHelper : DailyModuleBase
             {
                 ImGui.Spacing();
 
+                ActiveHealActionsSelect();
+                
+                ImGui.Spacing();
+
                 ImGui.TextColored(LightGreen, GetLoc("HealerHelper-EasyHeal-HealThreshold"));
                 ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyHeal-HealThresholdHelp"));
 
@@ -376,10 +380,6 @@ public class HealerHelper : DailyModuleBase
                     SaveConfig(ModuleConfig);
                 }
             }
-
-            ImGui.Spacing();
-
-            ActiveHealActionsSelect();
         }
     }
 
@@ -387,17 +387,17 @@ public class HealerHelper : DailyModuleBase
 
     private static void ActiveHealActionsSelect()
     {
-        ImGui.TextColored(LightYellow, $"{GetLoc("Whitelist")}");
+        ImGui.TextColored(YellowGreen, $"{GetLoc("HealerHelper-EasyHeal-ActiveHealAction")}");
         ImGui.Spacing();
 
         var actionList = ModuleConfig.TargetHealActions
-                                     .ToDictionary(act => act.Key, act => LuminaGetter.GetRow<LuminaAction>(act.Key).Value);
+                                     .ToDictionary(act => act.Key, act => LuminaGetter.GetRow<LuminaAction>(act.Key)!.Value);
         MultiSelectCombo(actionList,
                          ref ModuleConfig.ActiveHealActions,
                          ref ActionSearchInput,
                          [
-                             new(GetLoc("Action"), ImGuiTableColumnFlags.WidthStretch, 0),
-                             new(GetLoc("Job"), ImGuiTableColumnFlags.WidthStretch, 0.2f)
+                             new(GetLoc("Action"), ImGuiTableColumnFlags.WidthStretch, 20),
+                             new(GetLoc("Job"), ImGuiTableColumnFlags.WidthStretch, 10)
                          ],
                          [
                              x => () =>
