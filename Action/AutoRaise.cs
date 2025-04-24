@@ -354,7 +354,7 @@ public unsafe class AutoRaise : DailyModuleBase
                                    }
 
                                    return true;
-                               }, $"UseAction_{raiseActionId}", 5_000, true, (uint)priority);
+                               }, $"UseAction_{raiseActionId}", 5_000, true, priority);
         }
         catch
         {
@@ -493,7 +493,7 @@ public unsafe class AutoRaise : DailyModuleBase
                                }
                                
                                return true;
-                           }, $"UseAction_{SwiftcastActionID}", 5_000, true, (uint)priority);
+                           }, $"UseAction_{SwiftcastActionID}", 5_000, true, priority);
         
         TaskHelper.DelayNext(300);
         
