@@ -34,7 +34,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         TaskHelper.Abort();
         
         if (DService.ClientState.IsPvP) return;
-        if (!PresetSheet.TryGetContent(zone, out var content) || content.PvP ||
+        if (!PresetSheet.Contents.TryGetValue(zone, out var content) || content.PvP ||
             !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.RowId)) return;
         
         TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty", null, null, 2);
