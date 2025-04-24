@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Numerics;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using DailyRoutines.Abstracts;
@@ -13,18 +10,17 @@ using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Interface.Components;
-using Dalamud.Interface.Utility.Raii;
+using Dalamud.Game.ClientState.Party;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 using Newtonsoft.Json;
 using LuminaAction = Lumina.Excel.Sheets.Action;
+using Status = Lumina.Excel.Sheets.Status;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class HealerHelper : DailyModuleBase
 {
@@ -51,7 +47,7 @@ public class HealerHelper : DailyModuleBase
         DService.Framework.RunOnTick(async () => await FetchRemoteVersion());
 
         // build dispellable status dict
-        DispellableStatus = LuminaGetter.Get<Lumina.Excel.Sheets.Status>()
+        DispellableStatus = LuminaGetter.Get<Status>()
                                         .Where(s => s is { CanDispel: true, Name.IsEmpty: false })
                                         .ToDictionary(s => s.RowId, s => s.Name.ExtractText().ToLowerInvariant());
 
@@ -67,7 +63,7 @@ public class HealerHelper : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_PartyList", OnPartyListPostDraw);
     }
 
-    public override unsafe void Uninit()
+    public override void Uninit()
     {
         UseActionManager.Unregister(OnPreUseAction);
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
@@ -115,7 +111,7 @@ public class HealerHelper : DailyModuleBase
     private void AutoPlayCardUI()
     {
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-AutoPlayCardTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(17055)));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWrapper.GetActionName(17055)));
 
         ImGui.Spacing();
 
@@ -264,7 +260,7 @@ public class HealerHelper : DailyModuleBase
 
     private bool CustomCardOrderUI(string[] cardOrder)
     {
-        bool modified = false;
+        var modified = false;
 
         for (var idx = 0; idx < cardOrder.Length; idx++)
         {
@@ -401,7 +397,7 @@ public class HealerHelper : DailyModuleBase
                          ref ActionSearchInput,
                          [
                              new(GetLoc("Action"), ImGuiTableColumnFlags.WidthStretch, 0),
-                             new(GetLoc("Job"), ImGuiTableColumnFlags.WidthStretch, 0.2f),
+                             new(GetLoc("Job"), ImGuiTableColumnFlags.WidthStretch, 0.2f)
                          ],
                          [
                              x => () =>
@@ -412,11 +408,11 @@ public class HealerHelper : DailyModuleBase
                                  // icon - action name
                                  ImGui.TableSetColumnIndex(1);
                                  if (ImGuiOm.SelectableImageWithText(
-                                                                     actionIcon.GetWrapOrEmpty().ImGuiHandle,
-                                                                     new(ImGui.GetTextLineHeightWithSpacing()),
-                                                                     x.Name.ExtractText(),
-                                                                     ModuleConfig.ActiveHealActions.Contains(x.RowId),
-                                                                     ImGuiSelectableFlags.DontClosePopups))
+                                         actionIcon.GetWrapOrEmpty().ImGuiHandle,
+                                         new(ImGui.GetTextLineHeightWithSpacing()),
+                                         x.Name.ExtractText(),
+                                         ModuleConfig.ActiveHealActions.Contains(x.RowId),
+                                         ImGuiSelectableFlags.DontClosePopups))
                                  {
                                      if (!ModuleConfig.ActiveHealActions.Remove(x.RowId))
                                          ModuleConfig.ActiveHealActions.Add(x.RowId);
@@ -431,7 +427,7 @@ public class HealerHelper : DailyModuleBase
                              }
                          ],
                          [x => x.Name.ExtractText() + x.ClassJobCategory.Value.Name.ExtractText()]
-                        );
+        );
         ImGui.SameLine();
         ImGui.Dummy(new Vector2(5, 0));
         ImGui.SameLine();
@@ -442,7 +438,7 @@ public class HealerHelper : DailyModuleBase
     private void EasyDispelUI()
     {
         ImGui.TextColored(LightSkyBlue, GetLoc("HealerHelper-EasyDispelTitle"));
-        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWarpper.GetActionName(7568)));
+        ImGuiOm.HelpMarker(GetLoc("HealerHelper-EasyRedirectDescription", LuminaWrapper.GetActionName(7568)));
 
         ImGui.Spacing();
 
@@ -510,10 +506,7 @@ public class HealerHelper : DailyModuleBase
                 }
             }
         }
-        catch (Exception ex)
-        {
-            Error($"[HealerHelper] Fetch Remote Version Failed: {ex}");
-        }
+        catch (Exception ex) { Error($"[HealerHelper] Fetch Remote Version Failed: {ex}"); }
 
         // build cache
         UpdateTerritoryMaps();
@@ -536,10 +529,7 @@ public class HealerHelper : DailyModuleBase
                 SaveConfig(ModuleConfig);
             }
         }
-        catch (Exception ex)
-        {
-            Error($"[HealerHelper] Fetch Default Play Card Order Failed: {ex}");
-        }
+        catch (Exception ex) { Error($"[HealerHelper] Fetch Default Play Card Order Failed: {ex}"); }
     }
 
     private async Task FetchDefaultHealActions()
@@ -561,10 +551,7 @@ public class HealerHelper : DailyModuleBase
                 SaveConfig(ModuleConfig);
             }
         }
-        catch (Exception ex)
-        {
-            Error($"[HealerHelper] Fetch Default Heal Actions Failed: {ex}");
-        }
+        catch (Exception ex) { Error($"[HealerHelper] Fetch Default Heal Actions Failed: {ex}"); }
     }
 
     private async Task FetchTerritoryMap()
@@ -581,10 +568,7 @@ public class HealerHelper : DailyModuleBase
                 SaveConfig(ModuleConfig);
             }
         }
-        catch (Exception ex)
-        {
-            Error($"[HealerHelper] Fetch Territory Map Failed: {ex}");
-        }
+        catch (Exception ex) { Error($"[HealerHelper] Fetch Territory Map Failed: {ex}"); }
     }
 
     #endregion
@@ -777,7 +761,7 @@ public class HealerHelper : DailyModuleBase
                 var scale = 1 / (1 + Math.Exp(-(bestRecord.Percentile - 50) / 8.33));
 
                 // update priority
-                if (member.ClassJob.Value.Role is (1 or 2))
+                if (member.ClassJob.Value.Role is 1 or 2)
                 {
                     var idx = MeleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                     if (idx != -1)
@@ -801,7 +785,7 @@ public class HealerHelper : DailyModuleBase
         // fallback: select the first dps in party list
         if (MeleeCandidateOrder.Count is 0)
         {
-            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is (1 or 3));
+            var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is 1 or 3);
             if (firstRange is not null)
                 MeleeCandidateOrder.Add((firstRange.ObjectId, -5));
         }
@@ -872,7 +856,7 @@ public class HealerHelper : DailyModuleBase
             targetID = actionID switch
             {
                 37023 => FetchCandidateId("Melee"),
-                37026 => FetchCandidateId("Range"),
+                37026 => FetchCandidateId("Range")
             };
 
             var member = FetchMember((uint)targetID);
@@ -885,7 +869,7 @@ public class HealerHelper : DailyModuleBase
                 var locKey = actionID switch
                 {
                     37023 => "Melee",
-                    37026 => "Range",
+                    37026 => "Range"
                 };
 
                 if (ModuleConfig.SendChat)
@@ -953,10 +937,8 @@ public class HealerHelper : DailyModuleBase
                 continue;
 
             foreach (var status in member.Statuses)
-            {
                 if (DispellableStatus.ContainsKey(status.StatusId))
                     return member.ToStruct()->EntityId;
-            }
         }
 
         return needDispelId;
@@ -1015,7 +997,7 @@ public class HealerHelper : DailyModuleBase
         if (currentTarget is IBattleNpc || targetID == UnspecificTargetId)
         {
             // find target with dispellable status within range
-            targetID = TargetNeedDispel(reverse: ModuleConfig.DispelOrder is DispelOrderStatus.Reverse);
+            targetID = TargetNeedDispel(ModuleConfig.DispelOrder is DispelOrderStatus.Reverse);
             if (targetID == UnspecificTargetId)
             {
                 isPrevented = true;
@@ -1043,8 +1025,8 @@ public class HealerHelper : DailyModuleBase
     #region FFLogs
 
     // FFLogs related (auto play card advance mode)
-    private const  string                       FFLogsUri         = "https://www.fflogs.com/v1";
-    private static Dictionary<uint, LogsRecord> MemberBestRecords = new Dictionary<uint, LogsRecord>();
+    private const           string                       FFLogsUri         = "https://www.fflogs.com/v1";
+    private static readonly Dictionary<uint, LogsRecord> MemberBestRecords = new();
 
     // warning log
     private static bool FirstTimeFallback = true;
@@ -1113,10 +1095,7 @@ public class HealerHelper : DailyModuleBase
             MemberBestRecords[member.ObjectId] = bestRecord;
             return bestRecord;
         }
-        catch (Exception)
-        {
-            return null;
-        }
+        catch (Exception) { return null; }
     }
 
     #endregion
@@ -1127,9 +1106,9 @@ public class HealerHelper : DailyModuleBase
     private class Config : ModuleConfiguration
     {
         // auto play card
-        public AutoPlayCardStatus AutoPlayCard     = AutoPlayCardStatus.Default;
-        public PlayCardOrder      DefaultCardOrder = new();
-        public PlayCardOrder      CustomCardOrder  = new();
+        public          AutoPlayCardStatus AutoPlayCard     = AutoPlayCardStatus.Default;
+        public          PlayCardOrder      DefaultCardOrder = new();
+        public readonly PlayCardOrder      CustomCardOrder  = new();
 
         // FFLogs API Key v1 for fetching records (auto play card advance mode)
         public string             FFLogsAPIKey = string.Empty;
@@ -1252,7 +1231,7 @@ public class HealerHelper : DailyModuleBase
     {
         Local,     // local player
         FirstTank, // first tank in party list
-        Prevent,   // prevent overheal
+        Prevent    // prevent overheal
     }
 
     #endregion
