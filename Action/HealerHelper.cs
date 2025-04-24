@@ -960,18 +960,18 @@ public class HealerHelper : DailyModuleBase
                         return;
 
                     case OverhealTarget.Local:
-                        targetID = DService.ClientState.LocalPlayer.EntityId;
+                        targetID = DService.ObjectTable.LocalPlayer.EntityId;
                         break;
 
                     case OverhealTarget.FirstTank:
                         var partyList       = DService.PartyList;
                         var sortedPartyList = partyList.OrderBy(member => FetchMemberIndex(member.ObjectId) ?? 0).ToList();
                         var firstTank       = sortedPartyList.FirstOrDefault(m => m.ClassJob.Value.Role == 1);
-                        targetID = firstTank?.ObjectId ?? DService.ClientState.LocalPlayer.EntityId;
+                        targetID = firstTank?.ObjectId ?? DService.ObjectTable.LocalPlayer.EntityId;
                         break;
 
                     default:
-                        targetID = DService.ClientState.LocalPlayer.EntityId;
+                        targetID = DService.ObjectTable.LocalPlayer.EntityId;
                         break;
                 }
             }
