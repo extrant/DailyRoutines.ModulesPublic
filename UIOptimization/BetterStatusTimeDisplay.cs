@@ -1,32 +1,31 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Dalamud.Interface.Utility.Raii;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class BetterStatusTimeDisplay : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("BetterStatusTimeDisplayTitle"),
+        Title       = GetLoc("BetterStatusTimeDisplayTitle"),
         Description = GetLoc("BetterStatusTimeDisplayDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["Due"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["Due"]
     };
 
-    private static readonly string[] AvailableFormat = new[]
-    {
+    private static readonly string[] AvailableFormat =
+    [
         @"hh\hmm\m",
-        @"hhmm",
+        "hhmm",
         @"hh\:mm"
-    };
+    ];
     
     private static readonly Dictionary<int, uint> ArrayStatusPair = new()
     {
@@ -46,7 +45,7 @@ public class BetterStatusTimeDisplay : DailyModuleBase
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 1000);
     }
 
     public override void ConfigUI()
@@ -71,8 +70,6 @@ public class BetterStatusTimeDisplay : DailyModuleBase
 
     private static unsafe void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("ShowRemainingTimeOnUpdate", 1_000)) return;
-
         if (DService.ClientState.LocalPlayer is not { } localPlayer ||
             DService.Condition[ConditionFlag.InCombat]) return;
 

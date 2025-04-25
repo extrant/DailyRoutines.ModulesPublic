@@ -158,7 +158,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new Config();
 
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate);
     }
 
     public override void ConfigUI()

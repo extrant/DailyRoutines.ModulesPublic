@@ -30,7 +30,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        FrameworkManager.Register(true, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 100);
     }
 
     public override void ConfigUI()
@@ -185,11 +185,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
             SaveConfig(ModuleConfig);
     }
 
-    private static void OnUpdate(IFramework _)
-    {
-        if (!Throttler.Throttle("DisplayTargetHP", 100)) return;
-        Update();
-    }
+    private static void OnUpdate(IFramework _) => Update();
 
     private static void Update(bool reset = false)
     {

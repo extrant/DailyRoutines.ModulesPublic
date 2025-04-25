@@ -31,7 +31,7 @@ public unsafe class AutoRefocus : DailyModuleBase
 
         if (BoundByDuty) OnZoneChange(DService.ClientState.TerritoryType);
         DService.ClientState.TerritoryChanged += OnZoneChange;
-        FrameworkManager.Register(true, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 1000);
     }
 
     private static void OnZoneChange(ushort territory)
@@ -42,7 +42,6 @@ public unsafe class AutoRefocus : DailyModuleBase
 
     private static void OnUpdate(IFramework framework)
     {
-        if (!Throttler.Throttle("AutoRefocus", 1000)) return;
         if (!IsNeedToRefocus || FocusTarget == 0 || FocusTarget == 0xE000_0000) return;
 
         if (DService.Targets.FocusTarget == null)

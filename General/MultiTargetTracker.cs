@@ -45,7 +45,7 @@ public class MultiTargetTracker : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        FrameworkManager.Register(true, OnUpdate);
+        FrameworkManager.Register(OnUpdate, false, 1500);
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.ContextMenu.OnMenuOpened     += OnMenuOpen;
     }
@@ -130,14 +130,10 @@ public class MultiTargetTracker : DailyModuleBase
         args.AddMenuItem(PermanentTrackItem.Get());
     }
 
-    private void OnZoneChanged(ushort obj)
-    {
-        TempTrackedPlayers.Clear();
-    }
+    private static void OnZoneChanged(ushort obj) => TempTrackedPlayers.Clear();
 
-    private unsafe void OnUpdate(IFramework framework)
+    private static unsafe void OnUpdate(IFramework framework)
     {
-        if (!Throttler.Throttle("MultiTargetTracker_Update", 1_000)) return;
         if (BetweenAreas || !IsScreenReady() || DService.ClientState.TerritoryType == 0) return;
         if (ModuleConfig.PermanentTrackedPlayers.Count == 0 && TempTrackedPlayers.Count == 0) return;
 

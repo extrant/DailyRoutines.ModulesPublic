@@ -1,14 +1,14 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class ThePraetoriumHelper : DailyModuleBase
 {
@@ -26,12 +26,12 @@ public unsafe class ThePraetoriumHelper : DailyModuleBase
         OnZoneChanged(DService.ClientState.TerritoryType);
     }
 
-    private void OnZoneChanged(ushort zoneID)
+    private static void OnZoneChanged(ushort zoneID)
     {
         FrameworkManager.Unregister(OnUpdate);
         if (zoneID != 1044) return;
         
-        FrameworkManager.Register(true, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 1000);
     }
 
     private static void OnUpdate(IFramework framework)

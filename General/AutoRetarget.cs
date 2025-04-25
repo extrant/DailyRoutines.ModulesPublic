@@ -57,9 +57,10 @@ public class AutoRetarget : DailyModuleBase
 
     public override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new();
-        TaskHelper ??= new() { TimeLimitMS = 15_000 };
-        FrameworkManager.Register(true, OnUpdate);
+        ModuleConfig =   LoadConfig<Config>() ?? new();
+        TaskHelper   ??= new() { TimeLimitMS = 15_000 };
+        
+        FrameworkManager.Register(OnUpdate, true, 1000);
     }
 
     public override void Uninit()
@@ -70,8 +71,6 @@ public class AutoRetarget : DailyModuleBase
 
     private void OnUpdate(IFramework framework)
     {
-        if (!Throttler.Throttle("AutoRetarget", 1_000)) return;
-
         if (ModuleConfig.DisplayName == GetLoc("None") && !ModuleConfig.PrioritizeForlorn)
         {
             ClearMarkers();

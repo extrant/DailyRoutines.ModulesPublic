@@ -47,7 +47,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         DService.ClientState.Login  += OnLogin;
         DService.ClientState.Logout += OnLogout;
 
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 5000);
     }
 
     public override void ConfigUI()
@@ -103,11 +103,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         });
     }
 
-    private void OnUpdate(IFramework _)
-    {
-        if (!Throttler.Throttle("AutoRecordSubTimeLeft-OnUpdate", 5000)) return;
-        RefreshEntry();
-    }
+    private static void OnUpdate(IFramework _) => RefreshEntry();
 
     private void OnLogout(int code, int type) => TaskHelper?.Abort();
 

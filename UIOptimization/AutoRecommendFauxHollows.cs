@@ -80,7 +80,7 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
         {
             case AddonEvent.PostSetup:
                 Overlay.IsOpen = true;
-                FrameworkManager.Register(true, OnUpdate);
+                FrameworkManager.Register(OnUpdate, throttleMS: 1000);
                 break;
 
             case AddonEvent.PreFinalize:
@@ -91,8 +91,6 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
 
     private static void OnUpdate(IFramework framework)
     {
-        if (!Throttler.Throttle("AutoFauxHollows_Update", 1_000)) return;
-
         var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
         if (addon == null || !IsAddonAndNodesReady(WeeklyPuzzle)) return;
 
@@ -518,45 +516,26 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
 
     public class Patterns
     {
-        public class Cell
+        public class Cell(int chestTl, BitMask foxes)
         {
-            public int     ChestTL;
-            public BitMask Foxes;
-
-            public Cell(int chestTL, BitMask foxes)
-            {
-                ChestTL = chestTL;
-                Foxes   = foxes;
-            }
+            public readonly int     ChestTL = chestTl;
+            public          BitMask Foxes   = foxes;
         }
 
-        public class Row
+        public class Row(int swordsTl, bool swordsHorizontal, Cell[] cells)
         {
-            public int    SwordsTL;
-            public bool   SwordsHorizontal;
-            public Cell[] Cells;
-
-            public Row(int swordsTL, bool swordsHorizontal, Cell[] cells)
-            {
-                SwordsTL         = swordsTL;
-                SwordsHorizontal = swordsHorizontal;
-                Cells            = cells;
-            }
+            public readonly int    SwordsTL         = swordsTl;
+            public readonly bool   SwordsHorizontal = swordsHorizontal;
+            public readonly Cell[] Cells            = cells;
         }
 
-        public class Sheet
+        public class Sheet(BitMask blockers, Row[] rows)
         {
-            public BitMask Blockers;
-            public Row[]   Rows;
-
-            public Sheet(BitMask blockers, Row[] rows)
-            {
-                Blockers = blockers;
-                Rows     = rows;
-            }
+            public          BitMask Blockers = blockers;
+            public readonly Row[]   Rows     = rows;
         }
 
-        public List<Sheet> KnownPatterns = [];
+        public readonly List<Sheet> KnownPatterns = [];
 
         private static readonly Sheet[] KnownBaseSheets =
         [

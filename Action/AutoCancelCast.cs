@@ -44,7 +44,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
                                          .Select(x => x.RowId).ToHashSet();
 
         DService.Condition.ConditionChange += OnConditionChanged;
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate);
     }
 
     private static void OnConditionChanged(ConditionFlag flag, bool value)

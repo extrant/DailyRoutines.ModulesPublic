@@ -52,7 +52,7 @@ public class AutoCountPlayers : DailyModuleBase
         Entry.Shown = true;
         Entry.OnClick += () => Overlay.IsOpen ^= true;
         
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 500);
     }
 
     public override void ConfigUI()
@@ -120,7 +120,6 @@ public class AutoCountPlayers : DailyModuleBase
 
     private static void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoCountPlayers_OnUpdate")) return;
         if (Entry == null) return;
         
         Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersAroundManager.PlayersCount}";

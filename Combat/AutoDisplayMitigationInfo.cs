@@ -97,7 +97,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         DService.Framework.RunOnTick(async () => await FetchRemoteVersion());
 
         // life cycle hooks
-        FrameworkManager.Register(false, OnFrameworkUpdate);
+        FrameworkManager.Register(OnFrameworkUpdate, throttleMS: 500);
     }
 
     #endregion
@@ -237,8 +237,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     public static unsafe void OnFrameworkUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoDisplayMitigationInfo-OnFrameworkUpdate")) return;
-
         if (DService.ClientState.IsPvP || (ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat]))
         {
             ClearAndCloseBarEntry();

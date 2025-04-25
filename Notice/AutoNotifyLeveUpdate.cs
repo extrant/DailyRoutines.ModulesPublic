@@ -10,10 +10,10 @@ public unsafe class AutoNotifyLeveUpdate : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoNotifyLeveUpdateTitle"),
+        Title       = GetLoc("AutoNotifyLeveUpdateTitle"),
         Description = GetLoc("AutoNotifyLeveUpdateDescription"),
-        Category = ModuleCategories.Notice,
-        Author = ["HSS"]
+        Category    = ModuleCategories.Notice,
+        Author      = ["HSS"]
     };
 
     private static DateTime nextLeveCheck = DateTime.MinValue;
@@ -24,7 +24,7 @@ public unsafe class AutoNotifyLeveUpdate : DailyModuleBase
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 60_000);
     }
 
     public override void ConfigUI()
@@ -47,8 +47,7 @@ public unsafe class AutoNotifyLeveUpdate : DailyModuleBase
 
     private static void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoNotifyLeveUpdate", 5000) || 
-            !DService.ClientState.IsLoggedIn || DService.ClientState.LocalPlayer == null)
+        if (!DService.ClientState.IsLoggedIn || DService.ClientState.LocalPlayer == null)
             return;
 
         var nowUtc = DateTime.UtcNow;

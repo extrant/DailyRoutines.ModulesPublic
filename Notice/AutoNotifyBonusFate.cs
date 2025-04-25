@@ -65,13 +65,11 @@ public class AutoNotifyBonusFate : DailyModuleBase
         LastFates.Clear();
 
         if (ValidTerritory.Contains(zone))
-            FrameworkManager.Register(false, OnUpdate);
+            FrameworkManager.Register(OnUpdate, throttleMS: 5_000);
     }
 
     private static unsafe void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoNotifyBonusFate-Check", 5_000)) return;
-        
         var zoneID = DService.ClientState.TerritoryType;
         if (!ValidTerritory.Contains(zoneID))
         {
