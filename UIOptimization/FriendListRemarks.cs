@@ -194,9 +194,8 @@ public unsafe class FriendListRemarks : DailyModuleBase
         OnAddon(AddonEvent.PreFinalize, null);
         base.Uninit();
 
-        var info = InfoProxyFriendList.Instance();
-        if (info != null)
-            info->RequestData();
+        if (IsAddonAndNodesReady(FriendList))
+            InfoProxyFriendList.Instance()->RequestData();
 
         IsNeedToOpen = false;
     }
