@@ -65,12 +65,11 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         HasNotifiedInCurrentZone = false;
 
         if (ValidTerritory.Contains(zone))
-            FrameworkManager.Register(false, OnUpdate);
+            FrameworkManager.Register(OnUpdate, throttleMS: 5_000);
     }
 
     private static void OnUpdate(IFramework framework)
     {
-        if (!Throttler.Throttle("AutoGysahlGreens-OnUpdate", 5_000)) return;
         if (PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable)) return;
         if (DService.ObjectTable.LocalPlayer is not { IsDead: false }) return;
         if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;

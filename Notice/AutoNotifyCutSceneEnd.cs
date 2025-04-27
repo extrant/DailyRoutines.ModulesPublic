@@ -79,15 +79,13 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         Stopwatch = new();
         
         DService.DutyState.DutyCompleted += OnDutyComplete;
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 500);
     }
     
     private static void OnDutyComplete(object? sender, ushort zone) => IsDutyEnd = true;
 
     private void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoNotifyCutSceneEnd-Update")) return;
-        
         // PVP 或不在副本内 → 结束检查
         if (DService.ClientState.IsPvP || !BoundByDuty)
         {

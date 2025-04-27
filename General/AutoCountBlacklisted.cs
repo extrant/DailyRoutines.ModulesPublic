@@ -43,7 +43,7 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
         DtrEntry ??= DService.DtrBar.Get("DailyRoutines-AutoCountBlacklisted");
         DtrEntry.Shown = true;
 
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 500);
     }
 
     public override void ConfigUI()
@@ -95,8 +95,6 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
 
     private static void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("AutoCountBlacks-OnUpdate")) return;
-        
         if (DtrEntry is null) return;
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
 

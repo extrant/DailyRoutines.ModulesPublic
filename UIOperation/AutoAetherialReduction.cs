@@ -1,0 +1,128 @@
+using System.Numerics;
+using DailyRoutines.Abstracts;
+using DailyRoutines.Managers;
+using DailyRoutines.Windows;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Conditions;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+
+namespace DailyRoutines.ModulesPublic;
+
+public unsafe class AutoAetherialReduction : DailyModuleBase
+{
+    public override ModuleInfo Info { get; } = new()
+    {
+        Title       = GetLoc("AutoAetherialReductionTitle"),
+        Description = GetLoc("AutoAetherialReductionDescription"),
+        Category    = ModuleCategories.UIOperation,
+        Author      = ["YLCHEN"]
+    };
+    
+    private static readonly InventoryType[] Inventories =
+    [
+        InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4
+    ];
+
+    public override void Init()
+    {
+        TaskHelper ??= new TaskHelper();
+        Overlay    ??= new Overlay(this);
+
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyItemSelector", OnAddonList);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
+        if (IsAddonAndNodesReady(PurifyItemSelector)) OnAddonList(AddonEvent.PostSetup, null);
+
+        GameResourceManager.AddToBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
+    }
+    
+    public override void OverlayUI()
+    {
+        var addon = PurifyItemSelector;
+        if (addon == null)
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+        if (!IsAddonAndNodesReady(addon)) return;
+
+        var pos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 6);
+        ImGui.SetWindowPos(pos);
+
+        ImGui.TextColored(LightSkyBlue, GetLoc("AutoAetherialReductionTitle"));
+
+        ImGui.Separator();
+
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(GetLoc("Start")))
+                TaskHelper.Enqueue(StartAetherialReduction, "开始精选");
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button(GetLoc("Stop")))
+            TaskHelper.Abort();
+    }
+
+    public override void Uninit()
+    {
+        GameResourceManager.RemoveFromBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
+
+        DService.AddonLifecycle.UnregisterListener(OnAddonList);
+        
+        base.Uninit();
+    }
+
+    private bool? StartAetherialReduction()
+    {
+        if (IsCurrentEnvironmentInvalid()) return true;
+        
+        var agent = AgentPurify.Instance();
+        if (agent == null || agent->ReducibleItems.Count == 0) return true;
+
+        var manager = InventoryManager.Instance();
+        if (manager == null) return true;
+        
+        if (OccupiedInEvent) return false;
+
+        var firstItem = agent->ReducibleItems.First;
+        if (firstItem == null) return true;
+
+        var inventoryItem = manager->GetInventorySlot(firstItem->Inventory, firstItem->Slot);
+        if (inventoryItem == null) return true;
+        
+        agent->ReduceItem(inventoryItem);
+
+        TaskHelper.DelayNext(1000);
+        TaskHelper.Enqueue(StartAetherialReduction);
+        return true;
+    }
+
+    private bool IsCurrentEnvironmentInvalid()
+    {
+        if (IsInventoryFull(Inventories)               ||
+            DService.Condition[ConditionFlag.Mounted]  ||
+            DService.Condition[ConditionFlag.InCombat] ||
+            !IsAddonAndNodesReady(PurifyItemSelector))
+        {
+            TaskHelper.Abort();
+            return true;
+        }
+
+        return false;
+    }
+
+    private void OnAddonList(AddonEvent type, AddonArgs? args)
+    {
+        Overlay.IsOpen = type switch
+        {
+            AddonEvent.PostSetup   => true,
+            AddonEvent.PreFinalize => false,
+            _                      => Overlay.IsOpen
+        };
+
+        if (type == AddonEvent.PreFinalize)
+            TaskHelper.Abort();
+    }
+}

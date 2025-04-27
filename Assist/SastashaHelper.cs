@@ -51,12 +51,11 @@ public class SastashaHelper : DailyModuleBase
         if (zone != 1036) return;
         
         TaskHelper.Enqueue(GetCorrectCoral);
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 2_000);
     }
 
     private static unsafe void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("SastashaHelper-OnUpdate", 2_000)) return;
         if (CorrectCoralDataID == 0 || CorrectCoralHighlightColor == ObjectHighlightColor.None) return;
 
         var coral = DService.ObjectTable.FirstOrDefault(

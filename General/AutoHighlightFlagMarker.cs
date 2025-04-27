@@ -44,7 +44,7 @@ public unsafe class AutoHighlightFlagMarker : DailyModuleBase
         AgentMapReceiveEventHook.Enable();
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 1_000);
     }
 
     public override void ConfigUI()
@@ -98,7 +98,6 @@ public unsafe class AutoHighlightFlagMarker : DailyModuleBase
     private void OnUpdate(IFramework _)
     {
         if (!ModuleConfig.ConstantlyUpdate) return;
-        if (!Throttler.Throttle("AutoHighlightFlagMarker", 1_000)) return;
         if (!IsFlagMarkerValid())
         {
             ClearMarkers();

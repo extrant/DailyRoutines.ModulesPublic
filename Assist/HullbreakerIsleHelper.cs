@@ -9,7 +9,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
-namespace DailyRoutines.ModulesPublic.Assist;
+namespace DailyRoutines.ModulesPublic;
 
 public class HullbreakerIsleHelper : DailyModuleBase
 {
@@ -49,7 +49,7 @@ public class HullbreakerIsleHelper : DailyModuleBase
         OnZoneChanged(DService.ClientState.TerritoryType);
     }
 
-    private void OnZoneChanged(ushort zone)
+    private static void OnZoneChanged(ushort zone)
     {
         DService.UiBuilder.Draw -= OnDraw;
         FrameworkManager.Unregister(OnUpdate);
@@ -57,11 +57,11 @@ public class HullbreakerIsleHelper : DailyModuleBase
         FakeTreasurePositions.Clear();
         
         if (zone != 361) return;
-        FrameworkManager.Register(false, OnUpdate);
+        FrameworkManager.Register(OnUpdate, throttleMS: 2000);
         DService.UiBuilder.Draw += OnDraw;
     }
 
-    private void OnDraw()
+    private static void OnDraw()
     {
         foreach (var trap in TrapPositions)
         {
@@ -78,8 +78,6 @@ public class HullbreakerIsleHelper : DailyModuleBase
 
     private static unsafe void OnUpdate(IFramework _)
     {
-        if (!Throttler.Throttle("HullbreakerIsleHelper-OnUpdate", 2000)) return;
-
         HashSet<Vector3> trapCollect = [];
         HashSet<Vector3> fakeTreasureCollect = [];
         

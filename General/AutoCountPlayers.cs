@@ -1,18 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
-using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
-using System;
-using System.Linq;
-using System.Text;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoCountPlayers : DailyModuleBase
 {
@@ -36,7 +36,7 @@ public class AutoCountPlayers : DailyModuleBase
     static AutoCountPlayers()
     {
         LineColor = ImGui.ColorConvertFloat4ToU32(LightSkyBlue);
-        DotColor = ImGui.ColorConvertFloat4ToU32(RoyalBlue);
+        DotColor  = ImGui.ColorConvertFloat4ToU32(RoyalBlue);
         TextColor = ImGui.ColorConvertFloat4ToU32(Orange);
     }
 
@@ -46,13 +46,14 @@ public class AutoCountPlayers : DailyModuleBase
         
         Overlay ??= new(this);
         Overlay.Flags &= ~ImGuiWindowFlags.NoTitleBar;
+        Overlay.Flags &= ~ImGuiWindowFlags.AlwaysAutoResize;
         Overlay.WindowName = $"{GetLoc("AutoCountPlayers-PlayersAroundInfo")}###AutoCountPlayers-Overlay";
 
         Entry ??= DService.DtrBar.Get("DailyRoutines-AutoCountPlayers");
         Entry.Shown = true;
         Entry.OnClick += () => Overlay.IsOpen ^= true;
-        
-        FrameworkManager.Register(false, OnUpdate);
+
+        PlayersManager.ReceivePlayersAround += OnUpdate;
     }
 
     public override void ConfigUI()
@@ -71,27 +72,27 @@ public class AutoCountPlayers : DailyModuleBase
 
         if (BetweenAreas || DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
 
-        var source = PlayersAroundManager.CurrentPlayers.Where(x => string.IsNullOrWhiteSpace(SearchInput) ||
+        var source = PlayersManager.PlayersAround.Where(x => string.IsNullOrWhiteSpace(SearchInput) ||
                                                x.ToString().Contains(SearchInput, StringComparison.OrdinalIgnoreCase))
-                                   .OrderBy(x => x.Name.Length);
+                                   .OrderBy(x => x.Name.TextValue.Length);
 
-        var size = ScaledVector2(300f, 400f) * ModuleConfig.ScaleFactor;
-        using var child = ImRaii.Child("列表", size, true);
+        using var child = ImRaii.Child("列表", ImGui.GetContentRegionAvail() - ImGui.GetStyle().ItemSpacing, true);
         if (!child) return;
+        
         foreach (var playerAround in source)
         {
-            using var id = ImRaii.PushId($"{playerAround.GameObjectID}");
+            using var id = ImRaii.PushId($"{playerAround.GameObjectId}");
             if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("AutoCountPlayers-Locate")))
             {
                 if (LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var map))
                 {
-                    var mapPos = WorldToMap(playerAround.Character.Position.ToVector2(), map);
+                    var mapPos = WorldToMap(playerAround.Position.ToVector2(), map);
                     var message = new SeStringBuilder()
-                                  .Add(new PlayerPayload(playerAround.Name,
-                                                         playerAround.Character.ToStruct()->HomeWorld))
+                                  .Add(new PlayerPayload(playerAround.Name.TextValue,
+                                                         playerAround.ToStruct()->HomeWorld))
                                   .Append(" (")
-                                  .AddIcon(playerAround.Character.ClassJob.ValueNullable.ToBitmapFontIcon())
-                                  .Append($" {playerAround.Job})")
+                                  .AddIcon(playerAround.ClassJob.Value.ToBitmapFontIcon())
+                                  .Append($" {playerAround.ClassJob.Value.Name})")
                                   .Add(new NewLinePayload())
                                   .Append("     ")
                                   .Append(SeString.CreateMapLink(DService.ClientState.TerritoryType,
@@ -102,7 +103,7 @@ public class AutoCountPlayers : DailyModuleBase
             }
 
             if (ImGui.IsItemHovered() &&
-                DService.Gui.WorldToScreen(playerAround.Character.Position, out var screenPos) &&
+                DService.Gui.WorldToScreen(playerAround.Position, out var screenPos) &&
                 DService.Gui.WorldToScreen(localPlayer.Position, out var localScreenPos))
             {
                 var drawList = ImGui.GetForegroundDrawList();
@@ -110,78 +111,36 @@ public class AutoCountPlayers : DailyModuleBase
                 drawList.AddLine(localScreenPos, screenPos, LineColor, 8f);
                 drawList.AddCircleFilled(localScreenPos, 12f, DotColor);
                 drawList.AddCircleFilled(screenPos, 12f, DotColor);
-                drawList.AddText(screenPos + ScaledVector2(16f), TextColor, $"{playerAround.Name} ({playerAround.Job})");
+                drawList.AddText(screenPos + ScaledVector2(16f), TextColor, $"{playerAround.Name} ({playerAround.ClassJob.Value.Name})");
             }
 
             ImGui.SameLine();
-            ImGui.Text($"{playerAround.Name} ({playerAround.Job})");
+            ImGui.Text($"{playerAround.Name} ({playerAround.ClassJob.Value.Name})");
         }
     }
 
-    private static void OnUpdate(IFramework _)
+    private static void OnUpdate(IReadOnlyList<IPlayerCharacter> characters)
     {
-        if (!Throttler.Throttle("AutoCountPlayers_OnUpdate")) return;
         if (Entry == null) return;
         
-        Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersAroundManager.PlayersCount}";
+        Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersManager.PlayersAroundCount}";
+        
         var tooltip = new StringBuilder();
         tooltip.AppendLine($"{GetLoc("AutoCountPlayers-PlayersAroundInfo")}:");
-        PlayersAroundManager.CurrentPlayers.ForEach(x => tooltip.AppendLine($"{x.Name} ({x.Job})"));
+        characters.ForEach(x => tooltip.AppendLine($"{x.Name} ({x.ClassJob.Value.Name.ExtractText()})"));
         Entry.Tooltip = tooltip.ToString().Trim();
     }
 
     public override void Uninit()
     {
-        FrameworkManager.Unregister(OnUpdate);
+        PlayersManager.ReceivePlayersAround -= OnUpdate;
         
         Entry?.Remove();
         Entry = null;
         
         base.Uninit();
     }
-
-    public class GamePlayerAround : IEquatable<GamePlayerAround>
-    {
-        public ICharacter Character    { get; init; }
-        public string     Name         { get; init; }
-        public string     Job          { get; init; }
-        public ulong      GameObjectID { get; init; }
-
-        private readonly string identifier;
-
-        public GamePlayerAround(IGameObject obj)
-        {
-            Character = obj as ICharacter;
-
-            GameObjectID = obj?.GameObjectId ?? 0;
-            Name = Character?.Name.TextValue ?? string.Empty;
-            Job = Character?.ClassJob.ValueNullable?.Name.ExtractText() ?? string.Empty;
-
-            identifier = $"{Name}_{Job}_{GameObjectID}";
-        }
-
-        public bool IsValid() => Character.IsValid();
-
-        public override string ToString() => identifier;
-
-        public bool Equals(GamePlayerAround? other)
-        {
-            if(ReferenceEquals(null, other)) return false;
-            if(ReferenceEquals(this, other)) return true;
-            return GameObjectID == other.GameObjectID;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if(ReferenceEquals(null, obj)) return false;
-            if(ReferenceEquals(this, obj)) return true;
-            if(obj.GetType() != this.GetType()) return false;
-            return Equals((GamePlayerAround)obj);
-        }
-
-        public override int GetHashCode() => GameObjectID.GetHashCode();
-    }
-
+    
     public class Config : ModuleConfiguration
     {
         public float ScaleFactor = 1;
