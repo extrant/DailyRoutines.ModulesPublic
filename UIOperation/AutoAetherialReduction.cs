@@ -1,16 +1,14 @@
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Interface.Colors;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using System.Numerics;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoAetherialReduction : DailyModuleBase
 {
@@ -18,45 +16,36 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     {
         Title       = GetLoc("AutoAetherialReductionTitle"),
         Description = GetLoc("AutoAetherialReductionDescription"),
-        Category    = ModuleCategories.UIOperation,
+        Category    = ModuleCategories.UIOperation
     };
-
-    private static unsafe AtkUnitBase* PurifyItemSelector => (AtkUnitBase*)DService.Gui.GetAddonByName("PurifyItemSelector");
-    private static unsafe AtkUnitBase* PurifyResult => (AtkUnitBase*)DService.Gui.GetAddonByName("PurifyResult");
-
-    private static readonly InventoryType[] BackpackInventories =
+    
+    private static readonly InventoryType[] Inventories =
     [
         InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4
     ];
 
     public override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 10_000 };
+        TaskHelper ??= new TaskHelper();
         Overlay    ??= new Overlay(this);
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyResult",       OnAddon);
-        
+
         if (IsAddonAndNodesReady(PurifyItemSelector)) OnAddonList(AddonEvent.PostSetup, null);
-        if (IsAddonAndNodesReady(PurifyResult)) OnAddon(AddonEvent.PostSetup, null);
-        
+
         GameResourceManager.AddToBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
     }
-
-    public override void Uninit()
-    {
-        GameResourceManager.RemoveFromBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
-        
-        DService.AddonLifecycle.UnregisterListener(OnAddonList);
-        DService.AddonLifecycle.UnregisterListener(OnAddon);
-        base.Uninit();
-    }
-
+    
     public override void OverlayUI()
     {
         var addon = PurifyItemSelector;
-        if (addon == null) return;
+        if (addon == null)
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+        if (!IsAddonAndNodesReady(addon)) return;
 
         var pos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 6);
         ImGui.SetWindowPos(pos);
@@ -70,44 +59,52 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
             if (ImGui.Button(GetLoc("Start")))
                 TaskHelper.Enqueue(StartAetherialReduction, "开始精选");
         }
-            
+
         ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop"))) 
+        if (ImGui.Button(GetLoc("Stop")))
             TaskHelper.Abort();
+    }
+
+    public override void Uninit()
+    {
+        GameResourceManager.RemoveFromBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
+
+        DService.AddonLifecycle.UnregisterListener(OnAddonList);
+        
+        base.Uninit();
     }
 
     private bool? StartAetherialReduction()
     {
-        if (!Throttler.Throttle("AutoAetherialReduction")) return false;
-        if (OccupiedInEvent) return false;
-        if (!IsAddonAndNodesReady(PurifyItemSelector)) return false;
+        if (IsCurrentEnvironmentInvalid()) return true;
+        
+        var agent = AgentPurify.Instance();
+        if (agent == null || agent->ReducibleItems.Count == 0) return true;
 
-        if (IsEnvironmentBlockingOperation()) return false;
+        var manager = InventoryManager.Instance();
+        if (manager == null) return true;
         
-        var itemAmount = PurifyItemSelector->UldManager.NodeList[3]->GetAsAtkComponentList()->ListLength;
-        if (itemAmount == 0)
-        {
-            TaskHelper.Abort();
-            return true;
-        }
+        if (OccupiedInEvent) return false;
+
+        var firstItem = agent->ReducibleItems.First;
+        if (firstItem == null) return true;
+
+        var inventoryItem = manager->GetInventorySlot(firstItem->Inventory, firstItem->Slot);
+        if (inventoryItem == null) return true;
         
-        SendEvent(AgentId.Purify, 0, 12, 0);
+        agent->ReduceItem(inventoryItem);
+
+        TaskHelper.DelayNext(1000);
         TaskHelper.Enqueue(StartAetherialReduction);
         return true;
     }
 
-    private bool IsEnvironmentBlockingOperation()
+    private bool IsCurrentEnvironmentInvalid()
     {
-        if (IsInventoryFull(BackpackInventories))
-        {
-            TaskHelper.Abort();
-            return true;
-        }
-
-        if (DService.Condition[ConditionFlag.Mounted] ||
+        if (IsInventoryFull(Inventories)               ||
+            DService.Condition[ConditionFlag.Mounted]  ||
             DService.Condition[ConditionFlag.InCombat] ||
-            DService.Condition[ConditionFlag.Occupied39] ||
-            DService.Condition[ConditionFlag.Casting])
+            !IsAddonAndNodesReady(PurifyItemSelector))
         {
             TaskHelper.Abort();
             return true;
@@ -122,21 +119,10 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
         {
             AddonEvent.PostSetup   => true,
             AddonEvent.PreFinalize => false,
-            _                      => Overlay.IsOpen,
+            _                      => Overlay.IsOpen
         };
-        
+
         if (type == AddonEvent.PreFinalize)
             TaskHelper.Abort();
-    }
-
-    private void OnAddon(AddonEvent type, AddonArgs args)
-    {
-        if (!Throttler.Throttle("AutoAetherialReduction")) return;
-        if (!IsAddonAndNodesReady(PurifyResult)) return;
-        
-        if (TaskHelper.IsBusy)
-        {
-            Callback(PurifyResult, true, 0, 0);
-        }
     }
 }
