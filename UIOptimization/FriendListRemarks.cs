@@ -120,10 +120,7 @@ public unsafe class FriendListRemarks : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PostSetup:
-                Throttler.Throttle("FriendListRemarks-Update", reThrottle: true);
-                break;
             case AddonEvent.PostRequestedUpdate:
-                if (!Throttler.Throttle("FriendListRemarks-Update")) return;
                 Modify();
                 break;
             case AddonEvent.PreFinalize:
@@ -137,17 +134,20 @@ public unsafe class FriendListRemarks : DailyModuleBase
     {
         var addon = FriendList;
         if (!IsAddonAndNodesReady(addon)) return;
-        Throttler.Throttle("FriendListRemarks-Update", reThrottle: true);
 
         var info = InfoProxyFriendList.Instance();
 
+        var isAnyUpdate = false;
         for (var i = 0; i < info->EntryCount; i++)
         {
             var data = info->CharDataSpan[i];
             if (!ModuleConfig.PlayerInfos.TryGetValue(data.ContentId, out var configInfo)) continue;
 
-            if (!string.IsNullOrWhiteSpace(configInfo.Nickname))
+            var existedName = SeString.Parse(AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)]).TextValue;
+            if (!string.IsNullOrWhiteSpace(configInfo.Nickname) && existedName != configInfo.Nickname)
             {
+                isAnyUpdate = true;
+                
                 var nicknameBuilder = new SeStringBuilder();
                 nicknameBuilder.AddUiForeground($"{configInfo.Nickname}", 37);
                 
@@ -158,6 +158,7 @@ public unsafe class FriendListRemarks : DailyModuleBase
                 AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)] = nicknameString->StringPtr;
             }
 
+            var existedRemark = SeString.Parse(AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[3 + (5 * i)]).TextValue;
             if (!string.IsNullOrWhiteSpace(configInfo.Remark))
             {
                 var remarkString = Utf8String.FromString($"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}: {configInfo.Remark}" +
@@ -166,10 +167,15 @@ public unsafe class FriendListRemarks : DailyModuleBase
                                                               : $"\n{LuminaWrapper.GetAddonText(9818)}: {data.NameString}"));
                 Utf8Strings.Add((nint)remarkString);
                 
+                if (remarkString->ExtractText() == existedRemark) continue;
+                isAnyUpdate = true;
+                
                 // 在线状态
                 AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[3 + (5 * i)] = remarkString->StringPtr;
             }
         }
+        
+        if (!isAnyUpdate) return;
         
         FriendList->OnRequestedUpdate(AtkStage.Instance()->GetNumberArrayData(), AtkStage.Instance()->GetStringArrayData());
         DService.Framework.RunOnTick(
