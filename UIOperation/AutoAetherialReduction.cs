@@ -16,7 +16,8 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     {
         Title       = GetLoc("AutoAetherialReductionTitle"),
         Description = GetLoc("AutoAetherialReductionDescription"),
-        Category    = ModuleCategories.UIOperation
+        Category    = ModuleCategories.UIOperation,
+        Author      = ["YLCHEN"]
     };
     
     private static readonly InventoryType[] Inventories =
@@ -31,7 +32,6 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
-
         if (IsAddonAndNodesReady(PurifyItemSelector)) OnAddonList(AddonEvent.PostSetup, null);
 
         GameResourceManager.AddToBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
