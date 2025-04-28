@@ -214,7 +214,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                                       [
                                           x => () =>
                                           {
-                                              var icon = ImageHelper.GetIcon(x.Icon, SelectItemIsHQ);
+                                              var icon = ImageHelper.GetGameIcon(x.Icon, SelectItemIsHQ);
 
                                               if (ImGuiOm.SelectableImageWithText(icon.ImGuiHandle, ScaledVector2(20f),
                                                                                   x.Name.ExtractText(), x.RowId == SelectedItem,

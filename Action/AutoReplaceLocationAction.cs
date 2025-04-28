@@ -142,7 +142,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetIcon(action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon(action.Icon).ImGuiHandle, ScaledVector2(20f));
         }
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
@@ -157,7 +157,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetIcon((uint)action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon((uint)action.Icon).ImGuiHandle, ScaledVector2(20f));
         }
     }
 
