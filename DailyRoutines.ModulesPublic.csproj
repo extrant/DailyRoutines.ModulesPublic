@@ -1,5 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Dalamud.CN.NET.Sdk/11.3.0">
+    
     <PropertyGroup>
         <Authors>AtmoOmen</Authors>
         <Version>1.0.0.0</Version>
@@ -25,6 +25,8 @@
         <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
         <BaseOutputPath>$(SolutionDir)bin</BaseOutputPath>
         <SatelliteResourceLanguages>xxx</SatelliteResourceLanguages>
+        <Use_Dalamud_CN>true</Use_Dalamud_CN>
+        <Use_DalamudPackager>false</Use_DalamudPackager>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -41,54 +43,8 @@
         <DebugType>none</DebugType>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(appdata)\XIVLauncherCN\addon\Hooks\dev\</DalamudLibPath>
-        <DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(HOME)/.xlcore/dalamud/Hooks/dev/</DalamudLibPath>
-        <DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Application Support/XIV on Mac/dalamud/Hooks/dev/</DalamudLibPath>
-        <DalamudLibPath Condition="$(DALAMUD_HOME) != ''">$(DALAMUD_HOME)/</DalamudLibPath>
-    </PropertyGroup>
-
     <ItemGroup>
-        <Reference Include="FFXIVClientStructs">
-            <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Newtonsoft.Json">
-            <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Dalamud">
-            <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="ImGui.NET">
-            <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="ImGuiScene">
-            <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="ImGuiScene">
-            <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Lumina">
-            <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Lumina.Excel">
-            <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="PInvoke.User32">
-            <HintPath>$(DalamudLibPath)PInvoke.User32.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="PInvoke.Windows.Core">
-            <HintPath>$(DalamudLibPath)PInvoke.Windows.Core.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <PackageReference Include="System.CodeDom" Version="9.0.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -108,16 +64,6 @@
             <HintPath>$(BaseOutputPath)\$(Configuration)\EdgeTTS.dll</HintPath>
             <Private>false</Private>
         </Reference>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove=".editorconfig" />
-      <None Remove=".gitattributes" />
-      <None Remove=".gitignore" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="System.CodeDom" Version="9.0.1" />
     </ItemGroup>
 
 </Project>
