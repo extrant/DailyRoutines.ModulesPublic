@@ -271,7 +271,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
     
     public class IPC : DailyModuleIPCBase
     {
-        private const string IsBusyName = $"DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy";
+        private const string IsBusyName = "DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy";
         private static ICallGateProvider<bool>? IsBusyIPC;
         
         public override void Init()
