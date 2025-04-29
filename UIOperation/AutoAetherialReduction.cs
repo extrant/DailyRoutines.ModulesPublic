@@ -22,13 +22,6 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     };
     
     public bool IsReducing => TaskHelper?.IsBusy ?? false;
-
-    public bool StartReduction()
-    {
-        if (TaskHelper == null) return false;
-        TaskHelper.Enqueue(StartAetherialReduction, "开始精选");
-        return true;
-    }
     
     private static IPC?  ModuleIPC;
     
@@ -116,14 +109,20 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     {
         if (IsInventoryFull(Inventories)               ||
             DService.Condition[ConditionFlag.Mounted]  ||
-            DService.Condition[ConditionFlag.InCombat] ||
-            !IsAddonAndNodesReady(PurifyItemSelector))
+            DService.Condition[ConditionFlag.InCombat])
         {
             TaskHelper.Abort();
             return true;
         }
 
         return false;
+    }
+    
+    public bool StartReduction()
+    {
+        if (TaskHelper == null) return false;
+        TaskHelper.Enqueue(StartAetherialReduction, "开始精选");
+        return true;
     }
 
     private void OnAddonList(AddonEvent type, AddonArgs? args)
@@ -141,10 +140,10 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     
     public class IPC : DailyModuleIPCBase
     {
-        private const string IsBusyName = $"DailyRoutines.Modules.AutoAetherialReduction.IsBusy";
+        private const string IsBusyName = "DailyRoutines.Modules.AutoAetherialReduction.IsBusy";
         private static ICallGateProvider<bool>? IsBusyIPC;
         
-        private const string StartReductionName = $"DailyRoutines.Modules.AutoAetherialReduction.StartReduction";
+        private const string StartReductionName = "DailyRoutines.Modules.AutoAetherialReduction.StartReduction";
         private static ICallGateProvider<bool>? StartReductionIPC;
         
         public override void Init()
