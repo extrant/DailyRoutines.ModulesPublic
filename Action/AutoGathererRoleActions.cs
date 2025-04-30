@@ -2,16 +2,17 @@ using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoGathererRoleActions : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoGathererRoleActionsTitle"),
+        Title       = GetLoc("AutoGathererRoleActionsTitle"),
         Description = GetLoc("AutoGathererRoleActionsDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
 
     private static readonly HashSet<uint> ValidJobs = [16, 17, 18];
@@ -20,17 +21,17 @@ public class AutoGathererRoleActions : DailyModuleBase
     private static readonly Dictionary<uint, uint> Actions = new()
     {
         // 矿脉勘探
-        { 227, 225 },
+        [227] = 225,
         // 三角测量
-        { 210, 217 },
+        [210] = 217,
         // 山岳之相
-        { 238, 222 },
+        [238] = 222,
         // 丛林之相
-        { 221, 221 },
+        [221] = 221,
         // 鱼群测定
-        { 7903, 1166 },
+        [7903] = 1166,
         // 海洋之相
-        { 7911, 1173 },
+        [7911] = 1173,
     };
 
     public override void Init()
@@ -47,7 +48,7 @@ public class AutoGathererRoleActions : DailyModuleBase
         TaskHelper.Abort();
         if (!ValidJobs.Contains(jobID)) return;
 
-        var localPlayer = DService.ObjectTable.LocalPlayer.ToStruct();
+        var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return;
 
         TaskHelper.DelayNext(5_00);
@@ -59,7 +60,7 @@ public class AutoGathererRoleActions : DailyModuleBase
 
                 TaskHelper.Enqueue(() =>
                 {
-                    if (!Throttler.Throttle("AutoGathererRoleActions-UseAction", 100)) return false;
+                    if (!Throttler.Throttle("AutoGathererRoleActions-UseAction")) return false;
                     if (localPlayer->StatusManager.HasStatus(status) || !IsActionUnlocked(action)) return true;
                     UseActionManager.UseActionLocation(ActionType.Action, action);
                     return localPlayer->StatusManager.HasStatus(status);

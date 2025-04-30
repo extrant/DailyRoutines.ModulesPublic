@@ -113,7 +113,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
                             foreach (var item in ItemSearcher.SearchResult)
                             {
-                                var icon = ImageHelper.GetIcon(item.Icon).ImGuiHandle;
+                                var icon = ImageHelper.GetGameIcon(item.Icon).ImGuiHandle;
                                 if (ImGuiOm.SelectableImageWithText(icon, new(ImGui.GetTextLineHeightWithSpacing()),
                                                                     item.Name.ExtractText(), item.Equals(SelectedItem)))
                                     SelectedItem = item;
@@ -170,7 +170,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
             ImGui.TableNextColumn();
             if (!LuminaGetter.TryGetRow<Item>(group.ItemID, out var item)) continue;
-            var icon = ImageHelper.GetIcon(item.Icon);
+            var icon = ImageHelper.GetGameIcon(item.Icon);
             var name = item.Name.ExtractText();
             ImGuiOm.TextImage(name, icon.ImGuiHandle, ScaledVector2(24f));
 

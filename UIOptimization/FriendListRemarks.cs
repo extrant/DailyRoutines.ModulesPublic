@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
+using DailyRoutines.Managers;
 using DailyRoutines.Modules;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -22,11 +23,13 @@ public unsafe class FriendListRemarks : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
 
-    private static readonly ModifyInfoMenuItem ModifyInfoItem = new();
+    private static readonly ModifyInfoMenuItem   ModifyInfoItem = new();
     
     private static Config ModuleConfig = null!;
     
     private static readonly List<nint> Utf8Strings = [];
+    
+    private static readonly List<PlayerUsedNamesSubscriptionToken> Tokens = [];
 
     private static bool   IsNeedToOpen;
     private static ulong  ContentIDToModify;
@@ -70,8 +73,41 @@ public unsafe class FriendListRemarks : DailyModuleBase
         using var popup = ImRaii.Popup("ModifyPopup");
         if (!popup) return;
         
+        ImGui.AlignTextToFramePadding();
         ImGui.Text($"{LuminaWrapper.GetAddonText(9818)}: {NameToModify}");
+        
+        if (ImGui.IsItemHovered())
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+        if (ImGui.IsItemClicked())
+        {
+            ImGui.SetClipboardText($"{NameToModify}");
+            NotificationSuccess($"{GetLoc("CopiedToClipboard")}: {NameToModify}");
+        }
+        
         ImGuiOm.TooltipHover($"Content ID: {ContentIDToModify}");
+        
+        ImGui.SameLine();
+        if (ImGui.SmallButton(GetLoc("FriendListRemarks-ObtainUsedNames")))
+        {
+            var request = OnlineDataManager.GetRequest<PlayerUsedNamesRequest>();
+            Tokens.Add(request.Subscribe(ContentIDToModify, OnlineDataManager.GetWorldRegion(GameState.HomeWorld), data =>
+            {
+                if (data.Count == 0)
+                    Chat(GetLoc("FriendListRemarks-FriendUseNamesNotFound", NameToModify));
+                else
+                {
+                    Chat($"{GetLoc("FriendListRemarks-FriendUseNamesFound", NameToModify)}:");
+                    var counter = 1;
+                    foreach (var nameChange in data)
+                    {
+                        Chat($"{counter}. {nameChange.ChangedTime}:");
+                        Chat($"     {nameChange.BeforeName} -> {nameChange.AfterName}:");
+
+                        counter++;
+                    }
+                }
+            }));
+        }
 
         ImGui.Text($"{LuminaWrapper.GetAddonText(15207)}");
         ImGui.InputText("###NicknameInput", ref NicknameInput, 128);
@@ -126,6 +162,10 @@ public unsafe class FriendListRemarks : DailyModuleBase
             case AddonEvent.PreFinalize:
                 Utf8Strings.ForEach(x => ((Utf8String*)x)->Dtor(true));
                 Utf8Strings.Clear();
+                
+                var request = OnlineDataManager.GetRequest<PlayerUsedNamesRequest>();
+                Tokens.ForEach(x => request.Unsubscribe(x));
+                Tokens.Clear();
                 break;
         }
     }
@@ -209,14 +249,10 @@ public unsafe class FriendListRemarks : DailyModuleBase
     {
         public override string Name { get; protected set; } = GetLoc("FriendListRemarks-ContextMenuItemName");
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
-        {
-            if (args.AddonName         != "FriendList" || args.Target is not MenuTargetDefault target ||
-                target.TargetContentId == 0            || string.IsNullOrWhiteSpace(target.TargetName))
-                return false;
-            
-            return true;
-        }
+        public override bool IsDisplay(IMenuOpenedArgs args) =>
+            args is { AddonName: "FriendList", Target: MenuTargetDefault target } &&
+            target.TargetContentId != 0                                           &&
+            !string.IsNullOrWhiteSpace(target.TargetName);
 
         protected override void OnClicked(IMenuItemClickedArgs args)
         {

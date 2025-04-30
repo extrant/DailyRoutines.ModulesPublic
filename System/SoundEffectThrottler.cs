@@ -24,25 +24,24 @@ public class SoundEffectThrottler : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        PlaySoundEffectHook ??= 
-            DService.Hook.HookFromSignature<PlaySoundEffectDelegate>(PlaySoundEffectSig.Get(), PlaySoundEffectDetour);
+        PlaySoundEffectHook ??= PlaySoundEffectSig.GetHook<PlaySoundEffectDelegate>(PlaySoundEffectDetour);
         PlaySoundEffectHook.Enable();
     }
 
     public override void ConfigUI()
     {
         ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        ImGui.InputInt(Lang.Get("SoundEffectThrottler-Throttle"), ref ModuleConfig.Throttle, 0, 0);
+        ImGui.InputInt(GetLoc("SoundEffectThrottler-Throttle"), ref ModuleConfig.Throttle, 0, 0);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             ModuleConfig.Throttle = Math.Max(100, ModuleConfig.Throttle);
             SaveConfig(ModuleConfig);
         }
 
-        ImGuiOm.HelpMarker(Lang.Get("SoundEffectThrottler-ThrottleHelp", ModuleConfig.Throttle));
+        ImGuiOm.HelpMarker(GetLoc("SoundEffectThrottler-ThrottleHelp", ModuleConfig.Throttle));
 
         ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        ImGui.SliderInt(Lang.Get("SoundEffectThrottler-Volume"), ref ModuleConfig.Volume, 1, 3);
+        ImGui.SliderInt(GetLoc("SoundEffectThrottler-Volume"), ref ModuleConfig.Volume, 1, 3);
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
     }
@@ -52,7 +51,7 @@ public class SoundEffectThrottler : DailyModuleBase
         var se = sound - 36;
         switch (se)
         {
-            case <= 16 when Throttler.Throttle($"SoundEffectThorttler-{se}", ModuleConfig.Throttle):
+            case <= 16 when Throttler.Throttle($"SoundEffectThrottler-{se}", ModuleConfig.Throttle):
                 for (var i = 0; i < ModuleConfig.Volume; i++)
                     PlaySoundEffectHook.Original(sound, a2, a3, a4);
 
