@@ -113,7 +113,8 @@ public class AutoNotifyChaoticRaidBonus : DailyModuleBase
                 return;
 
             // 不在副本内且当前就在目标大区
-            if (!GameState.IsInInstanceArea && GameState.CurrentDataCenterData.Name.ExtractText() == dcName)
+            if (DService.ClientState.IsLoggedIn && !GameState.IsInInstanceArea && 
+                GameState.CurrentDataCenterData.Name.ExtractText() == dcName)
             {
                 var isBonusNow = GameState.IsChaoticRaidBonusActive;
                 if (isBonusNow)
