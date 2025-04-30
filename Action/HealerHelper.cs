@@ -926,7 +926,8 @@ public class HealerHelper : DailyModuleBase
             // skip member out of range for this action
             var maxDistance = ActionManager.GetActionRange(37023);
             var memberDead  = candidate.GameObject.IsDead || candidate.CurrentHP <= 0;
-            if (memberDead || Vector3.Distance(candidate.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance)
+            if (memberDead || 
+                Vector3.DistanceSquared(candidate.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                 continue;
 
             return member.id;
@@ -993,7 +994,8 @@ public class HealerHelper : DailyModuleBase
         {
             var maxDistance = ActionManager.GetActionRange(actionID);
             var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
-            if (memberDead || Vector3.Distance(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance)
+            if (memberDead || 
+                Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                 continue;
 
             var ratio = member.CurrentHP / (float)member.MaxHP;
@@ -1014,7 +1016,7 @@ public class HealerHelper : DailyModuleBase
 
         // first dispel local player
         var localPlayer       = DService.ObjectTable.LocalPlayer;
-        var localPlayerStatus = localPlayer.ToStruct()->StatusManager.Status;
+        var localPlayerStatus = localPlayer.StatusList;
         foreach (var status in localPlayerStatus)
             if (DispellableStatus.ContainsKey(status.StatusId))
                 return localPlayer.EntityId;
@@ -1027,7 +1029,8 @@ public class HealerHelper : DailyModuleBase
         {
             var maxDistance = ActionManager.GetActionRange(7568);
             var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
-            if (memberDead || Vector3.Distance(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance)
+            if (memberDead || 
+                Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                 continue;
 
             foreach (var status in member.Statuses)
@@ -1050,7 +1053,8 @@ public class HealerHelper : DailyModuleBase
         {
             var maxDistance = ActionManager.GetActionRange(actionID);
             var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
-            if (memberDead && Vector3.Distance(member.Position, DService.ClientState.LocalPlayer.Position) <= maxDistance)
+            if (memberDead && 
+                Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) <= maxDistance * maxDistance)
                 return member.ObjectId;
         }
 
