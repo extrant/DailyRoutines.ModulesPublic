@@ -1,4 +1,5 @@
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -11,14 +12,14 @@ public unsafe class AutoStellarSprint : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoStellarSprintTitle"), // 自动月球冲刺
+        Title       = GetLoc("AutoStellarSprintTitle"), // 自动月球冲刺
         Description = GetLoc("AutoStellarSprintDescription"),
-        Category = ModuleCategories.Action,
-        Author = ["Due"]
+        Category    = ModuleCategories.Action,
+        Author      = ["Due"]
     };
 
-    private static readonly uint StellarSprint = 43357;
-    private static readonly uint SprintStatus = 4398;
+    private const uint StellarSprint = 43357;
+    private const uint SprintStatus  = 4398;
 
     public override void Init()
     {
@@ -33,33 +34,41 @@ public unsafe class AutoStellarSprint : DailyModuleBase
         TaskHelper.Abort();
         FrameworkManager.Unregister(OnFrameworkUpdate);
 
-        if (!LuminaGetter.TryGetRow<TerritoryType>(zone, out var Item)) return;
-        if (Item.TerritoryIntendedUse.RowId == 60)
-            FrameworkManager.Register(OnFrameworkUpdate, throttleMS: 2_000);
+        if (!LuminaGetter.TryGetRow<TerritoryType>(zone, out var zoneData) || zoneData is not { TerritoryIntendedUse.RowId: 60 }) return;
+        FrameworkManager.Register(OnFrameworkUpdate, throttleMS: 2_000);
     }
 
     private void OnFrameworkUpdate(IFramework _)
     {
         TaskHelper.Abort();
-        TaskHelper.Enqueue(UseSpirit);
+        TaskHelper.Enqueue(UseSprint);
     }
 
-    private static bool? UseSpirit()
+    private bool? UseSprint()
     {
+        if (!IsScreenReady() || BetweenAreas || OccupiedInEvent) return false;
+
+        if (GameState.TerritoryIntendedUse != 60)
+        {
+            FrameworkManager.Unregister(OnFrameworkUpdate);
+            return true;
+        }
+        
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return false;
-        var JobCategory = LuminaGetter.GetRow<ClassJob>(localPlayer->ClassJob)?.ClassJobCategory.RowId;
-        if (JobCategory != 32 && JobCategory != 33) return true;
-        if (!IsScreenReady() || BetweenAreas) return false;
-        if (GameMain.Instance()->CurrentTerritoryIntendedUseId != 60) return true;
         if (localPlayer->StatusManager.HasStatus(SprintStatus)) return true;
-
-        return UseActionManager.UseAction(ActionType.Action, StellarSprint);
+        
+        var jobCategory = LuminaGetter.GetRow<ClassJob>(localPlayer->ClassJob)?.ClassJobCategory.RowId;
+        if (jobCategory is not (32 or 33)) return true;
+        
+        return UseActionManager.UseActionLocation(ActionType.Action, StellarSprint);
     }
 
     public override void Uninit()
     {
         FrameworkManager.Unregister(OnFrameworkUpdate);
         DService.ClientState.TerritoryChanged -= OnTerritoryChange;
+        
+        base.Uninit();
     }
 }
