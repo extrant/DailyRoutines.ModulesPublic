@@ -652,7 +652,7 @@ public class HealerHelper : DailyModuleBase
         if (type != ActionType.Action || DService.ClientState.IsPvP || DService.PartyList.Length < 2) return;
 
         // precheck
-        var localPlayer = DService.ClientState.LocalPlayer;
+        var localPlayer = DService.ObjectTable.LocalPlayer;
         var isHealer    = localPlayer.ClassJob.Value.Role is 4;
 
         // healer related
@@ -1054,7 +1054,7 @@ public class HealerHelper : DailyModuleBase
             var maxDistance = ActionManager.GetActionRange(actionID);
             var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
             if (memberDead && 
-                Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) <= maxDistance * maxDistance)
+                Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance)
                 return member.ObjectId;
         }
 
