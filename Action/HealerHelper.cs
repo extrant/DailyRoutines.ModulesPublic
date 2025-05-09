@@ -48,7 +48,7 @@ public class HealerHelper : DailyModuleBase
 
         Task.Run(async () => await FetchRemoteVersion());
 
-        UseActionManager.Register(OnPreUseAction);
+        UseActionManager.RegPreUseActionLocation(OnPreUseAction);
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
         DService.Condition.ConditionChange    += OnConditionChanged;
@@ -57,7 +57,7 @@ public class HealerHelper : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPreUseAction);
+        UseActionManager.UnregPreUseActionLocation(OnPreUseAction);
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
         DService.Condition.ConditionChange    -= OnConditionChanged;

@@ -47,17 +47,17 @@ public unsafe class PetSizeContextMenu : DailyModuleBase
             new()
             {
                 Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6371)!.Value.Text.ExtractText()}",
-                OnClicked = _ => ChatHelper.Instance.SendMessage("/petsize all large")
+                OnClicked = _ => ChatHelper.SendMessage("/petsize all large")
             },
             new()
             {
                 Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6372)!.Value.Text.ExtractText()}",
-                OnClicked = _ => ChatHelper.Instance.SendMessage("/petsize all medium")
+                OnClicked = _ => ChatHelper.SendMessage("/petsize all medium")
             },
             new()
             {
                 Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6373)!.Value.Text.ExtractText()}",
-                OnClicked = _ => ChatHelper.Instance.SendMessage("/petsize all small")
+                OnClicked = _ => ChatHelper.SendMessage("/petsize all small")
             }
         ];
 

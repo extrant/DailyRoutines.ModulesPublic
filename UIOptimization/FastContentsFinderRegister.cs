@@ -115,8 +115,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                             {
                                 if (ImGui.ImageButton(joinTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
                                 {
-                                    ChatHelper.Instance.SendMessage($"/pdrduty {(currentTab == 0 ? "r" : "n")} {name}");
-                                    ChatHelper.Instance.SendMessage($"/pdrduty {(currentTab != 0 ? "r" : "n")} {name}");
+                                    ChatHelper.SendMessage($"/pdrduty {(currentTab == 0 ? "r" : "n")} {name}");
+                                    ChatHelper.SendMessage($"/pdrduty {(currentTab != 0 ? "r" : "n")} {name}");
                                 }                                
                                 ImGuiOm.TooltipHover($"{sharedPrefix}");
                             }
@@ -129,7 +129,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                                     {
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(explorerTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
-                                            ChatHelper.Instance.SendMessage($"/pdrduty n {name} explorer");
+                                            ChatHelper.SendMessage($"/pdrduty n {name} explorer");
                                         ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaGetter.GetRow<Addon>(13038)!.Value.Text.ExtractText()})");
                                     }
                                 }
@@ -139,7 +139,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                                     {
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(unrestTexture.GetWrapOrEmpty().ImGuiHandle, new(lineHeight)))
-                                            ChatHelper.Instance.SendMessage($"/pdrduty n {name} unrest");
+                                            ChatHelper.SendMessage($"/pdrduty n {name} unrest");
                                         ImGuiOm.TooltipHover($"{sharedPrefix} ({LuminaGetter.GetRow<Addon>(10008)!.Value.Text.ExtractText()})\n" +
                                                              $"[{GetLoc("FastContentsFinderRegister-HoldConflictKeyToToggle")}]");
                                     }

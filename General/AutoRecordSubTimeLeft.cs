@@ -37,7 +37,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         TaskHelper   ??= new();
 
         Entry         ??= DService.DtrBar.Get("DailyRoutines-GameTimeLeft");
-        Entry.OnClick =   () => ChatHelper.Instance.SendMessage($"/pdr search {GetType().Name}");
+        Entry.OnClick =   () => ChatHelper.SendMessage($"/pdr search {GetType().Name}");
 
         RefreshEntry();
 

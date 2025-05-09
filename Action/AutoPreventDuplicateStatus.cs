@@ -163,7 +163,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         SaveConfig(ModuleConfig);
 
-        UseActionManager.Register(OnPreUseAction);
+        UseActionManager.RegPreUseAction(OnPreUseAction);
     }
 
     public override void ConfigUI()
@@ -298,7 +298,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPreUseAction);
+        UseActionManager.UnregPreUseAction(OnPreUseAction);
         NotificationThrottler.Clear();
     }
 
