@@ -11,8 +11,6 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <TargetFramework>net8.0-windows</TargetFramework>
-        <Platforms>AnyCPU</Platforms>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
