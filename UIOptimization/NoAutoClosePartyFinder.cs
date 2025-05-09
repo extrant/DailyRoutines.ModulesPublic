@@ -1,8 +1,8 @@
-using DailyRoutines.Abstracts;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System;
-using Dalamud.Hooking;
+using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
+using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -10,24 +10,23 @@ public unsafe class NoAutoClosePartyFinder : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("NoAutoClosePartyFinderTitle", "防止招募板自动关闭"),
-        Description = GetLoc("NoAutoClosePartyFinderDescription", "当小队成员变化时阻止招募板自动关闭。"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["Nyy", "YLCHEN"]
+        Title       = GetLoc("NoAutoClosePartyFinderTitle"),
+        Description = GetLoc("NoAutoClosePartyFinderDescription"),
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["Nyy", "YLCHEN"]
     };
 
-    private delegate void LookingForGroupHideDelegate(AgentLookingForGroup* thisPtr);
+    private delegate        void                               LookingForGroupHideDelegate(AgentLookingForGroup* agent);
+    private static readonly CompSig                            LookingForGroupHideSig = new("48 89 5C 24 ?? 57 48 83 EC 20 83 A1 ?? ?? ?? ?? ??");
+    private static          Hook<LookingForGroupHideDelegate>? LookingForGroupHideHook;
 
-    private static readonly CompSig LookingForGroupHideSig = new("48 89 5C 24 ?? 57 48 83 EC 20 83 A1 ?? ?? ?? ?? ??");
-
-    private static Hook<LookingForGroupHideDelegate>? LookingForGroupHideHook;
-
-    private static DateTime HookEndsAt;
+    private static DateTime LastPartyMemberChangeTime;
+    private static DateTime LastViewTime;
 
     public override void Init()
     {
         LookingForGroupHideHook = LookingForGroupHideSig.GetHook<LookingForGroupHideDelegate>(LookingForGroupHideDetour);
-        LookingForGroupHideHook?.Enable();
+        LookingForGroupHideHook.Enable();
 
         LogMessageManager.Register(OnPreReceiveMessage);
     }
@@ -35,16 +34,30 @@ public unsafe class NoAutoClosePartyFinder : DailyModuleBase
     private static void OnPreReceiveMessage(ref bool isPrevented, ref uint logMessageID)
     {
         if (logMessageID != 947) return;
-
+        
         isPrevented = true;
-        HookEndsAt = DateTime.UtcNow.AddSeconds(1);
+        
+        LastPartyMemberChangeTime = DateTime.UtcNow.AddSeconds(1);
+        if (IsAddonAndNodesReady(LookingForGroupDetail))
+            LastViewTime = DateTime.UtcNow.AddSeconds(1);
     }
 
-    private static void LookingForGroupHideDetour(AgentLookingForGroup* thisPtr)
+    private static void LookingForGroupHideDetour(AgentLookingForGroup* agent)
     {
-        if (DateTime.UtcNow < HookEndsAt) return;
+        if (DateTime.UtcNow < LastPartyMemberChangeTime)
+        {
+            if (DateTime.UtcNow < LastViewTime)
+            {
+                if (IsAddonAndNodesReady(LookingForGroupDetail))
+                    LookingForGroupDetail->Close(true);
 
-        LookingForGroupHideHook?.Original(thisPtr);
+                DService.Framework.RunOnTick(() => agent->OpenListing(agent->LastViewedListing.ListingId), TimeSpan.FromMilliseconds(100));
+            }
+            
+            return;
+        }
+        
+        LookingForGroupHideHook.Original(agent); 
     }
 
     public override void Uninit()
