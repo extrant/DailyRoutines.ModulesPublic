@@ -22,7 +22,7 @@ public unsafe class AutoDance : DailyModuleBase
     {
         TaskHelper ??= new TaskHelper { TimeLimitMS = 5_000 };
 
-        UseActionManager.Register(OnPostUseAction);
+        UseActionManager.RegUseActionLocation(OnPostUseAction);
     }
 
     private void OnPostUseAction(
@@ -62,7 +62,7 @@ public unsafe class AutoDance : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPostUseAction);
+        UseActionManager.UnregUseActionLocation(OnPostUseAction);
 
         TaskHelper?.Abort();
         TaskHelper = null;

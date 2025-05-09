@@ -18,7 +18,7 @@ public unsafe class AutoEnableAttack : DailyModuleBase
 
     public override void Init()
     {
-        UseActionManager.Register(OnPostUseAction);
+        UseActionManager.RegUseAction(OnPostUseAction);
     }
 
     private static void OnPostUseAction(
@@ -35,6 +35,6 @@ public unsafe class AutoEnableAttack : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPostUseAction);
+        UseActionManager.UnregUseAction(OnPostUseAction);
     }
 }

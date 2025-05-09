@@ -19,7 +19,7 @@ public unsafe class AutoManageInterruptAction : DailyModuleBase
     
     public override void Init()
     {
-        UseActionManager.Register(OnPreUseAction);
+        UseActionManager.RegPreUseAction(OnPreUseAction);
     }
 
     private static void OnPreUseAction(
@@ -35,6 +35,6 @@ public unsafe class AutoManageInterruptAction : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPreUseAction);
+        UseActionManager.UnregPreUseAction(OnPreUseAction);
     }
 }

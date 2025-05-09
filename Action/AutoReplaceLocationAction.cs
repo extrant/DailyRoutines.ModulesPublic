@@ -60,7 +60,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        UseActionManager.Register(OnPreUseActionLocation);
+        UseActionManager.RegPreUseActionLocation(OnPreUseActionLocation);
         ExecuteCommandManager.Register(OnPreExecuteCommandComplexLocation);
 
         ParseActionCommandArgHook ??=
@@ -407,7 +407,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
     public override void Uninit()
     {
-        UseActionManager.Unregister(OnPreUseActionLocation);
+        UseActionManager.UnregPreUseActionLocation(OnPreUseActionLocation);
         ExecuteCommandManager.Unregister(OnPreExecuteCommandComplexLocation);
 
         base.Uninit();

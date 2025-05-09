@@ -27,7 +27,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
         ModuleConfig ??= new Config();
         TaskHelper   ??= new TaskHelper { TimeLimitMS = 8_000 };
         
-        UseActionManager.Register(OnUseAction);
+        UseActionManager.RegUseActionLocation(OnUseAction);
     }
 
     private void OnUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam)
@@ -61,7 +61,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
     {
         base.Uninit();
         
-        UseActionManager.Unregister(OnUseAction);
+        UseActionManager.UnregUseActionLocation(OnUseAction);
     }
 
     public class Config : ModuleConfiguration
