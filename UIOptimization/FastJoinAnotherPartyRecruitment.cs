@@ -87,7 +87,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
                 if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
                 if (!IsInAnyParty()) return true;
                 
-                ChatHelper.Instance.SendMessage("/leave");
+                ChatHelper.SendMessage("/leave");
                 return !IsInAnyParty();
             });
         }

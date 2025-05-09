@@ -144,7 +144,7 @@ public class AutoSortItems : DailyModuleBase
         SendSortCondition("armourychest", "id", ModuleConfig.ArmouryChestId);
         SendSortCondition("armourychest", "itemlevel", ModuleConfig.ArmouryItemLevel);
         SendSortCondition("armourychest", "category", ModuleConfig.ArmouryCategory);
-        ChatHelper.Instance.SendMessage("/itemsort execute armourychest");
+        ChatHelper.SendMessage("/itemsort execute armourychest");
 
         SendSortCondition("inventory", "hq", ModuleConfig.InventoryHq);
         SendSortCondition("inventory", "id", ModuleConfig.InventoryId);
@@ -152,9 +152,9 @@ public class AutoSortItems : DailyModuleBase
         SendSortCondition("inventory", "category", ModuleConfig.InventoryCategory);
 
         if (ModuleConfig.InventoryTab == 0)
-            ChatHelper.Instance.SendMessage("/itemsort condition inventory tab");
+            ChatHelper.SendMessage("/itemsort condition inventory tab");
 
-        ChatHelper.Instance.SendMessage("/itemsort execute inventory");
+        ChatHelper.SendMessage("/itemsort execute inventory");
 
         if (ModuleConfig.SendNotification)
             NotificationInfo(GetLoc("AutoSortItems-SortMessage"));
@@ -164,7 +164,7 @@ public class AutoSortItems : DailyModuleBase
         return true;
 
         void SendSortCondition(string target, string condition, int setting)
-            => ChatHelper.Instance.SendMessage($"/itemsort condition {target} {condition} {sortOptionsCommand[setting]}");
+            => ChatHelper.SendMessage($"/itemsort condition {target} {condition} {sortOptionsCommand[setting]}");
     }
 
     public class Config : ModuleConfiguration

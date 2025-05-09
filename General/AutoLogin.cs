@@ -262,7 +262,7 @@ public unsafe class AutoLogin : DailyModuleBase
 
         if (SelectYesno == null)
         {
-            ChatHelper.Instance.SendMessage("/logout");
+            ChatHelper.SendMessage("/logout");
             return false;
         }
 
