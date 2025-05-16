@@ -5,6 +5,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using DailyRoutines.Widgets;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
@@ -15,11 +16,10 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title           = "自动记录状态效果消失情况",
-        Description     = "自动记录他人身上来自自身的状态效果的存续情况, 并在他人主动点掉状态效果时发送通知信息提醒",
+        Title           = GetLoc("AutoTrackStatusOffTitle"),
+        Description     = GetLoc("AutoTrackStatusOffDescription"),
         Category        = ModuleCategories.Combat,
-        Author          = ["Fragile"],
-        ModulesConflict = []
+        Author          = ["Fragile"]
     };
 
     private const float TimeThreshold = 0.2f;
@@ -37,13 +37,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
         StatusSelectCombo ??= new("Status", LuminaGetter.Get<Status>().Where(x => !string.IsNullOrEmpty(x.Name.ExtractText())));
 
         if (ModuleConfig.StatusToMonitor.Count > 0)
-        {
-            StatusSelectCombo.SelectedStatuses = ModuleConfig.StatusToMonitor
-                                                             .Distinct()
-                                                             .Select(x => LuminaGetter.GetRow<Status>(x).GetValueOrDefault())
-                                                             .Where(x => x.RowId != 0)
-                                                             .ToHashSet();
-        }
+            StatusSelectCombo.SelectedStatusIDs = ModuleConfig.StatusToMonitor.ToHashSet();
 
         PlayerStatusManager.RegGainStatus(OnGainStatus);
         PlayerStatusManager.RegLoseStatus(OnLoseStatus);
@@ -56,10 +50,10 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
         
         ImGui.NewLine();
         
-        if (ImGui.Checkbox("仅监控选定的状态效果", ref ModuleConfig.IsOnlyTrackSpecific))
+        if (ImGui.Checkbox(GetLoc("AutoTrackStatusOff-OnlyTrackSpecific"), ref ModuleConfig.OnlyTrackSpecific))
             SaveConfig(ModuleConfig);
 
-        if (ModuleConfig.IsOnlyTrackSpecific)
+        if (ModuleConfig.OnlyTrackSpecific)
         {
             if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.FileImport, GetLoc("Import")))
             {
@@ -94,7 +88,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     private static void OnGainStatus(BattleChara* player, ushort statusID, ushort param, ushort stackCount, TimeSpan remainingTime, ulong sourceID)
     {
         if (player == null || remainingTime.TotalSeconds <= 0) return;
-        if (ModuleConfig.IsOnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
+        if (ModuleConfig.OnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
         
         // 不是自己给的 Status 不记录
         if (sourceID != GameState.EntityID) return;
@@ -104,7 +98,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     private static void OnLoseStatus(BattleChara* player, ushort statusID, ushort param, ushort stackCount, ulong sourceID)
     {
         if (player == null) return;
-        if (ModuleConfig.IsOnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
+        if (ModuleConfig.OnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
         
         // 不是自己给的 Status 不判断
         if (sourceID != GameState.EntityID) return;
@@ -117,11 +111,12 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
             // 死了当然全没了啊
             if (actualDuration < expectedDuration * TimeThreshold && !player->IsDead())
             {
+                var job = LuminaGetter.GetRow<ClassJob>(player->ClassJob).GetValueOrDefault();
                 if (ModuleConfig.SendChat)
                 {
-                    Chat($"状态效果 {LuminaWrapper.GetStatusName(statusID)} 提前消失\n"          +
-                         $"预期存续: {expectedDuration:F1} 秒, 实际存续: {actualDuration:F1} 秒\n" +
-                         $"目标玩家: {player->NameString} ({LuminaWrapper.GetJobName(player->ClassJob)})");
+                    Chat(GetSLoc("AutoTrackStatusOff-Notification",
+                                 LuminaWrapper.GetStatusName(statusID),                    statusID,               $"{expectedDuration:F1}", $"{actualDuration:F1}",
+                                 new PlayerPayload(player->NameString, player->HomeWorld), job.ToBitmapFontIcon(), job.Name.ExtractText()));
                 }
             }
 
@@ -143,7 +138,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     {
         public bool SendChat = true;
         
-        public bool IsOnlyTrackSpecific;
+        public bool OnlyTrackSpecific;
 
         public HashSet<uint> StatusToMonitor = [];
     }
