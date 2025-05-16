@@ -49,9 +49,12 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
             SaveConfig(ModuleConfig);
         
         ImGui.NewLine();
-        
+
         if (ImGui.Checkbox(GetLoc("AutoTrackStatusOff-OnlyTrackSpecific"), ref ModuleConfig.OnlyTrackSpecific))
+        {
             SaveConfig(ModuleConfig);
+            Records.Clear();
+        }
 
         if (ModuleConfig.OnlyTrackSpecific)
         {
