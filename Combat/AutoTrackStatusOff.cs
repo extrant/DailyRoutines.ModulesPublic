@@ -34,7 +34,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         
-        StatusSelectCombo ??= new("Status", LuminaGetter.Get<Status>().Where(x => !string.IsNullOrEmpty(x.Name.ExtractText())));
+        StatusSelectCombo ??= new("Status", LuminaGetter.Get<Status>().Where(x => x.CanStatusOff && !string.IsNullOrEmpty(x.Name.ExtractText())));
 
         if (ModuleConfig.StatusToMonitor.Count > 0)
             StatusSelectCombo.SelectedStatusIDs = ModuleConfig.StatusToMonitor.ToHashSet();
@@ -92,6 +92,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     {
         if (player == null || remainingTime.TotalSeconds <= 0) return;
         if (ModuleConfig.OnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
+        if (!LuminaGetter.TryGetRow<Status>(statusID, out var status) || !status.CanStatusOff) return;
         
         // 不是自己给的 Status 不记录
         if (sourceID != GameState.EntityID) return;
@@ -102,6 +103,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
     {
         if (player == null) return;
         if (ModuleConfig.OnlyTrackSpecific && !ModuleConfig.StatusToMonitor.Contains(statusID)) return;
+        if (!LuminaGetter.TryGetRow<Status>(statusID, out var status) || !status.CanStatusOff) return;
         
         // 不是自己给的 Status 不判断
         if (sourceID != GameState.EntityID) return;
