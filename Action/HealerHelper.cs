@@ -801,10 +801,6 @@ public class HealerHelper : DailyModuleBase
 
         public void InitCustomCardOrder(string role = "All", string section = "All")
         {
-            Debug($"order: {config.CustomCardOrder.Melee["opener"]} (length: {config.CustomCardOrder.Melee["opener"].Length})");
-            foreach (var v in config.CustomCardOrder.Melee["opener"])
-                Debug($"order: {v}");
-
             // melee opener
             if (role is "Melee" or "All")
             {
@@ -822,10 +818,6 @@ public class HealerHelper : DailyModuleBase
                 if (section is "2m+" or "All")
                     config.CustomCardOrder.Range["2m+"] = config.DefaultCardOrder.Range["2m+"].ToArray();
             }
-
-            Debug($"order: {config.CustomCardOrder.Melee["opener"]} (length: {config.CustomCardOrder.Melee["opener"].Length})");
-            foreach (var v in config.CustomCardOrder.Melee["opener"])
-                Debug($"order: {v}");
 
             // reset order
             OrderCandidates();
