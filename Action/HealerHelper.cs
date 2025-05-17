@@ -972,7 +972,7 @@ public class HealerHelper : DailyModuleBase
                 var maxDistance = ActionManager.GetActionRange(37023);
                 var memberDead  = candidate.GameObject.IsDead || candidate.CurrentHP <= 0;
                 if (memberDead ||
-                    Vector3.DistanceSquared(candidate.Position, DService.ClientState.LocalPlayer.Position) > maxDistance * maxDistance)
+                    Vector3.DistanceSquared(candidate.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                     continue;
 
                 return member.id;
@@ -1125,7 +1125,7 @@ public class HealerHelper : DailyModuleBase
                 var maxDistance = ActionManager.GetActionRange(actionId);
                 var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
                 if (memberDead ||
-                    Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) > maxDistance * maxDistance)
+                    Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                     continue;
 
                 var ratio = member.CurrentHP / (float)member.MaxHP;
@@ -1144,7 +1144,7 @@ public class HealerHelper : DailyModuleBase
             var partyList = DService.PartyList;
 
             // first dispel local player
-            var localStatus = DService.ClientState.LocalPlayer.StatusList;
+            var localStatus = DService.ObjectTable.LocalPlayer.StatusList;
             foreach (var status in localStatus)
                 if (PresetSheet.DispellableStatuses.ContainsKey(status.StatusId))
                     return GameState.EntityID;
@@ -1158,7 +1158,7 @@ public class HealerHelper : DailyModuleBase
                 var maxDistance = ActionManager.GetActionRange(7568);
                 var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
                 if (memberDead ||
-                    Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) > maxDistance * maxDistance)
+                    Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) > maxDistance * maxDistance)
                     continue;
 
                 foreach (var status in member.Statuses)
@@ -1182,7 +1182,7 @@ public class HealerHelper : DailyModuleBase
                 var maxDistance = ActionManager.GetActionRange(actionId);
                 var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
                 if (memberDead &&
-                    Vector3.DistanceSquared(member.Position, DService.ClientState.LocalPlayer.Position) <= maxDistance * maxDistance)
+                    Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance)
                     return member.ObjectId;
             }
 
@@ -1214,7 +1214,7 @@ public class HealerHelper : DailyModuleBase
                             var firstTank       = sortedPartyList.FirstOrDefault(m => m.ClassJob.Value.Role == 1);
                             var maxDistance     = ActionManager.GetActionRange(actionId);
                             targetId = firstTank is not null &&
-                                       Vector3.DistanceSquared(firstTank.Position, DService.ClientState.LocalPlayer.Position) <= maxDistance * maxDistance
+                                       Vector3.DistanceSquared(firstTank.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance
                                            ? firstTank.ObjectId
                                            : GameState.EntityID;
                             break;
