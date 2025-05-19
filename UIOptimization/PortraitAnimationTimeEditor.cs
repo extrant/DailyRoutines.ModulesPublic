@@ -32,9 +32,7 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
     private static float Duration;
     private static int   FrameCount;
     private static float CurrentFrame;
-
-    private static float ComponentWidth = 100f;
-
+    
     public override void Init()
     {
         Overlay       ??= new(this);
@@ -68,7 +66,6 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
 
         var control = GetAnimationControl(PortraitChara);
 
-        ImGuiHelpers.CenterCursorFor(ComponentWidth);
         using (ImRaii.Group())
         {
             if (ImGuiOm.ButtonIcon("###LastTenFrame", FontAwesomeIcon.Backward, "-10"))
@@ -117,9 +114,8 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
                 UpdatePortraitCurrentFrame(CurrentFrame);
             }
         }
-        ComponentWidth = ImGui.GetItemRectSize().X;
 
-        ImGui.SetNextItemWidth(nodeState.Size.X - (4 * ImGui.GetStyle().ItemSpacing.X));
+        ImGui.SetNextItemWidth(MathF.Max(nodeState.Size.X - (4 * ImGui.GetStyle().ItemSpacing.X), 200f * GlobalFontScale));
         if (ImGui.SliderFloat("###TimestampSlider", ref CurrentFrame, 0f, FrameCount,
                               FrameCount < 100 ? $"%.3f / {FrameCount}" : $"%.2f / {FrameCount}"))
             UpdatePortraitCurrentFrame(CurrentFrame);
