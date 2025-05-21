@@ -118,11 +118,9 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
             {
                 var job = LuminaGetter.GetRow<ClassJob>(player->ClassJob).GetValueOrDefault();
                 if (ModuleConfig.SendChat)
-                {
                     Chat(GetSLoc("AutoTrackStatusOff-Notification",
                                  LuminaWrapper.GetStatusName(statusID),                    statusID,               $"{expectedDuration:F1}", $"{actualDuration:F1}",
                                  new PlayerPayload(player->NameString, player->HomeWorld), job.ToBitmapFontIcon(), job.Name.ExtractText()));
-                }
             }
 
             Records.Remove(statusID);

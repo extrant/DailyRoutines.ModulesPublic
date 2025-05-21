@@ -34,7 +34,8 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
     private nint HandlePricesDetour(InfoProxyItemSearch* infoProxy, void* unk1, void* unk2)
     {
         var result = HandlePricesHook.Original.Invoke(infoProxy, unk1, unk2);
-        if (result != 1) TaskHelper.Enqueue(RefreshPrices);
+        if (result != 1) 
+            TaskHelper.Enqueue(RefreshPrices);
 
         return result;
     }
@@ -47,11 +48,11 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
     }
 
     private static bool AddonItemSearchResultThrottled(AddonItemSearchResult* addon) =>
-        addon != null
-        && addon->ErrorMessage != null
-        && addon->ErrorMessage->AtkResNode.IsVisible()
-        && addon->HitsMessage != null
-        && !addon->HitsMessage->AtkResNode.IsVisible();
+        addon               != null                 &&
+        addon->ErrorMessage != null                 &&
+        addon->ErrorMessage->AtkResNode.IsVisible() &&
+        addon->HitsMessage != null                  &&
+        !addon->HitsMessage->AtkResNode.IsVisible();
 
     public override void Uninit()
     {

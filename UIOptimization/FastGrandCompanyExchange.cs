@@ -43,7 +43,8 @@ public class FastGrandCompanyExchange : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "GrandCompanyExchange", OnAddon);
-        if (IsAddonAndNodesReady(GrandCompanyExchange)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(GrandCompanyExchange)) 
+            OnAddon(AddonEvent.PostSetup, null);
 
         CommandManager.AddSubCommand(Command, new(OnCommand) { HelpMessage = GetLoc("FastGrandCompanyExchange-CommandHelp") });
     }

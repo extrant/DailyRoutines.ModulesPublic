@@ -38,7 +38,8 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
-        if (IsAddonAndNodesReady(PurifyItemSelector)) OnAddonList(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(PurifyItemSelector)) 
+            OnAddonList(AddonEvent.PostSetup, null);
 
         GameResourceManager.AddToBlacklist(typeof(AutoAetherialReduction), "chara/action/normal/item_action.tmb");
     }

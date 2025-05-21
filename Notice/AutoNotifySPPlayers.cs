@@ -225,8 +225,10 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalFontScale));
             RenderOnlineStatus(preset.OnlineStatus);
             if (ImGui.IsItemHovered())
+            {
                 using (ImRaii.Tooltip())
                     RenderOnlineStatus(preset.OnlineStatus, true);
+            }
 
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalFontScale));
@@ -354,7 +356,8 @@ public unsafe class AutoNotifySPPlayers : DailyModuleBase
             if (config.OnlineStatus.Count > 0)
                 checks[1] = config.OnlineStatus.Contains(chara->OnlineStatus);
 
-            if (config.Zone.Count > 0) checks[2] = config.Zone.Contains(DService.ClientState.TerritoryType);
+            if (config.Zone.Count > 0) 
+                checks[2] = config.Zone.Contains(DService.ClientState.TerritoryType);
 
             if (checks.All(x => x))
             {

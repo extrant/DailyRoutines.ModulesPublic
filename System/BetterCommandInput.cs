@@ -25,7 +25,7 @@ public unsafe class BetterCommandInput : DailyModuleBase
     private delegate void ProcessSendedChatDelegate(ShellCommandModule* module, Utf8String* message, UIModule* uiModule);
     private static   Hook<ProcessSendedChatDelegate>? ProcessSendedChatHook;
     
-    private static DateTime _lastChatTime = DateTime.MinValue;
+    private static DateTime lastChatTime = DateTime.MinValue;
 
     private static ShellCommandModule* shellCommandModule;
 
@@ -114,9 +114,7 @@ public unsafe class BetterCommandInput : DailyModuleBase
         handledMessage = string.Empty;
         if (shellCommandModule == null || !IsValid(command)) return false;
         if (ModuleConfig.IsAvoidingSpace)
-        {
             command = command.TrimStart(' ', '　');
-        }
 
         var spaceIndex = command.IndexOf(' ');
         if (spaceIndex == -1)
@@ -144,21 +142,24 @@ public unsafe class BetterCommandInput : DailyModuleBase
             str->Dtor(true);
         }
 
-        _lastChatTime = DateTime.Now;
+        lastChatTime = DateTime.Now;
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsValid(ReadOnlySpan<char> chars) =>
-        (DateTime.Now - _lastChatTime).TotalMilliseconds >= 500f && 
+        (DateTime.Now - lastChatTime).TotalMilliseconds >= 500f && 
         (ContainsUppercase(chars) || ContainsFullWidth(chars) || ContainsSpace(chars));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ContainsUppercase(ReadOnlySpan<char> chars)
     {
         foreach (var c in chars)
-            if (char.IsUpper(c)) return true;
-        
+        {
+            if (char.IsUpper(c)) 
+                return true;
+        }
+
         return false;
     }
 
@@ -166,7 +167,10 @@ public unsafe class BetterCommandInput : DailyModuleBase
     private static bool ContainsSpace(ReadOnlySpan<char> chars)
     {
         foreach (var c in chars)
-            if (c is ' ' or '　') return true;
+        {
+            if (c is ' ' or '　') 
+                return true;
+        }
 
         return false;
     }
@@ -175,7 +179,10 @@ public unsafe class BetterCommandInput : DailyModuleBase
     private static bool ContainsFullWidth(ReadOnlySpan<char> chars)
     {
         foreach (var c in chars)
-            if (c.IsFullWidth()) return true;
+        {
+            if (c.IsFullWidth()) 
+                return true;
+        }
 
         return false;
     }

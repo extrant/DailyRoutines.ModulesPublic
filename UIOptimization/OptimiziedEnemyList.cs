@@ -261,7 +261,8 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                 castTextNode->SetAlpha(0);
 
                 var castBackgroundNode = componentNode->Component->UldManager.SearchNodeById(5);
-                if (castBackgroundNode != null) castBackgroundNode->SetAlpha(0);
+                if (castBackgroundNode != null) 
+                    castBackgroundNode->SetAlpha(0);
             }
 
             var targetName = SanitizeSeIcon(targetNameTextNode->NodeText.ExtractText());
@@ -328,10 +329,12 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             UnlinkAndFreeTextNode(textNode, componentNode);
             
             var castTextNode = componentNode->Component->UldManager.SearchNodeById(4);
-            if (castTextNode != null) castTextNode->SetAlpha(255);
+            if (castTextNode != null) 
+                castTextNode->SetAlpha(255);
             
             var castBackgroundNode = componentNode->Component->UldManager.SearchNodeById(5);
-            if (castBackgroundNode != null) castBackgroundNode->SetAlpha(255);
+            if (castBackgroundNode != null) 
+                castBackgroundNode->SetAlpha(255);
         }
     }
 

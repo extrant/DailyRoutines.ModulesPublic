@@ -48,7 +48,8 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         ImGui.InputText("###DirectHitMessage", ref ModuleConfig.DirectHitPattern, 512);
-        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
+        if (ImGui.IsItemDeactivatedAfterEdit()) 
+            SaveConfig(ModuleConfig);
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoBroadcastActionHitInfo-CHHint")}:");
@@ -56,7 +57,8 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         ImGui.InputText("###CriticalHitMessage", ref ModuleConfig.CriticalHitPattern, 512);
-        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
+        if (ImGui.IsItemDeactivatedAfterEdit()) 
+            SaveConfig(ModuleConfig);
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoBroadcastActionHitInfo-DCHHint")}:");
@@ -64,7 +66,8 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         ImGui.InputText("###DirectCriticalHitMessage", ref ModuleConfig.DirectCriticalHitPattern, 512);
-        if (ImGui.IsItemDeactivatedAfterEdit()) SaveConfig(ModuleConfig);
+        if (ImGui.IsItemDeactivatedAfterEdit()) 
+            SaveConfig(ModuleConfig);
         
         ScaledDummy(5f);
         
@@ -222,11 +225,13 @@ public unsafe class AutoBroadcastActionHitInfo : DailyModuleBase
             {
                 case 32 or 64:
                     ContentHintBlue(message, 10);
-                    if (ModuleConfig.UseTTS) Speak(message);
+                    if (ModuleConfig.UseTTS) 
+                        Speak(message);
                     break;
                 case 96:
                     ContentHintRed(message, 10);
-                    if (ModuleConfig.UseTTS) Speak(message);
+                    if (ModuleConfig.UseTTS) 
+                        Speak(message);
                     break;
             }
         }

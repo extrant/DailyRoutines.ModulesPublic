@@ -135,7 +135,8 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                             if (row.RowId        == 0) continue;
                             if (row.UIForeground == 0) continue;
 
-                            if (counter % 5 == 0) ImGui.TableNextRow();
+                            if (counter % 5 == 0) 
+                                ImGui.TableNextRow();
                             ImGui.TableNextColumn();
                             
                             counter++;
@@ -335,7 +336,8 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                 if (insideTag)
                 {
                     newResult.Append(result[i]);
-                    if (result[i] == '>') insideTag = false;
+                    if (result[i] == '>') 
+                        insideTag = false;
 
                     continue;
                 }
@@ -345,23 +347,22 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                 {
                     // 找出连续被屏蔽的部分
                     var startPos = i;
-                    while (i + 1 < filtered.Length && filtered[i + 1] == '*' && result[i + 1] != '*') i++;
+                    while (i + 1 < filtered.Length && filtered[i + 1] == '*' && result[i + 1] != '*') 
+                        i++;
 
                     // 截取被屏蔽的词
                     var censoredWord = result.Substring(startPos, i - startPos + 1);
 
                     if (censoredWord.Length == 1 && IsChineseCharacter(censoredWord[0]))
-                    {
-                        // 单个汉字转拼音
                         newResult.Append(PinyinHelper.GetPinyin(censoredWord).ToLowerInvariant());
-                    }
                     else if (IsChineseString(censoredWord))
                     {
                         // 汉字词组加分隔符
                         for (var j = 0; j < censoredWord.Length; j++)
                         {
                             newResult.Append(censoredWord[j]);
-                            if (j < censoredWord.Length - 1) newResult.Append(ModuleConfig.Seperator);
+                            if (j < censoredWord.Length - 1) 
+                                newResult.Append(ModuleConfig.Seperator);
                         }
                     }
                     else
@@ -370,15 +371,13 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
                         for (var j = 0; j < censoredWord.Length; j++)
                         {
                             newResult.Append(censoredWord[j]);
-                            if (j < censoredWord.Length - 1) newResult.Append(ModuleConfig.Seperator);
+                            if (j < censoredWord.Length - 1) 
+                                newResult.Append(ModuleConfig.Seperator);
                         }
                     }
                 }
                 else
-                {
-                    // 未被屏蔽的部分保持原样
                     newResult.Append(result[i]);
-                }
             }
 
             result   = newResult.ToString();
@@ -411,7 +410,8 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             if (insideTag)
             {
                 result.Append(originalText[i].ToString());
-                if (originalText[i] == '>') insideTag = false;
+                if (originalText[i] == '>') 
+                    insideTag = false;
                 continue;
             }
             

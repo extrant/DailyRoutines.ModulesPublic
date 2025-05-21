@@ -23,7 +23,8 @@ public unsafe class AdventurerPlateThroughInspect : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CharacterInspect", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CharacterInspect", OnAddon);
-        if (IsAddonAndNodesReady(CharacterInspect)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(CharacterInspect)) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args) =>

@@ -53,7 +53,8 @@ public unsafe class AutoLogin : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "_TitleMenu", OnTitleMenu);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,  "Dialogue",   OnDialogue);
-        if (IsAddonAndNodesReady(TitleMenu)) OnTitleMenu(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(TitleMenu)) 
+            OnTitleMenu(AddonEvent.PostSetup, null);
 
         CommandManager.AddCommand(Command, new(OnCommand)
         {
@@ -133,10 +134,8 @@ public unsafe class AutoLogin : DailyModuleBase
                     if (worldNullable == null) continue;
                     var world = worldNullable.Value;
                     using (ImRaii.PushColor(ImGuiCol.Text, i % 2 == 0 ? ImGuiColors.TankBlue : ImGuiColors.DalamudWhite))
-                    {
                         ImGui.Selectable(
                             $"{i + 1}. {GetLoc("AutoLogin-LoginInfoDisplayText", world.Name.ExtractText(), world.DataCenter.Value.Name.ExtractText(), info.CharaIndex)}");
-                    }
 
                     using (var source = ImRaii.DragDropSource())
                     {
@@ -193,11 +192,13 @@ public unsafe class AutoLogin : DailyModuleBase
             if (combo)
             {
                 foreach (var mode in BehaviourModeLoc)
+                {
                     if (ImGui.Selectable(mode.Value, mode.Key == ModuleConfig.Mode))
                     {
                         ModuleConfig.Mode = mode.Key;
                         SaveConfig(ModuleConfig);
                     }
+                }
             }
         }
 
@@ -213,7 +214,8 @@ public unsafe class AutoLogin : DailyModuleBase
                                   : GetLoc("AutoLogin-HaveNotLogin"));
 
             ImGui.SameLine();
-            if (ImGui.SmallButton(GetLoc("Refresh"))) HasLoginOnce = false;
+            if (ImGui.SmallButton(GetLoc("Refresh"))) 
+                HasLoginOnce = false;
         }
 
         ImGui.Spacing();

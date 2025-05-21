@@ -209,9 +209,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
         if (originalName == "InventoryCrystalGrid" && 
             DService.GameConfig.UiConfig.TryGet("ItemInventryWindowSizeType", out uint itemInventryWindowSizeType) && 
             itemInventryWindowSizeType == 2)
-        {
             mappedName = "InventoryExpansion";
-        }
 
         if (!TryGetAddonByName(mappedName, out var unitBase))
         {
@@ -319,8 +317,10 @@ public unsafe class ScrollableTabs : DailyModuleBase
         {
             var numEnabledButtons = 0;
             foreach (ref var button in addon->Buttons)
+            {
                 if ((button.Value->AtkComponentButton.Flags & 0x40000) != 0)
                     numEnabledButtons++;
+            }
 
             var tabIndex = GetTabIndex(addon->TabIndex, numEnabledButtons);
 
@@ -399,7 +399,8 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         addon->SetTab(tabIndex);
 
-        for (var i = 0; i < addon->Tabs.Length; i++) addon->Tabs[i].Value->IsSelected = i == tabIndex;
+        for (var i = 0; i < addon->Tabs.Length; i++) 
+            addon->Tabs[i].Value->IsSelected = i == tabIndex;
     }
 
     private static void UpdateFateProgress(AddonFateProgress* addon)
@@ -443,14 +444,18 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
     private static void UpdateMountMinion(AddonMinionMountBase* addon)
     {
-        if (addon->CurrentView == AddonMinionMountBase.ViewType.Normal)
+        switch (addon->CurrentView)
         {
-            if (addon->TabController.TabIndex == 0 && WheelState < 0)
+            case AddonMinionMountBase.ViewType.Normal when addon->TabController.TabIndex == 0 && WheelState < 0:
                 addon->SwitchToFavorites();
-            else
+                break;
+            case AddonMinionMountBase.ViewType.Normal:
                 UpdateTabController((AtkUnitBase*)addon, &addon->TabController);
+                break;
+            case AddonMinionMountBase.ViewType.Favorites when WheelState > 0:
+                addon->TabController.CallbackFunction(0, (AtkUnitBase*)addon);
+                break;
         }
-        else if (addon->CurrentView == AddonMinionMountBase.ViewType.Favorites && WheelState > 0) addon->TabController.CallbackFunction(0, (AtkUnitBase*)addon);
     }
 
     private static void UpdateMJIMinionNoteBook(AddonMJIMinionNoteBook* addon)
@@ -556,8 +561,9 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         for (var i = 0; i < NumBuddyTabs; i++)
         {
-            var button                                           = addon->RadioButtons.GetPointer(i);
-            if (button->Value != null) button->Value->IsSelected = i == addon->TabIndex;
+            var button = addon->RadioButtons.GetPointer(i);
+            if (button->Value != null) 
+                button->Value->IsSelected = i == addon->TabIndex;
         }
     }
 
@@ -606,8 +612,9 @@ public unsafe class ScrollableTabs : DailyModuleBase
 
         for (var i = 0; i < addon->TabCount; i++)
         {
-            var button                                           = addon->Tabs.GetPointer(i);
-            if (button->Value != null) button->Value->IsSelected = i == addon->TabIndex;
+            var button = addon->Tabs.GetPointer(i);
+            if (button->Value != null) 
+                button->Value->IsSelected = i == addon->TabIndex;
         }
     }
 

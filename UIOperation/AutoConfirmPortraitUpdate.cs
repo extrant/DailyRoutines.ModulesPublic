@@ -21,7 +21,8 @@ public class AutoConfirmPortraitUpdate : DailyModuleBase
         SendNotification = GetConfig<bool>(nameof(SendNotification));
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "BannerPreview", OnAddon);
-        if (BannerPreview != null) OnAddon(AddonEvent.PostSetup, null);
+        if (BannerPreview != null) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -30,15 +31,13 @@ public class AutoConfirmPortraitUpdate : DailyModuleBase
             UpdateConfig(nameof(SendNotification), SendNotification);
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
+    private static unsafe void OnAddon(AddonEvent type, AddonArgs? args)
     {
         Callback(BannerPreview, true, 0);
         
-        if (SendNotification) NotificationSuccess(GetLoc("AutoConfirmPortraitUpdate-Notification"));
+        if (SendNotification) 
+            NotificationSuccess(GetLoc("AutoConfirmPortraitUpdate-Notification"));
     }
     
-    public override void Uninit()
-    {
-        DService.AddonLifecycle.UnregisterListener(OnAddon);
-    }
+    public override void Uninit() => DService.AddonLifecycle.UnregisterListener(OnAddon);
 }

@@ -145,9 +145,12 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         if (elapsedTime < TimeSpan.FromSeconds(4)) return;
         
         var message = GetLoc("AutoNotifyCutSceneEnd-NotificationMessage", $"{elapsedTime.TotalSeconds:F0}");
-        if (ModuleConfig.SendChat) Chat(message);
-        if (ModuleConfig.SendNotification) NotificationInfo(message);
-        if (ModuleConfig.SendTTS) Speak(message);
+        if (ModuleConfig.SendChat) 
+            Chat(message);
+        if (ModuleConfig.SendNotification) 
+            NotificationInfo(message);
+        if (ModuleConfig.SendTTS) 
+            Speak(message);
     }
 
     private class Config : ModuleConfiguration

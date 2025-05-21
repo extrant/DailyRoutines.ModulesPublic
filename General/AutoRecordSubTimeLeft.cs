@@ -149,7 +149,7 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
     {
         var size = Marshal.SizeOf(info);
         var arr = new byte[size];
-        var ptr = IntPtr.Zero;
+        var ptr = nint.Zero;
 
         try
         {
@@ -169,7 +169,8 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
     private static void RefreshEntry(ulong contentID = 0)
     {
-        if (contentID == 0) contentID = DService.ClientState.LocalContentId;
+        if (contentID == 0) 
+            contentID = DService.ClientState.LocalContentId;
         if (contentID == 0) return;
         
         if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||

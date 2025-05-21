@@ -29,7 +29,8 @@ public unsafe class AutoRefocus : DailyModuleBase
                 SetFocusTargetByObjectIDSig.Get(), SetFocusTargetByObjectIDDetour);
         SetFocusTargetByObjectIDHook.Enable();
 
-        if (BoundByDuty) OnZoneChange(DService.ClientState.TerritoryType);
+        if (BoundByDuty) 
+            OnZoneChange(DService.ClientState.TerritoryType);
         DService.ClientState.TerritoryChanged += OnZoneChange;
         FrameworkManager.Register(OnUpdate, throttleMS: 1000);
     }

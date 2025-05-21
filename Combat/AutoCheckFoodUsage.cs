@@ -91,7 +91,8 @@ public class AutoCheckFoodUsage : DailyModuleBase
                     {
                         if (combo.Success)
                         {
-                            if (ImGui.IsWindowAppearing()) ConditionSearch = string.Empty;
+                            if (ImGui.IsWindowAppearing()) 
+                                ConditionSearch = string.Empty;
 
                             ImGui.SetNextItemWidth(-1f);
                             ImGui.InputTextWithHint("###ConditionBeginSearch", GetLoc("PleaseSearch"),
@@ -128,7 +129,8 @@ public class AutoCheckFoodUsage : DailyModuleBase
                     {
                         if (combo.Success)
                         {
-                            if (ImGui.IsWindowAppearing()) ConditionSearch = string.Empty;
+                            if (ImGui.IsWindowAppearing()) 
+                                ConditionSearch = string.Empty;
 
                             ImGui.SetNextItemWidth(-1f);
                             ImGui.InputTextWithHint("###ConditionEndSearch", GetLoc("PleaseSearch"),
@@ -219,9 +221,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
                                               if (ImGuiOm.SelectableImageWithText(icon.ImGuiHandle, ScaledVector2(20f),
                                                                                   x.Name.ExtractText(), x.RowId == SelectedItem,
                                                                                   ImGuiSelectableFlags.DontClosePopups))
-                                              {
                                                   SelectedItem = SelectedItem == x.RowId ? 0 : x.RowId;
-                                              }
                                           }
                                       ], [x => x.Name.ExtractText(), x => x.RowId.ToString()], true);
 
@@ -294,7 +294,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
             ImGui.TableNextColumn();
             var zones = preset.Zones;
             ImGui.SetNextItemWidth(-1f);
-            using (var id0 = ImRaii.PushId("ZonesSelectCombo"))
+            using (ImRaii.PushId("ZonesSelectCombo"))
             {
                 if (MultiSelectCombo(PresetSheet.Zones, ref zones, ref ZoneSearch,
                                      [

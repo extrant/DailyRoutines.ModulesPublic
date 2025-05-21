@@ -55,12 +55,9 @@ public class FriendlistTeleporter : DailyModuleBase
 
         protected override unsafe void OnClicked(IMenuItemClickedArgs args) => Telepo.Instance()->Teleport(aetheryteID, 0);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) => args.AddonName == "FriendList"
-                                                                && args.Target is MenuTargetDefault target
-                                                                && target.TargetCharacter is not null
-                                                                && GetAetheryteId(
-                                                                    target.TargetCharacter.Location.Value.RowId,
-                                                                    out aetheryteID);
+        public override bool IsDisplay(IMenuOpenedArgs args) =>
+            args is { AddonName : "FriendList", Target: MenuTargetDefault { TargetCharacter: not null } target } &&
+            GetAetheryteId(target.TargetCharacter.Location.Value.RowId, out aetheryteID);
 
         private static bool GetAetheryteId(uint zoneID, out uint aetheryteID)
         {

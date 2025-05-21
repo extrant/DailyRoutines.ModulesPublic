@@ -46,14 +46,19 @@ public class AutoConvertMapLink : DailyModuleBase
         {
             var pMessage = Marshal.ReadIntPtr(ret);
             var length   = 0;
-            while (Marshal.ReadByte(pMessage, length) != 0) length++;
+            
+            while (Marshal.ReadByte(pMessage, length) != 0) 
+                length++;
+            
             var message = new byte[length];
             Marshal.Copy(pMessage, message, 0, length);
 
             var parsed = SeString.Parse(message);
             foreach (var payload in parsed.Payloads)
+            {
                 if (payload is AutoTranslatePayload p && p.Encode()[3] == 0xC9 && p.Encode()[4] == 0x04)
                     return ret;
+            }
 
             for (var i = 0; i < parsed.Payloads.Count; i++)
             {
@@ -72,12 +77,15 @@ public class AutoConvertMapLink : DailyModuleBase
 
                 var rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value, CultureInfo.InvariantCulture), map.OffsetX, map.SizeFactor);
                 var rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture), map.OffsetY, map.SizeFactor);
-                if (match.Groups["instance"].Value != "") mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
+                if (match.Groups["instance"].Value != "") 
+                    mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
 
                 var newPayloads = new List<Payload>();
-                if (match.Index > 0) newPayloads.Add(new TextPayload(payload.Text[..match.Index]));
+                if (match.Index > 0) 
+                    newPayloads.Add(new TextPayload(payload.Text[..match.Index]));
                 newPayloads.Add(new PreMapLinkPayload(territoryId, mapId, rawX, rawY));
-                if (match.Index + match.Length < payload.Text.Length) newPayloads.Add(new TextPayload(payload.Text[(match.Index + match.Length)..]));
+                if (match.Index + match.Length < payload.Text.Length) 
+                    newPayloads.Add(new TextPayload(payload.Text[(match.Index + match.Length)..]));
                 parsed.Payloads.RemoveAt(i);
                 parsed.Payloads.InsertRange(i, newPayloads);
 

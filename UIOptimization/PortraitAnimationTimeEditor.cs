@@ -41,7 +41,8 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "BannerEditor", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "BannerEditor", OnAddon);
-        if (IsAddonAndNodesReady(BannerEditor)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(BannerEditor)) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()

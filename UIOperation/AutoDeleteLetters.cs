@@ -27,7 +27,8 @@ public unsafe class AutoDeleteLetters : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LetterList", OnAddonLetterList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LetterList", OnAddonLetterList);
 
-        if (LetterList != null) OnAddonLetterList(AddonEvent.PostSetup, null);
+        if (LetterList != null) 
+            OnAddonLetterList(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()
@@ -42,12 +43,15 @@ public unsafe class AutoDeleteLetters : DailyModuleBase
 
         ImGui.Separator();
 
-        ImGui.BeginDisabled(TaskHelper.IsBusy);
-        if (ImGui.Button(Lang.Get("Start"))) TaskHelper.Enqueue(RightClickLetter);
-        ImGui.EndDisabled();
-
+        using (ImRaii.Disabled(TaskHelper.IsBusy))
+        {
+            if (ImGui.Button(Lang.Get("Start"))) 
+                TaskHelper.Enqueue(RightClickLetter);
+        }
+        
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("Stop"))) TaskHelper.Abort();
+        if (ImGui.Button(Lang.Get("Stop"))) 
+            TaskHelper.Abort();
     }
 
     public bool? RightClickLetter()

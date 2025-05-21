@@ -30,7 +30,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "ContentsFinder", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "ContentsFinder", OnAddon);
-        if (ContentsFinder != null) OnAddon(AddonEvent.PostSetup, null);
+        if (ContentsFinder != null) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()

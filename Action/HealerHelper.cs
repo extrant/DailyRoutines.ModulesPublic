@@ -758,8 +758,8 @@ public class HealerHelper : DailyModuleBase
         // cache
         public HashSet<uint> PartyMemberIdsCache = []; // check party member changed or not
 
-        private readonly List<(uint id, double priority)> _meleeCandidateOrder = [];
-        private readonly List<(uint id, double priority)> _rangeCandidateOrder = [];
+        private readonly List<(uint id, double priority)> meleeCandidateOrder = [];
+        private readonly List<(uint id, double priority)> rangeCandidateOrder = [];
 
         public bool IsOpener;
         public bool NeedReorder;
@@ -826,8 +826,8 @@ public class HealerHelper : DailyModuleBase
         public void OrderCandidates()
         {
             // reset candidates before select new candidates
-            _meleeCandidateOrder.Clear();
-            _rangeCandidateOrder.Clear();
+            meleeCandidateOrder.Clear();
+            rangeCandidateOrder.Clear();
 
             // find card candidates
             var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
@@ -863,16 +863,16 @@ public class HealerHelper : DailyModuleBase
             for (var idx = 0; idx < meleeOrder.Length; idx++)
             {
                 var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == meleeOrder[idx]);
-                if (member is not null && _meleeCandidateOrder.All(m => m.id != member.ObjectId))
-                    _meleeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
+                if (member is not null && meleeCandidateOrder.All(m => m.id != member.ObjectId))
+                    meleeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
             }
 
             var rangeOrder = activateOrder.Range[sectionLabel];
             for (var idx = 0; idx < rangeOrder.Length; idx++)
             {
                 var member = partyList.FirstOrDefault(m => m.ClassJob.Value.NameEnglish == rangeOrder[idx]);
-                if (member is not null && _rangeCandidateOrder.All(m => m.id != member.ObjectId))
-                    _rangeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
+                if (member is not null && rangeCandidateOrder.All(m => m.id != member.ObjectId))
+                    rangeCandidateOrder.Add((member.ObjectId, 2 - (idx * 0.1)));
             }
 
             // adjust candidate priority based on FFLogs records (auto play card advance mode)
@@ -891,22 +891,22 @@ public class HealerHelper : DailyModuleBase
                         // update priority
                         case 1 or 2:
                         {
-                            var idx = _meleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
+                            var idx = meleeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                             if (idx != -1)
                             {
-                                var priority = _meleeCandidateOrder[idx].priority * scale;
-                                _meleeCandidateOrder[idx] = (member.ObjectId, priority);
+                                var priority = meleeCandidateOrder[idx].priority * scale;
+                                meleeCandidateOrder[idx] = (member.ObjectId, priority);
                             }
 
                             break;
                         }
                         case 3:
                         {
-                            var idx = _rangeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
+                            var idx = rangeCandidateOrder.FindIndex(m => m.id == member.ObjectId);
                             if (idx != -1)
                             {
-                                var priority = _rangeCandidateOrder[idx].priority * scale;
-                                _rangeCandidateOrder[idx] = (member.ObjectId, priority);
+                                var priority = rangeCandidateOrder[idx].priority * scale;
+                                rangeCandidateOrder[idx] = (member.ObjectId, priority);
                             }
 
                             break;
@@ -916,31 +916,31 @@ public class HealerHelper : DailyModuleBase
             }
 
             // fallback: select the first dps in party list
-            if (_meleeCandidateOrder.Count is 0)
+            if (meleeCandidateOrder.Count is 0)
             {
                 var firstRange = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is 1 or 3);
                 if (firstRange is not null)
-                    _meleeCandidateOrder.Add((firstRange.ObjectId, -5));
+                    meleeCandidateOrder.Add((firstRange.ObjectId, -5));
             }
 
-            if (_rangeCandidateOrder.Count is 0)
+            if (rangeCandidateOrder.Count is 0)
             {
                 var firstMelee = partyList.FirstOrDefault(m => m.ClassJob.Value.Role is 2);
                 if (firstMelee is not null)
-                    _rangeCandidateOrder.Add((firstMelee.ObjectId, -5));
+                    rangeCandidateOrder.Add((firstMelee.ObjectId, -5));
             }
 
             // sort candidates by priority
-            _meleeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
-            _rangeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
+            meleeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
+            rangeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
         }
 
         private uint FetchCandidateId(string role)
         {
             var candidates = role switch
             {
-                "Melee" => _meleeCandidateOrder,
-                "Range" => _rangeCandidateOrder,
+                "Melee" => meleeCandidateOrder,
+                "Range" => rangeCandidateOrder,
                 _ => throw new ArgumentOutOfRangeException(nameof(role))
             };
 
@@ -957,10 +957,10 @@ public class HealerHelper : DailyModuleBase
                     switch (role)
                     {
                         case "Melee":
-                            _meleeCandidateOrder[i] = (candidate.ObjectId, -2);
+                            meleeCandidateOrder[i] = (candidate.ObjectId, -2);
                             break;
                         case "Range":
-                            _rangeCandidateOrder[i] = (candidate.ObjectId, -2);
+                            rangeCandidateOrder[i] = (candidate.ObjectId, -2);
                             break;
                     }
 
@@ -1146,8 +1146,10 @@ public class HealerHelper : DailyModuleBase
             // first dispel local player
             var localStatus = DService.ClientState.LocalPlayer.StatusList;
             foreach (var status in localStatus)
+            {
                 if (PresetSheet.DispellableStatuses.ContainsKey(status.StatusId))
                     return GameState.EntityID;
+            }
 
             // dispel in order (or reverse order)
             var sortedPartyList = reverse
@@ -1162,8 +1164,10 @@ public class HealerHelper : DailyModuleBase
                     continue;
 
                 foreach (var status in member.Statuses)
+                {
                     if (PresetSheet.DispellableStatuses.ContainsKey(status.StatusId))
                         return member.ObjectId;
+                }
             }
 
             return UnspecificTargetId;

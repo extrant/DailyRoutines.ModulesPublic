@@ -95,9 +95,12 @@ public class AutoNotifyBonusFate : DailyModuleBase
             var chatMessage = GetSLoc("AutoNotifyBonusFate-Chat", fate.Name.ExtractText(), fate.Progress, SeString.CreateMapLink(zoneID, mapID, mapPos.X, mapPos.Y));
             var notificationMessage = GetLoc("AutoNotifyBonusFate-Notification", fate.Name.ExtractText(), fate.Progress);
 
-            if (ModuleConfig.SendChat) Chat(chatMessage);
-            if (ModuleConfig.SendNotification) NotificationInfo(notificationMessage);
-            if (ModuleConfig.SendTTS) Speak(notificationMessage);
+            if (ModuleConfig.SendChat) 
+                Chat(chatMessage);
+            if (ModuleConfig.SendNotification) 
+                NotificationInfo(notificationMessage);
+            if (ModuleConfig.SendTTS) 
+                Speak(notificationMessage);
 
             if (ModuleConfig.AutoOpenMap)
             {
@@ -105,7 +108,8 @@ public class AutoNotifyBonusFate : DailyModuleBase
                 var currentZoneMapID = instance->CurrentMapId;
                 instance->SelectedMapId = currentZoneMapID;
 
-                if (!instance->IsAgentActive()) instance->Show();
+                if (!instance->IsAgentActive()) 
+                    instance->Show();
                 instance->SetFlagMapMarker(DService.ClientState.TerritoryType, currentZoneMapID, fate.Position);
                 instance->OpenMap(currentZoneMapID, DService.ClientState.TerritoryType, fate.Name.ExtractText());
             }

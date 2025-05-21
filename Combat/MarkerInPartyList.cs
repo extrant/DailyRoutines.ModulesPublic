@@ -319,10 +319,13 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private void PartyListDrawHandle(AddonEvent type, AddonArgs args)
     {
-        if (!IsBuilt)
+        lock (Lock)
         {
-            InitImageNodes();
-            InitMarkedObject();
+            if (!IsBuilt)
+            {
+                InitImageNodes();
+                InitMarkedObject();
+            }
         }
 
         if (NeedClear && MarkedObject.Count is 0 && IsScreenReady())

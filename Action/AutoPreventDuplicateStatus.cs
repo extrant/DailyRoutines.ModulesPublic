@@ -278,7 +278,8 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
         var canTargetSelf = actionData.Value.CanTargetSelf;
         // 雪仇
-        if (adjustedActionID == 7535) canTargetSelf = false;
+        if (adjustedActionID == 7535) 
+            canTargetSelf = false;
 
         var gameObj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(targetID);
 

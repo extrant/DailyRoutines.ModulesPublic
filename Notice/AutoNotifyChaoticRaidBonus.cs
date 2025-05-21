@@ -147,9 +147,12 @@ public class AutoNotifyChaoticRaidBonus : DailyModuleBase
     {
         var text = GetLoc("AutoNotifyChaoticRaidBonus-Notification", dcName);
         
-        if (ModuleConfig.SendNotification) NotificationInfo(text);
-        if (ModuleConfig.SendChat) Chat(text);
-        if (ModuleConfig.SendTTS) Speak(text);
+        if (ModuleConfig.SendNotification) 
+            NotificationInfo(text);
+        if (ModuleConfig.SendChat) 
+            Chat(text);
+        if (ModuleConfig.SendTTS) 
+            Speak(text);
     }
 
     public override void Uninit() => FrameworkManager.Unregister(OnUpdate);

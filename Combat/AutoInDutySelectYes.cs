@@ -28,7 +28,8 @@ public class AutoInDutySelectYes : DailyModuleBase
         var currentZone = DService.ClientState.TerritoryType;
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        if (PresetSheet.Contents.ContainsKey(currentZone)) OnZoneChanged(currentZone);
+        if (PresetSheet.Contents.ContainsKey(currentZone)) 
+            OnZoneChanged(currentZone);
     }
 
     private static void OnZoneChanged(ushort zone)

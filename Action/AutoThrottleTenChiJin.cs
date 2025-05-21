@@ -44,9 +44,7 @@ public unsafe class AutoThrottleTenChiJin : DailyModuleBase
                 isPrevented = true;
         }
         else if (NinJiTsuActions.Contains(data->ID))
-        {
             UsedShinobiActions.Clear();
-        }
     }
 
     public override void Uninit() => GamePacketManager.Unregister(OnPreSendActionPacket);

@@ -87,7 +87,8 @@ public class AutoChakraFormShift : DailyModuleBase
         if (flag is not ConditionFlag.InCombat) return;
         TaskHelper.Abort();
 
-        if (!value) TaskHelper.Enqueue(CheckCurrentJob);
+        if (!value) 
+            TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 重新挑战

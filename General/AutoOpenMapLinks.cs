@@ -32,9 +32,9 @@ public class AutoOpenMapLinks : DailyModuleBase
 
     public class Config : ModuleConfiguration
     {
-        public HashSet<string> WhitelistPlayer = [];
+        public HashSet<string>      WhitelistPlayer  = [];
         public HashSet<XivChatType> WhitelistChannel = [];
-        public bool IsFlagCentered = false;
+        public bool                 IsFlagCentered;
     }
 
     public override void Init()
@@ -60,9 +60,8 @@ public class AutoOpenMapLinks : DailyModuleBase
     public override void ConfigUI()
     {
         if (ImGui.Checkbox(Lang.Get("AutoOpenMapLinks-AutoFocusFlag"), ref ModuleConfig.IsFlagCentered))
-        {
             ModuleConfig.Save(this);
-        }
+        
         ImGui.Spacing();
         using (ImRaii.PushId("PlayerWhitelist"))
         {
@@ -195,9 +194,7 @@ public class AutoOpenMapLinks : DailyModuleBase
     private static unsafe void SetFlag(uint territoryId, uint mapId, int x, int y)
     {
         if (!ModuleConfig.IsFlagCentered)
-        {
             DService.Gui.OpenMapWithMapLink(new(territoryId, mapId, x, y));
-        }
         else
         {
             var agentMap = AgentMap.Instance();
@@ -207,9 +204,7 @@ public class AutoOpenMapLinks : DailyModuleBase
             // MapLinkPayload里面的 RawX和 RawY 是worldPos * 1000
             if (agentMap == null) return;
             if (!agentMap->IsAgentActive() || agentMap->SelectedMapId != mapId)
-            {
                 agentMap->OpenMap(mapId, territoryId);
-            }
             agentMap->SetFlagMapMarker(territoryId, mapId, new Vector3(x / 1000f, 0f, y / 1000f));
         }
     }
@@ -242,7 +237,6 @@ public class AutoOpenMapLinks : DailyModuleBase
                     or "ContactList" or "ChatLog" or "_PartyList" or "LinkShell" or "CrossWorldLinkshell"
                     or "ContentMemberList" or "BeginnerChatList" or "CircleBook" =>
                     target.TargetName != string.Empty && PresetSheet.Worlds.ContainsKey(target.TargetHomeWorld.RowId),
-                "BlackList" or "MuteList" => false,
                 _ => false
             };
         }

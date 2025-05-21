@@ -59,7 +59,8 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanySupplyList", OnAddonSupplyList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "GrandCompanySupplyList", OnAddonSupplyList);
-        if (IsAddonAndNodesReady(GrandCompanySupplyList)) OnAddonSupplyList(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(GrandCompanySupplyList)) 
+            OnAddonSupplyList(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()
@@ -166,7 +167,8 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                                                  .FirstOrDefault(x => x.ObjectKind == ObjectKind.EventNpc && x.DataId == info.DataID)
                                                  .TargetInteract());
                 TaskHelper.Enqueue(() => ClickSelectString(0));
-                if (isAutoExchange) TaskHelper.Enqueue(EnqueueDelivery);
+                if (isAutoExchange) 
+                    TaskHelper.Enqueue(EnqueueDelivery);
             }
         }
     }

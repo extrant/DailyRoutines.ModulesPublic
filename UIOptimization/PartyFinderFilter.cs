@@ -230,8 +230,10 @@ public class PartyFinderFilter : DailyModuleBase
             return true; // 生产职业 / 基础职业
 
         foreach (var present in listing.JobsPresent)
+        {
             if (present.RowId == localPlayer.ClassJob.RowId)
                 return false;
+        }
 
         return true;
     }

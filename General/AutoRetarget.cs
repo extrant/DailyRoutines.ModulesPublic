@@ -103,9 +103,7 @@ public class AutoRetarget : DailyModuleBase
                 DService.Targets.Target ??= igo;
 
             if (ModuleConfig.MarkerTrack)
-            {
                 EnqueuePlaceFieldMarkers(igo.Position);
-            }
         }
     }
 

@@ -28,7 +28,8 @@ public class WeeklyBingoClickToOpen : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyBingo", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddon);
 
-        if (IsAddonAndNodesReady(WeeklyBingo)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(WeeklyBingo)) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void Uninit()

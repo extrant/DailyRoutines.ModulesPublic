@@ -34,7 +34,8 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyPuzzle", OnWeeklyPuzzleEvent);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
-        if (WeeklyPuzzle != null) OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
+        if (WeeklyPuzzle != null) 
+            OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
     }
 
     public override void ConfigUI()
@@ -110,48 +111,50 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
         var result    = new BoardState.Tile[BoardState.Width * BoardState.Height];
         var tileIndex = 0;
         for (var y = 0; y < BoardState.Height; ++y)
-        for (var x = 0; x < BoardState.Width; ++x)
         {
-            ref var tileState = ref result[tileIndex++];
-
-            var tileButton          = GetTileButton(addon, x, y);
-            var tileBackgroundImage = GetBackgroundImageNode(tileButton);
-            var tileIconImage       = GetIconImageNode(tileButton);
-            tileState = (WeeklyPuzzleTexture)tileBackgroundImage->PartId switch
+            for (var x = 0; x < BoardState.Width; ++x)
             {
-                WeeklyPuzzleTexture.Hidden  => BoardState.Tile.Hidden,
-                WeeklyPuzzleTexture.Blocked => BoardState.Tile.Blocked,
-                WeeklyPuzzleTexture.Blank => !tileIconImage->IsVisible()
-                                                 ? BoardState.Tile.Empty
-                                                 : (WeeklyPuzzlePrizeTexture)tileIconImage->PartId switch
-                                                 {
-                                                     WeeklyPuzzlePrizeTexture.BoxTL     => BoardState.Tile.BoxTL,
-                                                     WeeklyPuzzlePrizeTexture.BoxTR     => BoardState.Tile.BoxTR,
-                                                     WeeklyPuzzlePrizeTexture.BoxBL     => BoardState.Tile.BoxBL,
-                                                     WeeklyPuzzlePrizeTexture.BoxBR     => BoardState.Tile.BoxBR,
-                                                     WeeklyPuzzlePrizeTexture.ChestTL   => BoardState.Tile.ChestTL,
-                                                     WeeklyPuzzlePrizeTexture.ChestTR   => BoardState.Tile.ChestTR,
-                                                     WeeklyPuzzlePrizeTexture.ChestBL   => BoardState.Tile.ChestBL,
-                                                     WeeklyPuzzlePrizeTexture.ChestBR   => BoardState.Tile.ChestBR,
-                                                     WeeklyPuzzlePrizeTexture.SwordsTL  => BoardState.Tile.SwordsTL,
-                                                     WeeklyPuzzlePrizeTexture.SwordsTR  => BoardState.Tile.SwordsTR,
-                                                     WeeklyPuzzlePrizeTexture.SwordsML  => BoardState.Tile.SwordsML,
-                                                     WeeklyPuzzlePrizeTexture.SwordsMR  => BoardState.Tile.SwordsMR,
-                                                     WeeklyPuzzlePrizeTexture.SwordsBL  => BoardState.Tile.SwordsBL,
-                                                     WeeklyPuzzlePrizeTexture.SwordsBR  => BoardState.Tile.SwordsBR,
-                                                     WeeklyPuzzlePrizeTexture.Commander => BoardState.Tile.Commander,
-                                                     _                                  => BoardState.Tile.Unknown
-                                                 },
-                _ => BoardState.Tile.Unknown
-            };
+                ref var tileState = ref result[tileIndex++];
 
-            if (tileState == BoardState.Tile.Unknown) return result;
+                var tileButton          = GetTileButton(addon, x, y);
+                var tileBackgroundImage = GetBackgroundImageNode(tileButton);
+                var tileIconImage       = GetIconImageNode(tileButton);
+                tileState = (WeeklyPuzzleTexture)tileBackgroundImage->PartId switch
+                {
+                    WeeklyPuzzleTexture.Hidden  => BoardState.Tile.Hidden,
+                    WeeklyPuzzleTexture.Blocked => BoardState.Tile.Blocked,
+                    WeeklyPuzzleTexture.Blank => !tileIconImage->IsVisible()
+                                                     ? BoardState.Tile.Empty
+                                                     : (WeeklyPuzzlePrizeTexture)tileIconImage->PartId switch
+                                                     {
+                                                         WeeklyPuzzlePrizeTexture.BoxTL     => BoardState.Tile.BoxTL,
+                                                         WeeklyPuzzlePrizeTexture.BoxTR     => BoardState.Tile.BoxTR,
+                                                         WeeklyPuzzlePrizeTexture.BoxBL     => BoardState.Tile.BoxBL,
+                                                         WeeklyPuzzlePrizeTexture.BoxBR     => BoardState.Tile.BoxBR,
+                                                         WeeklyPuzzlePrizeTexture.ChestTL   => BoardState.Tile.ChestTL,
+                                                         WeeklyPuzzlePrizeTexture.ChestTR   => BoardState.Tile.ChestTR,
+                                                         WeeklyPuzzlePrizeTexture.ChestBL   => BoardState.Tile.ChestBL,
+                                                         WeeklyPuzzlePrizeTexture.ChestBR   => BoardState.Tile.ChestBR,
+                                                         WeeklyPuzzlePrizeTexture.SwordsTL  => BoardState.Tile.SwordsTL,
+                                                         WeeklyPuzzlePrizeTexture.SwordsTR  => BoardState.Tile.SwordsTR,
+                                                         WeeklyPuzzlePrizeTexture.SwordsML  => BoardState.Tile.SwordsML,
+                                                         WeeklyPuzzlePrizeTexture.SwordsMR  => BoardState.Tile.SwordsMR,
+                                                         WeeklyPuzzlePrizeTexture.SwordsBL  => BoardState.Tile.SwordsBL,
+                                                         WeeklyPuzzlePrizeTexture.SwordsBR  => BoardState.Tile.SwordsBR,
+                                                         WeeklyPuzzlePrizeTexture.Commander => BoardState.Tile.Commander,
+                                                         _                                  => BoardState.Tile.Unknown
+                                                     },
+                    _ => BoardState.Tile.Unknown
+                };
 
-            var rotation = tileIconImage->AtkResNode.Rotation;
-            if (rotation < 0)
-                tileState |= BoardState.Tile.RotatedL;
-            else if (rotation > 0)
-                tileState |= BoardState.Tile.RotatedR;
+                if (tileState == BoardState.Tile.Unknown) return result;
+
+                var rotation = tileIconImage->AtkResNode.Rotation;
+                if (rotation < 0)
+                    tileState |= BoardState.Tile.RotatedL;
+                else if (rotation > 0)
+                    tileState |= BoardState.Tile.RotatedR;
+            }
         }
 
         return result;
@@ -161,21 +164,23 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
     {
         var tileIndex = 0;
         for (var y = 0; y < BoardState.Height; ++y)
-        for (var x = 0; x < BoardState.Width; ++x)
         {
-            var soln                = solution[tileIndex++];
-            var tileButton          = GetTileButton(addon, x, y);
-            var tileBackgroundImage = GetBackgroundImageNode(tileButton);
-            var (r, g, b) = soln switch
+            for (var x = 0; x < BoardState.Width; ++x)
             {
-                Solver.ConfirmedSword    => (31, 174, 186),
-                Solver.ConfirmedBoxChest => (255, 105, 180),
-                Solver.PotentialFox      => (255, 215, 0),
-                _                        => soln == bestScore ? (32, 143, 46) : (0, 0, 0)
-            };
-            tileBackgroundImage->AtkResNode.AddRed   = (short)r;
-            tileBackgroundImage->AtkResNode.AddGreen = (short)g;
-            tileBackgroundImage->AtkResNode.AddBlue  = (short)b;
+                var soln                = solution[tileIndex++];
+                var tileButton          = GetTileButton(addon, x, y);
+                var tileBackgroundImage = GetBackgroundImageNode(tileButton);
+                var (r, g, b) = soln switch
+                {
+                    Solver.ConfirmedSword    => (31, 174, 186),
+                    Solver.ConfirmedBoxChest => (255, 105, 180),
+                    Solver.PotentialFox      => (255, 215, 0),
+                    _                        => soln == bestScore ? (32, 143, 46) : (0, 0, 0)
+                };
+                tileBackgroundImage->AtkResNode.AddRed   = (short)r;
+                tileBackgroundImage->AtkResNode.AddGreen = (short)g;
+                tileBackgroundImage->AtkResNode.AddBlue  = (short)b;
+            }
         }
     }
     
@@ -455,20 +460,25 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
                 }
 
                 var swordsScore = potentialSwords.Count == 1 ? ConfirmedSword : 10;
-                var boxScore = potentialBoxes.Count == 1                    ? ConfirmedBoxChest :
-                               FindSwordsFirst && potentialSwords.Count > 1 ? 0 : 10;
+                var boxScore    = potentialBoxes.Count  == 1 ? ConfirmedBoxChest : FindSwordsFirst && potentialSwords.Count > 1 ? 0 : 10;
                 foreach (var (tl, h) in potentialSwords)
                 foreach (var i in SwordIndices(tl, h))
                     result[i] += swordsScore;
                 foreach (var tl in potentialBoxes)
-                foreach (var i in BoxChestIndices(tl))
-                    result[i] += boxScore;
+                {
+                    foreach (var i in BoxChestIndices(tl))
+                        result[i] += boxScore;
+                }
                 foreach (var foxes in potentialFoxes)
-                foreach (var f in new BitMask(foxes).SetBits())
-                    if (potentialFoxes.Count == 1)
-                        result[f] = PotentialFox;
-                    else
-                        result[f] += 1;
+                {
+                    foreach (var f in new BitMask(foxes).SetBits())
+                    {
+                        if (potentialFoxes.Count == 1)
+                            result[f] = PotentialFox;
+                        else
+                            result[f] += 1;
+                    }
+                }
             }
 
             return result;
@@ -495,16 +505,20 @@ public unsafe class AutoRecommendFauxHollows : DailyModuleBase
         public IEnumerable<(Patterns.Row row, Patterns.Cell cell)> MatchingCells(BoardState board, Patterns.Sheet sheet)
         {
             foreach (var r in MatchingRows(board, sheet))
-            foreach (var c in MatchingCells(board, r))
-                yield return (r, c);
+            {
+                foreach (var c in MatchingCells(board, r))
+                    yield return (r, c);
+            }
         }
 
         public static IEnumerable<int> RectIndices(int tl, int w, int h)
         {
             int sx = tl % BoardState.Width, sy = tl / BoardState.Width;
             for (var y = 0; y < h; ++y)
-            for (var x = 0; x < w; ++x)
-                yield return ((sy + y) * BoardState.Width) + sx + x;
+            {
+                for (var x = 0; x < w; ++x)
+                    yield return ((sy + y) * BoardState.Width) + sx + x;
+            }
         }
 
         public static IEnumerable<int> SwordIndices(int tl, bool horiz) => horiz ? RectIndices(tl, 3, 2) : RectIndices(tl, 2, 3);
