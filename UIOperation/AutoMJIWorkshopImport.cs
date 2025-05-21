@@ -337,9 +337,9 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
     public class Assignments
     {
-        private readonly List<DayAssignment> _schedules = [];
+        private readonly List<DayAssignment> schedules = [];
         public uint CyclesMask { get; private set; }
-        public IReadOnlyList<DayAssignment> Schedules => _schedules;
+        public IReadOnlyList<DayAssignment> Schedules => schedules;
 
         public bool Empty => Schedules.Count == 0;
 
@@ -354,7 +354,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
             if ((CyclesMask & mask) != 0)
             {
                 // 如果已经有安排，则更新现有的安排
-                var existingSchedule = _schedules.FirstOrDefault(s => s.Cycle == cycle);
+                var existingSchedule = schedules.FirstOrDefault(s => s.Cycle == cycle);
                 if (existingSchedule != null)
                 {
                     existingSchedule.MergeWith(schedule);
@@ -366,15 +366,15 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
                 throw new InvalidOperationException($"无效的天内安排: {cycle}");
 
             schedule.Cycle = cycle;
-            _schedules.Add(schedule);
+            schedules.Add(schedule);
             CyclesMask |= mask;
         }
 
-        public IEnumerable<(int cycle, DayAssignment rec)> Enumerate() => _schedules.Select(rec => (rec.Cycle, rec));
+        public IEnumerable<(int cycle, DayAssignment rec)> Enumerate() => schedules.Select(rec => (rec.Cycle, rec));
 
         public void Clear()
         {
-            _schedules.Clear();
+            schedules.Clear();
             CyclesMask = 0;
         }
 
@@ -386,13 +386,15 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
             var currentDayRec = new DayAssignment();
 
             foreach (var line in lines)
+            {
                 try
                 {
                     var (cycle, prefix, tasks) = ParseLine(line);
 
                     if (cycle != currentCycle)
                     {
-                        if (currentCycle > 0) result.Add(currentCycle, currentDayRec);
+                        if (currentCycle > 0) 
+                            result.Add(currentCycle, currentDayRec);
                         currentCycle = cycle;
                         currentDayRec = new DayAssignment();
                     }
@@ -407,8 +409,10 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
                     NotificationError(ex.Message, "解析时发生错误");
                     Error("解析时发生错误:", ex);
                 }
+            }
 
-            if (currentCycle > 0) result.Add(currentCycle, currentDayRec);
+            if (currentCycle > 0) 
+                result.Add(currentCycle, currentDayRec);
 
             return result;
         }
@@ -420,8 +424,11 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
             var normalMatch = Regex.Match(line, @"D(\d+)[:：]\s*(\d+)×(.+)");
             if (normalMatch.Success)
-                return (int.Parse(normalMatch.Groups[1].Value), int.Parse(normalMatch.Groups[2].Value),
+            {
+                return (int.Parse(normalMatch.Groups[1].Value),
+                           int.Parse(normalMatch.Groups[2].Value),
                            normalMatch.Groups[3].Value.Trim());
+            }
 
             throw new FormatException($"无效的行格式: {line}");
         }
@@ -429,62 +436,65 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
     public class DayAssignment
     {
-        private readonly List<WorkshopAssignment> _workshops = [];
-        public IReadOnlyList<WorkshopAssignment> Workshops => _workshops;
-        public bool Empty => _workshops.Count == 0;
+        private readonly List<WorkshopAssignment> workshops = [];
+        public IReadOnlyList<WorkshopAssignment> Workshops => workshops;
+        public bool Empty => workshops.Count == 0;
         public int Cycle { get; set; }
         public bool IsRest { get; private set; }
 
         public void SetRest()
         {
             IsRest = true;
-            _workshops.Clear();
+            workshops.Clear();
             for (var i = 0; i < 4; i++)
-                _workshops.Add(WorkshopAssignment.CreateRest());
+                workshops.Add(WorkshopAssignment.CreateRest());
         }
 
         public void AddWorkshops(int prefix, string tasks)
         {
-            if (IsRest) throw new InvalidOperationException("无法将工房安排添加至休息日");
+            if (IsRest) 
+                throw new InvalidOperationException("无法将工房安排添加至休息日");
 
             var workshop = WorkshopAssignment.Create(tasks);
 
-            if (_workshops.Count == 0)
+            if (workshops.Count == 0)
             {
                 // 第一行
                 for (var i = 0; i < prefix; i++)
-                    _workshops.Add(workshop);
+                    workshops.Add(workshop);
             }
             else
             {
                 // 第二行
-                var remainingWorkshops = 4 - _workshops.Count;
+                var remainingWorkshops = 4 - workshops.Count;
                 for (var i = 0; i < remainingWorkshops; i++)
-                    _workshops.Add(workshop);
+                    workshops.Add(workshop);
             }
         }
 
         public void MergeWith(DayAssignment other)
         {
             // 合并两天安排
-            _workshops.AddRange(other.Workshops);
+            workshops.AddRange(other.Workshops);
 
             // 确保工房总数不超过 4
-            while (_workshops.Count > 4) _workshops.RemoveAt(_workshops.Count - 1);
+            while (workshops.Count > 4) 
+                workshops.RemoveAt(workshops.Count - 1);
         }
 
         public IEnumerable<(int workshop, WorkshopAssignment rec)> Enumerate(int maxWorkshops)
         {
-            if (Empty) yield break;
+            if (Empty) 
+                yield break;
 
             for (var i = 0; i < maxWorkshops; i++)
-                if (i < _workshops.Count)
-                    yield return (i, _workshops[i]);
+            {
+                if (i < workshops.Count)
+                    yield return (i, workshops[i]);
+                // 工房数量不足 -> 使用最后一个工房的安排
                 else
-                {
-                    // 工房数量不足 -> 使用最后一个工房的安排
-                    yield return (i, _workshops[^1]);
-                }
+                    yield return (i, workshops[^1]);
+            }
         }
     }
 

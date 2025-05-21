@@ -4,9 +4,9 @@
     "net8.0-windows7.0": {
       "DailyRoutines.CodeAnalysis": {
         "type": "Direct",
-        "requested": "[1.0.5, )",
-        "resolved": "1.0.5",
-        "contentHash": "xPkH5Ivbp9PiArbgjfPR+91L837DtQ9h43NaBgrkHQagKsQ/2s6ksJt1Grrti5daJf9+oxJ6ZXREyDFa7hnGFQ=="
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "hR7s7swdLMXodYEx0592Abi1+eTtHRCYahNqF7vC1MlIefOOlMSqpLbU2Gk+fpguTxRRRACzql397a1Sl4N8GQ=="
       },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",

@@ -43,7 +43,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
     private static int SplitAmountInput = 1;
 
     private static          Overlay?           SplitOverlay;
-    private static readonly FastSplitItemStack _FastSplitItemStack = new();
+    private static readonly FastSplitItemStack FastSplitItemStackMenu = new();
 
     private static uint FastSplitItemID;
 
@@ -282,7 +282,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
         if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
         if (iTarget.TargetItem.Value.Quantity <= 1) return;
 
-        args.AddMenuItem(_FastSplitItemStack.Get());
+        args.AddMenuItem(FastSplitItemStackMenu.Get());
     }
 
     private void EnqueueSplit(SplitGroup group)
