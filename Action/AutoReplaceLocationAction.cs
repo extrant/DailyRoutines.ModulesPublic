@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Hooking;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -14,15 +12,15 @@ using Lumina.Excel.Sheets;
 using Action = Lumina.Excel.Sheets.Action;
 using MapType = FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoReplaceLocationAction : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoReplaceLocationActionTitle"),
+        Title       = GetLoc("AutoReplaceLocationActionTitle"),
         Description = GetLoc("AutoReplaceLocationActionDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
 
     // 返回值为 GameObject*, 无对象则为 0
@@ -41,7 +39,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     static AutoReplaceLocationAction()
     {
         LuminaGetter.Get<Map>()
-                   .Where(x => x.TerritoryType.RowId > 0 && x.TerritoryType.Value.ContentFinderCondition.RowId > 0)
+                   .Where(x => x.TerritoryType is { RowId: > 0, Value.ContentFinderCondition.RowId: > 0 })
                    .ForEach(map =>
                    {
                        GetMapMarkers(map.RowId)
@@ -63,8 +61,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         UseActionManager.RegPreUseActionLocation(OnPreUseActionLocation);
         ExecuteCommandManager.Register(OnPreExecuteCommandComplexLocation);
 
-        ParseActionCommandArgHook ??=
-            ParseActionCommandArgSig.GetHook<ParseActionCommandArgDelegate>(ParseActionCommandArgDetour);
+        ParseActionCommandArgHook ??= ParseActionCommandArgSig.GetHook<ParseActionCommandArgDelegate>(ParseActionCommandArgDetour);
         ParseActionCommandArgHook.Enable();
     }
 
@@ -87,7 +84,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         using var indent = ImRaii.PushIndent();
 
         // 通知发送
-        if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendMessage))
+        if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
             SaveConfig(ModuleConfig);
 
         ImGui.SameLine();
@@ -169,8 +166,8 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.TextColored(LightSteelBlue1, $"{GetLoc("AutoReplaceLocationAction-CenterPointData")}");
         using var indent = ImRaii.PushIndent();
 
-        var isMapValid = LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var currentMapData) && currentMapData.TerritoryType.RowId > 0 &&
-                         currentMapData.TerritoryType.Value.ContentFinderCondition.RowId > 0;
+        var isMapValid = LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var currentMapData) && 
+                         currentMapData.TerritoryType is { RowId: > 0, Value.ContentFinderCondition.RowId: > 0 };
         var currentMapPlaceName = isMapValid ? currentMapData.PlaceName.Value.Name.ExtractText() : "";
         var currentMapPlaceNameSub = isMapValid ? currentMapData.PlaceNameSub.Value.Name.ExtractText() : "";
         using var disabled = ImRaii.Disabled(!isMapValid);
@@ -236,6 +233,8 @@ public class AutoReplaceLocationAction : DailyModuleBase
             MarkCenterPoint();
         }
 
+        return;
+
         void MarkCenterPoint()
         {
             ClearCenterPoint();
@@ -293,7 +292,8 @@ public class AutoReplaceLocationAction : DailyModuleBase
         IsNeedToReplace = false;
 
         if (ModuleConfig.BlacklistContent.Contains(DService.ClientState.TerritoryType)) return;
-        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers)) markers = [];
+        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers)) 
+            markers = [];
 
         var modifiedLocation = location;
         if (HandleCustomLocation(ref modifiedLocation) ||
@@ -310,14 +310,17 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ref int param2, ref int param3, ref int param4)
     {
         if (command != ExecuteCommandComplexFlag.PetAction || param1 != 3) return;
-        if (!ModuleConfig.EnabledPetActions.TryGetValue(3, out var isEnabled) || (!isEnabled && !IsNeedToReplace)) {
+        if (!ModuleConfig.EnabledPetActions.TryGetValue(3, out var isEnabled) || (!isEnabled && !IsNeedToReplace))
+        {
             IsNeedToReplace = false;
             return;
         }
+
         IsNeedToReplace = false;
 
         if (ModuleConfig.BlacklistContent.Contains(DService.ClientState.TerritoryType)) return;
-        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers)) markers = [];
+        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers))
+            markers = [];
 
         var modifiedLocation = location;
         if (HandleCustomLocation(ref modifiedLocation) ||
@@ -399,7 +402,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
     {
         var message = GetLoc("AutoReplaceLocationAction-RedirectMessage", $"{location:F1}");
 
-        if (ModuleConfig.SendMessage)
+        if (ModuleConfig.SendChat)
             Chat(message);
         if (ModuleConfig.SendNotification)
             NotificationSuccess(message);
@@ -430,7 +433,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         public Dictionary<uint, List<Vector2>> CustomMarkers = [];
 
-        public bool SendMessage = true;
+        public bool SendChat         = true;
         public bool SendNotification = true;
 
         public float AdjustDistance = 15;
