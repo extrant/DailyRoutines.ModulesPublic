@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     "net8.0-windows7.0": {
+      "DailyRoutines.CodeAnalysis": {
+        "type": "Direct",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "vgm8rGczZIj0rMCLgitpN7n5IhP1gVCJ5f/jo14wmc2WgO8DSr9BEGRs1QdLDyETqiAH742GoFFLXvm7GEkCPQ=="
+      },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",
         "requested": "[1.2.25, )",

@@ -42,6 +42,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DailyRoutines.CodeAnalysis" Version="1.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="System.CodeDom" Version="9.0.1" />
     </ItemGroup>
 
