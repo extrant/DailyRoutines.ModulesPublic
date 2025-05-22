@@ -82,7 +82,7 @@ public class AutoCountPlayers : DailyModuleBase
         foreach (var playerAround in source)
         {
             using var id = ImRaii.PushId($"{playerAround.GameObjectId}");
-            if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("AutoCountPlayers-Locate")))
+            if (ImGuiOm.ButtonIcon("定位", FontAwesomeIcon.Flag, GetLoc("Locate")))
             {
                 if (LuminaGetter.TryGetRow<Map>(DService.ClientState.MapId, out var map))
                 {
