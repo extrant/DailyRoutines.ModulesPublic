@@ -97,7 +97,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         // life cycle hooks
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        FrameworkManager.Register(OnFrameworkUpdate);
         FrameworkManager.Register(OnFrameworkUpdateInterval, throttleMS: 500);
     }
 
@@ -105,7 +104,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     {
         // life cycle hooks
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
-        FrameworkManager.Unregister(OnFrameworkUpdate);
         FrameworkManager.Unregister(OnFrameworkUpdateInterval);
 
         // status bar
@@ -292,20 +290,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     #region Hooks
 
-    public static unsafe void OnFrameworkUpdate(IFramework _)
-    {
-        var combatInactive = ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
-        if (DService.ClientState.IsPvP || combatInactive || Control.GetLocalPlayer() is null)
-        {
-            StatusBarManager.Clear();
-            return;
-        }
-
-        // update status
-        CastBarManager.Update();
-        PartyListManager.Update();
-    }
-
     public static unsafe void OnFrameworkUpdateInterval(IFramework _)
     {
         var combatInactive = ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
@@ -318,6 +302,9 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         // update status
         MitigationService.Update();
         StatusBarManager.Update();
+        
+        CastBarManager.Update();
+        PartyListManager.Update();
     }
 
     private static void OnZoneChanged(ushort zoneId)
