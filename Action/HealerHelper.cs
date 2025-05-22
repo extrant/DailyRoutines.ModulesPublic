@@ -453,7 +453,8 @@ public class HealerHelper : DailyModuleBase
                          [
                              x => () =>
                              {
-                                 if (!DService.Texture.TryGetFromGameIcon((uint)x.Icon, out var actionIcon)) return;
+                                 if (!DService.Texture.TryGetFromGameIcon((uint)x.Icon, out var actionIcon))
+                                     return;
                                  using var id = ImRaii.PushId($"{x.RowId}");
 
                                  // icon - action name
@@ -579,7 +580,8 @@ public class HealerHelper : DailyModuleBase
         ref bool  isPrevented, ref ActionType type,     ref uint actionId,
         ref ulong targetId,    ref Vector3    location, ref uint extraParam)
     {
-        if (type != ActionType.Action || GameState.IsInPVPArea || DService.PartyList.Length < 2) return;
+        if (type != ActionType.Action || GameState.IsInPVPArea || DService.PartyList.Length < 2)
+            return;
 
         // job check
         var isHealer = GameState.ClassJobData.Role == 4;
@@ -641,7 +643,8 @@ public class HealerHelper : DailyModuleBase
         try
         {
             var inPvEParty = DService.PartyList.Length > 1 && !GameState.IsInPVPArea;
-            if (!inPvEParty) return;
+            if (!inPvEParty)
+                return;
 
             // need to update candidates?
             var ids = DService.PartyList.Select(m => m.ObjectId).ToHashSet();
@@ -696,10 +699,7 @@ public class HealerHelper : DailyModuleBase
                         AutoPlayCardService.InitCustomCardOrder();
                 }
             }
-            catch (Exception ex)
-            {
-                Error($"[HealerHelper] Fetch Default Play Card Order Failed: {ex}");
-            }
+            catch (Exception ex) { Error($"[HealerHelper] Fetch Default Play Card Order Failed: {ex}"); }
         }
 
         public static async Task FetchHealActions()
@@ -719,10 +719,7 @@ public class HealerHelper : DailyModuleBase
                         EasyHealService.InitActiveHealActions();
                 }
             }
-            catch (Exception ex)
-            {
-                Error($"[HealerHelper] Fetch Default Heal Actions Failed: {ex}");
-            }
+            catch (Exception ex) { Error($"[HealerHelper] Fetch Default Heal Actions Failed: {ex}"); }
         }
 
         public static async Task FetchTerritoryMap()
@@ -739,10 +736,7 @@ public class HealerHelper : DailyModuleBase
                     FFLogsService.InitTerritoryDict();
                 }
             }
-            catch (Exception ex)
-            {
-                Error($"[HealerHelper] Fetch Territory Map Failed: {ex}");
-            }
+            catch (Exception ex) { Error($"[HealerHelper] Fetch Territory Map Failed: {ex}"); }
         }
     }
 
@@ -881,7 +875,8 @@ public class HealerHelper : DailyModuleBase
                 foreach (var member in partyList)
                 {
                     var bestRecord = FFLogsService.FetchBestRecord((ushort)GameState.TerritoryType, member).GetAwaiter().GetResult();
-                    if (bestRecord is null) continue;
+                    if (bestRecord is null)
+                        continue;
 
                     // scale priority based on sigmoid percentile
                     var scale = 1 / (1 + Math.Exp(-(bestRecord.Percentile - 50) / 8.33));
@@ -949,7 +944,8 @@ public class HealerHelper : DailyModuleBase
             {
                 var member    = candidates[i];
                 var candidate = DService.PartyList.FirstOrDefault(m => m.ObjectId == member.id);
-                if (candidate is null) continue;
+                if (candidate is null)
+                    continue;
 
                 // skip dead member in this round (refresh on duty recommenced)
                 if (candidate.CurrentHP <= 0)
@@ -1381,10 +1377,7 @@ public class HealerHelper : DailyModuleBase
                 config.KeyValid   = !string.IsNullOrWhiteSpace(response);
                 FirstTimeFallback = true;
             }
-            catch (Exception)
-            {
-                config.KeyValid = false;
-            }
+            catch (Exception) { config.KeyValid = false; }
         }
 
         private static string FetchRegion()
@@ -1423,7 +1416,8 @@ public class HealerHelper : DailyModuleBase
                 // contains all ultimates and current savage in current version
                 var response = await HttpClientHelper.Get().GetStringAsync($"{uri}?{query}");
                 var records  = JsonConvert.DeserializeObject<LogsRecord[]>(response);
-                if (records == null || records.Length == 0) return null;
+                if (records == null || records.Length == 0)
+                    return null;
 
                 // find best record
                 bestRecord = records.Where(r => r.JobName == job)
@@ -1433,10 +1427,7 @@ public class HealerHelper : DailyModuleBase
                 MemberBestRecords[member.ObjectId] = bestRecord;
                 return bestRecord;
             }
-            catch (Exception)
-            {
-                return null;
-            }
+            catch (Exception) { return null; }
         }
 
         public void ClearBestRecords()
@@ -1449,7 +1440,6 @@ public class HealerHelper : DailyModuleBase
     }
 
     #endregion
-
 
     #region Config
 
