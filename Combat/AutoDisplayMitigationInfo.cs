@@ -1,20 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Helpers;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Hooking;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using Lumina.Excel.Sheets;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Graphics;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using Newtonsoft.Json;
+using Status = Lumina.Excel.Sheets.Status;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -995,21 +1007,21 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             ActionEffectHook.Original(sourceId, player, location, effectHeader, effectArray, effectTrail);
 
-            try
+            /*try
             {
                 for (var i = 0; i < effectHeader->EffectCount; i++)
                 {
                     var targetId = (uint)(effectTrail[i] & uint.MaxValue);
                     var actionId = effectHeader->EffectDisplayType switch
                     {
-                        EffectDisplayType.MountName => 0xD_000_000 + effectHeader->ActionId,
+                        EffectDisplayType.MountName    => 0xD_000_000 + effectHeader->ActionId,
                         EffectDisplayType.ShowItemName => 0x2_000_000 + effectHeader->ActionId,
-                        _ => effectHeader->ActionAnimationId
+                        _                              => effectHeader->ActionAnimationId
                     };
 
                     for (var j = 0; j < 8; j++)
                     {
-                        ref var effect = ref effectArray[i * 8 + j];
+                        ref var effect = ref effectArray[(i * 8) + j];
                         if (effect.EffectType == 0)
                             continue;
 
@@ -1020,7 +1032,10 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                     }
                 }
             }
-            catch (Exception ex) { Error($"[AutoDisplayMitigationInfo] 技能生效回调解析失败: {ex}"); }
+            catch (Exception ex)
+            {
+                Error($"[AutoDisplayMitigationInfo] 技能生效回调解析失败: {ex}");
+            }*/
         }
 
         #endregion
@@ -1042,8 +1057,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         private static void ListenAction()
         {
-            return;
-            while (!ActionPipe.IsCancellationRequested)
+            /*while (!ActionPipe.IsCancellationRequested)
             {
                 using var pipe = new NamedPipeServerStream("DR-ADMI", PipeDirection.In, 4);
                 pipe.WaitForConnection();
@@ -1061,7 +1075,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                         Task.Run(async () => await Timer.Emit(ClearAction, (int)(CurrentAction.Duration * 1000)));
                 }
                 catch (Exception ex) { Error($"[AutoDisplayMitigationInfo] Damage Action Pipe Listen Failed: {ex}"); }
-            }
+            }*/
         }
 
         private static void ClearAction()
