@@ -159,29 +159,32 @@ public class AutoCountPlayers : DailyModuleBase
         var last = TargetingMePlayers.ToList();
         TargetingMePlayers = characters.Where(x => x.TargetObjectId == GameState.EntityID).OrderBy(x => x.EntityId).ToList();
 
-        if (TargetingMePlayers.Count > 0 && TargetingMePlayers.Any(x => !x.StatusFlags.HasFlag(StatusFlags.PartyMember)) && !last.SequenceEqual(TargetingMePlayers))
+        if (TargetingMePlayers.Count > 0 &&
+            TargetingMePlayers.Any(x => !x.StatusFlags.HasFlag(StatusFlags.PartyMember) &&
+                                        !x.StatusFlags.HasFlag(StatusFlags.AllianceMember)) &&
+            !last.SequenceEqual(TargetingMePlayers))
         {
             if (ModuleConfig.SendTTS)
                 Speak(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
-            
+
             if (ModuleConfig.SendNotification)
                 NotificationWarning(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
-            
+
             if (ModuleConfig.SendChat)
             {
                 var builder = new SeStringBuilder();
-                
+
                 builder.Append($"{GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe")}:\n");
                 TargetingMePlayers.ForEach(x =>
                 {
                     builder.AddIcon(x.ClassJob.Value.ToBitmapFontIcon());
                     builder.Append($" {x.Name}\n");
                 });
-                
+
                 Chat(builder.ToString().Trim());
             }
         }
-        
+
         Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersManager.PlayersAroundCount}" +
                      (TargetingMePlayers.Count == 0 ? string.Empty : $" ({TargetingMePlayers.Count})");
 
