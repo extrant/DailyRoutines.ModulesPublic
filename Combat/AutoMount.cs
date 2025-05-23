@@ -142,7 +142,8 @@ public unsafe class AutoMount : DailyModuleBase
 
     private static bool CanUseMountCurrentZone(ushort zone = 0)
     {
-        if (zone == 0) zone = DService.ClientState.TerritoryType;
+        if (zone == 0) 
+            zone = DService.ClientState.TerritoryType;
         if (zone == 0) return false;
 
         var zoneData = LuminaGetter.GetRow<TerritoryType>(zone);

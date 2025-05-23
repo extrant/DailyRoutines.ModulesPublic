@@ -92,12 +92,14 @@ public unsafe class BetterBlueSetLoad : DailyModuleBase
         {
             if (finalActions[i] == 0) continue;
             for (var j = 0; j < 24; j++)
+            {
                 if (finalActions[i] == currentActions[j])
                 {
                     actionManager->SwapBlueMageActionSlots(i, j);
                     finalActions[i] = 0;
                     break;
                 }
+            }
         }
 
         for (var i = 0; i < 24; i++)

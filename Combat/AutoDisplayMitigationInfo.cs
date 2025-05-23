@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -254,16 +254,20 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         var localPlayerStatus = localPlayer.StatusList;
         foreach (var status in localPlayerStatus)
+        {
             if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
                 lastMitigationStatus.Add(mitigation, status.RemainingTime);
+        }
 
         var currentTarget = DService.Targets.Target;
         if (currentTarget is IBattleNpc battleNpc)
         {
             var statusList = battleNpc.StatusList;
             foreach (var status in statusList)
+            {
                 if (MitigationStatusMap.TryGetValue(status.StatusId, out var mitigation))
                     lastMitigationStatus.Add(mitigation, status.RemainingTime);
+            }
         }
 
         LastMitigationStatus = lastMitigationStatus.ToDictionary(x => x.Key, x => x.Value);
@@ -307,7 +311,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                 _ => BitmapFontIcon.None,
             };
 
-            if (i != 0) textBuildr.Append(" ");
+            if (i != 0) 
+                textBuildr.Append(" ");
             textBuildr.AddIcon(icon);
             textBuildr.Append($"{values[i]:0.0}%");
         }

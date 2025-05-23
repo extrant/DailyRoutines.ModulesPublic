@@ -57,9 +57,12 @@ public class AutoNotifyDutyName : DailyModuleBase
                              GetLoc("ILMinimum"), content.ItemLevelRequired,          
                              GetLoc("ILMaximum"), content.ItemLevelSync != 0 ? content.ItemLevelSync : maxILGearIL);
         
-        if (ModuleConfig.SendTTS) Speak(message);
-        if (ModuleConfig.SendChat) Chat(message);
-        if (ModuleConfig.SendNotification) NotificationInfo(message);
+        if (ModuleConfig.SendTTS) 
+            Speak(message);
+        if (ModuleConfig.SendChat) 
+            Chat(message);
+        if (ModuleConfig.SendNotification) 
+            NotificationInfo(message);
     }
 
     public override void Uninit() => DService.ClientState.TerritoryChanged -= OnZoneChange;

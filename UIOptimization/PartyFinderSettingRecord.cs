@@ -74,7 +74,8 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
             using (ImRaii.Group())
             {
                 var title = config.Name;
-                if (string.IsNullOrEmpty(title)) title = GetLoc("None");
+                if (string.IsNullOrEmpty(title)) 
+                    title = GetLoc("None");
 
                 ImGui.AlignTextToFramePadding();
                 ImGui.Text($"{i + 1}: {title}");

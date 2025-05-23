@@ -82,7 +82,8 @@ public class AutoFateSync : DailyModuleBase
     private unsafe nint FateDirectorSetupDetour(uint rowID, nint a2, nint a3)
     {
         var original = FateDirectorSetupHook.Original(rowID, a2, a3);
-        if (rowID == 102401 && FateManager.Instance()->CurrentFate != null) HandleFateEnter();
+        if (rowID == 102401 && FateManager.Instance()->CurrentFate != null) 
+            HandleFateEnter();
         return original;
     }
 

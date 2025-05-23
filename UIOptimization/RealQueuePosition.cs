@@ -86,9 +86,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
         var index = 5;
 
         if (a2->IntArray[5] > 0)
-        {
             index = 6;
-        }
 
         var position = *(uint*)(agentData + 0x12c);
         var positionStr = $"{LuminaGetter.GetRow<Addon>(10988)!.Value.Text.ExtractText()}: #{position}";

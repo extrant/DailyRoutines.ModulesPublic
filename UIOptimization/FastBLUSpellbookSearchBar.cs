@@ -27,7 +27,8 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "AOZNotebook", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "AOZNotebook", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "AOZNotebook", OnAddon);
-        if (IsAddonAndNodesReady(GetAddonByName("AOZNotebook"))) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(GetAddonByName("AOZNotebook"))) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()

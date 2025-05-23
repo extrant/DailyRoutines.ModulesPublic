@@ -17,7 +17,8 @@ public unsafe class AutoClaimItemIgnoringMismatchJobAndLevel : DailyModuleBase
     public override void Init()
     {
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddon);
-        if (IsAddonAndNodesReady(SelectYesno)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(SelectYesno)) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)

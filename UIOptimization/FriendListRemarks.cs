@@ -51,7 +51,8 @@ public unsafe class FriendListRemarks : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,           "FriendList", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "FriendList", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "FriendList", OnAddon);
-        if (IsAddonAndNodesReady(FriendList)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(FriendList)) 
+            OnAddon(AddonEvent.PostSetup, null);
 
         DService.ContextMenu.OnMenuOpened += OnContextMenu;
     }

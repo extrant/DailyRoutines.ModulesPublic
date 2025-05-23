@@ -248,7 +248,8 @@ public unsafe class DisplayTargetHP : DailyModuleBase
     {
         if (gauge == null || (ushort)gauge->AtkResNode.Type < 1000) return;
         
-        if (customColor is { W: 0 }) customColor = null;
+        if (customColor is { W: 0 }) 
+            customColor = null;
         
         AtkTextNode* textNode = null;
 
@@ -275,8 +276,9 @@ public unsafe class DisplayTargetHP : DailyModuleBase
             ExpandNodeList(gauge, 1);
             gauge->Component->UldManager.NodeList[gauge->Component->UldManager.NodeListCount++] = (AtkResNode*)textNode;
 
-            var nextNode                                       = gauge->Component->UldManager.RootNode;
-            while (nextNode->PrevSiblingNode != null) nextNode = nextNode->PrevSiblingNode;
+            var nextNode = gauge->Component->UldManager.RootNode;
+            while (nextNode->PrevSiblingNode != null) 
+                nextNode = nextNode->PrevSiblingNode;
 
             textNode->AtkResNode.ParentNode      = (AtkResNode*)gauge;
             textNode->AtkResNode.ChildNode       = null;

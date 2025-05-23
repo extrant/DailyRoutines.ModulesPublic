@@ -44,7 +44,8 @@ public class AutoRefreshPartyFinder : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroupDetail", OnAddonLFGD);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddonLFGD);
 
-        if (LookingForGroup != null) OnAddonPF(AddonEvent.PostSetup, null);
+        if (LookingForGroup != null) 
+            OnAddonPF(AddonEvent.PostSetup, null);
     }
 
     public override unsafe void OverlayUI()

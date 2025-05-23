@@ -27,7 +27,8 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "PvpReward", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PvpReward", OnAddon);
 
-        if (PvpReward != null) OnAddon(AddonEvent.PostSetup, null);
+        if (PvpReward != null) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)

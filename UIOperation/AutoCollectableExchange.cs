@@ -35,7 +35,8 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CollectablesShop", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CollectablesShop", OnAddon);
-        if (InfosOm.CollectablesShop != null) OnAddon(AddonEvent.PostSetup, null);
+        if (InfosOm.CollectablesShop != null) 
+            OnAddon(AddonEvent.PostSetup, null);
     }
 
     public override void OverlayUI()
@@ -55,8 +56,8 @@ public unsafe class AutoCollectableExchange : DailyModuleBase
 
         using var font = FontManager.UIFont80.Push();
 
-        ImGui.SetWindowPos(new Vector2(addon->X + addon->GetScaledWidth(true), addon->Y + addon->GetScaledHeight(true)) 
-                           - ImGui.GetWindowSize() - ScaledVector2(12f));
+        ImGui.SetWindowPos(new Vector2(addon->X + addon->GetScaledWidth(true), addon->Y + addon->GetScaledHeight(true)) - ImGui.GetWindowSize() -
+                           ScaledVector2(12f));
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(ImGuiColors.DalamudYellow, GetLoc("AutoCollectableExchangeTitle"));

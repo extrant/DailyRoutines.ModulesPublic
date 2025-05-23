@@ -24,20 +24,20 @@ public unsafe class BlockInputWhenFishing : DailyModuleBase
         IsKeyDownHook ??= DService.Hook.HookFromSignature<IsKeyDownDelegate>(IsKeyDownSig.Get(), IsKeyDownDetour);
         DService.Condition.ConditionChange += OnConditionChanged;
 
-        if (DService.Condition[ConditionFlag.Gathering]) IsKeyDownHook.Enable();
+        if (DService.Condition[ConditionFlag.Gathering]) 
+            IsKeyDownHook.Enable();
     }
 
-    public override void ConfigUI()
-    {
-        ConflictKeyText();
-    }
+    public override void ConfigUI() => ConflictKeyText();
 
     private static void OnConditionChanged(ConditionFlag flag, bool isSet)
     {
         if (flag != ConditionFlag.Gathering) return;
 
-        if (isSet) IsKeyDownHook.Enable();
-        else IsKeyDownHook.Disable();
+        if (isSet) 
+            IsKeyDownHook.Enable();
+        else 
+            IsKeyDownHook.Disable();
     }
 
     private static bool IsKeyDownDetour(UIInputData* data, int id) 

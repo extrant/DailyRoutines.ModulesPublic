@@ -126,9 +126,7 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
                         }
                     }
                     else
-                    {
                         CharacterDataDict[newData.ContentID] = newData;
-                    }
                 }
             }
         }
@@ -179,7 +177,8 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
             ImGui.TableNextColumn();
             if (ImGui.Selectable($"{data.Index}", selected, ImGuiSelectableFlags.SpanAllColumns))
             {
-                if (!SelectedMembers.Remove(data)) SelectedMembers.Add(data);
+                if (!SelectedMembers.Remove(data)) 
+                    SelectedMembers.Add(data);
             }
             
             DrawSingleContextMenu(data);
@@ -216,9 +215,7 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
             
             ImGui.TableNextColumn();
             using (ImRaii.Disabled())
-            {
                 ImGui.Checkbox($"{data.ContentID}_Checkbox", ref selected);
-            }
         }
     }
 
@@ -228,7 +225,8 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
         var arrowButton = IsReverse
                               ? ImGui.ArrowButton("IndexButton", ImGuiDir.Up)
                               : ImGui.ArrowButton("IndexButton", ImGuiDir.Down);
-        if (arrowButton) IsReverse            ^= true;
+        if (arrowButton)
+            IsReverse ^= true;
         
         ImGui.TableNextColumn();
         ImGui.Selectable(Lang.Get("Name"));
@@ -337,12 +335,14 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
             
                 // 除名
                 if (ImGui.MenuItem(LuminaGetter.GetRow<Addon>(2801)!.Value.Text.ExtractText()))
+                {
                     EnqueueContentMenuClicks(SelectedMembers, LuminaGetter.GetRow<Addon>(2801)!.Value.Text.ExtractText(), "SelectYesno",
                                              () =>
                                              {
                                                  ContextTaskHelper.Enqueue(() => ClickSelectYesnoYes(), null, null, null, 1);
                                                  return true;
                                              });
+                }
             }
 
             ImGui.EndPopup();
@@ -385,15 +385,10 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
         {
             ContextTaskHelper.Enqueue(() => OpenContextMenuAndClick(data.Index, text));
             if (waitAddon != null)
-            {
-                ContextTaskHelper.Enqueue(
-                    () => TryGetAddonByName<AtkUnitBase>(waitAddon, out var addon) && IsAddonAndNodesReady(addon));
-            }
+                ContextTaskHelper.Enqueue(() => TryGetAddonByName<AtkUnitBase>(waitAddon, out var addon) && IsAddonAndNodesReady(addon));
             
             if (extraAction != null)
-            {
                 ContextTaskHelper.Enqueue(extraAction);
-            }
             
             ContextTaskHelper.DelayNext(500);
         }

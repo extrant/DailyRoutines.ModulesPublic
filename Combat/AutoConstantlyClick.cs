@@ -32,7 +32,7 @@ public class AutoConstantlyClick : DailyModuleBase
 
     private static readonly CompSig GamepadPollSig = new("40 55 53 57 41 57 48 8D AC 24 58 FC FF FF ", "40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24");
     private static Hook<ControllerPoll>? GamepadPollHook;
-    private delegate int ControllerPoll(IntPtr controllerInput);
+    private delegate int ControllerPoll(nint controllerInput);
 
     private static readonly CompSig CheckHotbarClickedSig = new("E8 ?? ?? ?? ?? 48 8B 4F ?? 48 8B 01 FF 50 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 74");
     private delegate void CheckHotbarClickedDelegate(nint a1, byte a2);
@@ -54,10 +54,12 @@ public class AutoConstantlyClick : DailyModuleBase
         IsIDKeyClickedHook ??= IsIDKeyClickedSig.GetHook<IDKeyDelegate>(IsIDKeyClickedDetour);
 
         CheckHotbarClickedHook ??= CheckHotbarClickedSig.GetHook<CheckHotbarClickedDelegate>(CheckHotbarClickedDetour);
-        GamepadPollHook ??= GamepadPollSig.GetHook<ControllerPoll>(GamepadPollDetour);
+        GamepadPollHook        ??= GamepadPollSig.GetHook<ControllerPoll>(GamepadPollDetour);
 
-        if (ModuleConfig.MouseMode) CheckHotbarClickedHook.Enable();
-        if (ModuleConfig.GamepadMode) GamepadPollHook.Enable();
+        if (ModuleConfig.MouseMode) 
+            CheckHotbarClickedHook.Enable();
+        if (ModuleConfig.GamepadMode) 
+            GamepadPollHook.Enable();
     }
 
     public override void ConfigUI()
@@ -76,15 +78,19 @@ public class AutoConstantlyClick : DailyModuleBase
         if (ImGui.Checkbox(GetLoc("AutoConstantlyClick-MouseMode"), ref ModuleConfig.MouseMode))
         {
             ModuleConfig.Save(this);
-            if (ModuleConfig.MouseMode) CheckHotbarClickedHook.Enable();
-            else CheckHotbarClickedHook.Disable();
+            if (ModuleConfig.MouseMode) 
+                CheckHotbarClickedHook.Enable();
+            else 
+                CheckHotbarClickedHook.Disable();
         }
 
         if (ImGui.Checkbox(GetLoc("AutoConstantlyClick-GamepadMode"), ref ModuleConfig.GamepadMode))
         {
             ModuleConfig.Save(this);
-            if (ModuleConfig.GamepadMode) GamepadPollHook.Enable();
-            else GamepadPollHook.Disable();
+            if (ModuleConfig.GamepadMode) 
+                GamepadPollHook.Enable();
+            else 
+                GamepadPollHook.Disable();
         }
 
         if (ModuleConfig.GamepadMode)
@@ -109,7 +115,7 @@ public class AutoConstantlyClick : DailyModuleBase
         }
     }
 
-    private unsafe int GamepadPollDetour(IntPtr gamepadInput)
+    private unsafe int GamepadPollDetour(nint gamepadInput)
     {
         var input = (PadDevice*)gamepadInput;
         if (DService.Gamepad.Raw(ModuleConfig.GamepadModeTriggerButtons) == 1)
@@ -127,7 +133,7 @@ public class AutoConstantlyClick : DailyModuleBase
             }
         }
 
-        return GamepadPollHook.Original((IntPtr)input);
+        return GamepadPollHook.Original((nint)input);
     }
 
     private static bool IsIDKeyClickedDetour(nint data, int key)
@@ -141,9 +147,7 @@ public class AutoConstantlyClick : DailyModuleBase
         var orig = info.IsReady ? isPressed : isClicked;
 
         if (orig)
-        {
             info.RestartLastPress();
-        }
         else if (isPressed != info.LastFrameHeld)
         {
             if (isPressed && runningTimersCount > 0)

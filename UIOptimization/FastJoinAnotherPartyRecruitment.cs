@@ -30,9 +30,11 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "LookingForGroupDetail", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddon);
-        if (IsAddonAndNodesReady(LookingForGroupDetail)) OnAddon(AddonEvent.PostDraw, null);
+        if (IsAddonAndNodesReady(LookingForGroupDetail)) 
+            OnAddon(AddonEvent.PostDraw, null);
         
-        if (IsAddonAndNodesReady(LookingForGroup)) SendEvent(AgentId.LookingForGroup, 1, 17);
+        if (IsAddonAndNodesReady(LookingForGroup)) 
+            SendEvent(AgentId.LookingForGroup, 1, 17);
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)

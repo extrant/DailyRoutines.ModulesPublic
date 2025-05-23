@@ -49,10 +49,8 @@ public unsafe class AutoCancelCast : DailyModuleBase
 
     private static void OnConditionChanged(ConditionFlag flag, bool value)
     {
-        if (flag is ConditionFlag.Casting or ConditionFlag.Casting87)
-        {
-            IsOnCasting = value;
-        }
+        if (flag is not (ConditionFlag.Casting or ConditionFlag.Casting87)) return;
+        IsOnCasting = value;
     }
 
     private static void OnUpdate(IFramework _)

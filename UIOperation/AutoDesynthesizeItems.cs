@@ -34,7 +34,8 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SalvageItemSelector", OnAddonList);
-        if (IsAddonAndNodesReady(SalvageItemSelector)) OnAddonList(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(SalvageItemSelector)) 
+            OnAddonList(AddonEvent.PostSetup, null);
         
         GameResourceManager.AddToBlacklist(typeof(AutoDesynthesizeItems), "chara/action/normal/item_action.tmb");
     }

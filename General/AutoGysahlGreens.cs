@@ -29,9 +29,9 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
     static AutoGysahlGreens()
     {
         ValidTerritory = PresetSheet.Zones
-                                    .Where(x => 
-                                               x.Value.TerritoryIntendedUse.RowId == 1 
-                                               && x.Key != 250)
+                                    .Where(x =>
+                                               x.Value.TerritoryIntendedUse.RowId == 1 &&
+                                               x.Key                              != 250)
                                     .Select(x => (ushort)x.Key)
                                     .ToHashSet();
     }
@@ -87,9 +87,12 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
                 HasNotifiedInCurrentZone = true;
                 
                 var notificationMessage = GetLoc("AutoGysahlGreens-NotificationMessage");
-                if (ModuleConfig.SendChat) Chat(notificationMessage);
-                if (ModuleConfig.SendNotification) NotificationInfo(notificationMessage);
-                if (ModuleConfig.SendTTS) Speak(notificationMessage);
+                if (ModuleConfig.SendChat) 
+                    Chat(notificationMessage);
+                if (ModuleConfig.SendNotification) 
+                    NotificationInfo(notificationMessage);
+                if (ModuleConfig.SendTTS) 
+                    Speak(notificationMessage);
             }
 
             return;

@@ -33,7 +33,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
     ];
 
     private static Dictionary<string, Item>? ItemNames;
-    private static Dictionary<string, Item> _ItemNames = [];
+    private static Dictionary<string, Item> ItemNamesAnother = [];
 
     private static string ItemSearchInput = string.Empty;
     private static Item? SelectedItem;
@@ -45,7 +45,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
                                  .GroupBy(x => x.Name.ExtractText())
                                  .ToDictionary(x => x.Key, x => x.First());
 
-        _ItemNames = ItemNames.Take(10).ToDictionary(x => x.Key, x => x.Value);
+        ItemNamesAnother = ItemNames.Take(10).ToDictionary(x => x.Key, x => x.Value);
 
         RetriveMateriaHook ??= 
             DService.Hook.HookFromSignature<RetriveMateriaDelegate>(RetriveMateriaSig.Get(), RetriveMateriaDetour);
@@ -73,7 +73,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
             {
                 if (!string.IsNullOrWhiteSpace(ItemSearchInput))
                 {
-                    _ItemNames = ItemNames
+                    ItemNamesAnother = ItemNames
                                  .Where(x => x.Key.Contains(ItemSearchInput, StringComparison.OrdinalIgnoreCase))
                                  .OrderBy(x => !x.Key.StartsWith(ItemSearchInput))
                                  .Take(100)
@@ -82,7 +82,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
             }
 
             ImGui.Separator();
-            foreach (var (itemName, item) in _ItemNames)
+            foreach (var (itemName, item) in ItemNamesAnother)
                 if (ImGuiOm.SelectableImageWithText(ImageHelper.GetGameIcon(item.Icon).ImGuiHandle,
                                                     ScaledVector2(24f), itemName,
                                                     (SelectedItem?.RowId ?? 0) == item.RowId,

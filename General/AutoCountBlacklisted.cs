@@ -123,9 +123,12 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
         if (LastCheckNum < blackNum)
         {
             var message = GetLoc("AutoCountBlacks-DtrEntry-Text", tooltip.ToString().Trim());
-            if (ModuleConfig.SendChat) Chat(message);
-            if (ModuleConfig.SendNotification) NotificationInfo(message);
-            if (ModuleConfig.SendTTS) Speak(message);
+            if (ModuleConfig.SendChat) 
+                Chat(message);
+            if (ModuleConfig.SendNotification) 
+                NotificationInfo(message);
+            if (ModuleConfig.SendTTS) 
+                Speak(message);
         }
         LastCheckNum = blackNum;
 

@@ -61,7 +61,8 @@ public class AutoPeloton : DailyModuleBase
         DService.ClientState.LevelChanged     -= OnLevelChanged;
         DService.ClientState.ClassJobChanged  -= OnClassJobChanged;
 
-        if (Config != null) SaveConfig(Config);
+        if (Config != null) 
+            SaveConfig(Config);
 
         base.Uninit();
     }
@@ -104,7 +105,8 @@ public class AutoPeloton : DailyModuleBase
     {
         if (flag is not ConditionFlag.InCombat) return;
         TaskHelper.Abort();
-        if (!value) TaskHelper.Enqueue(OneTimeConditionCheck);
+        if (!value) 
+            TaskHelper.Enqueue(OneTimeConditionCheck);
     }
 
     private unsafe bool? OneTimeConditionCheck()
@@ -121,7 +123,8 @@ public class AutoPeloton : DailyModuleBase
 
     private bool Cycle(int delayMs = 0)
     {
-        if (delayMs > 0) TaskHelper.DelayNext(delayMs);
+        if (delayMs > 0) 
+            TaskHelper.DelayNext(delayMs);
         TaskHelper.Enqueue(MainProcess);
         return true;
     }

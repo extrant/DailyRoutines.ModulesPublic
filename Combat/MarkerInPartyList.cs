@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -9,11 +12,8 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class MarkerInPartyList : DailyModuleBase
 {
@@ -33,16 +33,17 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     public static Hook<LocalMarkingFunc>? LocalMarkingHook;
     public delegate void LocalMarkingFunc(nint manager, uint markingType, nint objectId, nint a4);
 
-    private static Config? _config;
-    private static readonly List<nint> _imageNodes = new(8);
-    private static readonly Dictionary<int, int> _markedObject = new(8); // markId, memberIndex
-    private static bool _isBuilt, _needClear;
-    private static readonly object _lock = new();
+    private static          Config?              ModuleConfig;
+    private static readonly List<nint>           ImageNodes   = new(8);
+    private static readonly Dictionary<int, int> MarkedObject = new(8); // markId, memberIndex
+    private static          bool                 IsBuilt, NeedClear;
+    
+    private static readonly object Lock = new();
 
     public override void Init()
     {
-        _isBuilt = false;
-        _config = LoadConfig<Config>() ?? new();
+        IsBuilt = false;
+        ModuleConfig = LoadConfig<Config>() ?? new();
 
         TaskHelper ??= new();
         MarkerSheet ??= DService.Data.GetExcelSheet<Marker>();
@@ -50,7 +51,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         LocalMarkingHook = DService.Hook.HookFromSignature<LocalMarkingFunc>(LocalMarkingSig.Get(), DetourLocalMarkingFunc);
         LocalMarkingHook.Enable();
 
-        DService.ClientState.TerritoryChanged += ResetmarkedObject;
+        DService.ClientState.TerritoryChanged += ResetMarkedObject;
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_PartyList", PartyListDrawHandle);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_PartyList", PartyListFinalizeHandle);
     }
@@ -59,7 +60,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     {
         DService.AddonLifecycle.UnregisterListener(AddonEvent.PostDraw, PartyListDrawHandle);
         DService.AddonLifecycle.UnregisterListener(AddonEvent.PreFinalize, PartyListFinalizeHandle);
-        DService.ClientState.TerritoryChanged -= ResetmarkedObject;
+        DService.ClientState.TerritoryChanged -= ResetMarkedObject;
 
         ResetPartyMemberList();
         ReleaseImageNodes();
@@ -70,35 +71,33 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     public override void ConfigUI()
     {
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputFloat2(Lang.Get("MarkerInPartyList-IconOffset"), ref _config.IconOffset, "%d");
+        ImGui.InputFloat2(Lang.Get("MarkerInPartyList-IconOffset"), ref ModuleConfig.IconOffset, "%d");
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
-            SaveConfig(_config);
+            SaveConfig(ModuleConfig);
             RefreshPosition();
         }
 
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputInt(Lang.Get("MarkerInPartyList-IconScale"), ref _config.Size, 0, 0);
+        ImGui.InputInt(Lang.Get("MarkerInPartyList-IconScale"), ref ModuleConfig.Size, 0, 0);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
-            SaveConfig(_config);
+            SaveConfig(ModuleConfig);
             RefreshPosition();
         }
 
-        if (ImGui.Checkbox(Lang.Get("MarkerInPartyList-HidePartyListIndexNumber"), ref _config.HidePartyListIndexNumber))
+        if (ImGui.Checkbox(Lang.Get("MarkerInPartyList-HidePartyListIndexNumber"), ref ModuleConfig.HidePartyListIndexNumber))
         {
-            SaveConfig(_config);
+            SaveConfig(ModuleConfig);
             ResetPartyMemberList();
         }
     }
 
-    private static void ResetmarkedObject(ushort obj)
+    private static void ResetMarkedObject(ushort obj)
     {
         foreach (var i in Enumerable.Range(0, 8))
-        {
             HideImageNode(i);
-        }
-        _markedObject.Clear();
+        MarkedObject.Clear();
         ResetPartyMemberList();
     }
 
@@ -112,7 +111,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void ModifyPartyMemberNumber(AtkUnitBase* pPartyList, bool visible)
     {
-        if (pPartyList is null || _config == null || (!_config.HidePartyListIndexNumber && !visible))
+        if (pPartyList is null || ModuleConfig == null || (!ModuleConfig.HidePartyListIndexNumber && !visible))
             return;
 
         var memberIdList = Enumerable.Range(10, 8).ToList();
@@ -203,11 +202,14 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     private static void InitImageNodes()
     {
         var partylist = (AtkUnitBase*)DService.Gui.GetAddonByName("_PartyList");
-        if (partylist is null) return;
-        
-        lock (_lock)
+        if (partylist is null)
         {
-            if (_isBuilt)
+            DService.Log.Error("Failed to get partylist");
+            return;
+        }
+        lock (Lock)
+        {
+            if (IsBuilt)
                 return;
 
             foreach (var i in Enumerable.Range(10, 8))
@@ -219,11 +221,11 @@ public unsafe class MarkerInPartyList : DailyModuleBase
                     continue;
                 }
                 imageNode->AtkResNode.NodeId = 114514;
-                _imageNodes.Add((nint)imageNode);
+                ImageNodes.Add((nint)imageNode);
 
                 LinkNodeAtEnd((AtkResNode*)imageNode, partylist);
             }
-            _isBuilt = true;
+            IsBuilt = true;
         }
     }
 
@@ -245,33 +247,37 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void ReleaseImageNodes()
     {
-        lock (_lock)
+        lock (Lock)
         {
-            if (!_isBuilt) return;
-            if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded) return;
+            if (!IsBuilt)
+                return;
 
-            foreach (var item in _imageNodes)
+            if (PartyList is null || PartyList->UldManager.LoadedState is not AtkLoadState.Loaded)
             {
-                UnlinkAndFreeImageNode((AtkImageNode*)item, PartyList);
+                Error("Failed to get partylist");
+                return;
             }
-            _imageNodes.Clear();
+
+            foreach (var item in ImageNodes)
+                UnlinkAndFreeImageNode((AtkImageNode*)item, PartyList);
+            ImageNodes.Clear();
         }
     }
 
     private static void ShowImageNode(int i, int iconId)
     {
-        if (i is < 0 or > 7 || PartyList is null || _imageNodes.Count <= i)
+        if (i is < 0 or > 7 || PartyList is null || ImageNodes.Count <= i)
             return;
 
-        var node = (AtkImageNode*)_imageNodes[i];
+        var node = (AtkImageNode*)ImageNodes[i];
         if (node is null)
             return;
 
         var component = PartyList->GetNodeById((uint)(10 + i));
-        var (x, y) = (component->X + BasePosition.X + _config.IconOffset.X, component->Y + BasePosition.Y + _config.IconOffset.Y);
+        var (x, y) = (component->X + BasePosition.X + ModuleConfig.IconOffset.X, component->Y + BasePosition.Y + ModuleConfig.IconOffset.Y);
         node->LoadIconTexture((uint)iconId, 0);
-        node->AtkResNode.SetHeight((ushort)_config.Size);
-        node->AtkResNode.SetWidth((ushort)_config.Size);
+        node->AtkResNode.SetHeight((ushort)ModuleConfig.Size);
+        node->AtkResNode.SetWidth((ushort)ModuleConfig.Size);
         node->AtkResNode.SetPositionFloat(x, y);
         node->AtkResNode.ToggleVisibility(true);
 
@@ -280,9 +286,9 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void HideImageNode(int i)
     {
-        if (i is < 0 or > 7 || _imageNodes.Count <= i)
+        if (i is < 0 or > 7 || ImageNodes.Count <= i)
             return;
-        var node = (AtkImageNode*)_imageNodes[i];
+        var node = (AtkImageNode*)ImageNodes[i];
         if (node is null)
             return;
 
@@ -294,15 +300,15 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         var partylist = (AtkUnitBase*)DService.Gui.GetAddonByName("_PartyList");
         if (partylist is null || !IsAddonAndNodesReady(partylist))
             return;
-        foreach (var item in _imageNodes.Zip(Enumerable.Range(10, 8)))
+        foreach (var item in ImageNodes.Zip(Enumerable.Range(10, 8)))
         {
             var node = (AtkImageNode*)item.First;
             var component = partylist->GetNodeById((uint)(10 + item.Second));
-            (var x, var y) = (component->X + BasePosition.X + _config.IconOffset.X,
-                                 component->Y + BasePosition.Y + _config.IconOffset.Y);
+            (var x, var y) = (component->X + BasePosition.X + ModuleConfig.IconOffset.X,
+                                 component->Y + BasePosition.Y + ModuleConfig.IconOffset.Y);
             node->AtkResNode.SetPositionFloat(x, y);
-            node->AtkResNode.SetHeight((ushort)_config.Size);
-            node->AtkResNode.SetWidth((ushort)_config.Size);
+            node->AtkResNode.SetHeight((ushort)ModuleConfig.Size);
+            node->AtkResNode.SetWidth((ushort)ModuleConfig.Size);
             node->AtkResNode.ToggleVisibility(true);
         }
     }
@@ -313,16 +319,19 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private void PartyListDrawHandle(AddonEvent type, AddonArgs args)
     {
-        if (!_isBuilt)
+        lock (Lock)
         {
-            InitImageNodes();
-            InitMarkedObject();
+            if (!IsBuilt)
+            {
+                InitImageNodes();
+                InitMarkedObject();
+            }
         }
 
-        if (_needClear && _markedObject.Count is 0 && IsScreenReady())
+        if (NeedClear && MarkedObject.Count is 0 && IsScreenReady())
         {
             ResetPartyMemberList((AtkUnitBase*)args.Addon);
-            _needClear = false;
+            NeedClear = false;
         }
     }
 
@@ -341,9 +350,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         if (mark <= 0 || mark > MarkerSheet.Count)
         {
             if (FindMember(entityId, out index))
-            {
                 RemoveMemberMark(index);
-            }
             return;
         }
 
@@ -355,11 +362,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         }
 
         if (!FindMember(entityId, out index))
-        {
-            // 标到了boss / 其他小队成员
             RemoveMark(icon.Icon);
-        }
-        else if (_markedObject.TryGetValue(icon.Icon, out var outValue) && outValue == index)
+        else if (MarkedObject.TryGetValue(icon.Icon, out var outValue) && outValue == index)
         {
             // 对同一个成员重复标记
         }
@@ -372,29 +376,29 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void AddMemberMark(int memberIndex, int markId)
     {
-        _markedObject[markId] = memberIndex;
+        MarkedObject[markId] = memberIndex;
         ShowImageNode(memberIndex, markId);
-        _needClear = false;
+        NeedClear = false;
     }
 
     private static void RemoveMemberMark(int memberIndex)
     {
-        if (_markedObject.ContainsValue(memberIndex))
+        if (MarkedObject.ContainsValue(memberIndex))
         {
-            _markedObject.Remove(_markedObject.First(x => x.Value == memberIndex).Key);
+            MarkedObject.Remove(MarkedObject.First(x => x.Value == memberIndex).Key);
             HideImageNode(memberIndex);
         }
 
-        if (_markedObject.Count == 0)
-            _needClear = true;
+        if (MarkedObject.Count == 0)
+            NeedClear = true;
     }
 
     private static void RemoveMark(int markId)
     {
-        if (_markedObject.Remove(markId, out var outValue))
+        if (MarkedObject.Remove(markId, out var outValue))
             HideImageNode(outValue);
-        if (_markedObject.Count == 0)
-            _needClear = true;
+        if (MarkedObject.Count == 0)
+            NeedClear = true;
     }
 
     private static bool FindMember(uint entityId, out int index)

@@ -66,7 +66,8 @@ public unsafe class AutoNotifyLeveUpdate : DailyModuleBase
                           $"{Lang.Get("AutoNotifyLeveUpdate-FullTimeText")}{finishTime.ToLocalTime():g}\n" +
                           $"{Lang.Get("AutoNotifyLeveUpdate-UpdateTimeText")}{nextLeveCheck.ToLocalTime():g}";
 
-            if (ModuleConfig.OnChatMessage) Chat(message);
+            if (ModuleConfig.OnChatMessage) 
+                Chat(message);
             NotificationInfo(message);
         }
     }

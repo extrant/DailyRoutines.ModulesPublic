@@ -67,7 +67,8 @@ public class AutoShowDutyGuide : DailyModuleBase
         {
             if (ImGui.Checkbox(GetLoc("AutoShowDutyGuide-DebugMode"), ref IsOnDebug))
             {
-                if (IsOnDebug) OnZoneChange(172);
+                if (IsOnDebug) 
+                    OnZoneChange(172);
                 else
                 {
                     GuideText.Clear();

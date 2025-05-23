@@ -58,14 +58,13 @@ public unsafe class AutoMaterialize : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "Materialize", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MaterializeDialog", OnDialogAddon);
 
-        if (Materialize != null) OnAddon(AddonEvent.PostSetup, null);
-        if (MaterializeDialog != null) OnDialogAddon(AddonEvent.PostSetup, null);
+        if (Materialize != null) 
+            OnAddon(AddonEvent.PostSetup, null);
+        if (MaterializeDialog != null) 
+            OnDialogAddon(AddonEvent.PostSetup, null);
     }
 
-    public override void ConfigUI()
-    {
-        ConflictKeyText();
-    }
+    public override void ConfigUI() => ConflictKeyText();
 
     public override void OverlayUI()
     {
@@ -172,7 +171,8 @@ public unsafe class AutoMaterialize : DailyModuleBase
     private int ExtractMateriaDetour(nint a1, InventoryType type, uint slot)
     {
         var original = ExtractMateriaHook.Original(a1, type, slot);
-        if (AutoExtractAll && !TaskHelper.IsBusy) StartARoundAll();
+        if (AutoExtractAll && !TaskHelper.IsBusy) 
+            StartARoundAll();
         return original;
     }
 

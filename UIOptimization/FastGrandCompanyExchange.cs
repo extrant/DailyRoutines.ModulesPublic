@@ -43,7 +43,8 @@ public class FastGrandCompanyExchange : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "GrandCompanyExchange", OnAddon);
-        if (IsAddonAndNodesReady(GrandCompanyExchange)) OnAddon(AddonEvent.PostSetup, null);
+        if (IsAddonAndNodesReady(GrandCompanyExchange)) 
+            OnAddon(AddonEvent.PostSetup, null);
 
         CommandManager.AddSubCommand(Command, new(OnCommand) { HelpMessage = GetLoc("FastGrandCompanyExchange-CommandHelp") });
     }
@@ -184,9 +185,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
                                 .OrderBy(x => (x.Item.ValueNullable?.Name.ExtractText() ?? string.Empty).Length)
                                 .FirstOrDefault();
         if (result.RowId == 0) return true;
-
-        var isVenture = result.Item.RowId == 21072;
-
+        
         var singleCost             = result.CostGCSeals;
         var availableExchangeCount = (int)(seals / singleCost);
         var exchangeCount = Math.Min(itemCount == -1 ? availableExchangeCount : itemCount, availableExchangeCount);
@@ -229,7 +228,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
 
                     SendEvent(AgentId.GrandCompanyExchange, 0, 0, i, exchangeCount, 0, true, false);
                     
-                    if (!isVenture && itemCount == -1)
+                    if (itemCount == -1)
                         TaskHelper.Enqueue(() => EnqueueByName(itemName, itemCount));
 
                     break;
@@ -241,6 +240,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
             }
         }, "点击道具");
 
+        /*
         if (isVenture)
         {
             TaskHelper.Enqueue(() =>
@@ -258,7 +258,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
                 buttonNode->ClickAddonButton(ShopExchangeCurrencyDialog);
                 return true;
             }, "交换货币");
-        }
+        }*/
         
         return true;
     }

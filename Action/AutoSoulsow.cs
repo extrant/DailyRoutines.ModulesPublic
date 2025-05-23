@@ -47,7 +47,8 @@ public class AutoSoulsow : DailyModuleBase
         if (flag is not ConditionFlag.InCombat) return;
         
         TaskHelper.Abort();
-        if (!value) TaskHelper.Enqueue(CheckCurrentJob);
+        if (!value) 
+            TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     private bool? CheckCurrentJob()

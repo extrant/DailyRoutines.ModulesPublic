@@ -97,7 +97,9 @@ public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
         
         for (var i = 0; i < blackListItems.Count; i++)
         {
-            if (i % 5 == 0) ImGui.TableNextRow();
+            if (i % 5 == 0) 
+                ImGui.TableNextRow();
+            
             ImGui.TableNextColumn();
 
             var inputRef = blackListItems[i];
@@ -172,12 +174,11 @@ public unsafe class AutoAddChatPrefixSuffix : DailyModuleBase
                 handledMessage = $"{original[..secondSpaceIndex]} {ModuleConfig.PrefixString}{original[secondSpaceIndex..].TrimStart()}";
             }
             else 
-            { 
                 handledMessage = $"{ModuleConfig.PrefixString}{handledMessage}";
-            }
         }
         
-        if (ModuleConfig.IsAddSuffix) handledMessage = $"{handledMessage}{ModuleConfig.SuffixString}";
+        if (ModuleConfig.IsAddSuffix) 
+            handledMessage = $"{handledMessage}{ModuleConfig.SuffixString}";
         return true;
     }
     
