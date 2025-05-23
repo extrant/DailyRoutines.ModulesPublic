@@ -15,6 +15,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -140,10 +141,49 @@ public class AutoCountPlayers : DailyModuleBase
     private static unsafe void OnDraw()
     {
         if (!ModuleConfig.DisplayLineWhenTargetingMe || TargetingMePlayers.Count == 0) return;
-
+        
+        var framework = Framework.Instance();
+        if (framework == null || framework->WindowInactive) return;
+        
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return;
+        
+        if (IsAddonAndNodesReady(NamePlate))
+        {
+            var node = NamePlate->GetNodeById(1);
+            if (node != null)
+            {
+                var nodeState = NodeState.Get(node);
+                if (ImGui.Begin($"AutoCountPlayers-{localPlayer->EntityId}", WindowFlags))
+                {
+                    ImGui.SetWindowPos((nodeState.Position2 / 2) - (ImGui.GetWindowSize() * 0.75f));
+                    using (FontManager.UIFont140.Push())
+                    using (ImRaii.Group())
+                    {
+                        ImGuiHelpers.SeStringWrapped(new SeStringBuilder().AddIcon(BitmapFontIcon.Warning).Encode());
+                        
+                        ImGui.SameLine();
+                        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (1.2f * GlobalFontScale));
+                        ImGuiOm.TextOutlined(Orange, $"{TargetingMePlayers.Count}", Brown4);
 
+                        // 副本内有点遮视线
+                        if (GameState.ContentFinderCondition == 0)
+                        {
+                            using (FontManager.UIFont80.Push())
+                            {
+                                var text = GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe");
+                                ImGuiOm.TextOutlined(ImGui.GetCursorScreenPos() - new Vector2(ImGui.CalcTextSize(text).X * 0.3f, 0),
+                                                     ImGui.ColorConvertFloat4ToU32(Orange),
+                                                     $"({text})", ImGui.ColorConvertFloat4ToU32(Brown4));
+                            }
+                        }
+                    }
+
+                    ImGui.End();
+                }
+            }
+        }
+        
         foreach (var player in TargetingMePlayers)
         {
             if (DService.Gui.WorldToScreen(player.Position, out var screenPos) &&
@@ -159,9 +199,8 @@ public class AutoCountPlayers : DailyModuleBase
         var last = TargetingMePlayers.ToList();
         TargetingMePlayers = characters.Where(x => x.TargetObjectId == GameState.EntityID).OrderBy(x => x.EntityId).ToList();
 
-        if (TargetingMePlayers.Count > 0 &&
-            TargetingMePlayers.Any(x => !x.StatusFlags.HasFlag(StatusFlags.PartyMember) &&
-                                        !x.StatusFlags.HasFlag(StatusFlags.AllianceMember)) &&
+        if (TargetingMePlayers.Count > 0 && GameState.ContentFinderCondition == 0 &&
+            TargetingMePlayers.Any(x => Throttler.Throttle($"AutoCountPlayers-Player-{x.EntityId}", 30_000)) &&
             !last.SequenceEqual(TargetingMePlayers))
         {
             if (ModuleConfig.SendTTS)
