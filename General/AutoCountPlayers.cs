@@ -199,7 +199,8 @@ public class AutoCountPlayers : DailyModuleBase
         var last = TargetingMePlayers.ToList();
         TargetingMePlayers = characters.Where(x => x.TargetObjectId == GameState.EntityID).OrderBy(x => x.EntityId).ToList();
 
-        if (TargetingMePlayers.Count > 0 && GameState.ContentFinderCondition == 0 &&
+        if (TargetingMePlayers.Count > 0                                                                     &&
+            (GameState.ContentFinderCondition == 0 || DService.PartyList.Length < 2)                         &&
             TargetingMePlayers.Any(x => Throttler.Throttle($"AutoCountPlayers-Player-{x.EntityId}", 30_000)) &&
             !last.SequenceEqual(TargetingMePlayers))
         {
