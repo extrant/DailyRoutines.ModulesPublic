@@ -40,6 +40,8 @@ public class AutoCountPlayers : DailyModuleBase
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? Entry;
 
+    private static readonly Dictionary<uint, byte[]> JobIcons = [];
+    
     private static List<IPlayerCharacter> TargetingMePlayers = [];
 
     private static string SearchInput = string.Empty;
@@ -218,7 +220,9 @@ public class AutoCountPlayers : DailyModuleBase
                 TargetingMePlayers.ForEach(x =>
                 {
                     builder.AddIcon(x.ClassJob.Value.ToBitmapFontIcon());
-                    builder.Append($" {x.Name}\n");
+                    builder.Append(" ");
+                    builder.Add(new PlayerPayload(x.Name.ExtractText(), x.HomeWorld.RowId));
+                    builder.Append("\n");
                 });
 
                 Chat(builder.ToString().Trim());
@@ -266,8 +270,10 @@ public class AutoCountPlayers : DailyModuleBase
             {
                 ScaledDummy(12f);
 
+                var icon = JobIcons.GetOrAdd(chara.ClassJob.RowId, 
+                                             _ => new SeStringBuilder().AddIcon(chara.ClassJob.Value.ToBitmapFontIcon()).Encode());
                 ImGui.SameLine();
-                ImGuiHelpers.SeStringWrapped(new SeStringBuilder().AddIcon(chara.ClassJob.Value.ToBitmapFontIcon()).Encode());
+                ImGuiHelpers.SeStringWrapped(icon);
                 
                 ImGui.SameLine();
                 ImGuiOm.TextOutlined(Orange, $"{chara.Name}");
