@@ -1,62 +1,71 @@
 using DailyRoutines.Abstracts;
 using Dalamud.Hooking;
-using FFXIVClientStructs.FFXIV.Client.UI;
+using Dalamud.Plugin.Ipc;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoRefreshMarketSearchResultTitle"),
+        Title       = GetLoc("AutoRefreshMarketSearchResultTitle"),
         Description = GetLoc("AutoRefreshMarketSearchResultDescription"),
-        Category = ModuleCategories.UIOptimization,
+        Category    = ModuleCategories.UIOptimization,
     };
 
-    private static readonly CompSig HandlePricesSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 0F B6 EA");
-    private delegate nint HandlePricesDelegate(InfoProxyItemSearch* infoProxy, void* unk1, void* unk2);
-    private static Hook<HandlePricesDelegate>? HandlePricesHook;
+    public static bool IsMarketStuck { get; set; }
+    
+    private static readonly CompSig ProcessRequestResultSig =
+        new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 0F B6 EA");
+    private delegate nint                                ProcessRequestResultDelegate(InfoProxyItemSearch* info, int entryCount, nint a3, nint a4);
+    private static   Hook<ProcessRequestResultDelegate>? ProcessRequestResultHook;
 
-    private static readonly CompSig WaitMessageSig =
-        new("BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B C0 BA ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 45 33 C9");
+    private static readonly CompSig     WaitMessageSig   = new("BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B C0 BA ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 45 33 C9");
     private static readonly MemoryPatch WaitMessagePatch = new(WaitMessageSig.Get(), [0xBA, 0xB9, 0x1A, 0x00, 0x00]);
-
+    
+    private static IPC? ModuleIPC;
+    
     public override void Init()
     {
-        HandlePricesHook ??= DService.Hook.HookFromSignature<HandlePricesDelegate>(HandlePricesSig.Get(), HandlePricesDetour);
-        HandlePricesHook.Enable();
+        ModuleIPC ??= new();
+        
+        ProcessRequestResultHook ??= ProcessRequestResultSig.GetHook<ProcessRequestResultDelegate>(ProcessRequestResultDetour);
+        ProcessRequestResultHook.Enable();
 
         WaitMessagePatch.Set(true);
-        TaskHelper ??= new TaskHelper { AbortOnTimeout = true, TimeLimitMS = 5000, ShowDebug = false };
     }
 
-    private nint HandlePricesDetour(InfoProxyItemSearch* infoProxy, void* unk1, void* unk2)
+    private static nint ProcessRequestResultDetour(InfoProxyItemSearch* info, int entryCount, nint a3, nint a4)
     {
-        var result = HandlePricesHook.Original.Invoke(infoProxy, unk1, unk2);
-        if (result != 1) 
-            TaskHelper.Enqueue(RefreshPrices);
+        if (entryCount == 0 && a3 > 0)
+        {
+            IsMarketStuck = true;
 
-        return result;
+            info->RequestData();
+            return nint.Zero;
+        }
+
+        IsMarketStuck = false;
+        return ProcessRequestResultHook.Original(info, entryCount, a3, a4);
     }
-
-    private static void RefreshPrices()
-    {
-        if (!TryGetAddonByName<AddonItemSearchResult>("ItemSearchResult", out var addonItemSearchResult)) return;
-        if (!AddonItemSearchResultThrottled(addonItemSearchResult)) return;
-        InfoProxyItemSearch.Instance()->RequestData();
-    }
-
-    private static bool AddonItemSearchResultThrottled(AddonItemSearchResult* addon) =>
-        addon               != null                 &&
-        addon->ErrorMessage != null                 &&
-        addon->ErrorMessage->AtkResNode.IsVisible() &&
-        addon->HitsMessage != null                  &&
-        !addon->HitsMessage->AtkResNode.IsVisible();
 
     public override void Uninit()
     {
         WaitMessagePatch.Dispose();
+        
         base.Uninit();
+    }
+    
+    public class IPC : DailyModuleIPCBase
+    {
+        private const  string                   IsMarketStuckName = "DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck";
+        private static ICallGateProvider<bool>? IsMarketStuckIPC;
+        
+        public override void Init()
+        {
+            IsMarketStuckIPC ??= DService.PI.GetIpcProvider<bool>(IsMarketStuckName);
+            IsMarketStuckIPC.RegisterFunc(() => IsMarketStuck);
+        }
     }
 }
