@@ -24,8 +24,8 @@ public unsafe class AutoAcceptInvitation : DailyModuleBase
         Category    = ModuleCategories.UIOperation,
         Author      = ["Fragile"],
     };
-    
-    private static Config ModuleConfig       = null!;
+
+    private static Config ModuleConfig = null!;
 
     private static string PlayerNameInput = string.Empty;
 
