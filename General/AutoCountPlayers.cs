@@ -73,26 +73,20 @@ public class AutoCountPlayers : DailyModuleBase
             ModuleConfig.ScaleFactor = Math.Max(0.1f, ModuleConfig.ScaleFactor);
         if (ImGui.IsItemDeactivatedAfterEdit())
             ModuleConfig.Save(this);
-        
+
         ImGui.NewLine();
-        
+
         if (ImGui.Checkbox(GetLoc("AutoCountPlayers-DisplayLineWhenTargetingMe"), ref ModuleConfig.DisplayLineWhenTargetingMe))
             ModuleConfig.Save(this);
 
-        if (ModuleConfig.DisplayLineWhenTargetingMe)
-        {
-            using (ImRaii.PushIndent())
-            {
-                if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
-                    ModuleConfig.Save(this);
-                
-                if (ImGui.Checkbox(GetLoc("SendNotification"), ref ModuleConfig.SendNotification))
-                    ModuleConfig.Save(this);
-                
-                if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
-                    ModuleConfig.Save(this);
-            }
-        }
+        if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
+            ModuleConfig.Save(this);
+
+        if (ImGui.Checkbox(GetLoc("SendNotification"), ref ModuleConfig.SendNotification))
+            ModuleConfig.Save(this);
+
+        if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
+            ModuleConfig.Save(this);
     }
 
     public override unsafe void OverlayUI()
