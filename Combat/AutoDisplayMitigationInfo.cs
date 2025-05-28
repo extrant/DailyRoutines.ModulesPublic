@@ -1062,7 +1062,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         private static void ListenAction()
         {
-            return;
+            /*return;
             while (!actionPipe.IsCancellationRequested)
             {
                 using var pipe = new NamedPipeServerStream("DR-ADMI", PipeDirection.In, 4);
@@ -1081,7 +1081,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                         Task.Run(async () => await Timer.Emit(ClearAction, (int)(CurrentAction.Duration * 1000)));
                 }
                 catch (Exception ex) { Error($"[AutoDisplayMitigationInfo] Damage Action Pipe Listen Failed: {ex}"); }
-            }
+            }*/
         }
 
         private static void ClearAction()
