@@ -1,151 +1,142 @@
-global using static DailyRoutines.Infos.Widgets;
-global using static OmenTools.Helpers.HelpersOm;
-global using static DailyRoutines.Infos.Extensions;
-global using static OmenTools.Infos.InfosOm;
-global using static OmenTools.Helpers.ThrottlerHelper;
-global using static DailyRoutines.Managers.Configuration;
-global using static DailyRoutines.Managers.LanguageManagerExtensions;
-global using static DailyRoutines.Helpers.NotifyHelper;
-global using static OmenTools.Helpers.ContentsFinderHelper;
-global using Dalamud.Interface.Utility.Raii;
-global using OmenTools.Infos;
-global using OmenTools.ImGuiOm;
-global using OmenTools.Helpers;
-global using OmenTools;
-global using ImGuiNET;
-global using ImPlotNET;
-global using Dalamud.Game;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Plugin.Services;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoAcceptInvitation : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = "自动接收组队邀请",
-        Category = ModuleCategories.General,
-        Author = ["Fragile"],
-        
+        Title       = GetLoc("AutoAcceptInvitationTitle"),
+        Description = GetLoc("AutoAcceptInvitationDescription"),
+        Category    = ModuleCategories.UIOperation,
+        Author      = ["Fragile"],
     };
     
-    private static readonly Regex ChinesePattern = new Regex(
-        @"^确定要加入(.*?)的小队吗？$",
-        RegexOptions.Compiled
-    );
-    
-    private static readonly Regex EnglishPattern = new Regex(
-        @"^Join (.*?)'s party\?$",
-        RegexOptions.Compiled
-    );
-    
-    private static readonly Regex JapanesePattern = new Regex(
-        @"^(.*?)のパーティに参加します。よろしいですか？$",
-        RegexOptions.Compiled
-    );
-    
-    /*private static readonly Regex DeclineChinesePattern = new Regex(
-        @"^确定要拒绝(.*?)发来的组队邀请吗？$", RegexOptions.Compiled);
-    private static readonly Regex DeclineEnglishPattern = new Regex(
-        @"^Decline (.*?)'s party invite\?$", RegexOptions.Compiled);
-    private static readonly Regex DeclineJapanesePattern = new Regex(
-        @"^(.*?)のパーティ勧誘を断ります。よろしいですか？$", RegexOptions.Compiled);*/
+    private static Config ModuleConfig       = null!;
 
-    private static readonly List<Regex> AllPatterns = new List<Regex>
-    {
-        ChinesePattern,
-        EnglishPattern,
-        JapanesePattern
-    };
-    
-    public static string ExtractPlayerId(string inputText)
-    {
-        foreach (Regex pattern in AllPatterns)
-        {
-            Match match = pattern.Match(inputText);
-            if (match is { Success: true, Groups.Count: > 1 })
-                return match.Groups[1].Value;
-        }
-        return "";
-    }
-    
-    private static Config ModuleConfig = null!;
-    private string newWhiteListPlayer = string.Empty;
+    private static string PlayerNameInput = string.Empty;
+
+    private static string Pattern { get; } = BuildPattern(LuminaGetter.GetRow<Addon>(120).GetValueOrDefault().Text.ToDalamudString().Payloads);
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnSelectYesno);
     }
-
-    public override void Uninit() => DService.AddonLifecycle.UnregisterListener(OnSelectYesno);
-
-    private void OnSelectYesno(AddonEvent type, AddonArgs args)
-    {
-        var text = ((AddonSelectYesno*)SelectYesno)->PromptText->NodeText.ExtractText();
-        var playerId = ExtractPlayerId(text);
-        if (playerId!="")
-        {
-            if (ModuleConfig.WhiteList.Any(whiteListId => playerId.Contains(whiteListId)))
-                ClickSelectYesnoYes();
-        }
-    }
     
     public override void ConfigUI()
     {
-        ImGui.Text("组队邀请白名单");
-        ImGui.Separator();
+        ImGui.AlignTextToFramePadding();
+        ImGui.Text($"{GetLoc("Mode")}:");
+        
+        ImGui.SameLine();
+        if (ImGuiComponents.ToggleButton("ModeSwitch", ref ModuleConfig.Mode))
+            SaveConfig(ModuleConfig);
+        
+        ImGui.SameLine();
+        ImGui.Text(GetLoc(ModuleConfig.Mode ? "Whitelist" : "Blacklist"));
+        
+        ImGui.TextColored(LightSkyBlue, $"{LuminaWrapper.GetAddonText(9818)}:");
 
-        // 添加新的白名单玩家
-        ImGui.Text("添加玩家到白名单:");
+        using var indent = ImRaii.PushIndent();
+
+        ImGui.SetNextItemWidth(200f * GlobalFontScale);
+        ImGui.InputText("##NewPlayerInput", ref PlayerNameInput, 128);
+        ImGuiOm.TooltipHover(GetLoc("AutoAcceptInvitationTitle-PlayerNameInputHelp"));
+
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(200);
-        if (ImGui.InputText("##NewWhiteListPlayer", ref newWhiteListPlayer, 100))
+        using (ImRaii.Disabled(string.IsNullOrWhiteSpace(PlayerNameInput) || 
+                               (ModuleConfig.Mode ? ModuleConfig.Whitelist : ModuleConfig.Blacklist).Contains(PlayerNameInput)))
         {
-            // 输入处理
-        }
-        
-        ImGui.SameLine();
-        if (ImGui.Button("添加") && !string.IsNullOrWhiteSpace(newWhiteListPlayer))
-        {
-            if (!ModuleConfig.WhiteList.Contains(newWhiteListPlayer))
+            if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
             {
-                ModuleConfig.WhiteList.Add(newWhiteListPlayer);
-                SaveConfig(ModuleConfig);
-                newWhiteListPlayer = string.Empty;
-            }
-        }
-        
-        ImGui.Separator();
-        ImGui.Text("当前白名单:");
-        
-        // 显示并允许删除白名单中的玩家
-        for (int i = 0; i < ModuleConfig.WhiteList.Count; i++)
-        {
-            using (ImRaii.PushId(i))
-            {
-                ImGui.Text(ModuleConfig.WhiteList[i]);
-                ImGui.SameLine();
-                if (ImGui.Button("删除"))
+                if (!string.IsNullOrWhiteSpace(PlayerNameInput) &&
+                    (ModuleConfig.Mode ? ModuleConfig.Whitelist : ModuleConfig.Blacklist).Add(PlayerNameInput))
                 {
-                    ModuleConfig.WhiteList.RemoveAt(i);
                     SaveConfig(ModuleConfig);
-                    i--;
+                    PlayerNameInput = string.Empty;
                 }
             }
         }
+
+        var playersToRemove = new List<string>();
+        foreach (var player in ModuleConfig.Mode ? ModuleConfig.Whitelist : ModuleConfig.Blacklist)
+        {
+            using var id = ImRaii.PushId($"{player}");
+            
+            if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.TrashAlt, GetLoc("Delete")))
+                playersToRemove.Add(player);
+            
+            ImGui.SameLine();
+            ImGui.Bullet();
+            
+            ImGui.SameLine(0, 8f * GlobalFontScale);
+            ImGui.Text($"{player}");
+        }
+
+        if (playersToRemove.Count > 0)
+        {
+            playersToRemove.ForEach(x => (ModuleConfig.Mode ? ModuleConfig.Whitelist : ModuleConfig.Blacklist).Remove(x));
+            SaveConfig(ModuleConfig);
+        }
+    }
+    
+    private static void OnSelectYesno(AddonEvent type, AddonArgs args)
+    {
+        var addon = (AddonSelectYesno*)SelectYesno;
+        if (addon == null || DService.PartyList.Length > 1) return;
+        
+        var text = addon->PromptText->NodeText.ExtractText();
+        if (string.IsNullOrWhiteSpace(text)) return;
+        
+        var playerName = ExtractPlayerName(text);
+        if (string.IsNullOrWhiteSpace(playerName)) return;
+        if ((ModuleConfig.Mode  && !ModuleConfig.Whitelist.Contains(playerName)) ||
+            (!ModuleConfig.Mode && ModuleConfig.Blacklist.Contains(playerName)))
+            return;
+        
+        ClickSelectYesnoYes();
+    }
+    
+    private static string ExtractPlayerName(string inputText) => 
+        Regex.Match(inputText, Pattern) is { Success: true, Groups.Count: > 1 } match ? match.Groups[1].Value : string.Empty;
+
+    private static string BuildPattern(List<Payload> payloads)
+    {
+        var pattern = new StringBuilder();
+        foreach (var payload in payloads)
+        {
+            if (payload is TextPayload textPayload)
+                pattern.Append(Regex.Escape(textPayload.Text));
+            else
+                pattern.Append("(.*?)");
+        }
+        
+        return pattern.ToString();
     }
 
+    public override void Uninit() => 
+        DService.AddonLifecycle.UnregisterListener(OnSelectYesno);
+    
     private class Config : ModuleConfiguration
     {
-        public List<string> WhiteList = [];
+        // true - 白名单, false - 黑名单
+        public bool Mode = true;
+        
+        public HashSet<string> Whitelist = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> Blacklist = new(StringComparer.OrdinalIgnoreCase);
     }
 }
