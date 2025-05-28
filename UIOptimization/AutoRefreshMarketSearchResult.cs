@@ -1,7 +1,9 @@
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Ipc;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -38,7 +40,11 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
 
     private static nint ProcessRequestResultDetour(InfoProxyItemSearch* info, int entryCount, nint a3, nint a4)
     {
-        if (entryCount == 0 && a3 > 0)
+        if (entryCount == 0 && a3 > 0 && 
+            GameState.ContentFinderCondition == 0 && 
+            info->SearchItemId != 0 && 
+            LuminaGetter.TryGetRow<Item>(info->SearchItemId, out var itemData) &&
+            itemData.ItemSearchCategory.RowId > 0)
         {
             IsMarketStuck = true;
 
