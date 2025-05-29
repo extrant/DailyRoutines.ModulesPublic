@@ -43,6 +43,8 @@ public class AutoCountPlayers : DailyModuleBase
     private static readonly Dictionary<uint, byte[]> JobIcons = [];
     
     private static List<IPlayerCharacter> TargetingMePlayers = [];
+    
+    private static HashSet<uint> LastTargetingEntityIDs = [];
 
     private static string SearchInput = string.Empty;
 
@@ -71,26 +73,20 @@ public class AutoCountPlayers : DailyModuleBase
             ModuleConfig.ScaleFactor = Math.Max(0.1f, ModuleConfig.ScaleFactor);
         if (ImGui.IsItemDeactivatedAfterEdit())
             ModuleConfig.Save(this);
-        
+
         ImGui.NewLine();
-        
+
         if (ImGui.Checkbox(GetLoc("AutoCountPlayers-DisplayLineWhenTargetingMe"), ref ModuleConfig.DisplayLineWhenTargetingMe))
             ModuleConfig.Save(this);
 
-        if (ModuleConfig.DisplayLineWhenTargetingMe)
-        {
-            using (ImRaii.PushIndent())
-            {
-                if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
-                    ModuleConfig.Save(this);
-                
-                if (ImGui.Checkbox(GetLoc("SendNotification"), ref ModuleConfig.SendNotification))
-                    ModuleConfig.Save(this);
-                
-                if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
-                    ModuleConfig.Save(this);
-            }
-        }
+        if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
+            ModuleConfig.Save(this);
+
+        if (ImGui.Checkbox(GetLoc("SendNotification"), ref ModuleConfig.SendNotification))
+            ModuleConfig.Save(this);
+
+        if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
+            ModuleConfig.Save(this);
     }
 
     public override unsafe void OverlayUI()
@@ -185,11 +181,13 @@ public class AutoCountPlayers : DailyModuleBase
                 }
             }
         }
-        
+
+        var currentWindowSize = ImGui.GetMainViewport().Size;
+        if (!DService.Gui.WorldToScreen(localPlayer->Position, out var localScreenPos))
+            localScreenPos = currentWindowSize with { X = currentWindowSize.X / 2 };
         foreach (var player in TargetingMePlayers)
         {
-            if (DService.Gui.WorldToScreen(player.Position, out var screenPos) &&
-                DService.Gui.WorldToScreen(localPlayer->Position,  out var localScreenPos))
+            if (DService.Gui.WorldToScreen(player.Position, out var screenPos))
                 DrawLine(localScreenPos, screenPos, player, LineColorRed);
         }
     }
@@ -198,37 +196,50 @@ public class AutoCountPlayers : DailyModuleBase
     {
         if (Entry == null) return;
 
-        var last = TargetingMePlayers.ToList();
-        TargetingMePlayers = characters.Where(x => x.TargetObjectId == GameState.EntityID).OrderBy(x => x.EntityId).ToList();
-
-        if (TargetingMePlayers.Count > 0                                                                     &&
-            (GameState.ContentFinderCondition == 0 || DService.PartyList.Length < 2)                         &&
-            TargetingMePlayers.Any(x => Throttler.Throttle($"AutoCountPlayers-Player-{x.EntityId}", 30_000)) &&
-            !last.SequenceEqual(TargetingMePlayers))
+        TargetingMePlayers = characters.Where(x => x.TargetObjectId == GameState.EntityID)
+                                       .OrderBy(x => x.EntityId)
+                                       .ToList();
+        
+        var currentTargetingEntityIds = TargetingMePlayers.Select(x => x.EntityId).ToHashSet();
+        if (TargetingMePlayers.Count > 0 &&
+            (GameState.ContentFinderCondition == 0 || DService.PartyList.Length < 2))
         {
-            if (ModuleConfig.SendTTS)
-                Speak(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
-
-            if (ModuleConfig.SendNotification)
-                NotificationWarning(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
-
-            if (ModuleConfig.SendChat)
+            if (TargetingMePlayers.Any(x => Throttler.Throttle($"AutoCountPlayers-Player-{x.EntityId}", 30_000)) &&
+                (currentTargetingEntityIds.Count != LastTargetingEntityIDs.Count || !currentTargetingEntityIds.SetEquals(LastTargetingEntityIDs)))
             {
-                var builder = new SeStringBuilder();
 
-                builder.Append($"{GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe")}:\n");
-                TargetingMePlayers.ForEach(x =>
+                if (ModuleConfig.SendTTS)
+                    Speak(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
+
+                if (ModuleConfig.SendNotification)
+                    NotificationWarning(GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe"));
+
+                if (ModuleConfig.SendChat)
                 {
-                    builder.AddIcon(x.ClassJob.Value.ToBitmapFontIcon());
-                    builder.Append(" ");
-                    builder.Add(new PlayerPayload(x.Name.ExtractText(), x.HomeWorld.RowId));
-                    builder.Append("\n");
-                });
+                    var builder = new SeStringBuilder();
 
-                Chat(builder.ToString().Trim());
+                    builder.Append($"{GetLoc("AutoCountPlayers-Notification-SomeoneTargetingMe")}:");
+                    builder.Add(new NewLinePayload());
+                    foreach (var player in TargetingMePlayers)
+                    {
+                        builder.Add(new PlayerPayload(player.Name.ExtractText(), player.HomeWorld.RowId))
+                               .Append(" (")
+                               .AddIcon(player.ClassJob.Value.ToBitmapFontIcon())
+                               .Append($" {player.ClassJob.Value.Name})");
+                        builder.Add(new NewLinePayload());
+                    }
+
+                    var message = builder.Build();
+                    if (message.Payloads.Last() is NewLinePayload)
+                        message.Payloads.RemoveAt(message.Payloads.Count - 1);
+
+                    Chat(builder.Build());
+                }
             }
         }
 
+        LastTargetingEntityIDs = currentTargetingEntityIds;
+        
         Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersManager.PlayersAroundCount}" +
                      (TargetingMePlayers.Count == 0 ? string.Empty : $" ({TargetingMePlayers.Count})");
 
@@ -289,6 +300,7 @@ public class AutoCountPlayers : DailyModuleBase
         PlayersManager.ReceivePlayersAround -= OnUpdate;
         
         TargetingMePlayers.Clear();
+        LastTargetingEntityIDs.Clear();
         
         Entry?.Remove();
         Entry = null;
