@@ -62,6 +62,14 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 
     public override void OverlayUI()
     {
+        if (MJICraftSchedule == null)
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+        
+        if (!IsAddonAndNodesReady(MJICraftSchedule)) return;
+        
         using var font = FontManager.UIFont80.Push();
         
         DrawImportSection();
@@ -318,15 +326,19 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
         agent->SetDisplayedCycle(agent->Data->CycleDisplayed);
         agent->Data->Flags1 |= AgentMJICraftSchedule.DataFlags1.MaterialsUpdated;
     }
-    
-    private void OnAddon(AddonEvent type, AddonArgs? args)
-    {
+
+    private void OnAddon(AddonEvent type, AddonArgs? args) =>
         Overlay.IsOpen = type switch
         {
             AddonEvent.PostSetup   => true,
             AddonEvent.PreFinalize => false,
             _                      => Overlay.IsOpen
         };
+
+    public override void Uninit()
+    {
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
+        base.Uninit();
     }
 
     private class Config : ModuleConfiguration
