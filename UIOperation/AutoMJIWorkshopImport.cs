@@ -1,20 +1,19 @@
-using DailyRoutines.Abstracts;
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game.MJI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Interface.Colors;
+using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoMJIWorkshopImport : DailyModuleBase
 {
@@ -36,11 +35,12 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
     static AutoMJIWorkshopImport()
     {
         OriginalCraftItemsSheet = LuminaGetter.Get<MJICraftworksObject>()
-            .Where(x => x.Item.RowId != 0 && x.Item.IsValid)
-            // 不知道这样改对不对
-            .ToDictionary(x => x.RowId, x => x);
+                                              .Where(x => x.Item.RowId != 0 && x.Item.IsValid)
+                                              .ToDictionary(x => x.RowId, x => x);
         ItemNameMap = OriginalCraftItemsSheet.Values
-            .ToDictionary(r => RemoveMJIItemPrefix(r.Item.Value.Name.ExtractText() ?? ""), r => r, StringComparer.OrdinalIgnoreCase);
+                                             .ToDictionary(r => RemoveMJIItemPrefix(r.Item.Value.Name.ExtractText() ?? string.Empty), 
+                                                           r => r,
+                                                           StringComparer.OrdinalIgnoreCase);
     }
 
     public override void Init()
