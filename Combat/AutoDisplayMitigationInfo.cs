@@ -375,10 +375,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             try
             {
-                await Task.WhenAll(
-                    FetchMitigationStatuses(),
-                    FetchDamageActions()
-                );
+                var tasks = new[] { FetchMitigationStatuses(), FetchDamageActions() };
+                await Task.WhenAll(tasks);
             }
             catch (Exception ex) { Error($"[AutoDisplayMitigationInfo] 远程资源获取失败: {ex}"); }
         }

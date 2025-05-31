@@ -20,6 +20,7 @@ using Lumina.Text.ReadOnly;
 using Newtonsoft.Json;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 
+
 namespace DailyRoutines.ModulesPublic;
 
 public class HealerHelper : DailyModuleBase
@@ -708,13 +709,10 @@ public class HealerHelper : DailyModuleBase
         {
             try
             {
-                await Task.WhenAll(
-                    FetchPlayCardOrder(),
-                    FetchHealActions(),
-                    FetchTerritoryMap()
-                );
+                var tasks = new[] { FetchPlayCardOrder(), FetchHealActions(), FetchTerritoryMap() };
+                await Task.WhenAll(tasks);
             }
-            catch (Exception ex) { Error($"[AutoDisplayMitigationInfo] 远程资源获取失败: {ex}"); } finally
+            catch (Exception ex) { Error($"[HealerHelper] 远程资源获取失败: {ex}"); } finally
             {
                 // action select combo
                 actionSelect ??= new("##ActionSelect", LuminaGetter.Get<LuminaAction>().Where(x => easyHealService.TargetHealActions.ContainsKey(x.RowId)));
