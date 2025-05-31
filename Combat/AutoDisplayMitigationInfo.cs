@@ -996,7 +996,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             if (CurrentAction.ActionId == 0)
                 FindAction(actionId);
 
-            return startCastHook.Original(player, ActionType.Action, actionId, a4, rotation, a6);
+            return startCastHook.Original(player, type, actionId, a4, rotation, a6);
         }
 
         private static unsafe nint OnCompleteCast(
