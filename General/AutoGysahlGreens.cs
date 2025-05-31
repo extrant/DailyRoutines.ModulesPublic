@@ -1,14 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using System.Collections.Generic;
-using System.Linq;
-using System;
 using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoGysahlGreens : DailyModuleBase
 {
@@ -20,56 +22,60 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         Author      = ["Veever"]
     };
 
-    private const  uint     GysahlGreens  = 4868;
+    private const uint GysahlGreens = 4868;
 
-    private static Config   ModuleConfig  = null!;
+    private static HashSet<ushort> ValidTerritory { get; } = PresetSheet.Zones
+                                                                        .Where(x => x.Value.TerritoryIntendedUse.RowId == 1 &&
+                                                                                    x.Key                              != 250)
+                                                                        .Select(x => (ushort)x.Key)
+                                                                        .ToHashSet();
 
-    private static readonly HashSet<ushort> ValidTerritory;
+    private static Config ModuleConfig = null!;
 
     private static bool HasNotifiedInCurrentZone;
-
-    static AutoGysahlGreens()
-    {
-        ValidTerritory = PresetSheet.Zones
-                                    .Where(x =>
-                                               x.Value.TerritoryIntendedUse.RowId == 1 &&
-                                               x.Key                              != 250)
-                                    .Select(x => (ushort)x.Key)
-                                    .ToHashSet();
-    }
 
     public override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
+
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        OnZoneChanged(DService.ClientState.TerritoryType);
+        OnZoneChanged((ushort)GameState.TerritoryType);
     }
 
     public override void ConfigUI()
     {
-        ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoGysahlGreens-ChangeStanceInfo")}:");
+        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-AutoSwitchStance"), ref ModuleConfig.AutoSwitchStance))
+            SaveConfig(ModuleConfig);
 
-        bool isFirst = true;
-        foreach (var checkPoint in Enum.GetValues<StanceCheckpoint>())
+        if (ModuleConfig.AutoSwitchStance)
         {
-            if (!isFirst)
-                ImGui.SameLine();
-            isFirst = false;
-
-            if (!LuminaGetter.TryGetRow<BuddyAction>((uint)checkPoint, out var buddyAction)) continue;
-            string label      = buddyAction.Name.ExtractText();
-            bool   isSelected = ModuleConfig.CommandCheck == (int)checkPoint;
-            
-            if (ImGui.Checkbox(label, ref isSelected))
+            using (ImRaii.PushIndent())
             {
-                if (isSelected)
+                var isFirst = true;
+                foreach (var checkPoint in Enum.GetValues<ChocoboStance>())
                 {
-                    ModuleConfig.CommandCheck = (int)checkPoint;
-                    SaveConfig(ModuleConfig);
+                    if (!LuminaGetter.TryGetRow<BuddyAction>((uint)checkPoint, out var buddyAction)) continue;
+
+                    if (!isFirst)
+                        ImGui.SameLine();
+                    isFirst = false;
+
+                    if (ImGui.RadioButton(buddyAction.Name.ExtractText(), ModuleConfig.Stance == checkPoint))
+                    {
+                        ModuleConfig.Stance = checkPoint;
+                        SaveConfig(ModuleConfig);
+                    }
                 }
             }
         }
-
+        
+        ImGui.NewLine();
+        
+        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NotBattleJobUsingGys"), ref ModuleConfig.NotBattleJobUsingGysahl))
+            SaveConfig(ModuleConfig);
+        
+        ImGui.NewLine();
+        
         if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
             SaveConfig(ModuleConfig);
 
@@ -77,9 +83,6 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
             SaveConfig(ModuleConfig);
 
         if (ImGui.Checkbox(GetLoc("SendTTS"), ref ModuleConfig.SendTTS))
-            SaveConfig(ModuleConfig);
-
-        if (ImGui.Checkbox(GetLoc("AutoGysahlGreens-NotBattleJobUsingGys"), ref ModuleConfig.NotBattleJobUsingGysahl))
             SaveConfig(ModuleConfig);
     }
 
@@ -95,42 +98,47 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
     private static void OnUpdate(IFramework framework)
     {
         if (PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable)) return;
-        if (DService.ClientState.LocalPlayer is not { IsDead: false }) return;
-        if (BetweenAreas || OccupiedInEvent || IsOnMount || !IsScreenReady()) return;
 
-        var classJobData = DService.ClientState.LocalPlayer.ClassJob.ValueNullable;
-        if (classJobData == null) return;
-        if (!ModuleConfig.NotBattleJobUsingGysahl && (classJobData?.DohDolJobIndex ?? 0) != -1) return;
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null || localPlayer->IsDead()) return;
+        
+        if (OccupiedInEvent || IsOnMount) return;
 
-        if (UIState.Instance()->Buddy.CompanionInfo.ActiveCommand != ModuleConfig.CommandCheck)
+        if (!LuminaGetter.TryGetRow<ClassJob>(localPlayer->ClassJob, out var classJob)) return;
+        if (!ModuleConfig.NotBattleJobUsingGysahl && classJob.DohDolJobIndex != -1) return;
+
+        var companionInfo = UIState.Instance()->Buddy.CompanionInfo;
+        if (companionInfo.TimeLeft > 300)
         {
-            SwitchCommand((StanceCheckpoint)ModuleConfig.CommandCheck);
+            if (ModuleConfig.AutoSwitchStance && companionInfo.ActiveCommand != (int)ModuleConfig.Stance)
+                SwitchCommand(ModuleConfig.Stance);
+            
+            return;
         }
-
-        if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft > 300) return;
+        
         if (InventoryManager.Instance()->GetInventoryItemCount(GysahlGreens) <= 3)
         {
             if (!HasNotifiedInCurrentZone)
             {
                 HasNotifiedInCurrentZone = true;
+                
                 var notificationMessage = GetLoc("AutoGysahlGreens-NotificationMessage");
-                if (ModuleConfig.SendChat) 
+                if (ModuleConfig.SendChat)
                     Chat(notificationMessage);
-                if (ModuleConfig.SendNotification) 
+                if (ModuleConfig.SendNotification)
                     NotificationInfo(notificationMessage);
-                if (ModuleConfig.SendTTS) 
+                if (ModuleConfig.SendTTS)
                     Speak(notificationMessage);
             }
 
             return;
         }
-        UseActionManager.UseActionLocation(ActionType.Item, GysahlGreens, 0xE0000000, default, 0xFFFF);
+
+        UseActionManager.UseActionLocation(ActionType.Item, GysahlGreens, extraParam: 0xFFFF);
     }
 
-    private static void SwitchCommand(StanceCheckpoint command)
-    {
+    private static void SwitchCommand(ChocoboStance command) =>
         UseActionManager.UseAction(ActionType.BuddyAction, (uint)command);
-    }
 
     public override void Uninit()
     {
@@ -138,7 +146,7 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         OnZoneChanged(0);
     }
 
-    private enum StanceCheckpoint
+    private enum ChocoboStance
     {
         FreeStance     = 0x04,
         DefenderStance = 0x05,
@@ -151,7 +159,10 @@ public unsafe class AutoGysahlGreens : DailyModuleBase
         public bool SendChat;
         public bool SendNotification = true;
         public bool SendTTS;
+        
         public bool NotBattleJobUsingGysahl;
-        public int  CommandCheck     = 0x04;
+
+        public bool          AutoSwitchStance;
+        public ChocoboStance Stance = ChocoboStance.FreeStance;
     }
 }
