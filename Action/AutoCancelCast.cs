@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
@@ -11,7 +9,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoCancelCast : DailyModuleBase
 {
@@ -21,13 +19,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
         Description = GetLoc("AutoCancelCastDescription"),
         Category    = ModuleCategories.Action,
     };
-
-    private static readonly CompSig CancelCastSig = new("48 83 EC 38 33 D2 C7 44 24 20 00 00 00 00 45 33 C9");
-    private static Action? CancelCast;
-
-    private static HashSet<uint>? TargetAreaActions;
-    private static bool IsOnCasting;
-
+    
     private static readonly HashSet<ObjectKind> InvalidInterruptKinds = 
     [
         ObjectKind.Treasure, ObjectKind.Aetheryte, ObjectKind.GatheringPoint, ObjectKind.EventObj, ObjectKind.Mount,
@@ -35,14 +27,16 @@ public unsafe class AutoCancelCast : DailyModuleBase
         ObjectKind.MjiObject, ObjectKind.Ornament, ObjectKind.CardStand
     ];
 
+    private static readonly CompSig CancelCastSig = new("48 83 EC 38 33 D2 C7 44 24 20 00 00 00 00 45 33 C9");
+    private static readonly Action CancelCast = CancelCastSig.GetDelegate<Action>();
+
+    private static HashSet<uint> TargetAreaActions { get; } = LuminaGetter.Get<Lumina.Excel.Sheets.Action>()
+                                                                          .Where(x => x.TargetArea)
+                                                                          .Select(x => x.RowId).ToHashSet();
+    private static bool IsOnCasting;
+
     public override void Init()
     {
-        CancelCast ??= CancelCastSig.GetDelegate<Action>();
-
-        TargetAreaActions ??= LuminaGetter.Get<Lumina.Excel.Sheets.Action>()
-                                         .Where(x => x.TargetArea)
-                                         .Select(x => x.RowId).ToHashSet();
-
         DService.Condition.ConditionChange += OnConditionChanged;
         FrameworkManager.Register(OnUpdate);
     }
@@ -69,9 +63,11 @@ public unsafe class AutoCancelCast : DailyModuleBase
             return;
         }
 
-        var obj = (GameObject*)CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)player.CastTargetObjectId);
-        if (obj == null || InvalidInterruptKinds.Contains(obj->ObjectKind)) return;
-        if (ActionManager.CanUseActionOnTarget(player.CastActionId, obj)) return;
+        var obj = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)player.CastTargetObjectId);
+        if (obj == null || 
+            InvalidInterruptKinds.Contains(obj->ObjectKind) ||
+            ActionManager.CanUseActionOnTarget(player.CastActionId, (GameObject*)obj)) 
+            return;
 
         CancelCastCombined();
     }
@@ -79,6 +75,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
     private static void CancelCastCombined()
     {
         if (!Throttler.Throttle("AutoCancelCast-CancelCast")) return;
+        
         CancelCast();
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
     }

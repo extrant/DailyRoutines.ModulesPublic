@@ -16,6 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 using Status = Lumina.Excel.Sheets.Status;
 
+
 namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoHighlightStatusAction : DailyModuleBase
@@ -31,10 +32,11 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     private static readonly CompSig IsActionHighlightedSig = new("E8 ?? ?? ?? ?? 88 47 41 80 BB C9 00 00 00 01");
     [return: MarshalAs(UnmanagedType.U1)]
     private delegate bool IsActionHighlightedDelegate(ActionManager* actionManager, ActionType actionType, uint actionID);
+
     private static Hook<IsActionHighlightedDelegate>? IsActionHighlightedHook;
 
     private static Config ModuleConfig = null!;
-    
+
     private static StatusSelectCombo? StatusCombo;
     private static ActionSelectCombo? ActionCombo;
 
@@ -43,10 +45,11 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     public override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new()
-        {
-            StatusToMonitor = StatusToAction.ToDictionary(x => x.Key, x => x.Value)
-        };
+        ModuleConfig = LoadConfig<Config>() ??
+                       new()
+                       {
+                           StatusToMonitor = StatusToAction.ToDictionary(x => x.Key, x => x.Value)
+                       };
 
         StatusCombo ??= new("StatusCombo", PresetSheet.Statuses.Values);
         ActionCombo ??= new("ActionCombo", PresetSheet.PlayerActions.Values);
@@ -72,15 +75,12 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         if (ImGui.SliderFloat($"{GetLoc("Threshold")} (s)##ReminderThreshold", ref ModuleConfig.Threshold, 2.0f, 10.0f, "%.1f"))
             SaveConfig(ModuleConfig);
         ImGuiOm.HelpMarker(GetLoc("AutoHighlightStatusAction-ThresholdHelp"));
-        
         ImGui.NewLine();
 
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         using (ImRaii.PushId("Status"))
             StatusCombo.DrawRadio();
-        
         ImGui.TextDisabled("↓");
-        
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         using (ImRaii.PushId("Action"))
             ActionCombo.DrawCheckbox();
@@ -93,7 +93,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                 ModuleConfig.Save(this);
             }
         }
-        
+
         ImGui.Spacing();
 
         foreach (var (status, actions) in ModuleConfig.StatusToMonitor)
@@ -105,11 +105,11 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                 ModuleConfig.StatusToMonitor.Remove(status);
                 ModuleConfig.Save(this);
             }
-            
+
             if (!LuminaGetter.TryGetRow<Status>(status, out var statusRow) ||
-                !DService.Texture.TryGetFromGameIcon(new(statusRow.Icon), out var texture)) 
+                !DService.Texture.TryGetFromGameIcon(new(statusRow.Icon), out var texture))
                 continue;
-            
+
             ImGui.SameLine();
             ImGuiOm.TextImage(statusRow.Name.ExtractText(), texture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
@@ -119,20 +119,21 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
             ImGui.SameLine();
             ImGui.TextDisabled("→");
-            
+
             ImGui.SameLine();
             using (ImRaii.Group())
             {
                 foreach (var action in actions)
                 {
                     if (!LuminaGetter.TryGetRow<LuminaAction>(action, out var actionRow) ||
-                        !DService.Texture.TryGetFromGameIcon(new(actionRow.Icon), out var actionTexture)) 
+                        !DService.Texture.TryGetFromGameIcon(new(actionRow.Icon), out var actionTexture))
                         continue;
-                    
+
                     ImGuiOm.TextImage(actionRow.Name.ExtractText(), actionTexture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeight()));
                     ImGui.SameLine();
                 }
             }
+
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
@@ -148,7 +149,8 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         var actionToHighlight = new Dictionary<uint, float>();
 
         var localPlayer = Control.GetLocalPlayer();
-        if (localPlayer == null) return;
+        if (localPlayer == null)
+            return;
 
         foreach (var status in localPlayer->StatusManager.Status)
         {
@@ -192,7 +194,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionID)
         => ActionsToHighlight.Contains(actionID) || IsActionHighlightedHook!.Original(actionManager, actionType, actionID);
-    
+
     private static uint[] FetchComboChain(uint actionId)
     {
         var chain = new List<uint>();
