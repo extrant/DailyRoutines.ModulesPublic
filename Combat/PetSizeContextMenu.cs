@@ -1,11 +1,10 @@
+using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using Lumina.Excel.Sheets;
-using System.Collections.Generic;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class PetSizeContextMenu : DailyModuleBase
 {
@@ -16,23 +15,19 @@ public unsafe class PetSizeContextMenu : DailyModuleBase
         Category    = ModuleCategories.Combat,
     };
 
-    private static UpperContainerItem ContainerItem = new();
+    private static readonly UpperContainerItem ContainerItem = new();
 
-    public override void Init()
-    {
+    public override void Init() => 
         DService.ContextMenu.OnMenuOpened += OnMenuOpened;
-    }
 
-    private void OnMenuOpened(IMenuOpenedArgs args)
+    private static void OnMenuOpened(IMenuOpenedArgs args)
     {
         if (!ContainerItem.IsDisplay(args)) return;
         args.AddMenuItem(ContainerItem.Get());
     }
     
-    public override void Uninit()
-    {
+    public override void Uninit() => 
         DService.ContextMenu.OnMenuOpened -= OnMenuOpened;
-    }
 
     private class UpperContainerItem : MenuItemBase
     {
@@ -46,17 +41,17 @@ public unsafe class PetSizeContextMenu : DailyModuleBase
         [
             new()
             {
-                Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6371)!.Value.Text.ExtractText()}",
+                Name      = $"{GetLoc("Adjust")}: {LuminaWrapper.GetAddonText(6371)}",
                 OnClicked = _ => ChatHelper.SendMessage("/petsize all large")
             },
             new()
             {
-                Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6372)!.Value.Text.ExtractText()}",
+                Name      = $"{GetLoc("Adjust")}: {LuminaWrapper.GetAddonText(6372)}",
                 OnClicked = _ => ChatHelper.SendMessage("/petsize all medium")
             },
             new()
             {
-                Name      = $"{GetLoc("Adjust")}: {LuminaGetter.GetRow<Addon>(6373)!.Value.Text.ExtractText()}",
+                Name      = $"{GetLoc("Adjust")}: {LuminaWrapper.GetAddonText(6373)}",
                 OnClicked = _ => ChatHelper.SendMessage("/petsize all small")
             }
         ];
