@@ -31,7 +31,6 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
     {
         TaskHelper ??= new() { TimeLimitMS = 5_000 };
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeCompanyChest", OnFCChestAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeCompanyChest", OnFCChestAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "InputNumeric",     OnInputNumericAddon);
         
@@ -40,49 +39,35 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
 
     public override void Uninit()
     {
-        TaskHelper?.Abort();
         DService.ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        
         DService.AddonLifecycle.UnregisterListener(OnFCChestAddon);
         DService.AddonLifecycle.UnregisterListener(OnInputNumericAddon);
+
+        CurrentItemQuantity = -1;
 
         base.Uninit();
     }
 
-    private void OnFCChestAddon(AddonEvent type, AddonArgs? args)
-    {
-        switch (type)
-        {
-            case AddonEvent.PostSetup:
-                break;
-            case AddonEvent.PreFinalize:
-                TaskHelper.Abort();
-                break;
-        }
-    }
-    
-    private void OnInputNumericAddon(AddonEvent type, AddonArgs? args)
-    {
-        if (type != AddonEvent.PostSetup) return;
+    private void OnFCChestAddon(AddonEvent type, AddonArgs? args) => 
+        TaskHelper.Abort();
 
-        TaskHelper.Enqueue(() =>
-        {
-            if (!IsAddonAndNodesReady(InputNumeric))
-                return false;
-
-            Callback(InputNumeric, true, CurrentItemQuantity);
-            return true;
-        }, "自动确认存入数量");
+    private static void OnInputNumericAddon(AddonEvent type, AddonArgs? args)
+    {
+        if (CurrentItemQuantity == -1) return;
+        
+        Callback(InputNumeric, true, CurrentItemQuantity);
+        CurrentItemQuantity = -1;
     }
 
     private void OnContextMenuOpened(IMenuOpenedArgs args)
     {
-        if (args.AddonName == "ArmouryBoard" || args.Target is not MenuTargetInventory { TargetItem: { } item })
-            return;
-
-        if (!IsAddonAndNodesReady(FreeCompanyChest))
-            return;
-        
-        if (!LuminaGetter.TryGetRow<Item>(item.ItemId, out var itemData) || itemData.IsUntradable)
+        if (!IsAddonAndNodesReady(FreeCompanyChest)                         ||
+            args.AddonName == "ArmouryBoard"                                ||
+            args.Target is not MenuTargetInventory { TargetItem: { } item } ||
+            !args.AddonName.StartsWith("Inventory")                         ||
+            !LuminaGetter.TryGetRow<Item>(item.ItemId, out var itemData)    ||
+            itemData.IsUntradable)
             return;
 
         if (IsConflictKeyPressed())
@@ -94,13 +79,11 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
         args.AddMenuItem(new StoreMenu(item.ItemId, item.IsHq, item.Quantity).Get());
     }
 
-    private void ExecuteDepositTask(uint itemId, bool itemHq, int itemAmount, string taskName)
+    private void ExecuteDepositTask(uint itemID, bool itemHq, int itemAmount, string taskName)
     {
-        if (TaskHelper.IsBusy)
-            return;
-
         CurrentItemQuantity = itemAmount;
-
+        
+        TaskHelper.Abort();
         TaskHelper.Enqueue(() =>
         {
             if (!IsAddonAndNodesReady(FreeCompanyChest))
@@ -108,7 +91,7 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
 
             var (sourceInventory, sourceSlot) = GetSelectedItemSource();
             if (sourceInventory != InventoryType.Invalid)
-                DepositItem(itemId, FreeCompanyChest, itemHq, itemAmount, sourceInventory, sourceSlot);
+                DepositItem(itemID, FreeCompanyChest, itemHq, itemAmount, sourceInventory, sourceSlot);
 
             return true;
         }, taskName);
@@ -118,13 +101,13 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
     {
         try
         {
-            var agentInventoryContext = AgentInventoryContext.Instance();
-            if (agentInventoryContext == null || agentInventoryContext->TargetInventorySlot == null)
+            var agent = AgentInventoryContext.Instance();
+            if (agent == null || agent->TargetInventorySlot == null)
                 throw new Exception();
 
-            var sourceInventory = agentInventoryContext->TargetInventoryId;
-            var sourceSlot      = (ushort)agentInventoryContext->TargetInventorySlotId;
-            var slot            = agentInventoryContext->TargetInventorySlot;
+            var sourceInventory = agent->TargetInventoryId;
+            var sourceSlot      = (ushort)agent->TargetInventorySlotId;
+            var slot            = agent->TargetInventorySlot;
             var itemID          = slot->ItemId;
 
             return itemID > 0 ? (SourceInventory: sourceInventory, sourceSlot) : (SourceInventory: InventoryType.Invalid, (ushort)0);
@@ -184,7 +167,7 @@ public unsafe class FastFreeCompanyChestStore : DailyModuleBase
 
     private class StoreMenu(uint ItemID, bool IsItemHQ, int ItemCount) : MenuItemBase
     {
-        public override string Name { get; protected set; } = "放入部队储物柜";
+        public override string Name { get; protected set; } = GetLoc("FastFreeCompanyChest-StoreIn");
 
         protected override bool WithDRPrefix { get; set; } = true;
 
