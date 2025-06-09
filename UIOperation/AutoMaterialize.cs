@@ -6,6 +6,7 @@ using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -130,12 +131,10 @@ public unsafe class AutoMaterialize : DailyModuleBase
                 if (!LuminaGetter.TryGetRow<Item>(slot->ItemId, out var itemData)) continue;
 
                 var itemName = itemData.Name.ExtractText();
-                TaskHelper.Enqueue(() => ExtractMateria(type, (uint)i) == 0,
-                                   $"开始精炼单件装备 {itemName}({slot->ItemId})");
-                TaskHelper.Enqueue(() => Chat(GetLoc("AutoMaterialize-Notice-ExtractNow", itemData.Name.ExtractText())), 
+                TaskHelper.Enqueue(() => ExtractMateria(type, (uint)i) == 0, $"开始精炼单件装备 {itemName}({slot->ItemId})");
+                TaskHelper.Enqueue(() => Chat(GetSLoc("AutoMaterialize-Notice-ExtractNow", SeString.CreateItemLink(itemData, slot->IsHighQuality()))), 
                                    $"通知精制进度 {itemName}({slot->ItemId})");
-                TaskHelper.DelayNext(1_000, 
-                                     $"等待精制完成 {itemName}({slot->ItemId})");
+                TaskHelper.DelayNext(1_000, $"等待精制完成 {itemName}({slot->ItemId})");
                 TaskHelper.Enqueue(() => StartARound(types), $"开始下一轮精制 本轮: {itemName}({slot->ItemId})");
                 return true;
             }
