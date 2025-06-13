@@ -16,7 +16,10 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
     };
 
-    public static bool IsMarketStuck { get; set; }
+    private static bool IsMarketStuck { get; set; }
+    
+    [DailyIPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
+    public static bool IsCurrentMarketStuck => IsMarketStuck;
     
     private static readonly CompSig ProcessRequestResultSig =
         new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F9 0F B6 EA");
@@ -58,7 +61,4 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
         
         base.Uninit();
     }
-    
-    [DailyIPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
-    public static bool IsCurrentMarketStuck => IsMarketStuck;
 }
