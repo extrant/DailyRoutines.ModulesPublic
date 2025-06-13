@@ -23,8 +23,6 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     
     public bool IsReducing => TaskHelper?.IsBusy ?? false;
     
-    private static IPC?  ModuleIPC;
-    
     private static readonly InventoryType[] Inventories =
     [
         InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4
@@ -34,7 +32,6 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
     {
         TaskHelper ??= new TaskHelper();
         Overlay    ??= new Overlay(this);
-        ModuleIPC  ??= new();
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PurifyItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
@@ -151,21 +148,9 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
             TaskHelper.Abort();
     }
     
-    public class IPC : DailyModuleIPCBase
-    {
-        private const string IsBusyName = "DailyRoutines.Modules.AutoAetherialReduction.IsBusy";
-        private static ICallGateProvider<bool>? IsBusyIPC;
-        
-        private const string StartReductionName = "DailyRoutines.Modules.AutoAetherialReduction.StartReduction";
-        private static ICallGateProvider<bool>? StartReductionIPC;
-        
-        public override void Init()
-        {
-            IsBusyIPC ??= DService.PI.GetIpcProvider<bool>(IsBusyName);
-            IsBusyIPC.RegisterFunc(() => ModuleManager.GetModule<AutoAetherialReduction>().IsReducing);
-            
-            StartReductionIPC ??= DService.PI.GetIpcProvider<bool>(StartReductionName);
-            StartReductionIPC.RegisterFunc(() => ModuleManager.GetModule<AutoAetherialReduction>().StartReduction());
-        }
-    }
+    [DailyIPCProvider("DailyRoutines.Modules.AutoAetherialReduction.IsBusy")]
+    public bool IsCurrentlyBusy => IsReducing;
+
+    [DailyIPCProvider("DailyRoutines.Modules.AutoAetherialReduction.StartReduction")]
+    public bool StartReductionIPC() => StartReduction();
 }

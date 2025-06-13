@@ -26,12 +26,8 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
     private static readonly CompSig     WaitMessageSig   = new("BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B C0 BA ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 45 33 C9");
     private static readonly MemoryPatch WaitMessagePatch = new(WaitMessageSig.Get(), [0xBA, 0xB9, 0x1A, 0x00, 0x00]);
     
-    private static IPC? ModuleIPC;
-    
     public override void Init()
     {
-        ModuleIPC ??= new();
-        
         ProcessRequestResultHook ??= ProcessRequestResultSig.GetHook<ProcessRequestResultDelegate>(ProcessRequestResultDetour);
         ProcessRequestResultHook.Enable();
 
@@ -63,15 +59,6 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
         base.Uninit();
     }
     
-    public class IPC : DailyModuleIPCBase
-    {
-        private const  string                   IsMarketStuckName = "DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck";
-        private static ICallGateProvider<bool>? IsMarketStuckIPC;
-        
-        public override void Init()
-        {
-            IsMarketStuckIPC ??= DService.PI.GetIpcProvider<bool>(IsMarketStuckName);
-            IsMarketStuckIPC.RegisterFunc(() => IsMarketStuck);
-        }
-    }
+    [DailyIPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
+    public static bool IsCurrentMarketStuck => IsMarketStuck;
 }
