@@ -1,7 +1,6 @@
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using Dalamud.Hooking;
-using Dalamud.Plugin.Ipc;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
 
@@ -18,7 +17,7 @@ public unsafe class AutoRefreshMarketSearchResult : DailyModuleBase
 
     private static bool IsMarketStuck { get; set; }
     
-    [DailyIPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
+    [IPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
     public static bool IsCurrentMarketStuck => IsMarketStuck;
     
     private static readonly CompSig ProcessRequestResultSig =

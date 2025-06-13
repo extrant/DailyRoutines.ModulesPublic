@@ -148,9 +148,9 @@ public unsafe class AutoAetherialReduction : DailyModuleBase
             TaskHelper.Abort();
     }
     
-    [DailyIPCProvider("DailyRoutines.Modules.AutoAetherialReduction.IsBusy")]
+    [IPCProvider("DailyRoutines.Modules.AutoAetherialReduction.IsBusy")]
     public bool IsCurrentlyBusy => IsReducing;
 
-    [DailyIPCProvider("DailyRoutines.Modules.AutoAetherialReduction.StartReduction")]
+    [IPCProvider("DailyRoutines.Modules.AutoAetherialReduction.StartReduction")]
     public bool StartReductionIPC() => StartReduction();
 }

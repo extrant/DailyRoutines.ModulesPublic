@@ -267,6 +267,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
         public int    ExchangeItemCount = -1;
     }
     
-    [DailyIPCProvider("DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy")]
+    [IPCProvider("DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy")]
     public bool IsCurrentlyBusy => IsExchanging;
 }
