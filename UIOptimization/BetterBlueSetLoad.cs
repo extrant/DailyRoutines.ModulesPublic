@@ -1,19 +1,13 @@
 using System;
-using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
-using DailyRoutines.Windows;
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class BetterBlueSetLoad : DailyModuleBase
 {
@@ -34,14 +28,11 @@ public unsafe class BetterBlueSetLoad : DailyModuleBase
         AgentAozNotebookReceiveEventHook.Enable();
     }
 
-    private AtkValue* AgentAozNotebookReceiveEventDetour(
-        AgentInterface* agent, AtkValue* returnvalues, AtkValue* values, uint valueCount, ulong eventKind)
+    private static AtkValue* AgentAozNotebookReceiveEventDetour(AgentInterface* agent, AtkValue* returnvalues, AtkValue* values, uint valueCount, ulong eventKind)
     {
-        if (!IsAddonAndNodesReady(AOZNotebookPresetList) || AOZNotebookPresetList->AtkValues->UInt != 0)
+        if (!IsAddonAndNodesReady(AOZNotebookPresetList) || AOZNotebookPresetList->AtkValues->UInt != 0 || eventKind != 1 || valueCount != 2)
             return InvokeOriginal();
-        if (eventKind != 1 || valueCount != 2)
-            return InvokeOriginal();
-        
+
         var index = values[1].UInt;
         if (values[1].Type != ValueType.UInt || index > 4) return InvokeOriginal();
         
