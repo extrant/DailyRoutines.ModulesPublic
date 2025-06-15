@@ -29,6 +29,7 @@ public class AutoNotifyDiademWeather : DailyModuleBase
         ModuleConfig = LoadConfig<Config>() ?? new();
         
         DService.ClientState.TerritoryChanged += OnZoneChanged;
+        OnZoneChanged(DService.ClientState.TerritoryType);
     }
 
     public override void ConfigUI()
@@ -73,6 +74,12 @@ public class AutoNotifyDiademWeather : DailyModuleBase
 
     private static unsafe void OnUpdate(IFramework framework)
     {
+        if (GameState.TerritoryType != 939)
+        {
+            FrameworkManager.Unregister(OnUpdate);
+            return;
+        }
+        
         var weatherID = WeatherManager.Instance()->GetCurrentWeather();
         if (LastWeather == weatherID || !LuminaGetter.TryGetRow<Weather>(weatherID, out var weather)) return;
         
