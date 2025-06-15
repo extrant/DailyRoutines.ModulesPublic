@@ -8,12 +8,12 @@ using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
-public unsafe class FastRatainerStore : DailyModuleBase
+public unsafe class FastRetainerStore : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = GetLoc("FastRatainerStoreTitle"),
-        Description = GetLoc("FastRatainerStoreDescription"),
+        Title       = GetLoc("FastRetainerStoreTitle"),
+        Description = GetLoc("FastRetainerStoreDescription"),
         Category    = ModuleCategories.UIOperation,
         Author      = ["YLChen"]
     };
@@ -174,6 +174,6 @@ public unsafe class FastRatainerStore : DailyModuleBase
         protected override bool   WithDRPrefix { get; set; }           = true;
 
         protected override void OnClicked(IMenuItemClickedArgs args) => 
-            ModuleManager.GetModule<FastRatainerStore>().ExecuteMoveAll(ItemId, IsHQ, IsCollectable, IsStoreToRetainer);
+            ModuleManager.GetModule<FastRetainerStore>().ExecuteMoveAll(ItemId, IsHQ, IsCollectable, IsStoreToRetainer);
     }
 }
