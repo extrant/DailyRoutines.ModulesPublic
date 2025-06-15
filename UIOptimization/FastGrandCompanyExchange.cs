@@ -31,7 +31,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
     private const string Command = "gce";
     
     private static Config ModuleConfig = null!;
-    private static IPC?   ModuleIPC;
     
     public override unsafe void Init()
     {
@@ -39,7 +38,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
         
         Overlay    ??= new(this);
         TaskHelper ??= new();
-        ModuleIPC  ??= new();
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "GrandCompanyExchange", OnAddon);
@@ -269,15 +267,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
         public int    ExchangeItemCount = -1;
     }
     
-    public class IPC : DailyModuleIPCBase
-    {
-        private const string IsBusyName = "DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy";
-        private static ICallGateProvider<bool>? IsBusyIPC;
-        
-        public override void Init()
-        {
-            IsBusyIPC ??= DService.PI.GetIpcProvider<bool>(IsBusyName);
-            IsBusyIPC.RegisterFunc(() => ModuleManager.GetModule<FastGrandCompanyExchange>().IsExchanging);
-        }
-    }
+    [IPCProvider("DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy")]
+    public bool IsCurrentlyBusy => IsExchanging;
 }
