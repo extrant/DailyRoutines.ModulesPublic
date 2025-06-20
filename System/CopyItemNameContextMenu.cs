@@ -99,9 +99,11 @@ public class CopyItemNameContextMenu : DailyModuleBase
 
     private sealed class CopyItemNameMenuItem(string name) : MenuItemBase
     {
+        public override string Name { get; protected set; } = name;
+        protected override bool WithDRPrefix { get; set; } = true;
+
         private uint ItemID;
         
-        public override string Name { get; protected set; } = name;
 
         protected override unsafe void OnClicked(IMenuItemClickedArgs args)
         {
