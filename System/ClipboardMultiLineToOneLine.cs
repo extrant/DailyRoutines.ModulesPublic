@@ -1,13 +1,13 @@
+using System.Linq;
+using System.Windows.Forms;
 using DailyRoutines.Abstracts;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using System;
-using System.Linq;
-using System.Windows.Forms;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class ClipboardMultiLineToOneLine : DailyModuleBase
 {
@@ -15,12 +15,12 @@ public unsafe class ClipboardMultiLineToOneLine : DailyModuleBase
     {
         Title       = GetLoc("ClipboardMultiLineToOneLineTitle"),
         Description = GetLoc("ClipboardMultiLineToOneLineDescription"),
-        Category    = ModuleCategories.System,
+        Category    = ModuleCategories.System
     };
 
     private static readonly CompSig GetClipboardDataSig =
         new("40 53 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B D9 BA");
-    private delegate Utf8String* GetClipboardDataDelegate(nint a1);
+    private delegate Utf8String* GetClipboardDataDelegate(ClipBoard* clipBoard);
     private static Hook<GetClipboardDataDelegate>? GetClipboardDataHook;
 
     private static readonly string[] BlacklistAddons = ["Macro"];
@@ -31,30 +31,27 @@ public unsafe class ClipboardMultiLineToOneLine : DailyModuleBase
         GetClipboardDataHook.Enable();
     }
 
-    private static Utf8String* GetClipboardDataDetour(nint a1)
+    private static Utf8String* GetClipboardDataDetour(ClipBoard* clipBoard)
     {
-        if (Framework.Instance()->WindowInactive || IsAnyBlacklistAddonFocused()) return InvokeOriginal();
+        if (Framework.Instance()->WindowInactive/* || IsAnyBlacklistAddonFocused()*/) return InvokeOriginal();
         
         var clipboardText = Clipboard.GetText();
-        if (string.IsNullOrWhiteSpace(clipboardText)) return InvokeOriginal();
+        if (string.IsNullOrWhiteSpace(clipboardText)) 
+            return InvokeOriginal();
 
-        var modifiedText = clipboardText.Replace("\r\n", " ").Replace("\n", " ").Replace("\u000D", " ")
-                                       .Replace("\u000D\u000A", " ");
-        if (modifiedText == clipboardText) return InvokeOriginal();
+        var modifiedText = clipboardText.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+        if (modifiedText == clipboardText) 
+            return InvokeOriginal();
 
-        var dest = (Utf8String*)(a1 + 8);
-        if (dest == null) return InvokeOriginal();
+        var dest = &clipBoard->SystemClipboardText;
 
-        var sour = Utf8String.FromString(modifiedText);
-        
-        dest->Clear();
-        dest->Copy(sour);
-        
-        sour->Dtor(true);
+        clipBoard->SystemClipboardText.Clear();
+        clipBoard->SystemClipboardText.SetString(modifiedText);
         
         return dest;
         
-        Utf8String* InvokeOriginal() => GetClipboardDataHook.Original(a1);
+        Utf8String* InvokeOriginal() => 
+            GetClipboardDataHook.Original(clipBoard);
     }
 
     private static bool IsAnyBlacklistAddonFocused()
