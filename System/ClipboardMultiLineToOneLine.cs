@@ -33,7 +33,7 @@ public unsafe class ClipboardMultiLineToOneLine : DailyModuleBase
 
     private static Utf8String* GetClipboardDataDetour(ClipBoard* clipBoard)
     {
-        if (Framework.Instance()->WindowInactive/* || IsAnyBlacklistAddonFocused()*/) return InvokeOriginal();
+        if (Framework.Instance()->WindowInactive || IsAnyBlacklistAddonFocused()) return InvokeOriginal();
         
         var clipboardText = Clipboard.GetText();
         if (string.IsNullOrWhiteSpace(clipboardText)) 
