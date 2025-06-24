@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -66,7 +67,6 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
         ImGui.SetWindowPos(nodeState.Position with { Y = nodeState.Position.Y - ImGui.GetWindowSize().Y - (2f * GlobalFontScale) });
 
         var control = GetAnimationControl(PortraitChara);
-
         using (ImRaii.Group())
         {
             if (ImGuiOm.ButtonIcon("###LastTenFrame", FontAwesomeIcon.Backward, "-10"))
@@ -81,7 +81,6 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
                 CurrentFrame = Math.Max(0, CurrentFrame - 1);
                 UpdatePortraitCurrentFrame(CurrentFrame);
             }
-
             ImGuiOm.TooltipHover("-1");
 
             var isPlaying = control->PlaybackSpeed > 0;
@@ -180,30 +179,59 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
     {
         if (charaActor == null) return null;
 
-        var actor = (Actor*)charaActor;
-        if (actor->Model                                                                                      == null ||
-            actor->Model->Skeleton                                                                            == null ||
-            actor->Model->Skeleton->PartialSkeletons                                                          == null ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)                             == null ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls.Length   == 0    ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0].Value == null)
-            return null;
+        if (DService.ClientState.ClientLanguage == (ClientLanguage)4)
+        {
+            var actor = (Actor*)charaActor;
+            if (actor->Model                                                                                      == null ||
+                actor->Model->Skeleton                                                                            == null ||
+                actor->Model->Skeleton->PartialSkeletons                                                          == null ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)                             == null ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls.Length   == 0    ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0].Value == null)
+                return null;
 
+            return actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0];
+        }
+        else
+        {
+            var actor = (ActorGlobal*)charaActor;
+            if (actor->Model                                                                                      == null ||
+                actor->Model->Skeleton                                                                            == null ||
+                actor->Model->Skeleton->PartialSkeletons                                                          == null ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)                             == null ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls.Length   == 0    ||
+                actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0].Value == null)
+                return null;
 
-        return actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0];
+            return actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0];
+        }
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    internal struct Actor
+    private struct Actor : IActor
     {
-        [FieldOffset(0x100)]
+        [FieldOffset(240)]
+        public ActorModel* model;
+
+        public ActorModel* Model => model;
+    }
+    
+    [StructLayout(LayoutKind.Explicit)]
+    private struct ActorGlobal
+    {
+        [FieldOffset(256)]
         public ActorModel* Model;
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct ActorModel
+    private struct ActorModel
     {
-        [FieldOffset(0xA0)]
+        [FieldOffset(160)]
         public Skeleton* Skeleton;
+    }
+    
+    private interface IActor
+    {
+        public ActorModel* Model { get; }
     }
 }
