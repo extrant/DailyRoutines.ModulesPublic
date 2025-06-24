@@ -26,8 +26,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         Overlay       ??= new(this);
         Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinder", OnAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "ContentsFinder", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "ContentsFinder", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "ContentsFinder", OnAddon);
         if (ContentsFinder != null) 
             OnAddon(AddonEvent.PostSetup, null);
@@ -179,7 +178,6 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
 
         switch (type)
         {
-            case AddonEvent.PostRefresh:
             case AddonEvent.PostSetup:
                 ContentFinderDataManager.UpdateCacheData();
                 break;
@@ -255,7 +253,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
 
                 var items = new List<ContentFinderItemData>();
 
-                for (var i = 0; i < Math.Min(listLength, 45); i++)
+                for (var i = 0; i < Math.Min(listLength, 16); i++)
                 {
                     var offset = 3 + i;
                     if (offset >= listComponent->Component->UldManager.NodeListCount) break;
@@ -270,7 +268,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                     if (nameNode == null) continue;
 
                     var name = string.Empty;
-                    try { name = nameNode->NodeText.ExtractText(); }
+                    try { name = nameNode->NodeText.ToString(); }
                     catch { name = string.Empty; }
                     if (string.IsNullOrWhiteSpace(name)) continue;
 
@@ -281,16 +279,17 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                     if (levelNode == null) continue;
 
                     var level = string.Empty;
-                    try { level = levelNode->NodeText.ExtractText(); }
+                    try { level = levelNode->NodeText.ToString(); }
                     catch { level = string.Empty; }
+                    if (string.IsNullOrWhiteSpace(level)) continue;
 
                     var itemData = new ContentFinderItemData
                     {
-                        NodeId = listItemComponent->NodeId,
-                        Name = name,
-                        Level = level,
-                        Position = new Vector2(levelNode->ScreenX + (newData.CurrentTab == 0 ? 24f : 0f), levelNode->ScreenY - 8f),
-                        IsLocked = lockNode->IsVisible(),
+                        NodeId    = listItemComponent->NodeId,
+                        Name      = name,
+                        Level     = level,
+                        Position  = new Vector2(levelNode->ScreenX + (newData.CurrentTab == 0 ? 24f : 0f), levelNode->ScreenY - 8f),
+                        IsLocked  = lockNode->IsVisible(),
                         IsVisible = levelNode->IsVisible(),
                         CleanName = name.Replace(" ", string.Empty)
                     };
