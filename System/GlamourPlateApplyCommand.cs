@@ -45,9 +45,9 @@ public unsafe class GlamourPlateApplyCommand : DailyModuleBase
     private static void ApplyGlamourPlate(int index)
     {
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.EnterGlamourPlateState, 1, 1);
-        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.ApplyGlamourPlate, index - 1);
+        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.ApplyGlamourPlate,      (uint)index - 1);
         ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.EnterGlamourPlateState, 0, 1);
     }
 
-    public override void Uninit() { CommandManager.RemoveSubCommand(Command); }
+    public override void Uninit() => CommandManager.RemoveSubCommand(Command);
 }

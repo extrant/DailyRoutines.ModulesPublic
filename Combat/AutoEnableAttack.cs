@@ -27,7 +27,7 @@ public unsafe class AutoEnableAttack : DailyModuleBase
             DService.Condition[ConditionFlag.Casting]) return;
         if (UIState.Instance()->WeaponState.AutoAttackState.IsAutoAttacking) return;
         
-        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.AutoAttack, 1, (int)targetID);
+        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.AutoAttack, 1, (uint)targetID);
     }
 
     public override void Uninit() => 

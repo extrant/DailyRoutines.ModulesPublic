@@ -1,3 +1,4 @@
+using System;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -91,7 +92,7 @@ public class AutoStoreToCabinet : DailyModuleBase
                         {
                             foreach (var item in list)
                             {
-                                ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.StoreToCabinet, (int)item);
+                                ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.StoreToCabinet, item);
                                 await Task.Delay(100).ConfigureAwait(false);
                             }
                         }
@@ -100,7 +101,7 @@ public class AutoStoreToCabinet : DailyModuleBase
                     {
                         IsOnTask = false;
                     }
-                }, default, default, CancelSource.Token);
+                }, cancellationToken: CancelSource.Token);
             }
 
             ImGui.EndDisabled();

@@ -306,8 +306,8 @@ public class AutoReplaceLocationAction : DailyModuleBase
     }
 
     private static void OnPreExecuteCommandComplexLocation(
-        ref bool isPrevented, ref ExecuteCommandComplexFlag command, ref Vector3 location, ref int param1,
-        ref int param2, ref int param3, ref int param4)
+        ref bool isPrevented, ref ExecuteCommandComplexFlag command, ref Vector3 location, ref uint param1,
+        ref uint param2,      ref uint                      param3,  ref uint    param4)
     {
         if (command != ExecuteCommandComplexFlag.PetAction || param1 != 3) return;
         if (!ModuleConfig.EnabledPetActions.TryGetValue(3, out var isEnabled) || (!isEnabled && !IsNeedToReplace))

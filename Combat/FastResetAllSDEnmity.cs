@@ -42,7 +42,8 @@ public class FastResetAllSDEnmity : DailyModuleBase
 
     private static void OnCommand(string command, string arguments) => ResetAllStrikingDummies();
 
-    public static void OnResetStrikingDummies(ref bool isPrevented, ref ExecuteCommandFlag command, ref int param1, ref int param2, ref int param3, ref int param4)
+    public static void OnResetStrikingDummies(
+        ref bool isPrevented, ref ExecuteCommandFlag command, ref uint param1, ref uint param2, ref uint param3, ref uint param4)
     {
         if (command != ExecuteCommandFlag.ResetStrikingDummy) return;
         isPrevented = true;
@@ -52,8 +53,8 @@ public class FastResetAllSDEnmity : DailyModuleBase
 
     private static void ResetAllStrikingDummies()
     {
-        DService.Framework.RunOnTick(FindAndResetInternal, default, 0, CancelSource.Token);
-        DService.Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(500), 0, CancelSource.Token);
+        DService.Framework.RunOnTick(FindAndResetInternal, TimeSpan.Zero,                   0, CancelSource.Token);
+        DService.Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(500),  0, CancelSource.Token);
         DService.Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(1000), 0, CancelSource.Token);
         DService.Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(1500), 0, CancelSource.Token);
     }
@@ -62,7 +63,7 @@ public class FastResetAllSDEnmity : DailyModuleBase
     {
         var targets = UIState.Instance()->Hater.Haters;
         foreach (var targetID in targets)
-            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.ResetStrikingDummy, (int)targetID.EntityId);
+            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.ResetStrikingDummy, targetID.EntityId);
     }
 
     public override void Uninit()
