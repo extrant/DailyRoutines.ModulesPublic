@@ -1,36 +1,28 @@
-using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
-using DailyRoutines.Managers;
-using DailyRoutines.Windows;
-using Dalamud.Game.Gui.ContextMenu;
-using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
+using DailyRoutines.Managers;
+using Dalamud.Game.Gui.ContextMenu;
+using Dalamud.Interface;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoSplitStacks : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoSplitStacksTitle"),
+        Title       = GetLoc("AutoSplitStacksTitle"),
         Description = GetLoc("AutoSplitStacksDescription"),
-        Category = ModuleCategories.General,
+        Category    = ModuleCategories.General,
     };
-
-    private static readonly InventoryType[] InventoryTypes =
-    [
-        InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3,
-        InventoryType.Inventory4,
-    ];
-
+    
     private const string Command = "/pdrsplit";
     private static readonly Vector2 CheckboxSize = ScaledVector2(20f);
 
@@ -42,10 +34,11 @@ public unsafe class AutoSplitStacks : DailyModuleBase
     private static string ItemSearchInput = string.Empty;
     private static int SplitAmountInput = 1;
 
-    private static          Overlay?           SplitOverlay;
     private static readonly FastSplitItemStack FastSplitItemStackMenu = new();
 
     private static uint FastSplitItemID;
+
+    private static bool IsNeedToOpen;
 
     public override void Init()
     {
@@ -59,12 +52,47 @@ public unsafe class AutoSplitStacks : DailyModuleBase
                                         .GroupBy(x => x.Name.ExtractText())
                                         .Select(x => x.First()),
                              [x => x.Name.ExtractText(), x => x.RowId.ToString()], x => x.Name.ExtractText());
-        
-        SplitOverlay       =  new(this);
-        SplitOverlay.Flags |= ImGuiWindowFlags.NoBackground;
 
         CommandManager.AddCommand(Command, new(OnCommand) { HelpMessage = GetLoc("AutoSplitStacks-CommandHelp") });
         DService.ContextMenu.OnMenuOpened += OnMenuOpened;
+
+        DService.UiBuilder.Draw += OnDraw;
+    }
+
+    private void OnDraw()
+    {
+        var popupName = $"{Lang.Get("AutoSplitStacks-FastSplit")}###FastSplitPopup";
+        
+        if (IsNeedToOpen && !ImGui.IsPopupOpen(popupName))
+            ImGui.OpenPopup(popupName);
+
+        var isOpen = true;
+        if (ImGui.BeginPopupModal(popupName, ref isOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar))
+        {
+            ImGui.Text($"{Lang.Get("AutoSplitStacks-PleaseInputSplitAmount")}:");
+
+            ImGui.SetNextItemWidth(150f * GlobalFontScale);
+            if (ImGui.InputInt("###FastSplitAmountInput", ref SplitAmountInput, 0, 0))
+                SplitAmountInput = Math.Clamp(SplitAmountInput, 1, 998);
+
+            ImGui.SameLine();
+            if (ImGui.Button(Lang.Get("Confirm")))
+            {
+                EnqueueSplit(FastSplitItemID, SplitAmountInput);
+
+                ImGui.CloseCurrentPopup();
+                IsNeedToOpen = false;
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button(Lang.Get("Cancel")))
+            {
+                ImGui.CloseCurrentPopup();
+                IsNeedToOpen = false;
+            }
+
+            ImGui.EndPopup();
+        }
     }
 
     public override void ConfigUI()
@@ -213,44 +241,7 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             }
         }
     }
-
-    public override void OverlayUI()
-    {
-        if (ImGui.IsWindowAppearing())
-            ImGui.OpenPopup($"{Lang.Get("AutoSplitStacks-FastSplit")}###FastSplitPopup");
-
-        var isOpen = true;
-        if (ImGui.BeginPopupModal($"{Lang.Get("AutoSplitStacks-FastSplit")}###FastSplitPopup", 
-                                  ref isOpen, ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            ImGui.Text($"{Lang.Get("AutoSplitStacks-PleaseInputSplitAmount")}:");
-
-            ImGui.SetNextItemWidth(150f * GlobalFontScale);
-            if (ImGui.InputInt("###FastSplitAmountInput", ref SplitAmountInput, 0, 0))
-                SplitAmountInput = Math.Clamp(SplitAmountInput, 1, 998);
-
-            ImGui.SameLine();
-            if (ImGui.Button(Lang.Get("Confirm")))
-            {
-                EnqueueSplit(FastSplitItemID, SplitAmountInput);
-
-                ImGui.CloseCurrentPopup();
-                SplitOverlay.IsOpen = false;
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button(Lang.Get("Cancel")))
-            {
-                ImGui.CloseCurrentPopup();
-                SplitOverlay.IsOpen = false;
-            }
-
-            ImGui.EndPopup();
-        }
-    }
-
-    public override void OverlayOnClose() => FastSplitItemID = 0;
-
+    
     private void OnCommand(string command, string args)
     {
         args = args.Trim();
@@ -314,19 +305,18 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             return false;
         }
 
-        if (IsInventoryFull(InventoryTypes))
+        if (IsInventoryFull(PlayerInventories))
         {
             TaskHelper.Abort();
             NotificationWarning(Lang.Get("AutoSplitStacks-Notification-FullInventory"));
             return true;
         }
 
-        var foundTypes
-            = InventoryTypes.Where(type => manager->GetInventoryContainer(type) != null   &&
-                                           manager->GetInventoryContainer(type)->IsLoaded &&
-                                           manager->GetItemCountInContainer(itemID, type) +
-                                           manager->GetItemCountInContainer(itemID, type, true) > amount)
-                            .ToList();
+        var foundTypes = PlayerInventories.Where(type => manager->GetInventoryContainer(type) != null   &&
+                                                         manager->GetInventoryContainer(type)->IsLoaded &&
+                                                         manager->GetItemCountInContainer(itemID, type) +
+                                                         manager->GetItemCountInContainer(itemID, type, true) > amount)
+                                          .ToList();
         if (foundTypes.Count <= 0)
         {
             TaskHelper.Abort();
@@ -384,14 +374,13 @@ public unsafe class AutoSplitStacks : DailyModuleBase
 
     public override void Uninit()
     {
-        if (SplitOverlay != null)
-        {
-            WindowManager.RemoveWindow(SplitOverlay);
-            SplitOverlay = null;
-        }
+        DService.UiBuilder.Draw -= OnDraw;
         
         CommandManager.RemoveCommand(Command);
         DService.ContextMenu.OnMenuOpened -= OnMenuOpened;
+
+        FastSplitItemID = 0;
+        IsNeedToOpen    = false;
 
         base.Uninit();
     }
@@ -444,8 +433,8 @@ public unsafe class AutoSplitStacks : DailyModuleBase
             if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
             if (iTarget.TargetItem.Value.Quantity <= 1) return;
 
-            FastSplitItemID     = iTarget.TargetItem.Value.ItemId;
-            SplitOverlay.IsOpen = true;
+            FastSplitItemID = iTarget.TargetItem.Value.ItemId;
+            IsNeedToOpen    = true;
         }
     }
 }

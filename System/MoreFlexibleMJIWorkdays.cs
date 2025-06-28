@@ -87,7 +87,7 @@ public unsafe class MoreFlexibleMJIWorkdays : DailyModuleBase
                     while (list.Count < 4)
                         list.Add(0);
                     
-                    ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.MJISetRestCycles,   list[0], list[1], list[2], list[3]);
+                    ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.MJISetRestCycles,   (uint)list[0], (uint)list[1], (uint)list[2], (uint)list[3]);
                     ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.MJIWorkshopRequest, agent->Data->CycleDisplayed);
                 }
                 

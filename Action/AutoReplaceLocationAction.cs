@@ -195,7 +195,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoReplaceLocationAction-CustomCenterPoint")}:");
 
-        using (ImRaii.Disabled(agent->IsFlagMarkerSet != 1 || agent->FlagMapMarker.MapId != DService.ClientState.MapId))
+        using (ImRaii.Disabled(!agent->IsFlagMarkerSet || agent->FlagMapMarker.MapId != DService.ClientState.MapId))
         {
             ImGui.SameLine();
             if (ImGui.Button(GetLoc("AutoReplaceLocationAction-AddFlagMarker")))
@@ -204,12 +204,12 @@ public class AutoReplaceLocationAction : DailyModuleBase
                 ModuleConfig.CustomMarkers[DService.ClientState.MapId].Add(new(agent->FlagMapMarker.XFloat, agent->FlagMapMarker.YFloat));
                 SaveConfig(ModuleConfig);
 
-                agent->IsFlagMarkerSet = 0;
+                agent->IsFlagMarkerSet = false;
                 MarkCenterPoint();
             }
         }
 
-        var localPlayer = DService.ClientState.LocalPlayer;
+        var localPlayer = DService.ObjectTable.LocalPlayer;
         using (ImRaii.Disabled(localPlayer == null))
         {
             ImGui.SameLine();
@@ -306,8 +306,8 @@ public class AutoReplaceLocationAction : DailyModuleBase
     }
 
     private static void OnPreExecuteCommandComplexLocation(
-        ref bool isPrevented, ref ExecuteCommandComplexFlag command, ref Vector3 location, ref int param1,
-        ref int param2, ref int param3, ref int param4)
+        ref bool isPrevented, ref ExecuteCommandComplexFlag command, ref Vector3 location, ref uint param1,
+        ref uint param2,      ref uint                      param3,  ref uint    param4)
     {
         if (command != ExecuteCommandComplexFlag.PetAction || param1 != 3) return;
         if (!ModuleConfig.EnabledPetActions.TryGetValue(3, out var isEnabled) || (!isEnabled && !IsNeedToReplace))
@@ -355,7 +355,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
         var modifiedLocation = markers
                                .MinBy(x => Vector2.DistanceSquared(
-                                            DService.ClientState.LocalPlayer.Position.ToVector2(), x))
+                                            DService.ObjectTable.LocalPlayer.Position.ToVector2(), x))
                                .ToVector3();
 
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);

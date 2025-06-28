@@ -1,35 +1,42 @@
+using System.Collections.Generic;
+using DailyRoutines.Abstracts;
+using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using System.Collections.Generic;
-using DailyRoutines.Abstracts;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoChakraFormShift : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoChakraFormShiftTitle"),
+        Title       = GetLoc("AutoChakraFormShiftTitle"),
         Description = GetLoc("AutoChakraFormShiftDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
+    
+    private static readonly HashSet<uint> InvalidContentTypes = [16, 17, 18, 19, 31, 32, 34, 35];
+    
+    private const uint SteeledMeditation = 36940;
+    private const uint FormShift         = 4262;
 
     public override void Init()
     {
         TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        DService.DutyState.DutyRecommenced += OnDutyRecommenced;
-        DService.Condition.ConditionChange += OnConditionChanged;
+        DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
+        DService.Condition.ConditionChange    += OnConditionChanged;
     }
 
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || OccupiedInEvent) return false;
-        if (DService.ClientState.LocalPlayer is not { ClassJob.RowId: 20 } || !IsValidPVEDuty())
+        if (GameState.ClassJob != 20 || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -38,35 +45,24 @@ public class AutoChakraFormShift : DailyModuleBase
         TaskHelper.Enqueue(UseRelatedActions, "UseRelatedActions", 5_000, true, 1);
         return true;
     }
-
-    private static unsafe bool IsValidPVEDuty()
-    {
-        HashSet<uint> InvalidContentTypes = [16, 17, 18, 19, 31, 32, 34, 35];
-
-        var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
-        var contentData = LuminaGetter.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
-        
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
-    }
-
+    
     private unsafe bool? UseRelatedActions()
     {
         var gauge = DService.JobGauges.Get<MNKGauge>();
-        if (DService.ClientState.LocalPlayer is not { } localPlayer) return false;
-        var statusManager = localPlayer.ToBCStruct()->StatusManager;
 
-        const uint SteeledMeditation = 36940;
-        const uint FormShift = 4262;
+        var localPlayer = Control.GetLocalPlayer();
+        if (localPlayer == null) return false;
+        
+        var statusManager = localPlayer->StatusManager;
 
         var action = 0U;
         // 铁山斗气
-        if (gauge.Chakra != 5 && IsActionUnlocked(SteeledMeditation))
+        if (IsActionUnlocked(SteeledMeditation) && gauge.Chakra != 5)
             action = SteeledMeditation;
         // 演武
-        else if (!statusManager.HasStatus(110) &&
-                 (!statusManager.HasStatus(2513) ||
-                  statusManager.GetRemainingTime(statusManager.GetStatusIndex(2513)) <= 27) && 
-                 IsActionUnlocked(FormShift))
+        else if (IsActionUnlocked(FormShift)   &&
+                 !statusManager.HasStatus(110) &&
+                 (!statusManager.HasStatus(2513) || statusManager.GetRemainingTime(statusManager.GetStatusIndex(2513)) <= 27))
             action = 4262;
 
         if (action == 0)
@@ -79,6 +75,13 @@ public class AutoChakraFormShift : DailyModuleBase
         TaskHelper.DelayNext(500, $"Delay_Use{action}", false, 1);
         TaskHelper.Enqueue(UseRelatedActions, "UseRelatedActions", 5_000, true, 1);
         return true;
+    }
+    
+    private static bool IsValidPVEDuty()
+    {
+        var contentData = LuminaGetter.GetRow<ContentFinderCondition>(GameState.ContentFinderCondition);
+        
+        return !GameState.IsInPVPArea && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
     }
 
     // 脱战

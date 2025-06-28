@@ -56,7 +56,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
             return;
         }
 
-        var buttonNode = addon->GetButtonNodeById(109);
+        var buttonNode = addon->GetComponentButtonById(109);
         if (buttonNode == null) return;
 
         if (!IsInAnyParty()                                            ||
@@ -88,8 +88,13 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
             {
                 if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
                 if (!IsInAnyParty()) return true;
+
+                ClickSelectYesnoYes();
                 
                 ChatHelper.SendMessage("/leave");
+                ChatHelper.SendMessage("/pcmd breakup");
+                SendEvent(AgentId.PartyMember, 0, 2, 3);
+                
                 return !IsInAnyParty();
             });
         }
@@ -107,7 +112,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         {
             if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
             
-            var buttonNode = LookingForGroupDetail->GetButtonNodeById(109);
+            var buttonNode = LookingForGroupDetail->GetComponentButtonById(109);
             if (buttonNode == null) return false;
 
             buttonNode->ClickAddonButton(LookingForGroupDetail);
@@ -116,9 +121,6 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         
         TaskHelper.Enqueue(() => ClickSelectYesnoYes());
     }
-
-    private static bool IsInAnyParty() => 
-        InfoProxyCrossRealm.IsCrossRealmParty() || DService.PartyList.Length >= 2;
 
     public override void Uninit()
     {

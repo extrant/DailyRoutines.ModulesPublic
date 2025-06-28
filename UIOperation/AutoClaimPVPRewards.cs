@@ -1,22 +1,19 @@
+using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using System.Numerics;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoClaimPVPRewards : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoClaimPVPRewardsTitle"),
+        Title       = GetLoc("AutoClaimPVPRewardsTitle"),
         Description = GetLoc("AutoClaimPVPRewardsDescription"),
-        Category = ModuleCategories.UIOperation,
+        Category    = ModuleCategories.UIOperation,
     };
 
     public override void Init()
@@ -24,11 +21,16 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
         TaskHelper ??= new() { TimeLimitMS = 5_000 };
         Overlay    ??= new(this);
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "PvpReward", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PvpReward", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PvpReward", OnAddon);
-
         if (PvpReward != null) 
             OnAddon(AddonEvent.PostSetup, null);
+    }
+
+    public override void Uninit()
+    {
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
+        base.Uninit();
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
@@ -50,11 +52,13 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
             return;
         }
         
+        if (!IsAddonAndNodesReady(addon)) return;
+        
         var pos   = new Vector2(addon->GetX() + 6, addon->GetY() - ImGui.GetWindowHeight());
         ImGui.SetWindowPos(pos);
 
         ImGui.AlignTextToFramePadding();
-        ImGui.TextColored(ImGuiColors.DalamudYellow, Lang.Get("AutoClaimPVPRewardsTitle"));
+        ImGui.TextColored(LightSkyBlue, GetLoc("AutoClaimPVPRewardsTitle"));
 
         ImGui.SameLine();
         ImGui.Spacing();
@@ -62,7 +66,7 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
         ImGui.SameLine();
         using (ImRaii.Disabled(TaskHelper.IsBusy))
         {
-            if (ImGui.Button(Lang.Get("Start")))
+            if (ImGui.Button(GetLoc("Start")))
             {
                 var currentRank = PvpReward->AtkValues[7].UInt;
                 if (currentRank <= 1 || IsTrophyCrystalAboutToReachLimit()) return;
@@ -76,7 +80,11 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
                                        }, $"CheckTCAmount_Rank{i}");
 
                     TaskHelper.Enqueue(
-                        () => ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CollectTrophyCrystal),
+                        () =>
+                        {
+                            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CollectTrophyCrystal);
+                            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CollectTrophyCrystal, 1);
+                        },
                         $"ClaimTC_Rank{i}");
 
                     TaskHelper.DelayNext(10, $"Delay_Rank{i}");
@@ -85,7 +93,7 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
         }
        
         ImGui.SameLine();
-        if (ImGui.Button(Lang.Get("Stop")))
+        if (ImGui.Button(GetLoc("Stop")))
             TaskHelper.Abort();
     }
 

@@ -61,7 +61,7 @@ public class AutoRequestNecessity : DailyModuleBase
     
     private void OnLogout(int type, int code) => TaskHelper?.Abort();
 
-    private void EnqueueRequest(ExecuteCommandFlag command, int param1 = 0, int param2 = 0, int param3 = 0, int param4 = 0)
+    private void EnqueueRequest(ExecuteCommandFlag command, uint param1 = 0, uint param2 = 0, uint param3 = 0, uint param4 = 0)
     {
         TaskHelper.Enqueue(() => ExecuteCommandManager.ExecuteCommand(command, param1, param2, param3, param4), 
                            $"{command}_{param1}_{param2}_{param3}{param4}");

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -14,7 +12,6 @@ using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -303,8 +300,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     private static unsafe void OnFrameworkUpdate(IFramework _)
     {
-        var combatInactive = moduleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
-        if (DService.ClientState.IsPvP || combatInactive || Control.GetLocalPlayer() is null)
+        if (DService.ClientState.IsPvP || Control.GetLocalPlayer() is null)
             return;
 
         // update party list
@@ -313,15 +309,22 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     private static unsafe void OnFrameworkUpdateInterval(IFramework _)
     {
+        if (DService.ClientState.IsPvP || Control.GetLocalPlayer() is null)
+        {
+            MitigationManager.Clear();
+            StatusBarManager.Clear();
+            return;
+        }
+
+        MitigationManager.Update();
+
         var combatInactive = moduleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
-        if (DService.ClientState.IsPvP || combatInactive || Control.GetLocalPlayer() is null)
+        if (combatInactive)
         {
             StatusBarManager.Clear();
             return;
         }
 
-        // update status
-        MitigationManager.Update();
         StatusBarManager.Update();
     }
 
@@ -935,23 +938,6 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         #region Hooks
 
-        // start cast hook
-        private static readonly CompSig                  startCastSig = new("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 89 BC 24 D0 00 00 00");
-        private static          Hook<StartCastDelegate>? startCastHook;
-
-        // start cast delegate
-        private unsafe delegate nint StartCastDelegate(BattleChara* player, ActionType type, uint actionId, nint a4, float rotation, float a6);
-
-        // complete cast hook
-        private static readonly CompSig                     completeCastSig = new("E8 ?? ?? ?? ?? 48 8B CF E8 ?? ?? ?? ?? 45 33 C0 48 8D 0D");
-        private static          Hook<CompleteCastDelegate>? completeCastHook;
-
-        // complete cast delegate
-        private unsafe delegate nint CompleteCastDelegate(
-            BattleChara* player,   ActionType type,     uint  actionId,               uint spellId,            GameObjectId animationTargetId,
-            Vector3*     location, float      rotation, short lastUsedActionSequence, int  animationVariation, int          ballistaEntityId
-        );
-
         // action effect hook
         private static readonly CompSig                       actionEffectSig = new("E8 ?? ?? ?? ?? 48 8B 8D F0 03 00 00");
         private static          Hook<OnActionEffectDelegate>? actionEffectHook;
@@ -961,13 +947,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         public static unsafe void Enable()
         {
-            startCastHook?.Dispose();
-            startCastHook = startCastSig.GetHook<StartCastDelegate>(OnStartCast);
-            startCastHook.Enable();
-
-            completeCastHook?.Dispose();
-            completeCastHook = completeCastSig.GetHook<CompleteCastDelegate>(OnCompleteCast);
-            completeCastHook.Enable();
+            UseActionManager.RegCharacterStartCast(OnStartCast);
+            UseActionManager.RegCharacterCompleteCast(OnCompleteCast);
 
             actionEffectHook?.Dispose();
             actionEffectHook = actionEffectSig.GetHook<OnActionEffectDelegate>(OnActionEffect);
@@ -978,35 +959,32 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             Task.Run(ListenAction);
         }
 
-        public static void Disable()
+        public static unsafe void Disable()
         {
-            startCastHook?.Dispose();
-            completeCastHook?.Dispose();
+            UseActionManager.UnregCharacterStartCast(OnStartCast);
+            UseActionManager.UnregCharacterCompleteCast(OnCompleteCast);
+
             actionEffectHook?.Dispose();
 
             // auto emit from pipe
             actionPipe?.Cancel();
         }
 
-        private static unsafe nint OnStartCast(BattleChara* player, ActionType type, uint actionId, nint a4, float rotation, float a6)
+        private static unsafe void OnStartCast(nint a1, BattleChara* player, ActionType type, uint actionId, nint a4, float rotation, float a6)
         {
             // auto emit from cache
             if (CurrentAction.ActionId == 0)
                 FindAction(actionId);
-
-            return startCastHook.Original(player, type, actionId, a4, rotation, a6);
         }
 
-        private static unsafe nint OnCompleteCast(
-            BattleChara* player,   ActionType type,     uint  actionId,               uint spellId,            GameObjectId animationTargetId,
-            Vector3*     location, float      rotation, short lastUsedActionSequence, int  animationVariation, int          ballistaEntityId
+        private static unsafe void OnCompleteCast(
+            nint     a1,       BattleChara* player,   ActionType type,                   uint actionId,           uint spellId, GameObjectId animationTargetId,
+            Vector3* location, float        rotation, short      lastUsedActionSequence, int  animationVariation, int  ballistaEntityId
         )
         {
             // auto clear (duration = 0)
             if (CurrentAction.ActionId == actionId && CurrentAction.Duration == 0)
                 ClearAction();
-
-            return completeCastHook.Original(player, type, actionId, spellId, animationTargetId, location, rotation, lastUsedActionSequence, animationVariation, ballistaEntityId);
         }
 
         private static unsafe void OnActionEffect(int sourceId, BattleChara* player, Vector3* location, EffectHeader* effectHeader, Effect* effectArray, ulong* effectTrail)

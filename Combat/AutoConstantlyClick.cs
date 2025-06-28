@@ -2,6 +2,7 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.ClientState.GamePad;
 using Dalamud.Hooking;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
 using System;
 using System.Threading;
 
@@ -29,7 +30,7 @@ public class AutoConstantlyClick : DailyModuleBase
     private static readonly CompSig IsIDKeyPressedSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? BA ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 4C 8B 05 ?? ?? ?? ?? 48 8D 4C 24 ?? 0F 29 BC 24");
     private static IDKeyDelegate? IsIDKeyPressed;
 
-    private static readonly CompSig GamepadPollSig = new("40 55 53 57 41 57 48 8D AC 24 58 FC FF FF ", "40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24");
+    private static readonly CompSig GamepadPollSig = new("40 55 53 57 41 57 48 8D AC 24 58 FC FF FF");
     private static Hook<ControllerPoll>? GamepadPollHook;
     private delegate int ControllerPoll(nint controllerInput);
 
@@ -116,7 +117,7 @@ public class AutoConstantlyClick : DailyModuleBase
 
     private unsafe int GamepadPollDetour(nint gamepadInput)
     {
-        var input = (GamepadInput*)gamepadInput;
+        var input = (PadDevice*)gamepadInput;
         if (DService.Gamepad.Raw(ModuleConfig.GamepadModeTriggerButtons) == 1)
         {
             foreach (var btn in Enum.GetValues<GamepadButtons>())
@@ -126,7 +127,7 @@ public class AutoConstantlyClick : DailyModuleBase
                     if (Environment.TickCount64 >= ThrottleTime)
                     {
                         ThrottleTime = Environment.TickCount64 + ModuleConfig.RepeatInterval;
-                        input->ButtonsRaw -= (ushort)btn;
+                        input->GamepadInputData.Buttons -= (ushort)btn;
                     }
                 }
             }

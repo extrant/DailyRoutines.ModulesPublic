@@ -37,16 +37,11 @@ public class BaitSwitchCommand : DailyModuleBase
                                                                  PinyinHelper.GetPinyin(x.Name.ExtractText(), "")));
     }
 
-    public override void Init()
-    {
-        CommandManager.AddSubCommand(
-            Command, new(OnCommand) { HelpMessage = GetLoc("BaitSwitchCommand-CommandHelp") });
-    }
+    public override void Init() => 
+        CommandManager.AddSubCommand(Command, new(OnCommand) { HelpMessage = GetLoc("BaitSwitchCommand-CommandHelp") });
 
-    public override void ConfigUI()
-    {
+    public override void ConfigUI() => 
         ImGui.TextWrapped(GetLoc("BaitSwitchCommand-CommandHelpDetailed"));
-    }
 
     public static void OnCommand(string command, string arguments)
     {
@@ -86,9 +81,9 @@ public class BaitSwitchCommand : DailyModuleBase
     private static void SwitchBait(uint itemID, bool isBait, int swimBaitIndex = -1)
     {
         if (isBait)
-            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 4, (int)itemID);
+            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 4, itemID);
         else if (swimBaitIndex != -1)
-            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 25, swimBaitIndex);
+            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Fish, 25, (uint)swimBaitIndex);
     }
 
     private static bool TryFindItemByName(
@@ -98,7 +93,7 @@ public class BaitSwitchCommand : DailyModuleBase
                .FirstOrDefault(x => x.Value.NameLower.Equals(itemName, StringComparison.OrdinalIgnoreCase) ||
                                     x.Value.NamePinyin.Equals(itemName, StringComparison.OrdinalIgnoreCase)).Key;
         
-        if (item == default)
+        if (item == 0)
         {
             var matchingItems = source
                                 .Where(x => x.Value.NameLower.Contains(itemName, StringComparison.OrdinalIgnoreCase) ||
@@ -110,7 +105,7 @@ public class BaitSwitchCommand : DailyModuleBase
             item = matchingItems.FirstOrDefault().Key;
         }
 
-        return item != default;
+        return item != 0;
     }
 
     private static unsafe bool IsAbleToSwitch(uint itemID, out bool isBait, out int swimBaitIndex)
@@ -163,8 +158,6 @@ public class BaitSwitchCommand : DailyModuleBase
         return [itemArray[0], itemArray[1], itemArray[2]];
     }
 
-    public override void Uninit()
-    {
+    public override void Uninit() => 
         CommandManager.RemoveSubCommand(Command);
-    }
 }
