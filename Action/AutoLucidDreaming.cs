@@ -98,7 +98,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
             return;
         }
 
-        if (!DService.Condition[ConditionFlag.InCombat] || !ClassJobArr.Contains(GameState.ClassJob) ||
+        if (!DService.Condition[ConditionFlag.InCombat] || !ClassJobArr.Contains(LocalPlayerState.ClassJob) ||
             !IsActionUnlocked(LucidDreamingID))
             return;
 

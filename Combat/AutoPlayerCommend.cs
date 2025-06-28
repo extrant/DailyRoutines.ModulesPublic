@@ -130,8 +130,8 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
         var blacklistPlayers = GetBlacklistPlayerContentIDs();
         
         // 获取玩家自身职业和职能信息
-        var selfRole = GetCharacterJobRole(GameState.ClassJobData.Role);
-        var selfClassJob = GameState.ClassJob;
+        var selfRole = GetCharacterJobRole(LocalPlayerState.ClassJobData.Role);
+        var selfClassJob = LocalPlayerState.ClassJob;
         
         // 统计相同职业的数量
         var jobCounts = partyMembers
@@ -157,7 +157,7 @@ public unsafe class AutoPlayerCommend : DailyModuleBase
                                        x.Key.Role is PlayerRole.MeleeDPS or PlayerRole.RangedDPS)
                                        return selfRole == x.Key.Role ? 1 : 0;
                                    
-                                   if (GameState.ClassJobData.Role == x.Key.RoleRaw)
+                                   if (LocalPlayerState.ClassJobData.Role == x.Key.RoleRaw)
                                        return 1;
                                    
                                    return 0;

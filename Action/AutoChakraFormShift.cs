@@ -36,7 +36,7 @@ public class AutoChakraFormShift : DailyModuleBase
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || OccupiedInEvent) return false;
-        if (GameState.ClassJob != 20 || !IsValidPVEDuty())
+        if (LocalPlayerState.ClassJob != 20 || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;

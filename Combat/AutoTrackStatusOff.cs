@@ -96,7 +96,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
         if (!LuminaGetter.TryGetRow<Status>(statusID, out var status) || !status.CanStatusOff) return;
         
         // 不是自己给的 Status 不记录
-        if (sourceID != GameState.EntityID) return;
+        if (sourceID != LocalPlayerState.EntityID) return;
         Records[statusID] = ((float)remainingTime.TotalSeconds, sourceID, DateTime.Now, player->EntityId);
     }
 
@@ -107,7 +107,7 @@ public unsafe class AutoTrackStatusOff : DailyModuleBase
         if (!LuminaGetter.TryGetRow<Status>(statusID, out var status) || !status.CanStatusOff) return;
         
         // 不是自己给的 Status 不判断
-        if (sourceID != GameState.EntityID) return;
+        if (sourceID != LocalPlayerState.EntityID) return;
         
         if (Records.TryGetValue(statusID, out var buffInfo))
         {

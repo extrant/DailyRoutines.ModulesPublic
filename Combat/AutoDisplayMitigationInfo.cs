@@ -1288,7 +1288,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         public static Dictionary<uint, float[]> FetchParty()
         {
             if (DService.PartyList.Count == 0)
-                return new Dictionary<uint, float[]>() { { GameState.EntityID, FetchLocal() } };
+                return new Dictionary<uint, float[]>() { { LocalPlayerState.EntityID, FetchLocal() } };
 
             var partyValues = new Dictionary<uint, float[]>();
             foreach (var memberActiveStatus in PartyActiveStatus)

@@ -40,7 +40,7 @@ public class AutoPetFollow : DailyModuleBase
             value                                     ||
             GameState.IsInPVPArea                     ||
             DService.Condition[ConditionFlag.Mounted] ||
-            !ValidClassJobs.Contains(GameState.ClassJob))
+            !ValidClassJobs.Contains(LocalPlayerState.ClassJob))
             return;
 
         var localPlayer   = Control.GetLocalPlayer();

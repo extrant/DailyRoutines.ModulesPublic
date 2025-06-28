@@ -550,12 +550,12 @@ public class HealerHelper : DailyModuleBase
             return;
 
         // job check
-        var isHealer = GameState.ClassJobData.Role == 4;
+        var isHealer = LocalPlayerState.ClassJobData.Role == 4;
 
         // healer related
         if (isHealer)
         {
-            var isAST = GameState.ClassJob == 33;
+            var isAST = LocalPlayerState.ClassJob == 33;
 
             // auto play card
             var cardConfig = moduleConfig.AutoPlayCardStorage;
@@ -573,7 +573,7 @@ public class HealerHelper : DailyModuleBase
         }
 
         // can raise
-        var canRaise = isHealer || GameState.ClassJob is 27 or 35;
+        var canRaise = isHealer || LocalPlayerState.ClassJob is 27 or 35;
         if (canRaise)
         {
             // easy raise
@@ -808,7 +808,7 @@ public class HealerHelper : DailyModuleBase
 
             // find card candidates
             var partyList = DService.PartyList; // role [1 tank, 2 melee, 3 range, 4 healer]
-            var isAST     = GameState.ClassJob == 33;
+            var isAST     = LocalPlayerState.ClassJob == 33;
             if (GameState.IsInPVPArea || partyList.Length < 2 || !isAST || config.AutoPlayCard == AutoPlayCardStatus.Disable)
                 return;
 
@@ -960,7 +960,7 @@ public class HealerHelper : DailyModuleBase
             if (needResort)
                 candidates.Sort((a, b) => b.priority.CompareTo(a.priority));
 
-            return GameState.EntityID;
+            return LocalPlayerState.EntityID;
         }
 
         public void OnPrePlayCard(ref ulong targetId, ref uint actionId)
@@ -1132,7 +1132,7 @@ public class HealerHelper : DailyModuleBase
             foreach (var status in localStatus)
             {
                 if (PresetSheet.DispellableStatuses.ContainsKey(status.StatusId))
-                    return GameState.EntityID;
+                    return LocalPlayerState.EntityID;
             }
 
             // dispel in order (or reverse order)
@@ -1199,7 +1199,7 @@ public class HealerHelper : DailyModuleBase
                             return;
 
                         case OverhealTarget.Local:
-                            targetId = GameState.EntityID;
+                            targetId = LocalPlayerState.EntityID;
                             break;
 
                         case OverhealTarget.FirstTank:
@@ -1210,11 +1210,11 @@ public class HealerHelper : DailyModuleBase
                             targetId = firstTank is not null &&
                                        Vector3.DistanceSquared(firstTank.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance
                                            ? firstTank.ObjectId
-                                           : GameState.EntityID;
+                                           : LocalPlayerState.EntityID;
                             break;
 
                         default:
-                            targetId = GameState.EntityID;
+                            targetId = LocalPlayerState.EntityID;
                             break;
                     }
                 }
