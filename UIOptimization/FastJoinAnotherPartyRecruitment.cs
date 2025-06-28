@@ -18,10 +18,6 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
     
-    private delegate bool OpenListingByContentIDDelegate(AgentLookingForGroup* agent, ulong contentID);
-    private static readonly OpenListingByContentIDDelegate? OpenListingByContentIDInfo =
-        new CompSig("40 53 48 83 EC 20 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 07 C6 83 90 31 00 00 01").GetDelegate<OpenListingByContentIDDelegate>();
-    
     public override void Init()
     {
         TaskHelper    ??= new() { TimeLimitMS = 10_000 };
@@ -102,10 +98,12 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         TaskHelper.Enqueue(() =>
         {
             if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
-            if (AgentLookingForGroup.Instance()->ListingContentId == currentCID) return true;
             
-            OpenListingByContentIDInfo(AgentLookingForGroup.Instance(), currentCID);
-            return AgentLookingForGroup.Instance()->ListingContentId == currentCID;
+            var instance = AgentLookingForGroup.Instance();
+            if (instance->ListingContentId == currentCID) return true;
+
+            instance->OpenListingByContentId(currentCID);
+            return instance->ListingContentId == currentCID;
         });
         
         TaskHelper.Enqueue(() =>
