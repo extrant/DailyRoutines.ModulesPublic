@@ -21,7 +21,7 @@ using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class CrossDCPartyFinder : DailyModuleBase
 {
@@ -41,7 +41,7 @@ public class CrossDCPartyFinder : DailyModuleBase
     /// 当前玩家所在大区
     /// </summary>
     private static string LocatedDataCenter =>
-        DService.ObjectTable.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+        GameState.CurrentDataCenterData.Name.ExtractText();
 
     private static readonly CompSig AgentLookingForGroupReceiveEventSig =
         new("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC ?? 45 8B D1");
@@ -76,8 +76,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         if (IsAddonAndNodesReady(LookingForGroup))
             OnAddon(AddonEvent.PostSetup, null);
 
-        AgentLookingForGroupReceiveEventHook ??=
-            AgentLookingForGroupReceiveEventSig.GetHook<AgentReceiveEventDelegate>(AgentLookingForGroupReceiveEventDetour);
+        AgentLookingForGroupReceiveEventHook ??= AgentLookingForGroupReceiveEventSig.GetHook<AgentReceiveEventDelegate>(AgentLookingForGroupReceiveEventDetour);
         AgentLookingForGroupReceiveEventHook.Enable();
     }
 
@@ -491,7 +490,7 @@ public class CrossDCPartyFinder : DailyModuleBase
         }
     }
 
-    private unsafe AtkValue* AgentLookingForGroupReceiveEventDetour(
+    private static unsafe AtkValue* AgentLookingForGroupReceiveEventDetour(
         AgentInterface* agent, AtkValue* returnvalues, AtkValue* values, uint valueCount, ulong eventKind)
     {
         var ret = InvokeOriginal();
