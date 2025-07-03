@@ -277,10 +277,8 @@ public unsafe class AutoLogin : DailyModuleBase
             TaskHelper.Enqueue(SelectCharacterDefault, "SelectCharaDefault0");
     }
 
-    private void OnDialogue(AddonEvent type, AddonArgs args)
+    private static void OnDialogue(AddonEvent type, AddonArgs args)
     {
-        if (InterruptByConflictKey(TaskHelper, this)) return;
-
         var addon = Dialogue;
         if (!IsAddonAndNodesReady(addon)) return;
 
