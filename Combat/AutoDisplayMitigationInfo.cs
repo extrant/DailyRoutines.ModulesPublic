@@ -37,29 +37,16 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     };
 
     // storage
-    private static ModuleStorage? moduleConfig;
+    private static ModuleStorage? ModuleConfig;
 
     // asset
-    private static readonly byte[] damagePhysicalStr;
-    private static readonly byte[] damageMagicalStr;
-
-    // manager
-    private PartyListManager? partyListManager;
-
-    static AutoDisplayMitigationInfo()
-    {
-        damagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
-        damageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
-    }
-
-
+    private static readonly byte[] DamagePhysicalStr = new SeString(new IconPayload(BitmapFontIcon.DamagePhysical)).Encode();
+    private static readonly byte[] DamageMagicalStr  = new SeString(new IconPayload(BitmapFontIcon.DamageMagical)).Encode();
+    
     public override void Init()
     {
-        moduleConfig = LoadConfig<ModuleStorage>() ?? new ModuleStorage();
-
-        // manager
-        partyListManager = new PartyListManager();
-
+        ModuleConfig = LoadConfig<ModuleStorage>() ?? new ModuleStorage();
+        
         // overlay
         SetOverlay();
 
@@ -96,14 +83,14 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     public override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref moduleConfig.OnlyInCombat))
-            SaveConfig(moduleConfig);
+        if (ImGui.Checkbox(GetLoc("OnlyInCombat"), ref ModuleConfig.OnlyInCombat))
+            SaveConfig(ModuleConfig);
 
-        if (ImGui.Checkbox(GetLoc("TransparentOverlay"), ref moduleConfig.TransparentOverlay))
+        if (ImGui.Checkbox(GetLoc("TransparentOverlay"), ref ModuleConfig.TransparentOverlay))
         {
-            SaveConfig(moduleConfig);
+            SaveConfig(ModuleConfig);
 
-            if (moduleConfig.TransparentOverlay)
+            if (ModuleConfig.TransparentOverlay)
             {
                 Overlay.Flags |= ImGuiWindowFlags.NoBackground;
                 Overlay.Flags |= ImGuiWindowFlags.NoTitleBar;
@@ -115,21 +102,21 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             }
         }
 
-        if (ImGui.Checkbox(GetLoc("ResizeableOverlay"), ref moduleConfig.ResizeableOverlay))
+        if (ImGui.Checkbox(GetLoc("ResizeableOverlay"), ref ModuleConfig.ResizeableOverlay))
         {
-            SaveConfig(moduleConfig);
+            SaveConfig(ModuleConfig);
 
-            if (moduleConfig.ResizeableOverlay)
+            if (ModuleConfig.ResizeableOverlay)
                 Overlay.Flags &= ~ImGuiWindowFlags.NoResize;
             else
                 Overlay.Flags |= ImGuiWindowFlags.NoResize;
         }
 
-        if (ImGui.Checkbox(GetLoc("MoveableOverlay"), ref moduleConfig.MoveableOverlay))
+        if (ImGui.Checkbox(GetLoc("MoveableOverlay"), ref ModuleConfig.MoveableOverlay))
         {
-            SaveConfig(moduleConfig);
+            SaveConfig(ModuleConfig);
 
-            if (!moduleConfig.MoveableOverlay)
+            if (!ModuleConfig.MoveableOverlay)
             {
                 Overlay.Flags |= ImGuiWindowFlags.NoMove;
                 Overlay.Flags |= ImGuiWindowFlags.NoInputs;
@@ -200,7 +187,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Overlay.Flags      &=  ~ImGuiWindowFlags.NoTitleBar;
         Overlay.Flags      &=  ~ImGuiWindowFlags.AlwaysAutoResize;
 
-        if (moduleConfig.TransparentOverlay)
+        if (ModuleConfig.TransparentOverlay)
         {
             Overlay.Flags |= ImGuiWindowFlags.NoBackground;
             Overlay.Flags |= ImGuiWindowFlags.NoTitleBar;
@@ -211,12 +198,12 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             Overlay.Flags &= ~ImGuiWindowFlags.NoTitleBar;
         }
 
-        if (moduleConfig.ResizeableOverlay)
+        if (ModuleConfig.ResizeableOverlay)
             Overlay.Flags &= ~ImGuiWindowFlags.NoResize;
         else
             Overlay.Flags |= ImGuiWindowFlags.NoResize;
 
-        if (!moduleConfig.MoveableOverlay)
+        if (!ModuleConfig.MoveableOverlay)
         {
             Overlay.Flags |= ImGuiWindowFlags.NoMove;
             Overlay.Flags |= ImGuiWindowFlags.NoInputs;
@@ -246,13 +233,13 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         ImGuiOm.TooltipHover($"{status.Key.Id}");
 
         ImGui.TableNextColumn();
-        ImGuiHelpers.SeStringWrapped(damagePhysicalStr);
+        ImGuiHelpers.SeStringWrapped(DamagePhysicalStr);
 
         ImGui.SameLine();
         ImGui.Text($"{status.Key.Info.Physical}% ");
 
         ImGui.SameLine();
-        ImGuiHelpers.SeStringWrapped(damageMagicalStr);
+        ImGuiHelpers.SeStringWrapped(DamageMagicalStr);
 
         ImGui.SameLine();
         ImGui.Text($"{status.Key.Info.Magical}% ");
@@ -262,7 +249,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     #region Hooks
 
-    private unsafe void OnFrameworkUpdateInterval(IFramework _)
+    private static unsafe void OnFrameworkUpdateInterval(IFramework _)
     {
         if (DService.ClientState.IsPvP || Control.GetLocalPlayer() is null)
         {
@@ -273,7 +260,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         MitigationManager.Update();
 
-        var combatInactive = moduleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
+        var combatInactive = ModuleConfig.OnlyInCombat && !DService.Condition[ConditionFlag.InCombat];
         if (combatInactive)
         {
             StatusBarManager.Clear();
@@ -424,36 +411,29 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     #region PartyList
 
-    public unsafe void Draw()
+    public static unsafe void Draw()
     {
-        var partyListAddon = (AddonPartyList*)DService.Gui.GetAddonByName("_PartyList");
-        if (partyListAddon is null || partyListManager is null || !partyListAddon->IsVisible)
-            return;
+        if (!IsAddonAndNodesReady(PartyList)) return;
 
-        var drawList = ImGui.GetForegroundDrawList();
-
+        var drawList = ImGui.GetBackgroundDrawList();
+        var addon    = (AddonPartyList*)PartyList;
         foreach (var memberStatus in MitigationManager.FetchParty())
         {
             if (FetchMemberIndex(memberStatus.Key) is { } memberIndex)
             {
-                ref var partyMember = ref partyListAddon->PartyMembers[(int)memberIndex];
+                ref var partyMember = ref addon->PartyMembers[(int)memberIndex];
                 if (partyMember.HPGaugeComponent is null || !partyMember.HPGaugeComponent->OwnerNode->IsVisible())
                     continue;
 
-                partyListManager.DrawMitigationNode(drawList, ref partyMember, memberStatus.Value);
-                partyListManager.DrawShieldNode(drawList, ref partyMember, memberStatus.Value);
+                PartyListManager.DrawMitigationNode(drawList, ref partyMember, memberStatus.Value);
+                PartyListManager.DrawShieldNode(drawList, ref partyMember, memberStatus.Value);
             }
         }
     }
 
-    private unsafe class PartyListManager
+    private static unsafe class PartyListManager
     {
-        private static readonly IFontAtlas fontAtlas = DService.PI.UiBuilder.CreateFontAtlas(FontAtlasAutoRebuildMode.OnNewFrame);
-
-        private readonly IFontHandle mitigationFont = fontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.MiedingerMid14));
-        private readonly IFontHandle shieldFont     = fontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.MiedingerMid12));
-
-        public void DrawMitigationNode(ImDrawListPtr drawList, ref AddonPartyList.PartyListMemberStruct partyMember, float[] status)
+        public static void DrawMitigationNode(ImDrawListPtr drawList, ref AddonPartyList.PartyListMemberStruct partyMember, float[] status)
         {
             var mitigationValue = Math.Max(status[0], status[1]);
             if (mitigationValue == 0)
@@ -463,47 +443,47 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             if (nameNode is null || !nameNode->IsVisible())
                 return;
 
-            var partyListAddon = (AddonPartyList*)DService.Gui.GetAddonByName("_PartyList");
-            if (partyListAddon is null || !partyListAddon->IsVisible)
-                return;
+            var partyListAddon = (AddonPartyList*)PartyList;
+            if (!IsAddonAndNodesReady(PartyList)) return;
+            
             var partyScale = partyListAddon->Scale;
 
-            using var fontPush = mitigationFont.Push();
+            using var fontPush = FontManager.MiedingerMidFont140.Push();
 
             var text     = $"{mitigationValue:N0}%";
             var textSize = ImGui.CalcTextSize(text);
 
-            var posX = nameNode->ScreenX + nameNode->GetWidth() * partyScale - textSize.X - 5 * partyScale;
-            var posY = nameNode->ScreenY + 2 * partyScale;
+            var posX = nameNode->ScreenX + (nameNode->GetWidth() * partyScale) - textSize.X - (5 * partyScale);
+            var posY = nameNode->ScreenY                                       + (2              * partyScale);
 
             drawList.AddText(new Vector2(posX + 1, posY + 1), 0x9D00A2FF, text);
             drawList.AddText(new Vector2(posX, posY), 0xFFFFFFFF, text);
         }
 
-        public void DrawShieldNode(ImDrawListPtr drawList, ref AddonPartyList.PartyListMemberStruct partyMember, float[] status)
+        public static void DrawShieldNode(ImDrawListPtr drawList, ref AddonPartyList.PartyListMemberStruct partyMember, float[] status)
         {
             var shieldValue = status[2];
-            if (shieldValue == 0)
-                return;
+            if (shieldValue == 0) return;
 
             var hpComponent = partyMember.HPGaugeComponent;
             if (hpComponent is null || !hpComponent->OwnerNode->IsVisible())
                 return;
+            
             var numNode = hpComponent->GetTextNodeById(2);
             if (numNode is null || !numNode->IsVisible())
                 return;
 
-            var partyListAddon = (AddonPartyList*)DService.Gui.GetAddonByName("_PartyList");
-            if (partyListAddon is null || !partyListAddon->IsVisible)
-                return;
+            var partyListAddon = (AddonPartyList*)PartyList;
+            if (!IsAddonAndNodesReady(PartyList)) return;
+            
             var partyScale = partyListAddon->Scale;
 
-            using var fontPush = shieldFont.Push();
+            using var fontPush = FontManager.MiedingerMidFont120.Push();
 
             var text = $"{shieldValue:F0}";
 
-            var posX = numNode->ScreenX + numNode->GetWidth() * partyListAddon->Scale + 3 * partyScale;
-            var posY = numNode->ScreenY + numNode->GetHeight() * partyListAddon->Scale / 2 - 1.5f * partyScale;
+            var posX = numNode->ScreenX + (numNode->GetWidth()                         * partyListAddon->Scale) + (3    * partyScale);
+            var posY = numNode->ScreenY + (numNode->GetHeight() * partyListAddon->Scale / 2)                      - (3f * partyScale);
 
             drawList.AddText(new Vector2(posX + 1, posY + 1), 0x9D00A2FF, text);
             drawList.AddText(new Vector2(posX, posY), 0xFFFFFFFF, text);
@@ -709,10 +689,10 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     #region Utils
 
-    private static unsafe uint? FetchMemberIndex(uint entityId)
-        => AgentHUD.Instance()->PartyMembers.ToArray()
-                                            .Select((m, i) => (Member: m, Index: (uint)i))
-                                            .FirstOrDefault(t => t.Member.EntityId == entityId).Index;
+    private static unsafe uint? FetchMemberIndex(uint entityId) =>
+        AgentHUD.Instance()->PartyMembers.ToArray()
+                                         .Select((m, i) => (Member: m, Index: (uint)i))
+                                         .FirstOrDefault(t => t.Member.EntityId == entityId).Index;
 
     #endregion
 
