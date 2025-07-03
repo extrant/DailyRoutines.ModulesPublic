@@ -1,48 +1,52 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 
-
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoCancelStarContributor : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoCancelStarContributorTitle"),
+        Title       = GetLoc("AutoCancelStarContributorTitle"),
         Description = GetLoc("AutoCancelStarContributorDescription"),
-        Category = ModuleCategories.General,
-        Author = ["Shiyuvi"]
+        Category    = ModuleCategories.General,
+        Author      = ["Shiyuvi"]
     };
     
-    private const uint StarContributorBuffId = 4409;
+    private const uint StarContributorBuffID = 4409;
     
-    
-    public override void Init() => FrameworkManager.Register(OnUpdate, throttleMS: 1500);
-    
-    public override void Uninit() => FrameworkManager.Unregister(OnUpdate);
-    
-    private static void OnUpdate(IFramework framework)
+    public override void Init() => 
+        DService.ClientState.TerritoryChanged += OnZoneChanged;
+
+    private static void OnZoneChanged(ushort zone)
     {
-        if (!IsValidState()) return;
-
-        var localPlayer = DService.ObjectTable.LocalPlayer;
-        if (localPlayer is null) return;
-
-        var statusManager = localPlayer.ToStruct()->StatusManager;
-        var statusIndex = statusManager.GetStatusIndex(StarContributorBuffId);
+        FrameworkManager.Unregister(OnUpdate);
+        if (GameState.TerritoryIntendedUse != 60) return;
         
-        if (statusIndex != -1)
-            StatusManager.ExecuteStatusOff(StarContributorBuffId);
+        FrameworkManager.Register(OnUpdate, throttleMS: 10_000);
     }
 
-    
-    private static bool IsValidState() =>
-               DService.ObjectTable.LocalPlayer != null && 
-               GameState.TerritoryIntendedUse == 60 &&
-               !BetweenAreas &&
-               !OccupiedInEvent &&
-               IsScreenReady();
+    public override void Uninit()
+    {
+        DService.ClientState.TerritoryChanged -= OnZoneChanged;
+        FrameworkManager.Unregister(OnUpdate);
+    }
+
+    private static void OnUpdate(IFramework framework)
+    {
+        if (GameState.TerritoryIntendedUse != 60)
+        {
+            FrameworkManager.Unregister(OnUpdate);
+            return;
+        }
+        
+        if (BetweenAreas || DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
+        
+        var statusManager = localPlayer.ToStruct()->StatusManager;
+        if (!statusManager.HasStatus(StarContributorBuffID)) return;
+        
+        StatusManager.ExecuteStatusOff(StarContributorBuffID);
+    }
 }
