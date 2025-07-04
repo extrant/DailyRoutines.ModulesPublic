@@ -301,7 +301,7 @@ public unsafe class AutoLogin : DailyModuleBase
     private bool? SelectCharacter(ushort worldID, int charaIndex)
     {
         if (InterruptByConflictKey(TaskHelper, this)) return true;
-        if (!Throttler.Throttle("AutoLogin-SelectCharacter", 100)) return false;
+        if (!Throttler.Throttle("AutoLogin-SelectCharacter")) return false;
 
         var agent = AgentLobby.Instance();
         if (agent == null) return false;
@@ -323,7 +323,7 @@ public unsafe class AutoLogin : DailyModuleBase
 
         TaskHelper.Enqueue(() => ClickSelectYesnoYes(), "准备点击确认登录");
         TaskHelper.Enqueue(ResetStates);
-        return true;
+        return IsAddonAndNodesReady(SelectYesno);
     }
 
     private bool? SelectWorld(ushort worldID)
