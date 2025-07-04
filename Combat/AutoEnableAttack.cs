@@ -20,7 +20,7 @@ public unsafe class AutoEnableAttack : DailyModuleBase
 
     private static void OnPostUseAction(
         bool result, ActionType actionType, uint actionID, ulong targetID, uint extraParam,
-        ActionManager.UseActionMode queueState, uint comboRouteID, bool* outOptAreaTargeted)
+        ActionManager.UseActionMode queueState, uint comboRouteID)
     {
         if (actionType is not ActionType.Action || targetID == 0xE000_0000) return;
         if (DService.ClientState.IsPvP || !DService.Condition[ConditionFlag.InCombat] ||

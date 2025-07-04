@@ -18,7 +18,7 @@ public unsafe class MacroIntoActionQueue : DailyModuleBase
     private static void OnPreUseAction(
         ref bool isPrevented,
         ref ActionType actionType, ref uint actionID, ref ulong targetID, ref uint extraParam,
-        ref ActionManager.UseActionMode queueState, ref uint comboRouteID, ref bool* outOptAreaTargeted)
+        ref ActionManager.UseActionMode queueState, ref uint comboRouteID)
     {
         queueState = ActionManager.UseActionMode.Queue;
         ActionManager.Instance()->QueueType = ActionManager.UseActionMode.Queue;

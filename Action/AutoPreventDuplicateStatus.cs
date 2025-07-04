@@ -262,7 +262,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
     private static void OnPreUseAction(
         ref bool isPrevented,
         ref ActionType actionType, ref uint actionID, ref ulong targetID, ref uint extraParam,
-        ref ActionManager.UseActionMode queueState, ref uint comboRouteID, ref bool* outOptAreaTargeted)
+        ref ActionManager.UseActionMode queueState, ref uint comboRouteID)
     {
         if (actionType != ActionType.Action) return;
 
