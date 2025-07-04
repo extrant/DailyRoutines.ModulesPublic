@@ -31,18 +31,10 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         
         if (IsAddonAndNodesReady(LookingForGroup)) 
             SendEvent(AgentId.LookingForGroup, 1, 17);
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonYesno);
     }
-
-    private void OnAddon(AddonEvent type, AddonArgs? args)
-    {
-        Overlay.IsOpen = type switch
-        {
-            AddonEvent.PostDraw    => true,
-            AddonEvent.PreFinalize => false,
-            _                      => Overlay.IsOpen
-        };
-    }
-
+    
     public override void OverlayUI()
     {
         var addon = LookingForGroupDetail;
@@ -70,6 +62,22 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         if (ImGui.Button(GetLoc("FastJoinAnotherPartyRecruitment-LeaveAndJoin")))
             Enqueue();
     }
+
+    private void OnAddonYesno(AddonEvent type, AddonArgs args)
+    {
+        if (!TaskHelper.IsBusy) return;
+        ClickSelectYesnoYes();
+    }
+
+    private void OnAddon(AddonEvent type, AddonArgs? args)
+    {
+        Overlay.IsOpen = type switch
+        {
+            AddonEvent.PostDraw    => true,
+            AddonEvent.PreFinalize => false,
+            _                      => Overlay.IsOpen
+        };
+    }
     
     private void Enqueue()
     {
@@ -84,8 +92,6 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
             {
                 if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
                 if (!IsInAnyParty()) return true;
-
-                ClickSelectYesnoYes();
                 
                 ChatHelper.SendMessage("/leave");
                 ChatHelper.SendMessage("/pcmd breakup");
@@ -97,7 +103,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         
         TaskHelper.Enqueue(() =>
         {
-            if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
+            if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task")) return false;
             
             var instance = AgentLookingForGroup.Instance();
             if (instance->ListingContentId == currentCID) return true;
@@ -108,7 +114,8 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         
         TaskHelper.Enqueue(() =>
         {
-            if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task", 100)) return false;
+            if (!Throttler.Throttle("FastJoinAnotherPartyRecruitment-Task")) return false;
+            if (!IsAddonAndNodesReady(LookingForGroupDetail)) return false;
             
             var buttonNode = LookingForGroupDetail->GetComponentButtonById(109);
             if (buttonNode == null) return false;
@@ -117,12 +124,14 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
             return true;
         });
         
-        TaskHelper.Enqueue(() => ClickSelectYesnoYes());
+        // 滞留 500 毫秒避免点不了
+        TaskHelper.DelayNext(500);
     }
 
     public override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
+        DService.AddonLifecycle.UnregisterListener(OnAddonYesno);
         
         base.Uninit();
     }
