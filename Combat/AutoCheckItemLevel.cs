@@ -65,69 +65,89 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
             TaskHelper.Enqueue(() =>
             {
-                if (!Throttler.Throttle("AutoCheckItemLevel-WaitExamineUI", 1000)) return false;
-                AgentInspect.Instance()->ExamineCharacter(partyMember.GameObject.EntityId);
-                return CharacterInspect != null;
+                try
+                {
+                    if (!Throttler.Throttle("AutoCheckItemLevel-WaitExamineUI", 1000)) return false;
+                    if (partyMember.GameObject is not { EntityId: > 0 } gameObject) return false;
+                
+                    AgentInspect.Instance()->ExamineCharacter(gameObject.EntityId);
+                    return CharacterInspect != null;
+                } 
+                catch
+                {
+                    return false;
+                }
             });
 
             TaskHelper.DelayNext(1_000);
             TaskHelper.Enqueue(() =>
             {
-                if (!TryGetInventoryItems([InventoryType.Examine], _ => true, out var list)) return false;
-
-                uint totalIL = 0U, lowestIL = uint.MaxValue;
-                var itemSlotAmount = 11;
-                for (var i = 0; i < 13; i++)
+                try
                 {
-                    var slot = list[i];
-                    var itemID = slot.ItemId;
-                    var itemData = LuminaGetter.GetRow<Item>(itemID);
-                    if (itemData == null) continue;
-                    switch (i)
-                    {
-                        case 0:
-                        {
-                            var category = itemData.Value.ClassJobCategory.RowId;
-                            if (HaveOffHandJobCategories.Contains(category))
-                                itemSlotAmount++;
+                    if (partyMember.GameObject is not { EntityId: > 0 }) return false;
+                    if (!TryGetInventoryItems([InventoryType.Examine], _ => true, out var list)) return false;
 
-                            break;
+                    uint totalIL        = 0U, lowestIL = uint.MaxValue;
+                    var  itemSlotAmount = 11;
+                
+                    for (var i = 0; i < 13; i++)
+                    {
+                        var slot   = list[i];
+                        var itemID = slot.ItemId;
+                    
+                        if (!LuminaGetter.TryGetRow(itemID, out Item item)) continue;
+
+                        switch (i)
+                        {
+                            case 0:
+                            {
+                                var category = item.ClassJobCategory.RowId;
+                                if (HaveOffHandJobCategories.Contains(category))
+                                    itemSlotAmount++;
+
+                                break;
+                            }
+                            case 1 when itemSlotAmount != 12:
+                            case 5: // 腰带
+                                continue;
                         }
-                        case 1 when itemSlotAmount != 12:
-                        case 5: // 腰带
-                            continue;
+
+                        if (item.LevelItem.RowId < lowestIL)
+                            lowestIL = item.LevelItem.RowId;
+
+                        totalIL += item.LevelItem.RowId;
                     }
 
-                    if (itemData.Value.LevelItem.RowId < lowestIL)
-                        lowestIL = itemData.Value.LevelItem.RowId;
+                    var avgItemLevel = totalIL / itemSlotAmount;
 
-                    totalIL += itemData.Value.LevelItem.RowId;
+                    var content = GameState.ContentFinderConditionData;
+                
+                    var ssb = new SeStringBuilder();
+                    ssb.AddUiForeground(25);
+                    ssb.Add(new PlayerPayload(partyMember.Name.TextValue, ((BattleChara*)partyMember.GameObject.Address)->HomeWorld));
+                    ssb.AddUiForegroundOff();
+                    ssb.Append($" ({partyMember.ClassJob.Value.Name.ExtractText()})");
+
+                    ssb.Append($" {GetLoc("Level")}: ").AddUiForeground(
+                        partyMember.Level.ToString(), (ushort)(partyMember.Level >= content.ClassJobLevelSync ? 43 : 17));
+
+                    ssb.Add(new NewLinePayload());
+                    ssb.Append($" {GetLoc("ILAverage")}: ")
+                       .AddUiForeground(avgItemLevel.ToString(), (ushort)(avgItemLevel > content.ItemLevelSync ? 43 : 17));
+
+                    ssb.Append($" {GetLoc("ILMinimum")}: ")
+                       .AddUiForeground(lowestIL.ToString(), (ushort)(lowestIL > content.ItemLevelRequired ? 43 : 17));
+
+                    ssb.Add(new NewLinePayload());
+
+                    Chat(ssb.Build());
+                    CharacterInspect->Close(true);
+                    return true;
                 }
-
-                var avgItemLevel = totalIL / itemSlotAmount;
-
-                var content = PresetSheet.Contents[DService.ClientState.TerritoryType];
-                var ssb = new SeStringBuilder();
-                ssb.AddUiForeground(25);
-                ssb.Add(new PlayerPayload(partyMember.Name.TextValue, ((BattleChara*)partyMember.GameObject.Address)->HomeWorld));
-                ssb.AddUiForegroundOff();
-                ssb.Append($" ({partyMember.ClassJob.Value.Name.ExtractText()})");
-
-                ssb.Append($" {GetLoc("Level")}: ").AddUiForeground(
-                    partyMember.Level.ToString(), (ushort)(partyMember.Level >= content.ClassJobLevelSync ? 43 : 17));
-
-                ssb.Add(new NewLinePayload());
-                ssb.Append($" {GetLoc("ILAverage")}: ")
-                   .AddUiForeground(avgItemLevel.ToString(), (ushort)(avgItemLevel > content.ItemLevelSync ? 43 : 17));
-
-                ssb.Append($" {GetLoc("ILMinimum")}: ")
-                   .AddUiForeground(lowestIL.ToString(), (ushort)(lowestIL > content.ItemLevelRequired ? 43 : 17));
-
-                ssb.Add(new NewLinePayload());
-
-                Chat(ssb.Build());
-                CharacterInspect->Close(true);
-                return true;
+                catch
+                {
+                    return false;
+                }
             });
 
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers));
