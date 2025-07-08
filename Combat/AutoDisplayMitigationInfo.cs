@@ -448,7 +448,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             
             var partyScale = partyListAddon->Scale;
 
-            using var fontPush = FontManager.MiedingerMidFont140.Push();
+            using var fontPush = FontManager.MiedingerMidFont120.Push();
 
             var text     = $"{mitigationValue:N0}%";
             var textSize = ImGui.CalcTextSize(text);
@@ -456,8 +456,10 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             var posX = nameNode->ScreenX + (nameNode->GetWidth() * partyScale) - textSize.X - (5 * partyScale);
             var posY = nameNode->ScreenY                                       + (2              * partyScale);
 
-            drawList.AddText(new Vector2(posX + 1, posY + 1), 0x9D00A2FF, text);
-            drawList.AddText(new Vector2(posX, posY), 0xFFFFFFFF, text);
+            var pos = new Vector2(posX, posY);
+            
+            drawList.AddText(pos + new Vector2(3, 3), 0x9D00A2FF, text);
+            drawList.AddText(pos,                     0xFFFFFFFF, text);
         }
 
         public static void DrawShieldNode(ImDrawListPtr drawList, ref AddonPartyList.PartyListMemberStruct partyMember, float[] status)
