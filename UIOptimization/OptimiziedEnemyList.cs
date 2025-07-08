@@ -3,20 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
-using Dalamud.Game.Addon.Events;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
-using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using Action = Lumina.Excel.Sheets.Action;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class OptimiziedEnemyList : DailyModuleBase
 {
@@ -28,6 +25,8 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
     };
 
     private static Config ModuleConfig = null!;
+
+    private static Dictionary<uint, int> HaterInfo = [];
 
     private static string CastInfoTargetBlacklistInput = string.Empty;
     
@@ -200,7 +199,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon(AddonEvent type, AddonArgs args)
     {
         switch (type)
         {
@@ -224,11 +223,14 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
         var numberArray = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.EnemyList);
         if (numberArray == null) return;
 
-        var hateInfo = UIState.Instance()->Hater.Haters.ToArray()
+        if (Throttler.Throttle("OptimiziedEnemyList-UpdateHaterInfo"))
+        {
+            HaterInfo = UIState.Instance()->Hater.Haters.ToArray()
                                                 .Where(x => x.EntityId != 0 && x.EntityId != 0xE0000000)
                                                 .DistinctBy(x => x.EntityId)
                                                 .ToDictionary(x => x.EntityId, x => x.Enmity);
-        
+        }
+
         var castWidth  = stackalloc ushort[1];
         var castHeight = stackalloc ushort[1];
         
@@ -242,12 +244,15 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             var gameObjectID = (ulong)numberArray->IntArray[offset];
             if (gameObjectID is 0 or 0xE0000000) continue;
             
-            var gameObj = DService.ObjectTable.SearchById(gameObjectID);
-            if (gameObj == null || gameObj is not IBattleChara bc) continue;
+            var textNode      = (AtkTextNode*)nodes[i].TextNodePtr;
             
-            if (!hateInfo.TryGetValue(gameObj.EntityId, out var enmity)) continue;
-
-            var textNode = (AtkTextNode*)nodes[i].TextNodePtr;
+            var gameObj = DService.ObjectTable.SearchById(gameObjectID);
+            if (gameObj is not IBattleChara bc || (!bc.IsTargetable && bc.CurrentHp == bc.MaxHp) || !HaterInfo.TryGetValue(gameObj.EntityId, out var enmity))
+            {
+                textNode->SetText(string.Empty);
+                continue;
+            }
+            
             var componentNode = (AtkComponentNode*)nodes[i].ComponentNodePtr;
             
             var castTextNode = componentNode->Component->UldManager.SearchNodeById(4)->GetAsAtkTextNode();
@@ -280,12 +285,11 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             
             textNode->FontSize = ModuleConfig.FontSize;
             textNode->SetText(bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName)
-                                  ? $"{GetCastInfoText((ActionType)bc.CastActionType, bc.CastActionId)}: {bc.TotalCastTime - bc.CurrentCastTime:F1}"
+                                  ? $"{GetCastInfoText(bc.CastActionType, bc.CastActionId)}: {bc.TotalCastTime - bc.CurrentCastTime:F1}"
                                   : GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity));
             
             textNode->GetTextDrawSize(infoWidth, infoHeight);
-            textNode->SetPositionFloat(Math.Max(90f, *castWidth + 28) + ModuleConfig.TextOffset.X,
-                                       4 + ModuleConfig.TextOffset.Y);
+            textNode->SetPositionFloat(Math.Max(90f, *castWidth + 28) + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
         }
     }
     
@@ -406,8 +410,9 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
     public override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
-        
         FreeNodes();
+        
+        HaterInfo.Clear();
     }
 
     private class Config : ModuleConfiguration
