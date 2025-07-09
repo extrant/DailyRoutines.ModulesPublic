@@ -3,6 +3,7 @@ using System.Linq;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -33,129 +34,128 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
     {
         TaskHelper.Abort();
         
-        if (DService.ClientState.IsPvP) return;
-        if (!PresetSheet.Contents.TryGetValue(zone, out var content) || content.PvP ||
-            !ValidContentJobCategories.Contains(content.AcceptClassJobCategory.RowId)) return;
+        if (GameState.IsInPVPArea || GameState.ContentFinderCondition == 0) return;
+        if (!ValidContentJobCategories.Contains(GameState.ContentFinderConditionData.AcceptClassJobCategory.RowId)) return;
         
-        TaskHelper.Enqueue(() => !BetweenAreas, "WaitForEnteringDuty", null, null, 2);
-        TaskHelper.Enqueue(() => CheckMembersItemLevel([]));
+        TaskHelper.Enqueue(() => !BetweenAreas && DService.ObjectTable.LocalPlayer != null, "WaitForEnteringDuty", weight: 2);
+        TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
     }
 
-    private bool? CheckMembersItemLevel(HashSet<ulong> checkedMembers)
+    private bool CheckMembersItemLevel(HashSet<ulong> checkedMembers)
     {
-        if (IsAddonAndNodesReady(CharacterInspect))
-            CharacterInspect->Close(true);
-
-        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-
-        if (checkedMembers.Count == 0)
-            checkedMembers = [localPlayer.GameObjectId];
-
-        if (DService.PartyList.Length <= 1 || 
-            DService.PartyList.All(x => checkedMembers.Contains(x.GameObject?.GameObjectId ?? 0)))
+        var agent        = AgentHUD.Instance();
+        var agentInspect = AgentInspect.Instance();
+        if (agent == null || agentInspect == null || agent->PartyMemberCount <= 1)
         {
             TaskHelper.Abort();
             return true;
         }
 
-        foreach (var partyMember in DService.PartyList)
+        if (IsAddonAndNodesReady(CharacterInspect))
         {
-            if (partyMember?.GameObject == null) continue;
-            if (!checkedMembers.Add(partyMember.GameObject.GameObjectId)) continue;
-
+            CharacterInspect->Close(true);
+            return false;
+        }
+        
+        var members = agent->PartyMembers.ToArray();
+        foreach (var member in members)
+        {
+            if (member.EntityId == 0 || member.EntityId == LocalPlayerState.EntityID || checkedMembers.Contains(member.EntityId)) continue;
+            checkedMembers.Add(member.EntityId);
+            
             TaskHelper.Enqueue(() =>
             {
-                try
-                {
-                    if (!Throttler.Throttle("AutoCheckItemLevel-WaitExamineUI", 1000)) return false;
-                    if (partyMember.GameObject is not { EntityId: > 0 } gameObject) return false;
+                if (!Throttler.Throttle("AutoCheckItemLevel", 1_000)) return false;
+                if (CharacterInspect != null) return true;
                 
-                    AgentInspect.Instance()->ExamineCharacter(gameObject.EntityId);
-                    return CharacterInspect != null;
-                } 
-                catch
-                {
-                    return false;
-                }
-            });
+                agentInspect->ExamineCharacter(member.EntityId);
+                return false;
+            }, "打开检视界面");
 
-            TaskHelper.DelayNext(1_000);
+            TaskHelper.DelayNext(500, "等待 500 毫秒");
             TaskHelper.Enqueue(() =>
             {
-                try
-                {
-                    if (partyMember.GameObject is not { EntityId: > 0 }) return false;
-                    if (!TryGetInventoryItems([InventoryType.Examine], _ => true, out var list)) return false;
+                if (member.Object == null) return false;
+                if (!TryGetInventoryItems([InventoryType.Examine], _ => true, out var list)) return false;
 
-                    uint totalIL        = 0U, lowestIL = uint.MaxValue;
-                    var  itemSlotAmount = 11;
+                while (list.Count < 13)
+                    list.Add(new());
                 
-                    for (var i = 0; i < 13; i++)
+                uint totalIL        = 0U, lowestIL = 9999U;
+                var  itemSlotAmount = 11;
+
+                for (var i = 0; i < 13; i++)
+                {
+                    var slot   = list[i];
+                    var itemID = slot.ItemId;
+
+                    if (!LuminaGetter.TryGetRow(itemID, out Item item)) continue;
+
+                    switch (i)
                     {
-                        var slot   = list[i];
-                        var itemID = slot.ItemId;
-                    
-                        if (!LuminaGetter.TryGetRow(itemID, out Item item)) continue;
-
-                        switch (i)
+                        case 0:
                         {
-                            case 0:
-                            {
-                                var category = item.ClassJobCategory.RowId;
-                                if (HaveOffHandJobCategories.Contains(category))
-                                    itemSlotAmount++;
+                            var category = item.ClassJobCategory.RowId;
+                            if (HaveOffHandJobCategories.Contains(category))
+                                itemSlotAmount++;
 
-                                break;
-                            }
-                            case 1 when itemSlotAmount != 12:
-                            case 5: // 腰带
-                                continue;
+                            break;
                         }
-
-                        if (item.LevelItem.RowId < lowestIL)
-                            lowestIL = item.LevelItem.RowId;
-
-                        totalIL += item.LevelItem.RowId;
+                        case 1 when itemSlotAmount != 12:
+                        case 5: // 腰带
+                            continue;
                     }
 
-                    var avgItemLevel = totalIL / itemSlotAmount;
+                    if (item.LevelItem.RowId < lowestIL)
+                        lowestIL = item.LevelItem.RowId;
 
-                    var content = GameState.ContentFinderConditionData;
+                    totalIL += item.LevelItem.RowId;
+                }
+
+                var avgItemLevel = (uint)(totalIL / itemSlotAmount);
                 
-                    var ssb = new SeStringBuilder();
-                    ssb.AddUiForeground(25);
-                    ssb.Add(new PlayerPayload(partyMember.Name.TextValue, ((BattleChara*)partyMember.GameObject.Address)->HomeWorld));
-                    ssb.AddUiForegroundOff();
-                    ssb.Append($" ({partyMember.ClassJob.Value.Name.ExtractText()})");
-
-                    ssb.Append($" {GetLoc("Level")}: ").AddUiForeground(
-                        partyMember.Level.ToString(), (ushort)(partyMember.Level >= content.ClassJobLevelSync ? 43 : 17));
-
-                    ssb.Add(new NewLinePayload());
-                    ssb.Append($" {GetLoc("ILAverage")}: ")
-                       .AddUiForeground(avgItemLevel.ToString(), (ushort)(avgItemLevel > content.ItemLevelSync ? 43 : 17));
-
-                    ssb.Append($" {GetLoc("ILMinimum")}: ")
-                       .AddUiForeground(lowestIL.ToString(), (ushort)(lowestIL > content.ItemLevelRequired ? 43 : 17));
-
-                    ssb.Add(new NewLinePayload());
-
-                    Chat(ssb.Build());
-                    CharacterInspect->Close(true);
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            });
-
-            TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers));
+                SendNotification(member, avgItemLevel, lowestIL);
+                return true;
+            }, "检查装等");
+            
+            TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }
-
+        
         TaskHelper.Abort();
         return true;
+    }
+
+    private static void SendNotification(HudPartyMember partyMember, uint avgIL, uint lowIL)
+    {
+        if (partyMember.Object == null) return;
+        
+        var content = GameState.ContentFinderConditionData;
+        if (content.RowId == 0) return;
+        
+        var ssb = new SeStringBuilder();
+
+        ssb.AddUiForeground(25)
+           .Add(new PlayerPayload(partyMember.Name.ExtractText(), partyMember.Object->HomeWorld))
+           .AddUiForegroundOff();
+        
+        ssb.Append($" ({LuminaWrapper.GetJobName(partyMember.Object->ClassJob)})");
+
+        var level = partyMember.Object->Level;
+        ssb.Append($" {GetLoc("Level")}: ")
+           .AddUiForeground(level.ToString(), (ushort)(level >= content.ClassJobLevelSync ? 43 : 17));
+
+        ssb.Add(new NewLinePayload());
+        
+        ssb.Append($" {GetLoc("ILAverage")}: ")
+           .AddUiForeground(avgIL.ToString(), (ushort)(avgIL > content.ItemLevelSync ? 43 : 17));
+
+        ssb.Append($" {GetLoc("ILMinimum")}: ")
+           .AddUiForeground(lowIL.ToString(), (ushort)(lowIL > content.ItemLevelRequired ? 43 : 17));
+
+        ssb.Add(new NewLinePayload());
+
+        Chat(ssb.Build());
     }
 
     public override void Uninit()
