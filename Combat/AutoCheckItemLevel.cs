@@ -25,7 +25,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
     
     public override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 20_000 };
+        TaskHelper ??= new() { TimeLimitMS = 20_000 };
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
     }
@@ -35,7 +35,9 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         TaskHelper.Abort();
         
         if (GameState.IsInPVPArea || GameState.ContentFinderCondition == 0) return;
-        if (!ValidContentJobCategories.Contains(GameState.ContentFinderConditionData.AcceptClassJobCategory.RowId)) return;
+        if (GameState.ContentFinderConditionData.PvP || 
+            !ValidContentJobCategories.Contains(GameState.ContentFinderConditionData.AcceptClassJobCategory.RowId)) 
+            return;
         
         TaskHelper.Enqueue(() => !BetweenAreas && DService.ObjectTable.LocalPlayer != null, "WaitForEnteringDuty", weight: 2);
         TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
