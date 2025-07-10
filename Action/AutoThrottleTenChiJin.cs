@@ -25,7 +25,7 @@ public unsafe class AutoThrottleTenChiJin : DailyModuleBase
 
     public override void Init() => GamePacketManager.Register(OnPreSendActionPacket);
     
-    private static void OnPreSendActionPacket(ref bool isPrevented, int opcode, ref byte* packet)
+    private static void OnPreSendActionPacket(ref bool isPrevented, int opcode, ref byte* packet, ref ushort priority)
     {
         if (opcode != GamePacketOpcodes.UseActionOpcode) return;
 
