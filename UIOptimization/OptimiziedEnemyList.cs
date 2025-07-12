@@ -247,7 +247,7 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
             var textNode      = (AtkTextNode*)nodes[i].TextNodePtr;
             
             var gameObj = DService.ObjectTable.SearchById(gameObjectID);
-            if (gameObj is not IBattleChara bc || (!bc.IsTargetable && bc.CurrentHp == bc.MaxHp) || !HaterInfo.TryGetValue(gameObj.EntityId, out var enmity))
+            if (gameObj is not IBattleChara bc || !HaterInfo.TryGetValue(gameObj.EntityId, out var enmity))
             {
                 textNode->SetText(string.Empty);
                 continue;
@@ -284,9 +284,13 @@ public unsafe class OptimiziedEnemyList : DailyModuleBase
                                             : castTextNode->BackgroundColor;
             
             textNode->FontSize = ModuleConfig.FontSize;
-            textNode->SetText(bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName)
-                                  ? $"{GetCastInfoText(bc.CastActionType, bc.CastActionId)}: {bc.TotalCastTime - bc.CurrentCastTime:F1}"
-                                  : GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity));
+            
+            if (bc.IsCasting && bc.CurrentCastTime != bc.TotalCastTime && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName))
+                textNode->SetText($"{GetCastInfoText(bc.CastActionType, bc.CastActionId)}: {bc.TotalCastTime - bc.CurrentCastTime:F1}");
+            else if (!bc.IsTargetable && bc.CurrentHp == bc.MaxHp)
+                textNode->SetText(string.Empty);
+            else
+                textNode->SetText(GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity));
             
             textNode->GetTextDrawSize(infoWidth, infoHeight);
             textNode->SetPositionFloat(Math.Max(90f, *castWidth + 28) + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
