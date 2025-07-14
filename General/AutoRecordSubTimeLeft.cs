@@ -1,16 +1,16 @@
-using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
-using Dalamud.Game.Gui.Dtr;
-using Dalamud.Hooking;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using DailyRoutines.Abstracts;
+using DailyRoutines.Managers;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Gui.Dtr;
+using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 {
@@ -24,9 +24,9 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
     public override ModulePermission Permission { get; } = new() { CNOnly = true };
 
-    private static readonly CompSig AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 46 08 01 E9 ?? ?? ?? ?? 83 FB 03");
-    private delegate nint AgentLobbyOnLoginDelegate(AgentLobby* agent);
-    private static Hook<AgentLobbyOnLoginDelegate>? AgentLobbyOnLoginHook;
+    private static readonly CompSig                          AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 46 08 01 E9 ?? ?? ?? ?? 83 FB 03");
+    private delegate        nint                             AgentLobbyOnLoginDelegate(AgentLobby* agent);
+    private static          Hook<AgentLobbyOnLoginDelegate>? AgentLobbyOnLoginHook;
     
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? Entry;
@@ -47,12 +47,12 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         DService.ClientState.Login  += OnLogin;
         DService.ClientState.Logout += OnLogout;
 
-        FrameworkManager.Register(OnUpdate, throttleMS: 5000);
+        FrameworkManager.Register(OnUpdate, throttleMS: 5_000);
     }
 
     public override void ConfigUI()
     {
-        var contentID = DService.ClientState.LocalContentId;
+        var contentID = LocalPlayerState.ContentID;
         if (contentID == 0) return;
         
         if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
@@ -62,17 +62,17 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
             return;
         }
 
-        ImGui.TextColored(LightSkyBlue, $"上次记录:");
+        ImGui.TextColored(LightSkyBlue, "上次记录:");
 
         ImGui.SameLine();
         ImGui.Text($"{info.Record}");
 
-        ImGui.TextColored(LightSkyBlue, $"月卡 剩余时间:");
+        ImGui.TextColored(LightSkyBlue, "月卡 剩余时间:");
 
         ImGui.SameLine();
         ImGui.Text(FormatTimeSpan(info.LeftMonth));
         
-        ImGui.TextColored(LightSkyBlue, $"点卡 剩余时间:");
+        ImGui.TextColored(LightSkyBlue, "点卡 剩余时间:");
 
         ImGui.SameLine();
         ImGui.Text(FormatTimeSpan(info.LeftTime));
@@ -169,14 +169,18 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
     private static void RefreshEntry(ulong contentID = 0)
     {
+        if (Entry == null) return;
+        
         if (contentID == 0) 
             contentID = DService.ClientState.LocalContentId;
-        if (contentID == 0) return;
-        
-        if (!ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
+        if (contentID == 0                             ||
+            DService.Condition[ConditionFlag.InCombat] || !ModuleConfig.Infos.TryGetValue(contentID, out var info) || info.Record == DateTime.MinValue ||
             (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
+        {
+            Entry.Shown = false;
             return;
-        
+        }
+
         var isMonth = info.LeftMonth != TimeSpan.MinValue;
         var expireTime = info.Record + (isMonth ? info.LeftMonth : info.LeftTime);
         
