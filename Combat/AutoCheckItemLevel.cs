@@ -67,14 +67,13 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             
             TaskHelper.Enqueue(() =>
             {
-                if (!Throttler.Throttle("AutoCheckItemLevel", 1_000)) return false;
+                if (!Throttler.Throttle("AutoCheckItemLevel-OpenExamine")) return false;
                 if (CharacterInspect != null) return true;
                 
                 agentInspect->ExamineCharacter(member.EntityId);
                 return false;
             }, "打开检视界面");
 
-            TaskHelper.DelayNext(500, "等待 500 毫秒");
             TaskHelper.Enqueue(() =>
             {
                 if (member.Object == null) return false;
@@ -117,9 +116,11 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var avgItemLevel = (uint)(totalIL / itemSlotAmount);
                 
                 SendNotification(member, avgItemLevel, lowestIL);
+                CharacterInspect->Close(true);
                 return true;
             }, "检查装等");
             
+            TaskHelper.DelayNext(500, "稍等一会");
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }
