@@ -65,6 +65,10 @@
             <HintPath>$(BaseOutputPath)\$(Configuration)\EdgeTTS.dll</HintPath>
             <Private>false</Private>
         </Reference>
+        <Reference Include="KamiToolKit">
+            <HintPath>$(BaseOutputPath)\$(Configuration)\KamiToolKit.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
     </ItemGroup>
 
 </Project>
