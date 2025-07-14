@@ -62,13 +62,12 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         var members = agent->PartyMembers.ToArray();
         foreach (var member in members)
         {
-            if (member.EntityId == 0 || member.EntityId == LocalPlayerState.EntityID || checkedMembers.Contains(member.EntityId)) continue;
-            checkedMembers.Add(member.EntityId);
+            if (member.EntityId == 0 || member.EntityId == LocalPlayerState.EntityID || !checkedMembers.Add(member.EntityId)) continue;
             
             TaskHelper.Enqueue(() =>
             {
                 if (!Throttler.Throttle("AutoCheckItemLevel-OpenExamine")) return false;
-                if (CharacterInspect != null) return true;
+                if (CharacterInspect != null && agentInspect->CurrentEntityId == member.EntityId) return true;
                 
                 agentInspect->ExamineCharacter(member.EntityId);
                 return false;
@@ -116,11 +115,18 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var avgItemLevel = (uint)(totalIL / itemSlotAmount);
                 
                 SendNotification(member, avgItemLevel, lowestIL);
-                CharacterInspect->Close(true);
                 return true;
             }, "检查装等");
             
-            TaskHelper.DelayNext(500, "稍等一会");
+            TaskHelper.Enqueue(() =>
+            {
+                if (CharacterInspect == null) return true;
+
+                CharacterInspect->Close(true);
+                return false;
+            }, "关掉");
+            
+            TaskHelper.DelayNext(500, "等待一会");
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }
