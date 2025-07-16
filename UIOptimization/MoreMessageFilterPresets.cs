@@ -24,7 +24,7 @@ public class MoreMessageFilterPresets : DailyModuleBase
     };
     
     private static readonly CompSig ApplyMessageFilterSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 4C 24 ?? 56 57 41 54 41 56 41 57 48 83 EC ?? 45 33 E4");
-    private delegate int ApplyMessageFilterDelegate(nint filters);
+    private delegate        int ApplyMessageFilterDelegate(nint filters);
     private static readonly ApplyMessageFilterDelegate ApplyMessageFilter = ApplyMessageFilterSig.GetDelegate<ApplyMessageFilterDelegate>();
 
     private static readonly        CompSig MessageFilterSizeSig = new("FF C5 81 FD ?? ?? ?? ?? 0F 82 ?? ?? ?? ?? 48 8B 0D");
@@ -63,7 +63,7 @@ public class MoreMessageFilterPresets : DailyModuleBase
 
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         ImGui.TableNextColumn();
-        if (ImGuiOm.ButtonIconSelectable("AddNewPreset", FontAwesomeIcon.Plus, "保存当前消息栏过滤设置"))
+        if (ImGuiOm.ButtonIconSelectable("AddNewPreset", FontAwesomeIcon.Plus))
             ImGui.OpenPopup("AddNewPresetPopup");
 
         using (var popup = ImRaii.Popup("AddNewPresetPopup"))
@@ -174,7 +174,7 @@ public class MoreMessageFilterPresets : DailyModuleBase
             }
         }
     }
-    private static unsafe void OnMenuOpened(IMenuOpenedArgs args)
+    private static void OnMenuOpened(IMenuOpenedArgs args)
     {
         if (!MenuItem.IsDisplay(args)) return;
         args.AddMenuItem(MenuItem.Get());
@@ -265,11 +265,11 @@ public class MoreMessageFilterPresets : DailyModuleBase
 
     private class ApplyLogFilterMenuItem : MenuItemBase
     {
-        public override string Name { get; protected set; } = GetLoc("ApplyLogFilterPreset");
+        public override string Name { get; protected set; } = GetLoc("MoreMessageFilterPresetsTitle");
         protected override bool IsSubmenu { get; set; } = true;
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override unsafe void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked(IMenuItemClickedArgs args)
         {
             if (GetSelectedTabIndex() > 3) return;
 
