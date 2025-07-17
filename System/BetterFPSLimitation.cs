@@ -5,6 +5,7 @@ using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Gui.Dtr;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Plugin.Services;
@@ -119,6 +120,9 @@ public class BetterFPSLimitation : DailyModuleBase
 
         var text       = LuminaGetter.GetRow<Addon>(4002).GetValueOrDefault().Text.ToDalamudString();
         text.Payloads[0] = new TextPayload($"{Framework.Instance()->FrameRate:F0}");
+
+        if (ModuleConfig.IsEnabled)
+            text = new SeStringBuilder().AddUiGlow(37).Append(text).AddUiGlowOff().Build();
         
         Entry.Text = text;
     }
