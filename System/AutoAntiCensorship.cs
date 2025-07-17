@@ -84,7 +84,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
         using (ImRaii.Group())
         {
             ImGui.AlignTextToFramePadding();
-            ImGui.Text($"屏蔽词处理分隔符:");
+            ImGui.Text("屏蔽词处理分隔符:");
             
             ImGui.AlignTextToFramePadding();
             ImGui.Text("屏蔽词显示高亮颜色:");

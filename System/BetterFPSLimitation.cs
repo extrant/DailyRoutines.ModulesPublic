@@ -116,6 +116,8 @@ public class BetterFPSLimitation : DailyModuleBase
 
     private static unsafe void OnUpdate(IFramework _)
     {
+        Update();
+        
         if (Entry == null) return;
 
         var text       = LuminaGetter.GetRow<Addon>(4002).GetValueOrDefault().Text.ToDalamudString();
