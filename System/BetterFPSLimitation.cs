@@ -147,7 +147,6 @@ public class BetterFPSLimitation : DailyModuleBase
                 Entry         ??= DService.DtrBar.Get("DailyRoutines-BetterFPSLimitation");
                 Entry.OnClick +=  () => Addon.Toggle();
                 Entry.Shown   =   true;
-                Entry.Tooltip =   GetLoc("WorldTravelCommand-DtrEntryTooltip");
                 Entry.Text    =   LuminaWrapper.GetAddonText(4002);
                 return;
             case false when Entry != null:
