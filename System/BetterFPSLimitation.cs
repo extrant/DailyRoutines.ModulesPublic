@@ -230,7 +230,7 @@ public class BetterFPSLimitation : DailyModuleBase
         
         public static NodeBase CreateFPSWidget()
         {
-            var column = new VerticalListNode<NodeBase>
+            var column = new VerticalListNode
             {
                 IsVisible = true,
             };
@@ -291,7 +291,7 @@ public class BetterFPSLimitation : DailyModuleBase
             column.AddNode(FPSInputNode);
             totalHeight += FPSInputNode.Size.Y;
 
-            var fpsDisplayColumn = new HorizontalFlexNode<NodeBase>()
+            var fpsDisplayColumn = new HorizontalFlexNode
             {
                 Width = Addon.Size.X,
                 IsVisible      = true,
@@ -348,7 +348,7 @@ public class BetterFPSLimitation : DailyModuleBase
                                           .ToList();
             foreach (var thresholds in thresholdGroups)
             {
-                var fpsSetTable = new HorizontalFlexNode<NodeBase>()
+                var fpsSetTable = new HorizontalFlexNode
                 {
                     Width          = Addon.Size.X,
                     IsVisible      = true,
