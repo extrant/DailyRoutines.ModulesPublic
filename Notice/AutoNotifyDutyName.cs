@@ -65,7 +65,8 @@ public class AutoNotifyDutyName : DailyModuleBase
             NotificationInfo(message);
     }
 
-    public override void Uninit() => DService.ClientState.TerritoryChanged -= OnZoneChange;
+    public override void Uninit() => 
+        DService.ClientState.TerritoryChanged -= OnZoneChange;
 
     private class Config : ModuleConfiguration
     {

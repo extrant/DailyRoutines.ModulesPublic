@@ -39,7 +39,7 @@ public unsafe class AutoDisplayDutyReadyLeftTime : DailyModuleBase
         }
     }
 
-    private void OnCountdownRunning(object? sender, int second)
+    private static void OnCountdownRunning(object? sender, int second)
     {
         if (!IsAddonAndNodesReady(ContentsFinderReady)) return;
         

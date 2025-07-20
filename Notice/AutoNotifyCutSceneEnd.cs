@@ -82,7 +82,8 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         FrameworkManager.Register(OnUpdate, throttleMS: 500);
     }
     
-    private static void OnDutyComplete(object? sender, ushort zone) => IsDutyEnd = true;
+    private static void OnDutyComplete(object? sender, ushort zone) => 
+        IsDutyEnd = true;
 
     private void OnUpdate(IFramework _)
     {
@@ -150,7 +151,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         if (ModuleConfig.SendNotification) 
             NotificationInfo(message);
         if (ModuleConfig.SendTTS) 
-            Speak($"{message} {GetLoc("AutoNotifyCutSceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime:F0}")}");
+            Speak($"{message} {GetLoc("AutoNotifyCutSceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime.TotalSeconds:F0}")}");
     }
 
     private class Config : ModuleConfiguration

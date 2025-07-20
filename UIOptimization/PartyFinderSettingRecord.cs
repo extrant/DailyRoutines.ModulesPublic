@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
@@ -5,21 +7,18 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System.Collections.Generic;
-using System.Numerics;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class PartyFinderSettingRecord : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("PartyFinderSettingRecordTitle"),
+        Title       = GetLoc("PartyFinderSettingRecordTitle"),
         Description = GetLoc("PartyFinderSettingRecordDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["status102"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["status102"]
     };
 
     private static Config? ModuleConfig;
