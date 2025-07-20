@@ -8,15 +8,15 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoNotifyCutSceneEndTitle"),
+        Title       = GetLoc("AutoNotifyCutSceneEndTitle"),
         Description = GetLoc("AutoNotifyCutSceneEndDescription"),
-        Category = ModuleCategories.Notice,
+        Category    = ModuleCategories.Notice,
     };
 
     private static Config ModuleConfig = null!;
@@ -113,7 +113,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         {
             // 副本还未开始 → 先检查是否有玩家没加载出来 → 如有, 不继续检查
             if (!DService.DutyState.IsDutyStarted &&
-                DService.PartyList.Any(x => x.GameObject == null || !x.GameObject.IsTargetable))
+                DService.PartyList.Any(x => x.GameObject is not { IsTargetable: true }))
                 return;
             
             // 检查是否任一玩家仍在剧情状态
@@ -144,13 +144,13 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         // 小于四秒 → 不播报
         if (elapsedTime < TimeSpan.FromSeconds(4)) return;
         
-        var message = GetLoc("AutoNotifyCutSceneEnd-NotificationMessage", $"{elapsedTime.TotalSeconds:F0}");
+        var message = $"{GetLoc("AutoNotifyCutSceneEnd-NotificationMessage")}";
         if (ModuleConfig.SendChat) 
             Chat(message);
         if (ModuleConfig.SendNotification) 
             NotificationInfo(message);
         if (ModuleConfig.SendTTS) 
-            Speak(message);
+            Speak($"{message} {GetLoc("AutoNotifyCutSceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime:F0}")}");
     }
 
     private class Config : ModuleConfiguration
