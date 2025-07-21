@@ -15,7 +15,7 @@ public class AutoNotifyDutyConfirm : DailyModuleBase
         Category    = ModuleCategories.Notice,
     };
 
-    public override void Init() => 
+    protected override void Init() => 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinderConfirm", OnAddonSetup);
 
     private static unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
@@ -31,6 +31,6 @@ public class AutoNotifyDutyConfirm : DailyModuleBase
         Speak(loc);
     }
 
-    public override void Uninit() => 
+    protected override void Uninit() => 
         DService.AddonLifecycle.UnregisterListener(OnAddonSetup);
 }

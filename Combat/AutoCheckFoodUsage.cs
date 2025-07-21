@@ -40,7 +40,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
     private static readonly DateTime LastFoodUsageTime        = DateTime.MinValue;
     private const           int      FoodUsageCooldownSeconds = 10;
 
-    public override void Init()
+    protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         foreach (var checkPoint in Enum.GetValues<FoodCheckpoint>())
@@ -55,7 +55,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         DService.Condition.ConditionChange    += OnConditionChanged;
     }
 
-    public override void ConfigUI()
+    protected override void ConfigUI()
     {
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoCheckFoodUsage-Checkpoint")}:");
 
@@ -467,8 +467,8 @@ public class AutoCheckFoodUsage : DailyModuleBase
         TaskHelper.Abort();
         TaskHelper.Enqueue(() => EnqueueFoodRefresh());
     }
-    
-    public override void Uninit()
+
+    protected override void Uninit()
     {
         DService.Condition.ConditionChange -= OnConditionChanged;
         DService.ClientState.TerritoryChanged -= OnZoneChanged;

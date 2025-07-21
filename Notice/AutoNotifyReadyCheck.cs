@@ -19,7 +19,7 @@ public class AutoNotifyReadyCheck : DailyModuleBase
     private static readonly HashSet<ushort> ValidTypes = [57, 313, 569];
     private static readonly string[] ValidStrings = ["发起了准备确认", "a ready check", "レディチェックを開始しました"];
 
-    public override void Init() => 
+    protected override void Init() => 
         DService.Chat.ChatMessage += OnChatMessage;
 
     private static void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
@@ -33,6 +33,6 @@ public class AutoNotifyReadyCheck : DailyModuleBase
         Speak(content);
     }
 
-    public override void Uninit() => 
+    protected override void Uninit() => 
         DService.Chat.ChatMessage -= OnChatMessage;
 }

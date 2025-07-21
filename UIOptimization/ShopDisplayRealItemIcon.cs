@@ -22,8 +22,8 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
     };
 
     private static List<(uint ID, uint IconID, string Name)> CollectablesShopItemDatas = [];
-    
-    public override void Init()
+
+    protected override void Init()
     {
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "Shop", OnShop);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Shop", OnShop);
@@ -217,7 +217,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnShop);
         DService.AddonLifecycle.UnregisterListener(OnInclusionShop);

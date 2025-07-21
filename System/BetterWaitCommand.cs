@@ -38,13 +38,13 @@ public class BetterWaitCommand : DailyModuleBase
         ]
     );
 
-    public override void Init()
+    protected override void Init()
     {
         WaitSyntaxDecimalPatch.Enable();
         WaitCommandDecimalPatch.Enable();
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         WaitSyntaxDecimalPatch.Disable();
         WaitCommandDecimalPatch.Disable();

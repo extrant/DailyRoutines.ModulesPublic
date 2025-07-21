@@ -29,8 +29,8 @@ public unsafe class AutoReplaceLowBlowWithInterject : DailyModuleBase
     private static          Hook<GetIconIDForSlotDelegate> GetIconIDForSlotHook;
 
     private const uint LowBlowAction = 7540;
-    
-    public override void Init()
+
+    protected override void Init()
     {
         IsActionReplaceableHook ??= IsActionReplaceableSig.GetHook<IsActionReplaceableDelegate>(IsActionReplaceableDetour);
         IsActionReplaceableHook.Enable();

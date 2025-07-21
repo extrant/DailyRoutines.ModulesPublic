@@ -28,11 +28,11 @@ public unsafe class AutoSharpenInterfaceText : DailyModuleBase
         ["HousingSignBoard"]   = [new(28)],
         ["FreeCompanyProfile"] = [new(30)]
     };
-    
-    public override void Init() => 
+
+    protected override void Init() => 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, TextWindows.Keys, OnTextAddon);
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnTextAddon);
 

@@ -22,8 +22,8 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
 
     private static readonly HashSet<uint> ValidContentJobCategories = [108, 142, 146];
     private static readonly HashSet<uint> HaveOffHandJobCategories  = [2, 7, 8, 20];
-    
-    public override void Init()
+
+    protected override void Init()
     {
         TaskHelper ??= new() { TimeLimitMS = 20_000 };
 
@@ -168,7 +168,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         Chat(ssb.Build());
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
 

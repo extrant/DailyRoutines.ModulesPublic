@@ -13,8 +13,8 @@ public class AutoBlockTitleMovie : DailyModuleBase
         Description = GetLoc("AutoBlockTitleMovieDescription"),
         Category    = ModuleCategories.System
     };
-    
-    public override void Init() => 
+
+    protected override void Init() => 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "Title", OnAddon);
 
     // 非即时的懒得 Hook 了
@@ -25,7 +25,7 @@ public class AutoBlockTitleMovie : DailyModuleBase
 
         agent->IdleTime = 0;
     }
-    
-    public override void Uninit() => 
+
+    protected override void Uninit() => 
         DService.AddonLifecycle.UnregisterListener(OnAddon);
 }

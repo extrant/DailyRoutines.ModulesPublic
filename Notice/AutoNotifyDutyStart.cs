@@ -11,7 +11,7 @@ public class AutoNotifyDutyStart : DailyModuleBase
         Category    = ModuleCategories.Notice,
     };
 
-    public override void Init() => 
+    protected override void Init() => 
         DService.DutyState.DutyStarted += OnDutyStart;
 
     private static void OnDutyStart(object? sender, ushort e)
@@ -21,6 +21,6 @@ public class AutoNotifyDutyStart : DailyModuleBase
         Speak(message);
     }
 
-    public override void Uninit() => 
+    protected override void Uninit() => 
         DService.DutyState.DutyStarted -= OnDutyStart;
 }

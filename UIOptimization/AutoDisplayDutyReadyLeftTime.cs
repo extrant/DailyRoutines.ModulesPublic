@@ -18,8 +18,8 @@ public unsafe class AutoDisplayDutyReadyLeftTime : DailyModuleBase
     };
 
     private static CountdownTimer? Timer;
-    
-    public override void Init() => DService.Condition.ConditionChange += OnConditionChanged;
+
+    protected override void Init() => DService.Condition.ConditionChange += OnConditionChanged;
 
     private void OnConditionChanged(ConditionFlag flag, bool value)
     {
@@ -49,7 +49,7 @@ public unsafe class AutoDisplayDutyReadyLeftTime : DailyModuleBase
         textNode->SetText($"{LuminaWrapper.GetAddonText(2780)} ({second})");
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.Condition.ConditionChange -= OnConditionChanged;
         OnConditionChanged(ConditionFlag.WaitingForDuty, false);

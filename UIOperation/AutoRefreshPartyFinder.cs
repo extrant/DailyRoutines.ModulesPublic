@@ -30,7 +30,7 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
     private static Timer? PFRefreshTimer;
     private static int Cooldown;
 
-    public override void Init()
+    protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
 
@@ -51,7 +51,7 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
             OnAddonPF(AddonEvent.PostSetup, null);
     }
 
-    public override void OverlayUI()
+    protected override void OverlayUI()
     {
         if (!IsAddonAndNodesReady(LookingForGroup))
         {
@@ -148,7 +148,7 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
         DService.Framework.Run(() => RefreshPartyFinder(AgentLookingForGroup.Instance()));
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnAddonPF);
         DService.AddonLifecycle.UnregisterListener(OnAddonLFGD);

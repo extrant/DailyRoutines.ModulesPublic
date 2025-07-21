@@ -21,10 +21,10 @@ public class FriendlistTeleporter : DailyModuleBase
     private static readonly TeleportMenuItem   TeleportItem   = new();
     private static readonly CrossWorldMenuItem CrossWorldItem = new();
 
-    public override void Init() => 
+    protected override void Init() => 
         DService.ContextMenu.OnMenuOpened += OnMenuOpen;
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.ContextMenu.OnMenuOpened -= OnMenuOpen;
         base.Uninit();

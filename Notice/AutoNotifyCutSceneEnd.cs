@@ -24,7 +24,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
     private static bool IsDutyEnd;
     private static Stopwatch? Stopwatch;
 
-    public override void Init()
+    protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         
@@ -35,7 +35,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
         OnZoneChanged(DService.ClientState.TerritoryType);
     }
 
-    public override void ConfigUI()
+    protected override void ConfigUI()
     {
         if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
             SaveConfig(ModuleConfig);
@@ -47,7 +47,7 @@ public unsafe class AutoNotifyCutSceneEnd : DailyModuleBase
             SaveConfig(ModuleConfig);
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         OnZoneChanged(0);
         DService.ClientState.TerritoryChanged -= OnZoneChanged;

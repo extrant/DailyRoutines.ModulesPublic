@@ -13,7 +13,7 @@ public unsafe class AutoClaimItemIgnoringMismatchJobAndLevel : DailyModuleBase
         Category    = ModuleCategories.UIOperation
     };
 
-    public override void Init()
+    protected override void Init()
     {
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddon);
         if (IsAddonAndNodesReady(SelectYesno)) 
@@ -33,5 +33,5 @@ public unsafe class AutoClaimItemIgnoringMismatchJobAndLevel : DailyModuleBase
         ]);
     }
 
-    public override void Uninit() => DService.AddonLifecycle.UnregisterListener(OnAddon);
+    protected override void Uninit() => DService.AddonLifecycle.UnregisterListener(OnAddon);
 }

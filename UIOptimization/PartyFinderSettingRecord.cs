@@ -24,7 +24,7 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
     private static Config? ModuleConfig;
     private static bool EditInited;
 
-    public override void Init()
+    protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         Overlay ??= new Overlay(this);
@@ -39,14 +39,14 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupCondition", OnLookingForGroupConditionAddon);
     }
 
-    public override void Uninit()
+    protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnLookingForGroupConditionAddon);
 
         base.Uninit();
     }
 
-    public override void OverlayUI()
+    protected override void OverlayUI()
     {
         if (!EditInited || !IsAddonAndNodesReady(LookingForGroup) || !IsAddonAndNodesReady(LookingForGroupCondition))
             return;
