@@ -9,7 +9,7 @@ using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
-public class AutoCountCompanyChestValue : DailyModuleBase
+public class AutoCountFCCGilItemsValue : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
@@ -24,21 +24,21 @@ public class AutoCountCompanyChestValue : DailyModuleBase
 
     private static long LastTotalPrice;
     
-    protected override void Init()
+    protected override unsafe void Init()
     {
         Overlay ??= new(this);
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "FreeCompanyChest", CheckFcChestAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeCompanyChest", CheckFcChestAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeCompanyChest", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeCompanyChest", OnAddon);
+        if (IsAddonAndNodesReady(FreeCompanyChest))
+            OnAddon(AddonEvent.PostSetup, null);
+            
     }
     
-    protected override void Uninit()
-    {
-        DService.AddonLifecycle.UnregisterListener(CheckFcChestAddon);
-        base.Uninit();
-    }
-    
-    private void CheckFcChestAddon(AddonEvent type, AddonArgs? args)
+    protected override void Uninit() => 
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
+
+    private void OnAddon(AddonEvent type, AddonArgs? args)
     {
         Overlay.IsOpen = type switch
         {
@@ -52,7 +52,7 @@ public class AutoCountCompanyChestValue : DailyModuleBase
     
     protected override unsafe void OverlayUI()
     {
-        if (FreeCompanyChest == null)
+        if (FreeCompanyChest == null || !DService.Texture.TryGetFromGameIcon(new(65002), out var texture))
         {
             Overlay.IsOpen = false;
             return;
@@ -76,9 +76,17 @@ public class AutoCountCompanyChestValue : DailyModuleBase
         
         Overlay.Flags &= ~ImGuiWindowFlags.NoBackground;
         
-        ImGui.SetWindowPos(new(node->ScreenX, FreeCompanyChest->GetY() - ImGui.GetWindowSize().Y));
+        ImGui.SetWindowPos(new(node->ScreenX + (4f * GlobalFontScale), FreeCompanyChest->GetY() - ImGui.GetWindowSize().Y));
+
+        using (ImRaii.Group())
+        {
+            ImGui.Image(texture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
         
-        ImGui.Text($"变卖用道具总价值: {FormatNumber(LastTotalPrice)}");
+            ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text($"{FormatNumber(LastTotalPrice)}");
+        }
+        ImGuiOm.TooltipHover($"{GetLoc("AutoCountFCCGilItemsValue-TotalPrice")}");
     }
 
     private static unsafe bool TryGetTotalPrice(out long totalPrice)
