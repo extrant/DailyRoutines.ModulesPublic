@@ -19,11 +19,11 @@ public class AutoTankStance : DailyModuleBase
     private static readonly Dictionary<uint, (uint Action, uint Status)> TankStanceActions = new()
     {
         // 剑术师 / 骑士
-        [1] = (28, 79),
+        [1]  = (28, 79),
         [19] = (28, 79),
         // 斧术师 / 战士
         [3]  = (48, 91),
-        [21] = (38, 91),
+        [21] = (48, 91),
         // 暗黑骑士
         [32] = (3629, 743),
         // 绝枪战士
