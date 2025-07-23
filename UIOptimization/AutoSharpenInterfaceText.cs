@@ -28,6 +28,8 @@ public unsafe class AutoSharpenInterfaceText : DailyModuleBase
     {
         AtkTextNodeSetTextHook.Original(node, text);
 
+        if (node == null || !text.HasValue) return;
+        
         var flag2 = (TextFlags2)node->TextFlags2;
         if (flag2.HasFlag(TextFlags2.FixedFontResolution))
         {
