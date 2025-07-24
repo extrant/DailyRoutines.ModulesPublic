@@ -29,6 +29,9 @@ public unsafe class AutoSharpenInterfaceText : DailyModuleBase
         AtkTextNodeSetTextHook.Original(node, text);
 
         if (node == null || !text.HasValue) return;
+        // NamePlate
+        if (node->TextFlags == 152 && node->TextFlags2 == 80 && node->AlignmentFontType == 7)
+            return;
         
         var flag2 = (TextFlags2)node->TextFlags2;
         if (flag2.HasFlag(TextFlags2.FixedFontResolution))
