@@ -6,6 +6,7 @@ using System.Text;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -188,9 +189,16 @@ public class AutoCountPlayers : DailyModuleBase
         }
     }
 
-    private static void OnUpdate(IReadOnlyList<IPlayerCharacter> characters)
+    private void OnUpdate(IReadOnlyList<IPlayerCharacter> characters)
     {
         if (Entry == null) return;
+
+        Entry.Shown = !DService.Condition[ConditionFlag.InCombat];
+        if (!Entry.Shown)
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
 
         Entry.Text = $"{GetLoc("AutoCountPlayers-PlayersAroundCount")}: {PlayersManager.PlayersAroundCount}" +
                      (PlayersManager.PlayersTargetingMe.Count == 0 ? string.Empty : $" ({PlayersManager.PlayersTargetingMe.Count})");

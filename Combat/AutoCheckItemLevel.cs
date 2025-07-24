@@ -58,6 +58,8 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             CharacterInspect->Close(true);
             return false;
         }
+
+        if (BetweenAreas) return false;
         
         var members = agent->PartyMembers.ToArray();
         foreach (var member in members)
