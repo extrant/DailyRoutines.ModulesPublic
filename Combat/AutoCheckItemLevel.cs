@@ -39,7 +39,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             !ValidContentJobCategories.Contains(GameState.ContentFinderConditionData.AcceptClassJobCategory.RowId)) 
             return;
         
-        TaskHelper.Enqueue(() => !BetweenAreas && DService.ObjectTable.LocalPlayer != null, "WaitForEnteringDuty", weight: 2);
+        TaskHelper.Enqueue(() => !BetweenAreas && DService.ObjectTable.LocalPlayer != null, "WaitForEnteringDuty");
         TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
     }
 
@@ -53,12 +53,6 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             return true;
         }
 
-        if (IsAddonAndNodesReady(CharacterInspect))
-        {
-            CharacterInspect->Close(true);
-            return false;
-        }
-
         if (BetweenAreas) return false;
         
         var members = agent->PartyMembers.ToArray();
@@ -70,7 +64,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             {
                 if (CharacterInspect != null && agentInspect->CurrentEntityId == member.EntityId) return true;
 
-                if (Throttler.Throttle("AutoCheckItemLevel-OpenExamine"))
+                if (Throttler.Throttle("AutoCheckItemLevel-OpenExamine", 250))
                     agentInspect->ExamineCharacter(member.EntityId);
                 
                 return false;
@@ -121,15 +115,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 return true;
             }, "检查装等");
             
-            TaskHelper.Enqueue(() =>
-            {
-                if (CharacterInspect == null) return true;
-
-                CharacterInspect->Close(true);
-                return false;
-            }, "关掉");
-            
-            TaskHelper.DelayNext(1000, "等待 1 秒");
+            // TaskHelper.DelayNext(1000, "等待 1 秒");
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }

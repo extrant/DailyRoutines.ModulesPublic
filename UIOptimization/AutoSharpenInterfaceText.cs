@@ -30,7 +30,7 @@ public unsafe class AutoSharpenInterfaceText : DailyModuleBase
 
         if (node == null || !text.HasValue) return;
         // NamePlate
-        if (node->TextFlags == 152 && node->TextFlags2 == 80 && node->AlignmentFontType == 7)
+        if (node->TextFlags == 152 && node->AlignmentFontType == 7)
             return;
         
         var flag2 = (TextFlags2)node->TextFlags2;
