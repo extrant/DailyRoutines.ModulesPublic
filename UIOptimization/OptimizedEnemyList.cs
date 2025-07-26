@@ -7,6 +7,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
+using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -90,8 +91,8 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             ImGui.TextColored(LightSkyBlue, $"{GetLoc("BackgroundColor")}:");
             
             ImGui.SameLine();
-            ModuleConfig.BackgroundColor =
-                ImGuiComponents.ColorPickerWithPalette(2, "###BackgroundColorInput", ModuleConfig.BackgroundColor);
+            ModuleConfig.BackgroundNodeColor =
+                ImGuiComponents.ColorPickerWithPalette(2, "###BackgroundColorInput", ModuleConfig.BackgroundNodeColor);
             
             ImGui.SameLine();
             ImGui.TextDisabled("|");
@@ -106,9 +107,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             ImGui.SameLine();
             if (ImGui.Button($"{GetLoc("Reset")}"))
             {
-                ModuleConfig.TextColor       = Vector4.One;
-                ModuleConfig.EdgeColor       = new(0, 0.372549f, 1, 1);
-                ModuleConfig.BackgroundColor = Vector4.Zero;
+                ModuleConfig.TextColor           = Vector4.One;
+                ModuleConfig.EdgeColor           = new(0, 0.372549f, 1, 1);
+                ModuleConfig.BackgroundNodeColor = Vector4.Zero.WithW(1);
                 
                 ModuleConfig.Save(this);
                 UpdateTextNodes();
@@ -282,7 +283,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                                      ? ModuleConfig.EdgeColor
                                      : new(0, 0.372549f, 1, 1);
             backgroundNode.Color = ModuleConfig.UseCustomizeTextColor
-                                       ? ModuleConfig.BackgroundColor
+                                       ? ModuleConfig.BackgroundNodeColor
                                        : ConvertByteColorToVector4(castTextNode->BackgroundColor);
             
             textNode.FontSize = ModuleConfig.FontSize;
@@ -424,9 +425,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         public string CustomizeTextPattern = @"HP: {0}% / Enmity: {1}%";
 
         public bool    UseCustomizeTextColor;
-        public Vector4 TextColor       = Vector4.One;
-        public Vector4 EdgeColor       = new(0, 0.372549f, 1, 1);
-        public Vector4 BackgroundColor = Vector4.Zero;
+        public Vector4 TextColor           = Vector4.One;
+        public Vector4 EdgeColor           = new(0, 0.372549f, 1, 1);
+        public Vector4 BackgroundNodeColor = Vector4.Zero.WithW(1);
 
         public byte FontSize = 10;
 
