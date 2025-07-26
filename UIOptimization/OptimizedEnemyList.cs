@@ -106,9 +106,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             ImGui.SameLine();
             if (ImGui.Button($"{GetLoc("Reset")}"))
             {
-                ModuleConfig.TextColor       = new(1, 1, 1, 1);
-                ModuleConfig.EdgeColor       = new(0.6157f, 0.5137f, 0.3569f, 1);
-                ModuleConfig.BackgroundColor = new(0, 0, 0, 0);
+                ModuleConfig.TextColor       = Vector4.One;
+                ModuleConfig.EdgeColor       = new(0, 0.372549f, 1, 1);
+                ModuleConfig.BackgroundColor = Vector4.Zero;
                 
                 ModuleConfig.Save(this);
                 UpdateTextNodes();
@@ -280,10 +280,10 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                                       : ConvertByteColorToVector4(castTextNode->TextColor);
             textNode.TextOutlineColor = ModuleConfig.UseCustomizeTextColor
                                      ? ModuleConfig.EdgeColor
-                                     : ConvertByteColorToVector4(castTextNode->EdgeColor);
-            textNode.BackgroundColor = ModuleConfig.UseCustomizeTextColor
-                                            ? ModuleConfig.BackgroundColor
-                                            : ConvertByteColorToVector4(castTextNode->BackgroundColor);
+                                     : new(0, 0.372549f, 1, 1);
+            backgroundNode.Color = ModuleConfig.UseCustomizeTextColor
+                                       ? ModuleConfig.BackgroundColor
+                                       : ConvertByteColorToVector4(castTextNode->BackgroundColor);
             
             textNode.FontSize = ModuleConfig.FontSize;
             
@@ -424,9 +424,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         public string CustomizeTextPattern = @"HP: {0}% / Enmity: {1}%";
 
         public bool    UseCustomizeTextColor;
-        public Vector4 TextColor = new(1, 1, 1, 1);
-        public Vector4 EdgeColor = new(0.6157f, 0.5137f, 0.3569f, 1);
-        public Vector4 BackgroundColor = new(0, 0, 0, 0);
+        public Vector4 TextColor       = Vector4.One;
+        public Vector4 EdgeColor       = new(0, 0.372549f, 1, 1);
+        public Vector4 BackgroundColor = Vector4.Zero;
 
         public byte FontSize = 10;
 
