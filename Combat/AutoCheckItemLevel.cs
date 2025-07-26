@@ -54,17 +54,26 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         }
 
         if (BetweenAreas) return false;
+
+        if (CharacterInspect != null)
+        {
+            CharacterInspect->Close(true);
+            return false;
+        }
         
         var members = agent->PartyMembers.ToArray();
         foreach (var member in members)
         {
             if (member.EntityId == 0 || member.EntityId == LocalPlayerState.EntityID || !checkedMembers.Add(member.EntityId)) continue;
             
+            if (checkedMembers.Count != 0 && checkedMembers.Count % 4 == 0)
+                TaskHelper.DelayNext(2000, "等待 2 秒");
+            
             TaskHelper.Enqueue(() =>
             {
                 if (CharacterInspect != null && agentInspect->CurrentEntityId == member.EntityId) return true;
 
-                if (Throttler.Throttle("AutoCheckItemLevel-OpenExamine", 250))
+                if (Throttler.Throttle("AutoCheckItemLevel-OpenExamine"))
                     agentInspect->ExamineCharacter(member.EntityId);
                 
                 return false;
@@ -115,7 +124,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 return true;
             }, "检查装等");
             
-            // TaskHelper.DelayNext(1000, "等待 1 秒");
+            TaskHelper.DelayNext(1000);
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }
