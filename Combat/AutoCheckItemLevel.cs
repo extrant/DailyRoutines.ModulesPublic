@@ -40,6 +40,7 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
             return;
         
         TaskHelper.Enqueue(() => !BetweenAreas && DService.ObjectTable.LocalPlayer != null, "WaitForEnteringDuty");
+        TaskHelper.DelayNext(2000);
         TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
     }
 
@@ -65,9 +66,6 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
         foreach (var member in members)
         {
             if (member.EntityId == 0 || member.EntityId == LocalPlayerState.EntityID || !checkedMembers.Add(member.EntityId)) continue;
-            
-            if (checkedMembers.Count != 0 && checkedMembers.Count % 4 == 0)
-                TaskHelper.DelayNext(2000, "等待 2 秒");
             
             TaskHelper.Enqueue(() =>
             {
@@ -121,10 +119,14 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var avgItemLevel = (uint)(totalIL / itemSlotAmount);
                 
                 SendNotification(member, avgItemLevel, lowestIL);
+                CharacterInspect->Close(true);
                 return true;
             }, "检查装等");
+
+            var checkedCount = checkedMembers.Count - 1;
+            if (checkedCount != 0 && checkedCount % 3 == 0)
+                TaskHelper.DelayNext(2000, "等待 2 秒");
             
-            TaskHelper.DelayNext(1000);
             TaskHelper.Enqueue(() => CheckMembersItemLevel(checkedMembers), "进入新循环");
             return true;
         }
