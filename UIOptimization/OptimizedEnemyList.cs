@@ -214,6 +214,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                 break;
             case AddonEvent.PostDraw:
                 if (!Throttler.Throttle("OptimizedEnemyList-OnPostDraw")) break;
+                MakeTextNodesAndLink();
                 UpdateTextNodes();
                 break;
         }
