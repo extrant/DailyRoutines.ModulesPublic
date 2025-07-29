@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -170,7 +169,13 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 InfoTokens.ForEach(x => OnlineDataManager.GetRequest<PlayerInfoRequest>().Unsubscribe(x));
                 InfoTokens.Clear();
                 
-                Utf8Strings.ForEach(x => ((Utf8String*)x)->Dtor(true));
+                Utf8Strings.ForEach(x =>
+                {
+                    var ptr = (Utf8String*)x;
+                    if (ptr == null) return;
+                    
+                    ptr->Dtor(true);
+                });
                 Utf8Strings.Clear();
                 break;
         }
@@ -201,7 +206,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                     
                     var nameBuilder = new SeStringBuilder();
                     nameBuilder.AddUiForeground($"{name}", 32);
-                
+                    
                     var nameString = Utf8String.FromSequence(nameBuilder.Build().Encode());
                     Utf8Strings.Add((nint)nameString);
                     
