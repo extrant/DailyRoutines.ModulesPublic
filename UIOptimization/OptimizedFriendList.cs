@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -7,8 +8,11 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using KamiToolKit.Addon;
+using KamiToolKit.Nodes;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -21,34 +25,37 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
 
-    private static readonly ModifyInfoMenuItem   ModifyInfoItem = new();
+    private delegate void RequestFriendOnlineStatusDelegate(AgentFriendlist* agent, ulong contentID);
+    private static readonly RequestFriendOnlineStatusDelegate RequestFriendOnlineStatus =
+        new CompSig("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA 48 8B 49 ?? 48 8B 01 FF 90 ?? ?? ?? ?? 48 8B D7")
+            .GetDelegate<RequestFriendOnlineStatusDelegate>();
+    
+    private static ModifyInfoMenuItem ModifyInfoItem = null!;
     
     private static Config ModuleConfig = null!;
+
+    private static DRFriendlistRemarkEdit? Addon;
     
-    private static readonly List<nint> Utf8Strings = [];
-    
-    private static readonly List<PlayerUsedNamesSubscriptionToken> Tokens = [];
-
-    private static readonly List<PlayerInfoSubscriptionToken> InfoTokens = [];
-
-    private static bool   IsNeedToOpen;
-    private static ulong  ContentIDToModify;
-    private static string NameToModify;
-
-    private static string NicknameInput = string.Empty;
-    private static string RemarkInput   = string.Empty;
+    private static readonly List<nint>                             Utf8Strings = [];
+    private static readonly List<PlayerUsedNamesSubscriptionToken> Tokens      = [];
+    private static readonly List<PlayerInfoSubscriptionToken>      InfoTokens  = [];
 
     protected override void Init()
     {
+        ModuleConfig = LoadConfig<Config>() ?? new();
         TaskHelper ??= new();
-        
-        Overlay        ??= new(this);
-        Overlay.IsOpen =   true;
-        Overlay.Flags |= ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDecoration |
-                         ImGuiWindowFlags.NoDocking    | ImGuiWindowFlags.NoFocusOnAppearing    | ImGuiWindowFlags.NoNav      | ImGuiWindowFlags.NoResize     |
-                         ImGuiWindowFlags.NoInputs;
-        
-        ModuleConfig =   LoadConfig<Config>() ?? new();
+
+        Addon ??= new(this)
+        {
+            InternalName          = "DRFriendlistRemarkEdit",
+            Title                 = GetLoc("OptimizedFriendList-AddonTitle"),
+            Size                  = new(460f, 255f),
+            Position              = new(800f, 350f),
+            NativeController      = Service.AddonController,
+            RememberClosePosition = true
+        };
+
+        ModifyInfoItem = new(TaskHelper);
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,           "FriendList", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "FriendList", OnAddon);
@@ -58,96 +65,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
 
         DService.ContextMenu.OnMenuOpened += OnContextMenu;
     }
-
-    protected override void OverlayUI()
-    {
-        if (IsNeedToOpen)
-        {
-            IsNeedToOpen = false;
-
-            var isExisted = ModuleConfig.PlayerInfos.TryGetValue(ContentIDToModify, out var info);
-            
-            NicknameInput = isExisted ? info.Nickname : string.Empty;
-            RemarkInput   = isExisted ? info.Remark : string.Empty;
-            
-            ImGui.OpenPopup("ModifyPopup");
-        }
-
-        using var popup = ImRaii.Popup("ModifyPopup");
-        if (!popup) return;
-        
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text($"{LuminaWrapper.GetAddonText(9818)}: {NameToModify}");
-        
-        if (ImGui.IsItemHovered())
-            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-        if (ImGui.IsItemClicked())
-        {
-            ImGui.SetClipboardText($"{NameToModify}");
-            NotificationSuccess($"{GetLoc("CopiedToClipboard")}: {NameToModify}");
-        }
-        
-        ImGuiOm.TooltipHover($"Content ID: {ContentIDToModify}");
-        
-        ImGui.SameLine();
-        if (ImGui.SmallButton(GetLoc("OptimizedFriendList-ObtainUsedNames")))
-        {
-            var request = OnlineDataManager.GetRequest<PlayerUsedNamesRequest>();
-            Tokens.Add(request.Subscribe(ContentIDToModify, OnlineDataManager.GetWorldRegion(GameState.HomeWorld), data =>
-            {
-                if (data.Count == 0)
-                    Chat(GetLoc("OptimizedFriendList-FriendUseNamesNotFound", NameToModify));
-                else
-                {
-                    Chat($"{GetLoc("OptimizedFriendList-FriendUseNamesFound", NameToModify)}:");
-                    var counter = 1;
-                    foreach (var nameChange in data)
-                    {
-                        Chat($"{counter}. {nameChange.ChangedTime}:");
-                        Chat($"     {nameChange.BeforeName} -> {nameChange.AfterName}:");
-
-                        counter++;
-                    }
-                }
-            }));
-        }
-
-        ImGui.Text($"{LuminaWrapper.GetAddonText(15207)}");
-        ImGui.InputText("###NicknameInput", ref NicknameInput, 128);
-        
-        ImGui.Text($"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}");
-        ImGui.InputText("###RemarkInput", ref RemarkInput, 512);
-        ImGui.TextWrapped(RemarkInput);
-        
-        if (ImGui.Button($"{GetLoc("Confirm")}"))
-        {
-            ModuleConfig.PlayerInfos[ContentIDToModify] = new()
-            {
-                ContentID = ContentIDToModify,
-                Name      = NameToModify,
-                Nickname  = NicknameInput,
-                Remark    = RemarkInput,
-            };
-            ModuleConfig.Save(this);
-            
-            ImGui.CloseCurrentPopup();
-            Modify(TaskHelper);
-        }
-
-        using (ImRaii.Disabled(!ModuleConfig.PlayerInfos.ContainsKey(ContentIDToModify)))
-        {
-            ImGui.SameLine();
-            if (ImGui.Button($"{GetLoc("Delete")}"))
-            {
-                ModuleConfig.PlayerInfos.Remove(ContentIDToModify);
-                ModuleConfig.Save(this);
-                
-                ImGui.CloseCurrentPopup();
-                InfoProxyFriendList.Instance()->RequestData();
-            }
-        }
-    }
-
+    
     private static void OnContextMenu(IMenuOpenedArgs args)
     {
         if (ModifyInfoItem.IsDisplay(args))
@@ -159,6 +77,43 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PostSetup:
+                if (Throttler.Throttle("OptimizedFriendList-OnRequestFriendList", 10_000))
+                {
+                    var agent = AgentFriendlist.Instance();
+                    if (agent == null) return;
+
+                    var info = InfoProxyFriendList.Instance();
+                    if (info == null || info->EntryCount == 0) return;
+
+                    var validCounter = 0;
+                    for (var i = 0; i < info->CharDataSpan.Length; i++)
+                    {
+                        var chara = info->CharDataSpan[i];
+                        if (chara.ContentId == 0) continue;
+                        
+                        DService.Framework.RunOnTick(() =>
+                        {
+                            if (FriendList == null) return;
+                            
+                            RequestFriendOnlineStatus(agent, chara.ContentId);
+                        }, TimeSpan.FromMilliseconds(10 * validCounter));
+
+                        validCounter++;
+                    }
+                    
+                    if (validCounter > 0)
+                    {
+                        DService.Framework.RunOnTick(() =>
+                        {
+                            if (FriendList == null) return;
+
+                            Modify(TaskHelper);
+                        }, TimeSpan.FromMilliseconds(10 * (validCounter + 1)));
+                    }
+                }
+                
+                Modify(TaskHelper);
+                break;
             case AddonEvent.PostRequestedUpdate:
                 Modify(TaskHelper);
                 break;
@@ -289,22 +244,239 @@ public unsafe class OptimizedFriendList : DailyModuleBase
     {
         DService.ContextMenu.OnMenuOpened -= OnContextMenu;
         DService.AddonLifecycle.UnregisterListener(OnAddon);
+        
+        Addon?.Dispose();
+        Addon = null;
 
         OnAddon(AddonEvent.PreFinalize, null);
-        base.Uninit();
 
         if (IsAddonAndNodesReady(FriendList))
             InfoProxyFriendList.Instance()->RequestData();
-
-        IsNeedToOpen = false;
     }
 
     private class Config : ModuleConfiguration
     {
         public Dictionary<ulong, PlayerInfo> PlayerInfos = [];
     }
+
+    private class DRFriendlistRemarkEdit(DailyModuleBase instance) : NativeAddon
+    {
+        public ulong  ContentID { get; private set; }
+        public string Name      { get; private set; } = string.Empty;
+        public string WorldName { get; private set; } = string.Empty;
+
+        private DailyModuleBase Instance { get; init; } = instance;
+        
+        private string NicknameInput { get; set; } = string.Empty;
+        private string RemarkInput   { get; set; } = string.Empty;
+
+        private TextNode PlayerNameNode;
+
+        private TextNode      NicknameNode;
+        private TextInputNode NicknameInputNode;
+        
+        private TextNode      RemarkNode;
+        private TextInputNode RemarkInputNode;
+
+        private TextButtonNode ConfirmButtonNode;
+        private TextButtonNode ClearButtonNode;
+        private TextButtonNode QuertUsedNameButtonNode;
+        
+        protected override void OnSetup(AtkUnitBase* addon)
+        {
+            if (ContentID == 0 || string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(WorldName))
+            {
+                Close();
+                return;
+            }
+
+            NicknameInput = ModuleConfig.PlayerInfos.GetValueOrDefault(ContentID, new()).Nickname;
+            RemarkInput   = ModuleConfig.PlayerInfos.GetValueOrDefault(ContentID, new()).Remark;
+            
+            PlayerNameNode = new()
+            {
+                IsVisible        = true,
+                Position         = new(10, 36),
+                Size             = new(100, 48),
+                Text             = new SeStringBuilder().Append(Name).AddIcon(BitmapFontIcon.CrossWorld).Append(WorldName).Build(),
+                FontSize         = 24,
+                AlignmentType    = AlignmentType.Left,
+            };
+            AttachNode(PlayerNameNode);
+            
+            NicknameNode = new()
+            {
+                IsVisible        = true,
+                Position         = new(10, 80),
+                Size             = new(100, 28),
+                Text             = $"{LuminaWrapper.GetAddonText(15207)}",
+                FontSize         = 14,
+                AlignmentType    = AlignmentType.Left,
+            };
+            AttachNode(NicknameNode);
+
+            NicknameInputNode = new()
+            {
+                IsVisible     = true,
+                Position      = new(10, 108),
+                Size          = new(440, 28),
+                MaxCharacters = 20,
+                ShowLimitText = true,
+                OnInputReceived = x =>
+                {
+                    NicknameInput = x.ExtractText();
+
+                    NicknameInputNode.Tooltip = NicknameInput;
+                    if (!string.IsNullOrWhiteSpace(NicknameInput))
+                        NicknameInputNode.ShowTooltip();
+                    else
+                        NicknameInputNode.HideTooltip();
+                },
+                OnFocused = () =>
+                {
+                    if (!string.IsNullOrWhiteSpace(NicknameInput))
+                        NicknameInputNode.ShowTooltip();
+                    else
+                        NicknameInputNode.HideTooltip();
+                },
+                OnUnfocused = () => NicknameInputNode.HideTooltip()
+            };
+            NicknameInputNode.String = NicknameInput;
+            AttachNode(NicknameInputNode);
+            
+            RemarkNode = new()
+            {
+                IsVisible     = true,
+                Position      = new(10, 140),
+                Size          = new(100, 28),
+                Text          = $"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}",
+                FontSize      = 14,
+                AlignmentType = AlignmentType.Left,
+            };
+            AttachNode(RemarkNode);
+
+            RemarkInputNode = new()
+            {
+                IsVisible     = true,
+                Position      = new(10, 168),
+                Size          = new(440, 28),
+                MaxCharacters = 1024,
+                ShowLimitText = true,
+                OnInputReceived = x =>
+                {
+                    RemarkInput = x.ExtractText();
+
+                    RemarkInputNode.Tooltip = RemarkInput;
+                    if (!string.IsNullOrWhiteSpace(RemarkInput))
+                        RemarkInputNode.ShowTooltip();
+                    else
+                        RemarkInputNode.HideTooltip();
+                },
+                OnFocused = () =>
+                {
+                    if (!string.IsNullOrWhiteSpace(RemarkInput))
+                        RemarkInputNode.ShowTooltip();
+                    else
+                        RemarkInputNode.HideTooltip();
+                },
+                OnUnfocused = () => RemarkInputNode.HideTooltip()
+            };
+            RemarkInputNode.String = RemarkInput;
+            AttachNode(RemarkInputNode);
+
+            ConfirmButtonNode = new()
+            {
+                Position  = new(10, 208),
+                Size      = new(140, 28),
+                IsVisible = true,
+                Label     = GetLoc("Confirm"),
+                OnClick = () =>
+                {
+                    ModuleConfig.PlayerInfos[ContentID] = new()
+                    {
+                        ContentID = ContentID,
+                        Name      = Name,
+                        Nickname  = NicknameInput,
+                        Remark    = RemarkInput,
+                    };
+                    ModuleConfig.Save(Instance);
+                    
+                    InfoProxyFriendList.Instance()->RequestData();
+                    Close();
+                },
+            };
+            AttachNode(ConfirmButtonNode);
+            
+            ClearButtonNode = new()
+            {
+                Position  = new(160, 208),
+                Size      = new(140, 28),
+                IsVisible = true,
+                Label     = GetLoc("Clear"),
+                OnClick = () =>
+                {
+                    ModuleConfig.PlayerInfos.Remove(ContentID);
+                    InfoProxyFriendList.Instance()->RequestData();
+                    Close();
+                },
+            };
+            AttachNode(ClearButtonNode);
+            
+            QuertUsedNameButtonNode = new()
+            {
+                Position  = new(310, 208),
+                Size      = new(140, 28),
+                IsVisible = true,
+                Label     = GetLoc("OptimizedFriendList-ObtainUsedNames"),
+                OnClick = () =>
+                {
+                    var request = OnlineDataManager.GetRequest<PlayerUsedNamesRequest>();
+                    Tokens.Add(request.Subscribe(ContentID, OnlineDataManager.GetWorldRegion(GameState.HomeWorld), data =>
+                    {
+                        if (data.Count == 0)
+                            Chat(GetLoc("OptimizedFriendList-FriendUseNamesNotFound", Name));
+                        else
+                        {
+                            Chat($"{GetLoc("OptimizedFriendList-FriendUseNamesFound", Name)}:");
+                            var counter = 1;
+                            foreach (var nameChange in data)
+                            {
+                                Chat($"{counter}. {nameChange.ChangedTime}:");
+                                Chat($"     {nameChange.BeforeName} -> {nameChange.AfterName}:");
+
+                                counter++;
+                            }
+                        }
+                    }));
+                },
+            };
+            AttachNode(QuertUsedNameButtonNode);
+        }
+
+        protected override void OnUpdate(AtkUnitBase* addon)
+        {
+            if (!IsAddonAndNodesReady(FriendList))
+                Close();
+        }
+
+        protected override void OnFinalize(AtkUnitBase* addon)
+        {
+            ContentID = 0;
+            Name      = string.Empty;
+            WorldName = string.Empty;
+        }
+
+        public void OpenWithData(ulong contentID, string name, string worldName)
+        {
+            ContentID = contentID;
+            Name      = name;
+            WorldName = worldName;
+            
+            Open();
+        }
+    }
     
-    private class ModifyInfoMenuItem : MenuItemBase
+    private class ModifyInfoMenuItem(TaskHelper TaskHelper) : MenuItemBase
     {
         public override string Name { get; protected set; } = GetLoc("OptimizedFriendList-ContextMenuItemName");
 
@@ -316,10 +488,17 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         protected override void OnClicked(IMenuItemClickedArgs args)
         {
             if (args.Target is not MenuTargetDefault target) return;
-            
-            ContentIDToModify = target.TargetContentId;
-            NameToModify      = target.TargetName;
-            IsNeedToOpen      = true;
+
+            if (Addon.IsOpen)
+            {
+                Addon.Close();
+
+                TaskHelper.DelayNext(100);
+                TaskHelper.Enqueue(() => !Addon.IsOpen);
+                TaskHelper.Enqueue(() => Addon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ExtractText()));
+            }
+            else
+                Addon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ExtractText());
         }
     }
     
