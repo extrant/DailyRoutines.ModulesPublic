@@ -4,18 +4,29 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace DailyRoutines.ModulesPublic;
 
-public class AutoRemoveRepeatGlamour : DailyModuleBase
+public class AutoRemoveDuplicateGlamours : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = GetLoc("AutoRemoveRepeatGlamourTitle"),
-        Description = GetLoc("AutoRemoveRepeatGlamourDescription"),
+        Title       = GetLoc("AutoRemoveDuplicateGlamoursTitle"),
+        Description = GetLoc("AutoRemoveDuplicateGlamoursDescription"),
         Author      = ["ECSS11"]
     };
 
-    protected override void Init() => TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
+    protected override void Init() => 
+        TaskHelper ??= new();
+    
+    protected override void ConfigUI()
+    {
+        if (ImGui.Button(GetLoc("Start")))
+            Enqueue();
+        
+        ImGui.SameLine();
+        if (ImGui.Button(GetLoc("Stop")))
+            TaskHelper.Abort();
+    }
 
-    private unsafe void GlamourBoxTakeout()
+    private unsafe void Enqueue()
     {
         var instance = MirageManager.Instance();
         if (instance == null) return;
@@ -35,14 +46,6 @@ public class AutoRemoveRepeatGlamour : DailyModuleBase
         if (itemIndexToRemove.Count == 0) return;
 
         itemIndexToRemove.ForEach(x => TaskHelper.Enqueue(() => instance->RestorePrismBoxItem(x)));
-    }
-
-    protected override void ConfigUI()
-    {
-        if (ImGui.Button(GetLoc("Start")))
-            GlamourBoxTakeout();
-        ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop")))
-            TaskHelper.Abort();
+        TaskHelper.Enqueue(Enqueue);
     }
 }
