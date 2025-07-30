@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
@@ -7,6 +8,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
@@ -20,9 +22,10 @@ public unsafe class OptimizedFriendList : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = GetLoc("OptimizedFriendListTitle"),
-        Description = GetLoc("OptimizedFriendListDescription"),
-        Category    = ModuleCategories.UIOptimization
+        Title               = GetLoc("OptimizedFriendListTitle"),
+        Description         = GetLoc("OptimizedFriendListDescription"),
+        Category            = ModuleCategories.UIOptimization,
+        ModulesPrerequisite = ["WorldTravelCommand"]
     };
 
     private delegate void RequestFriendOnlineStatusDelegate(AgentFriendlist* agent, ulong contentID);
@@ -30,7 +33,9 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         new CompSig("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA 48 8B 49 ?? 48 8B 01 FF 90 ?? ?? ?? ?? 48 8B D7")
             .GetDelegate<RequestFriendOnlineStatusDelegate>();
     
-    private static ModifyInfoMenuItem ModifyInfoItem = null!;
+    private static          ModifyInfoMenuItem          ModifyInfoItem    = null!;
+    private static readonly TeleportFriendZoneMenuItem  TeleportZoneItem  = new();
+    private static readonly TeleportFriendWorldMenuItem TeleportWorldItem = new();
     
     private static Config ModuleConfig = null!;
 
@@ -48,7 +53,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         Addon ??= new(this)
         {
             InternalName          = "DRFriendlistRemarkEdit",
-            Title                 = GetLoc("OptimizedFriendList-AddonTitle"),
+            Title                 = GetLoc("OptimizedFriendList-ContextMenu-NicknameAndRemark"),
             Size                  = new(460f, 255f),
             Position              = new(800f, 350f),
             NativeController      = Service.AddonController,
@@ -70,6 +75,12 @@ public unsafe class OptimizedFriendList : DailyModuleBase
     {
         if (ModifyInfoItem.IsDisplay(args))
             args.AddMenuItem(ModifyInfoItem.Get());
+        
+        if (TeleportZoneItem.IsDisplay(args))
+            args.AddMenuItem(TeleportZoneItem.Get());
+
+        if (TeleportWorldItem.IsDisplay(args))
+            args.AddMenuItem(TeleportWorldItem.Get());
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
@@ -478,7 +489,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
     
     private class ModifyInfoMenuItem(TaskHelper TaskHelper) : MenuItemBase
     {
-        public override string Name { get; protected set; } = GetLoc("OptimizedFriendList-ContextMenuItemName");
+        public override string Name { get; protected set; } = GetLoc("OptimizedFriendList-ContextMenu-NicknameAndRemark");
 
         public override bool IsDisplay(IMenuOpenedArgs args) =>
             args is { AddonName: "FriendList", Target: MenuTargetDefault target } &&
@@ -500,6 +511,66 @@ public unsafe class OptimizedFriendList : DailyModuleBase
             else
                 Addon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ExtractText());
         }
+    }
+    
+    private class TeleportFriendZoneMenuItem : MenuItemBase
+    {
+        public override string Name { get; protected set; } = GetLoc("OptimizedFriendList-ContextMenu-TeleportToFriendZone");
+        
+        private uint AetheryteID;
+
+        protected override void OnClicked(IMenuItemClickedArgs args) => 
+            Telepo.Instance()->Teleport(AetheryteID, 0);
+
+        public override bool IsDisplay(IMenuOpenedArgs args) =>
+            args is { AddonName : "FriendList", Target: MenuTargetDefault { TargetCharacter: not null } target } &&
+            GetAetheryteID(target.TargetCharacter.Location.RowId, out AetheryteID);
+
+        private static bool GetAetheryteID(uint zoneID, out uint aetheryteID)
+        {
+            aetheryteID = 0;
+            if (zoneID == 0 || zoneID == GameState.TerritoryType) return false;
+            
+            zoneID = zoneID switch
+            {
+                128 => 129,
+                133 => 132,
+                131 => 130,
+                399 => 478,
+                _ => zoneID
+            };
+            if (zoneID == GameState.TerritoryType) return false;
+            
+            aetheryteID = DService.AetheryteList
+                                  .Where(aetheryte => aetheryte.TerritoryId == zoneID)
+                                  .Select(aetheryte => aetheryte.AetheryteId)
+                                  .FirstOrDefault();
+
+            return aetheryteID > 0;
+        }
+    }
+
+    private class TeleportFriendWorldMenuItem : MenuItemBase
+    {
+        public override string Name { get; protected set; } = GetLoc("OptimizedFriendList-ContextMenu-TeleportToFriendWorld");
+        
+        private uint TargetWorldID;
+
+        public override bool IsDisplay(IMenuOpenedArgs args)
+        {
+            if ((ModuleManager.IsModuleEnabled("WorldTravelCommand") ?? false) &&
+                args is { AddonName: "FriendList", Target: MenuTargetDefault { TargetCharacter.CurrentWorld.RowId: var targetWorldID } } &&
+                targetWorldID != GameState.CurrentWorld)
+            {
+                TargetWorldID = targetWorldID;
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override void OnClicked(IMenuItemClickedArgs args) => 
+            ChatHelper.SendMessage($"/pdr worldtravel {LuminaWrapper.GetWorldName(TargetWorldID)}");
     }
     
     public class PlayerInfo
