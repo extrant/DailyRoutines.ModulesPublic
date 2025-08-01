@@ -157,6 +157,7 @@ public class AutoAethericMimicry : DailyModuleBase
                             .Where(x => x is IPlayerCharacter player                 &&
                                         player.EntityId != LocalPlayerState.EntityID &&
                                         roles.Contains(player.ClassJob.Value.Role))
+                            .Where(x => x is { YalmDistanceX: <= 25, YalmDistanceZ: <= 25 })
                             .OrderBy(x => x.YalmDistanceX + x.YalmDistanceZ)
                             .OfType<IPlayerCharacter>()
                             .FirstOrDefault();
