@@ -18,7 +18,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Newtonsoft.Json;
 using LuminaStatus = Lumina.Excel.Sheets.Status;
 
-
 namespace DailyRoutines.ModulesPublic;
 
 public class AutoDisplayMitigationInfo : DailyModuleBase
@@ -249,7 +248,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     private static unsafe void OnFrameworkUpdateInterval(IFramework _)
     {
-        if (DService.ClientState.IsPvP || Control.GetLocalPlayer() is null)
+        if (GameState.IsInPVPArea || Control.GetLocalPlayer() is null)
         {
             MitigationManager.Clear();
             StatusBarManager.Clear();
@@ -409,24 +408,45 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
     #region PartyList
 
+    private static Dictionary<uint, (float[] Info, int Index)> CachedPartyInfo = [];
+
+    private static bool IsNeedToDrawOnPartyList;
+    
+
     public static unsafe void Draw()
     {
-        if (!IsAddonAndNodesReady(PartyList))
-            return;
+        if (Throttler.Throttle("AutoDisplayMitigationInfo-OnUpdatePartyDrawCondition"))
+            IsNeedToDrawOnPartyList = IsAddonAndNodesReady(PartyList) && !GameState.IsInPVPArea;
+        
+        if (!IsNeedToDrawOnPartyList) return;
+
+        if (Throttler.Throttle("AutoDisplayMitigationInfo-OnUpdateParty"))
+        {
+            CachedPartyInfo = MitigationManager.FetchParty()
+                                               .Select(x => new
+                                               {
+                                                   ID = x.Key,
+                                                   Detail = new
+                                                   {
+                                                       Info  = x.Value,
+                                                       Index = (int?)FetchMemberIndex(x.Key) ?? -1
+                                                   }
+                                               })
+                                               .ToDictionary(x => x.ID, x => (x.Detail.Info, x.Detail.Index));
+        }
 
         var drawList = ImGui.GetBackgroundDrawList();
         var addon    = (AddonPartyList*)PartyList;
-        foreach (var memberStatus in MitigationManager.FetchParty())
+        foreach (var (_, (info, index)) in CachedPartyInfo)
         {
-            if (FetchMemberIndex(memberStatus.Key) is { } memberIndex)
-            {
-                ref var partyMember = ref addon->PartyMembers[(int)memberIndex];
-                if (partyMember.HPGaugeComponent is null || !partyMember.HPGaugeComponent->OwnerNode->IsVisible())
-                    continue;
+            if (index == -1) continue;
+            
+            ref var partyMember = ref addon->PartyMembers[index];
+            if (partyMember.HPGaugeComponent is null || !partyMember.HPGaugeComponent->OwnerNode->IsVisible())
+                continue;
 
-                PartyListManager.DrawMitigationNode(drawList, ref partyMember, memberStatus.Value);
-                PartyListManager.DrawShieldNode(drawList, ref partyMember, memberStatus.Value);
-            }
+            PartyListManager.DrawMitigationNode(drawList, ref partyMember, info);
+            PartyListManager.DrawShieldNode(drawList, ref partyMember, info);
         }
     }
 
@@ -605,7 +625,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
             #region Equals
 
-            public bool Equals(MMStatus other) => Id == other.Id;
+            public bool Equals(MMStatus? other) => Id == other.Id;
 
             public override bool Equals(object? obj) => obj is MMStatus other && Equals(other);
 
@@ -750,7 +770,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         public static Dictionary<uint, float[]> FetchParty()
         {
             if (DService.PartyList.Count == 0)
-                return new Dictionary<uint, float[]>() { { LocalPlayerState.EntityID, FetchLocal() } };
+                return new Dictionary<uint, float[]> { { LocalPlayerState.EntityID, FetchLocal() } };
 
             var partyValues = new Dictionary<uint, float[]>();
             foreach (var memberActiveStatus in PartyActiveStatus)
