@@ -257,9 +257,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         }
 
         PartyMemberIndexCache.Clear();
-        var partyMembers = AgentHUD.Instance()->PartyMembers.ToArray();
-        foreach (var member in partyMembers)
-            PartyMemberIndexCache[member.EntityId] = (uint)member.Index;
+        foreach (var member in AgentHUD.Instance()->PartyMembers)
+            PartyMemberIndexCache[member.EntityId] = member.Index;
 
         MitigationManager.Update();
 
