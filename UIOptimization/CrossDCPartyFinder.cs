@@ -44,10 +44,8 @@ public class CrossDCPartyFinder : DailyModuleBase
     private static string LocatedDataCenter =>
         GameState.CurrentDataCenterData.Name.ExtractText();
 
-    private static readonly CompSig AgentLookingForGroupReceiveEventSig =
-        new("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC ?? 45 8B D1");
-
-    private static Hook<AgentReceiveEventDelegate>? AgentLookingForGroupReceiveEventHook;
+    private static readonly CompSig AgentLookingForGroupReceiveEventSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC ?? 45 8B D1");
+    private static          Hook<AgentReceiveEventDelegate>? AgentLookingForGroupReceiveEventHook;
 
     private static Config ModuleConfig = null!;
 
@@ -376,7 +374,6 @@ public class CrossDCPartyFinder : DailyModuleBase
             Listings = listings.OrderByDescending(x => x.TimeLeft)
                                .DistinctBy(x => x.ID)
                                .DistinctBy(x => $"{x.PlayerName}@{x.HomeWorldName}")
-                               .Where(x => DateTime.Now - x.UpdatedAt > TimeSpan.FromMinutes(5)) // 5 分钟没更新
                                .ToList();
             ListingsDisplay = FilterAndSort(Listings);
         }, CancelSource.Token).ContinueWith(async _ =>
