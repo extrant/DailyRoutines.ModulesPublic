@@ -48,7 +48,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
         if (MaterializeDialog != null) 
             OnDialogAddon(AddonEvent.PostSetup, null);
 
-        CommandManager.AddSubCommand(Command, new((_, _) => StartARoundAll()) { HelpMessage = GetLoc("AutoMaterialize-AutoExtractAll") });
+        CommandManager.AddSubCommand(Command, new((_, _) => StartARoundAll()) { HelpMessage = GetLoc("AutoMaterializeTitle") });
     }
 
     protected override void ConfigUI() => ConflictKeyText();
