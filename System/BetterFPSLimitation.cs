@@ -107,7 +107,7 @@ public class BetterFPSLimitation : DailyModuleBase
             
             ImGui.SameLine();
             ImGui.SetNextItemWidth(100f * GlobalFontScale);
-            if (ImGuiOm.InputUShort("###NewThreshold", ref NewThresholdInput, 10, 10))
+            if (ImGui.InputUShort("###NewThreshold", ref NewThresholdInput, 10, 10))
                 NewThresholdInput = (ushort)Math.Clamp(NewThresholdInput, 1, short.MaxValue);
         }
     }
@@ -147,7 +147,7 @@ public class BetterFPSLimitation : DailyModuleBase
                 }
                 
                 Entry         ??= DService.DtrBar.Get("DailyRoutines-BetterFPSLimitation");
-                Entry.OnClick +=  () => Addon.Toggle();
+                Entry.OnClick +=  _ => Addon.Toggle();
                 Entry.Shown   =   true;
                 Entry.Text    =   LuminaWrapper.GetAddonText(4002);
                 return;

@@ -83,7 +83,7 @@ public unsafe class AutoMateriaRetrive : DailyModuleBase
 
             ImGui.Separator();
             foreach (var (itemName, item) in ItemNamesAnother)
-                if (ImGuiOm.SelectableImageWithText(ImageHelper.GetGameIcon(item.Icon).ImGuiHandle,
+                if (ImGuiOm.SelectableImageWithText(ImageHelper.GetGameIcon(item.Icon).Handle,
                                                     ScaledVector2(24f), itemName,
                                                     (SelectedItem?.RowId ?? 0) == item.RowId,
                                                     ImGuiSelectableFlags.DontClosePopups))

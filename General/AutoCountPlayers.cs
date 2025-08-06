@@ -56,7 +56,7 @@ public class AutoCountPlayers : DailyModuleBase
 
         Entry ??= DService.DtrBar.Get("DailyRoutines-AutoCountPlayers");
         Entry.Shown = true;
-        Entry.OnClick += () => Overlay.IsOpen ^= true;
+        Entry.OnClick += _ => Overlay.IsOpen ^= true;
 
         DService.UiBuilder.Draw += OnDraw;
 

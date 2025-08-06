@@ -42,7 +42,7 @@ public class AutoInDutySelectYes : DailyModuleBase
 
     private static unsafe void OnAddonSelectYesno(AddonEvent type, AddonArgs args)
     {
-        var addon = (AddonSelectYesno*)args.Addon;
+        var addon = (AddonSelectYesno*)args.Addon.Address;
         if (addon == null) return;
         
         var text = addon->PromptText->NodeText.ExtractText();

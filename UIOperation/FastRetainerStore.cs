@@ -92,7 +92,7 @@ public unsafe class FastRetainerStore : DailyModuleBase
                     if (!TryFindTargetSlot(targetInvs, itemID, isHQ, isCollectable, out var targetSlot))
                         return true;
 
-                    manager->MoveItemSlot(sourceInv, (ushort)slot->Slot, targetSlot.Inventory, (ushort)targetSlot.Slot, 1);
+                    manager->MoveItemSlot(sourceInv, (ushort)slot->Slot, targetSlot.Inventory, (ushort)targetSlot.Slot, true);
                 }
             }
 

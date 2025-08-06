@@ -50,7 +50,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
         // status bar
         StatusBarManager.Enable();
-        StatusBarManager.BarEntry.OnClick = () =>
+        StatusBarManager.BarEntry.OnClick = _ =>
         {
             if (Overlay == null)
                 return;
@@ -167,7 +167,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            ImGui.Image(barrierIcon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
+            ImGui.Image(barrierIcon.GetWrapOrEmpty().Handle, ScaledVector2(24f));
 
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
@@ -223,7 +223,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         ImGui.TableNextRow();
 
         ImGui.TableNextColumn();
-        ImGui.Image(icon.GetWrapOrEmpty().ImGuiHandle, ScaledVector2(24f));
+        ImGui.Image(icon.GetWrapOrEmpty().Handle, ScaledVector2(24f));
 
         ImGui.TableNextColumn();
         ImGui.AlignTextToFramePadding();

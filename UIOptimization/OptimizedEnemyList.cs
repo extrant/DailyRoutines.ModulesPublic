@@ -48,7 +48,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputFloat2("###TextOffsetInput", ref ModuleConfig.TextOffset, "%.1f");
+        ImGui.InputFloat2("###TextOffsetInput", ref ModuleConfig.TextOffset, format: "%.1f");
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             ModuleConfig.Save(this);
@@ -125,7 +125,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         if (ModuleConfig.UseCustomizeText)
         {
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeightWithSpacing());
-            ImGui.InputText("###CustomizeTextPatternInput", ref ModuleConfig.CustomizeTextPattern, 512);
+            ImGui.InputText("###CustomizeTextPatternInput", ref ModuleConfig.CustomizeTextPattern);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
                 ModuleConfig.Save(this);
@@ -140,7 +140,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         
         ImGui.SameLine();
         ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        ImGuiOm.InputByte("###FontSize", ref ModuleConfig.FontSize);
+        ImGui.InputByte("###FontSize", ref ModuleConfig.FontSize);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             ModuleConfig.Save(this);
@@ -161,7 +161,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         {
             if (popup)
             {
-                ImGui.InputText("###CastInfoTargetBlacklistInput", ref CastInfoTargetBlacklistInput, 512);
+                ImGui.InputText("###CastInfoTargetBlacklistInput", ref CastInfoTargetBlacklistInput);
                 
                 ImGui.SameLine();
                 using (ImRaii.Disabled(string.IsNullOrWhiteSpace(CastInfoTargetBlacklistInput) || 

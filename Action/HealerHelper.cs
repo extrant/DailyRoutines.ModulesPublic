@@ -271,7 +271,7 @@ public class HealerHelper : DailyModuleBase
             if (ImGui.BeginDragDropSource())
             {
                 customCardOrderDragIndex = index;
-                ImGui.SetDragDropPayload("##CustomCardOrder", nint.Zero, 0);
+                ImGui.SetDragDropPayload("##CustomCardOrder", [], 0);
                 ImGui.EndDragDropSource();
             }
 

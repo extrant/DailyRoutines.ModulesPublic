@@ -202,7 +202,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         ImGui.SameLine();
         using (ImRaii.Group())
         {
-            ImGui.Image(icon.ImGuiHandle, new(ImGui.GetTextLineHeightWithSpacing()));
+            ImGui.Image(icon.Handle, new(ImGui.GetTextLineHeightWithSpacing()));
             
             ImGui.SameLine();
             ImGui.Text(rankText);

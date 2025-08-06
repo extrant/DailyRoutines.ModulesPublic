@@ -113,7 +113,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                 continue;
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(statusRow.Name.ExtractText(), texture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeight()));
+            ImGuiOm.TextImage(statusRow.Name.ExtractText(), texture.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
@@ -131,7 +131,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                         !DService.Texture.TryGetFromGameIcon(new(actionRow.Icon), out var actionTexture))
                         continue;
 
-                    ImGuiOm.TextImage(actionRow.Name.ExtractText(), actionTexture.GetWrapOrEmpty().ImGuiHandle, new(ImGui.GetTextLineHeight()));
+                    ImGuiOm.TextImage(actionRow.Name.ExtractText(), actionTexture.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeight()));
                     ImGui.SameLine();
                 }
             }

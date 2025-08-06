@@ -19,12 +19,12 @@ public unsafe class AutoCancelCast : DailyModuleBase
         Description = GetLoc("AutoCancelCastDescription"),
         Category    = ModuleCategories.Action,
     };
-    
-    private static readonly HashSet<ObjectKind> InvalidInterruptKinds = 
+
+    private static readonly HashSet<ObjectKind> InvalidInterruptKinds =
     [
         ObjectKind.Treasure, ObjectKind.Aetheryte, ObjectKind.GatheringPoint, ObjectKind.EventObj, ObjectKind.Mount,
         ObjectKind.Companion, ObjectKind.Retainer, ObjectKind.AreaObject, ObjectKind.HousingEventObject, ObjectKind.Cutscene,
-        ObjectKind.MjiObject, ObjectKind.Ornament, ObjectKind.CardStand
+        ObjectKind.ReactionEventObject, ObjectKind.Ornament, ObjectKind.CardStand
     ];
 
     private static readonly CompSig CancelCastSig = new("48 83 EC 38 33 D2 C7 44 24 20 00 00 00 00 45 33 C9");

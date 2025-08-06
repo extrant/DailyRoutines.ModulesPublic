@@ -115,7 +115,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             }
             
             ImGui.SetNextItemWidth(150f * GlobalFontScale);
-            if (ImGuiOm.InputUInt("###HighlightColorInput", ref ModuleConfig.HighlightColor, 1, 1))
+            if (ImGui.InputUInt("###HighlightColorInput", ref ModuleConfig.HighlightColor, 1, 1))
                 SaveConfig(ModuleConfig);
             
             ImGui.SameLine();

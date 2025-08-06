@@ -229,7 +229,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
         var addonCharacter = name == "Character" ? (AddonCharacter*)unitBase : GetAddonByName<AddonCharacter>("Character");
 
         if (addonCharacter == null || !addonCharacter->AddonControl.IsChildSetupComplete ||
-            IntersectingCollisionNode == addonCharacter->CharacterPreviewCollisionNode)
+            IntersectingCollisionNode == addonCharacter->PreviewController.CollisionNode)
         {
             WheelState = 0;
             return;

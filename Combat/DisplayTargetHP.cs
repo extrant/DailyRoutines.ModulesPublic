@@ -50,7 +50,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
 
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(-1f);
-                if (ImGui.InputInt("###PreviewNumberInput", ref NumberPreview, 0, 0))
+                if (ImGui.InputInt("###PreviewNumberInput", ref NumberPreview))
                     NumberPreview = (int)Math.Clamp(NumberPreview, 0, uint.MaxValue);
 
                 ImGui.Separator();
@@ -96,7 +96,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
         
         ImGui.SameLine();
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.InputFloat2("###TargetPosition", ref ModuleConfig.Position, "%.2f");
+        ImGui.InputFloat2("###TargetPosition", ref ModuleConfig.Position, format: "%.2f");
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
         
@@ -152,7 +152,7 @@ public unsafe class DisplayTargetHP : DailyModuleBase
         
         ImGui.SameLine();
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.InputFloat2("###FocusPosition", ref ModuleConfig.FocusPosition, "%.2f");
+        ImGui.InputFloat2("###FocusPosition", ref ModuleConfig.FocusPosition, format: "%.2f");
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
         

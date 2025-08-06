@@ -1,4 +1,5 @@
-﻿using DailyRoutines.Abstracts;
+﻿/*
+using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -121,6 +122,8 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
             var instance = AgentLookingForGroup.Instance();
             if (instance->ListingContentId == currentCID) return true;
 
+            // TODO: 等 FFCS 更新
+            
             instance->OpenListingByContentId(currentCID);
             return instance->ListingContentId == currentCID;
         });
@@ -152,3 +155,4 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         base.Uninit();
     }
 }
+*/

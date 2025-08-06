@@ -139,7 +139,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon(action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon(action.Icon).Handle, ScaledVector2(20f));
         }
 
         foreach (var actionPair in ModuleConfig.EnabledPetActions)
@@ -154,7 +154,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
             }
 
             ImGui.SameLine();
-            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon((uint)action.Icon).ImGuiHandle, ScaledVector2(20f));
+            ImGuiOm.TextImage(action.Name.ExtractText(), ImageHelper.GetGameIcon((uint)action.Icon).Handle, ScaledVector2(20f));
         }
     }
 
@@ -195,16 +195,16 @@ public class AutoReplaceLocationAction : DailyModuleBase
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(LightSkyBlue, $"{GetLoc("AutoReplaceLocationAction-CustomCenterPoint")}:");
 
-        using (ImRaii.Disabled(!agent->IsFlagMarkerSet || agent->FlagMapMarker.MapId != DService.ClientState.MapId))
+        using (ImRaii.Disabled(agent->FlagMarkerCount == 0 || agent->FlagMapMarkers[0].MapId != DService.ClientState.MapId))
         {
             ImGui.SameLine();
             if (ImGui.Button(GetLoc("AutoReplaceLocationAction-AddFlagMarker")))
             {
                 ModuleConfig.CustomMarkers.TryAdd(DService.ClientState.MapId, []);
-                ModuleConfig.CustomMarkers[DService.ClientState.MapId].Add(new(agent->FlagMapMarker.XFloat, agent->FlagMapMarker.YFloat));
+                ModuleConfig.CustomMarkers[DService.ClientState.MapId].Add(new(agent->FlagMapMarkers[0].XFloat, agent->FlagMapMarkers[0].YFloat));
                 SaveConfig(ModuleConfig);
 
-                agent->IsFlagMarkerSet = false;
+                agent->FlagMarkerCount = 0;
                 MarkCenterPoint();
             }
         }

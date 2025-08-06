@@ -71,7 +71,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
     protected override void ConfigUI()
     {
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputFloat2(Lang.Get("MarkerInPartyList-IconOffset"), ref ModuleConfig.IconOffset, "%d");
+        ImGui.InputFloat2(Lang.Get("MarkerInPartyList-IconOffset"), ref ModuleConfig.IconOffset, format: "%d");
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             SaveConfig(ModuleConfig);
@@ -79,7 +79,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         }
 
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputInt(Lang.Get("MarkerInPartyList-IconScale"), ref ModuleConfig.Size, 0, 0);
+        ImGui.InputInt(Lang.Get("MarkerInPartyList-IconScale"), ref ModuleConfig.Size);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             SaveConfig(ModuleConfig);
@@ -201,29 +201,23 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void InitImageNodes()
     {
-        var partylist = (AtkUnitBase*)DService.Gui.GetAddonByName("_PartyList");
-        if (partylist is null)
-        {
-            DService.Log.Error("Failed to get partylist");
-            return;
-        }
+        var addon = PartyList;
+        if (addon == null) return;
+        
         lock (Lock)
         {
             if (IsBuilt)
                 return;
 
-            foreach (var i in Enumerable.Range(10, 8))
+            foreach (var _ in Enumerable.Range(10, 8))
             {
                 var imageNode = GenerateImageNode();
-                if (imageNode is null)
-                {
-                    DService.Log.Error($"Failed to create image parentNode-{i}");
-                    continue;
-                }
+                if (imageNode is null) continue;
+                
                 imageNode->AtkResNode.NodeId = 114514;
                 ImageNodes.Add((nint)imageNode);
 
-                LinkNodeAtEnd((AtkResNode*)imageNode, partylist);
+                LinkNodeAtEnd((AtkResNode*)imageNode, addon);
             }
             IsBuilt = true;
         }
@@ -297,15 +291,15 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void RefreshPosition()
     {
-        var partylist = (AtkUnitBase*)DService.Gui.GetAddonByName("_PartyList");
-        if (partylist is null || !IsAddonAndNodesReady(partylist))
-            return;
+        var addon = PartyList;
+        if (!IsAddonAndNodesReady(addon)) return;
+        
         foreach (var item in ImageNodes.Zip(Enumerable.Range(10, 8)))
         {
             var node = (AtkImageNode*)item.First;
-            var component = partylist->GetNodeById((uint)(10 + item.Second));
-            (var x, var y) = (component->X + BasePosition.X + ModuleConfig.IconOffset.X,
-                                 component->Y + BasePosition.Y + ModuleConfig.IconOffset.Y);
+            var component = addon->GetNodeById((uint)(10 + item.Second));
+            var (x, y) = (component->X + BasePosition.X + ModuleConfig.IconOffset.X,
+                             component->Y + BasePosition.Y + ModuleConfig.IconOffset.Y);
             node->AtkResNode.SetPositionFloat(x, y);
             node->AtkResNode.SetHeight((ushort)ModuleConfig.Size);
             node->AtkResNode.SetWidth((ushort)ModuleConfig.Size);
@@ -330,15 +324,12 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
         if (NeedClear && MarkedObject.Count is 0 && IsScreenReady())
         {
-            ResetPartyMemberList((AtkUnitBase*)args.Addon);
+            ResetPartyMemberList((AtkUnitBase*)args.Addon.Address);
             NeedClear = false;
         }
     }
 
-    private static void PartyListFinalizeHandle(AddonEvent type, AddonArgs args)
-    {
-        ReleaseImageNodes();
-    }
+    private static void PartyListFinalizeHandle(AddonEvent type, AddonArgs args) => ReleaseImageNodes();
 
     private static void ProcMarkIconSetted(uint markIndex, uint entityId)
     {
@@ -414,7 +405,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             }
         }
 
-        if (InfoProxyCrossRealm.Instance()->IsCrossRealm > 0)
+        if (InfoProxyCrossRealm.Instance()->IsCrossRealm)
         {
             var myGroup      = InfoProxyCrossRealm.GetMemberByEntityId((uint)DService.ObjectTable.LocalPlayer!.GameObjectId);
             var pGroupMember = InfoProxyCrossRealm.GetMemberByEntityId(entityId);

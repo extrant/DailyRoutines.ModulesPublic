@@ -218,7 +218,7 @@ public unsafe class AutoMJIWorkshopImport : DailyModuleBase
         var iconSize = ImGui.GetTextLineHeight() * 1.5f;
         var iconSizeVec = new Vector2(iconSize, iconSize);
         var craftworkItemIcon = row.Item.Value.Icon;
-        ImGui.Image(DService.Texture.GetFromGameIcon(new(craftworkItemIcon)).GetWrapOrEmpty().ImGuiHandle,
+        ImGui.Image(DService.Texture.GetFromGameIcon(new(craftworkItemIcon)).GetWrapOrEmpty().Handle,
             iconSizeVec, Vector2.Zero, Vector2.One);
     }
 

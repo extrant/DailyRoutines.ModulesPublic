@@ -29,15 +29,17 @@ public unsafe class AutoSharpenInterfaceText : DailyModuleBase
         AtkTextNodeSetTextHook.Original(node, text);
 
         if (node == null || !text.HasValue) return;
+        // TODO: 找新的 NamePlate TextFlag
+        
         // NamePlate
-        if (node->TextFlags == 152 && node->AlignmentFontType == 7)
+        if ((byte)node->TextFlags == 152 && node->AlignmentFontType == 7)
             return;
         
-        var flag2 = (TextFlags2)node->TextFlags2;
-        if (flag2.HasFlag(TextFlags2.FixedFontResolution))
+        var flag2 = node->TextFlags;
+        if (flag2.HasFlag(TextFlags.FixedFontResolution))
         {
-            flag2            &= ~TextFlags2.FixedFontResolution;
-            node->TextFlags2 =  (byte)flag2;
+            flag2           &= ~TextFlags.FixedFontResolution;
+            node->TextFlags =  flag2;
         }
     }
 }

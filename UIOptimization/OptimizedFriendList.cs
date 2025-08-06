@@ -159,7 +159,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         {
             var data = info->CharDataSpan[i];
 
-            var existedName = SeString.Parse(AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)]).TextValue;
+            var existedName = SeString.Parse(AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)].Value).TextValue;
             if (existedName == LuminaWrapper.GetAddonText(964))
             {
                 isAnyUpdate = true;
@@ -213,7 +213,8 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)] = nicknameString->StringPtr;
             }
 
-            var existedRemark = SeString.Parse(AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[3 + (5 * i)]).TextValue;
+            var ptr           = AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[3 + (5 * i)];
+            var existedRemark = SeString.Parse(ptr.Value).TextValue;
             if (!string.IsNullOrWhiteSpace(configInfo.Remark))
             {
                 var remarkString = Utf8String.FromString($"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}: {configInfo.Remark}" +

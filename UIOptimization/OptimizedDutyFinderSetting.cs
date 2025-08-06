@@ -6,6 +6,7 @@ using System.Threading;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Events;
+using Dalamud.Game.Addon.Events.EventDataTypes;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
@@ -392,10 +393,10 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PostSetup:
-                SetupAddon((AtkUnitBase*)args.Addon);
+                SetupAddon((AtkUnitBase*)args.Addon.Address);
                 break;
             case AddonEvent.PreFinalize:
-                ResetAddon((AtkUnitBase*)args.Addon);
+                ResetAddon((AtkUnitBase*)args.Addon.Address);
                 break;
         }
     }
