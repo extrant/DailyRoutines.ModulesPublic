@@ -26,8 +26,9 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         Author      = ["Mizami"]
     };
-    
-    private static readonly CompSig                                      SetContentsFinderSettingsInitSig = new("E8 ?? ?? ?? ?? 49 8B 06 33 ED");
+
+    private static readonly CompSig SetContentsFinderSettingsInitSig =
+        new("E8 ?? ?? ?? ?? 49 8B 06 45 33 FF 49 8B CE 45 89 7E 20 FF 50 28 B0 01");
     private delegate        void                                         SetContentsFinderSettingsInitDelegate(byte* a1, nint a2);
     private static          Hook<SetContentsFinderSettingsInitDelegate>? SetContentsFinderSettingsInitHook;
 
