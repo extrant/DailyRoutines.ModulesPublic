@@ -193,7 +193,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
                 Service.AddonController.DetachNode(StopButtonNode);
                 StopButtonNode = null;
                 
-                TaskHelper.Abort();
+                TaskHelper?.Abort();
                 break;
         }
     }
@@ -214,7 +214,5 @@ public unsafe class AutoMaterialize : DailyModuleBase
         OnAddon(AddonEvent.PreFinalize, null);
         
         DService.AddonLifecycle.UnregisterListener(OnDialogAddon);
-
-        base.Uninit();
     }
 }

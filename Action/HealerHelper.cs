@@ -41,6 +41,7 @@ public class HealerHelper : DailyModuleBase
     // cache
     private static readonly Dictionary<ReadOnlySeString, ReadOnlySeString> JobNameMap =
         LuminaGetter.Get<ClassJob>()
+                    .DistinctBy(x => x.NameEnglish)
                     .ToDictionary(s => s.NameEnglish, s => s.Name);
 
     // storage
