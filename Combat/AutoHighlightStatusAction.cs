@@ -233,10 +233,16 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     }
 
     private static void OnPreUseActionLocation(
-        ref bool isPrevented, ref ActionType type, ref uint actionId, ref ulong targetId, ref Vector3 location, ref uint extraParam)
+        ref bool       isPrevented,
+        ref ActionType type,
+        ref uint       actionID,
+        ref ulong      targetID,
+        ref Vector3    location,
+        ref uint       extraParam,
+        ref byte       a7)
     {
-        ActionsToHighlight.Remove(actionId);
-        lastActionId = actionId;
+        ActionsToHighlight.Remove(actionID);
+        lastActionId = actionID;
     }
 
     private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionId)

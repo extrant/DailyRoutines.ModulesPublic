@@ -486,8 +486,13 @@ public class HealerHelper : DailyModuleBase
 
     // hook before play card and target heal
     private static void OnPreUseAction(
-        ref bool  isPrevented, ref ActionType type,     ref uint actionId,
-        ref ulong targetId,    ref Vector3    location, ref uint extraParam
+        ref bool       isPrevented,
+        ref ActionType type,
+        ref uint       actionID,
+        ref ulong      targetID,
+        ref Vector3    location,
+        ref uint       extraParam,
+        ref byte       a7
     )
     {
         if (type != ActionType.Action || GameState.IsInPVPArea || DService.PartyList.Length < 2)
@@ -503,17 +508,17 @@ public class HealerHelper : DailyModuleBase
 
             // auto play card
             var cardConfig = ModuleConfig.AutoPlayCardStorage;
-            if (isAST && AutoPlayCardManager.PlayCardActions.Contains(actionId) && cardConfig.AutoPlayCard != AutoPlayCardManager.AutoPlayCardStatus.Disable)
-                AutoPlayCardService.OnPrePlayCard(ref targetId, ref actionId);
+            if (isAST && AutoPlayCardManager.PlayCardActions.Contains(actionID) && cardConfig.AutoPlayCard != AutoPlayCardManager.AutoPlayCardStatus.Disable)
+                AutoPlayCardService.OnPrePlayCard(ref targetID, ref actionID);
 
             // easy heal
             var healConfig = ModuleConfig.EasyHealStorage;
-            if (healConfig.EasyHeal == EasyHealManager.EasyHealStatus.Enable && healConfig.ActiveHealActions.Contains(actionId))
-                EasyHealService.OnPreHeal(ref targetId, ref actionId, ref isPrevented);
+            if (healConfig.EasyHeal == EasyHealManager.EasyHealStatus.Enable && healConfig.ActiveHealActions.Contains(actionID))
+                EasyHealService.OnPreHeal(ref targetID, ref actionID, ref isPrevented);
 
             // easy dispel
-            if (healConfig.EasyDispel == EasyHealManager.EasyDispelStatus.Enable && actionId is 7568)
-                EasyHealService.OnPreDispel(ref targetId, ref isPrevented);
+            if (healConfig.EasyDispel == EasyHealManager.EasyDispelStatus.Enable && actionID is 7568)
+                EasyHealService.OnPreDispel(ref targetID, ref isPrevented);
         }
 
         // can raise
@@ -522,8 +527,8 @@ public class HealerHelper : DailyModuleBase
         {
             // easy raise
             var healConfig = ModuleConfig.EasyHealStorage;
-            if (healConfig.EasyRaise == EasyHealManager.EasyRaiseStatus.Enable && EasyHealManager.RaiseActions.Contains(actionId))
-                EasyHealService.OnPreRaise(ref targetId, ref actionId, ref isPrevented);
+            if (healConfig.EasyRaise == EasyHealManager.EasyRaiseStatus.Enable && EasyHealManager.RaiseActions.Contains(actionID))
+                EasyHealService.OnPreRaise(ref targetID, ref actionID, ref isPrevented);
         }
     }
 

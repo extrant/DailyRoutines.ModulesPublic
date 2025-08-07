@@ -280,8 +280,13 @@ public class AutoReplaceLocationAction : DailyModuleBase
     }
 
     private static void OnPreUseActionLocation(
-        ref bool isPrevented, ref ActionType type, ref uint actionID,
-        ref ulong targetID, ref Vector3 location, ref uint extraParam)
+        ref bool       isPrevented,
+        ref ActionType type,
+        ref uint       actionID,
+        ref ulong      targetID,
+        ref Vector3    location,
+        ref uint       extraParam,
+        ref byte       a7)
     {
         if (type != ActionType.Action) return;
         if (!ModuleConfig.EnabledActions.TryGetValue(actionID, out var isEnabled) || (!isEnabled && !IsNeedToReplace))
@@ -289,14 +294,15 @@ public class AutoReplaceLocationAction : DailyModuleBase
             IsNeedToReplace = false;
             return;
         }
+
         IsNeedToReplace = false;
 
         if (ModuleConfig.BlacklistContent.Contains(DService.ClientState.TerritoryType)) return;
-        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers)) 
+        if (!ZoneMapMarkers.TryGetValue(DService.ClientState.MapId, out var markers))
             markers = [];
 
         var modifiedLocation = location;
-        if (HandleCustomLocation(ref modifiedLocation) ||
+        if (HandleCustomLocation(ref modifiedLocation)       ||
             HandleMapLocation(markers, ref modifiedLocation) ||
             HandlePresetCenterLocation(ref modifiedLocation))
         {

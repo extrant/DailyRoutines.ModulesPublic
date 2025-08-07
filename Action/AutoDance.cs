@@ -26,7 +26,7 @@ public unsafe class AutoDance : DailyModuleBase
     }
 
     private void OnPostUseAction(
-        bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam)
+        bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7)
     {
         if (!result || actionType != ActionType.Action || !DanceActions.Contains(actionID)) return;
         

@@ -30,7 +30,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
         UseActionManager.RegUseActionLocation(OnUseAction);
     }
 
-    private void OnUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam)
+    private void OnUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7)
     {
         if (actionType != ActionType.Action || actionID != RiddleOfEarthAction || !result) return;
 
