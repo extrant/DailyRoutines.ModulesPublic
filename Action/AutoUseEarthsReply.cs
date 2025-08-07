@@ -61,7 +61,7 @@ public unsafe class AutoUseEarthsReply : DailyModuleBase
     {
         base.Uninit();
         
-        UseActionManager.UnregUseActionLocation(OnUseAction);
+        UseActionManager.Unreg(OnUseAction);
     }
 
     public class Config : ModuleConfiguration

@@ -62,7 +62,7 @@ public unsafe class AutoDance : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregUseActionLocation(OnPostUseAction);
+        UseActionManager.Unreg(OnPostUseAction);
 
         TaskHelper?.Abort();
         TaskHelper = null;

@@ -40,7 +40,7 @@ public class AutoAethericMimicry : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregPreUseAction(OnPreUseAction);
+        UseActionManager.Unreg(OnPreUseAction);
         
         Addon?.Dispose();
         Addon = null;

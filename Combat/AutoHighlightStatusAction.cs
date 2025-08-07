@@ -65,7 +65,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregPreUseActionLocation(OnPreUseActionLocation);
+        UseActionManager.Unreg(OnPreUseActionLocation);
         FrameworkManager.Unregister(OnUpdate);
 
         base.Uninit();

@@ -416,7 +416,7 @@ public class AutoReplaceLocationAction : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregPreUseActionLocation(OnPreUseActionLocation);
+        UseActionManager.Unreg(OnPreUseActionLocation);
         ExecuteCommandManager.Unregister(OnPreExecuteCommandComplexLocation);
 
         base.Uninit();

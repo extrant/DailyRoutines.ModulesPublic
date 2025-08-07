@@ -74,7 +74,7 @@ public class HealerHelper : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregPreUseActionLocation(OnPreUseAction);
+        UseActionManager.Unreg(OnPreUseAction);
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.Condition.ConditionChange    -= OnConditionChanged;

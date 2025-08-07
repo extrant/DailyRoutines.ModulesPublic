@@ -299,7 +299,7 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
 
     protected override void Uninit()
     {
-        UseActionManager.UnregPreUseAction(OnPreUseAction);
+        UseActionManager.Unreg(OnPreUseAction);
         NotificationThrottler.Clear();
     }
 

@@ -32,5 +32,5 @@ public unsafe class MacroIntoActionQueue : DailyModuleBase
         }
     }
 
-    protected override void Uninit() => UseActionManager.UnregPreUseAction(OnPreUseAction);
+    protected override void Uninit() => UseActionManager.Unreg(OnPreUseAction);
 }
