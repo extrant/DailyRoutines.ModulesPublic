@@ -592,7 +592,7 @@ public unsafe class ScrollableTabs : DailyModuleBase
         // if (IsAddonOpen("MiragePrismPrismBoxFilter"))
         // return;
         // TODO 先这样写着，但可能有BUG
-        if (IsAddonAndNodesReady(GetAddonByName("MiragePrismPrismBoxFilter")))
+        if (IsAddonAndNodesReady(MiragePrismPrismBoxFilter))
             return;
 
         var agent = AgentMiragePrismPrismBox.Instance();
