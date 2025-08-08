@@ -391,20 +391,22 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
             };
 
-            var castBarNode = new CastBarProgressBarNode()
+            var castBarNode = new CastBarProgressBarNode
             {
                 IsVisible = true,
                 Position  = new(90, 16),
                 Size      = new(120, 16),
             };
 
-            castBarNode.ProgressNode.TexturePath        = "ui/uld/enemylist_hr1.tex";
-            castBarNode.ProgressNode.TextureCoordinates = new(0, 104);
-            castBarNode.ProgressNode.TextureSize        = new(120, 16);
+            castBarNode.ProgressNode.TexturePath        =  "ui/uld/enemylist_hr1.tex";
+            castBarNode.ProgressNode.TextureCoordinates =  new(0, 104);
+            castBarNode.ProgressNode.TextureSize        =  new(120, 16);
+            castBarNode.ProgressNode.Position           += new Vector2(1, 0);
             
-            castBarNode.BorderImageNode.TexturePath        = "ui/uld/enemylist_hr1.tex";
-            castBarNode.BorderImageNode.TextureCoordinates = new(0, 120);
-            castBarNode.BorderImageNode.TextureSize        = new(120, 16);
+            castBarNode.BorderImageNode.TexturePath        =  "ui/uld/enemylist_hr1.tex";
+            castBarNode.BorderImageNode.TextureCoordinates =  new(0, 120);
+            castBarNode.BorderImageNode.TextureSize        =  new(120, 16);
+            castBarNode.BorderImageNode.Size               += new Vector2(2, 0);
 
             castBarNode.ProgressNode.AddColor = new(1);
             
