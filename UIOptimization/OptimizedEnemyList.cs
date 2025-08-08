@@ -235,6 +235,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         var castWidth  = stackalloc ushort[1];
         var castHeight = stackalloc ushort[1];
 
+        var isTargetCasting = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Hud2)->IntArray[69] != -1;
         for (var i = 0; i < nodes.Count; i++)
         {
             var offset = 8 + (i * 6);
@@ -267,8 +268,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             if (targetNameTextNode == null) continue;
             
             targetNameTextNode->GetTextDrawSize(castWidth, castHeight);
-            
-            if (bc.IsCasting)
+
+            var isCasting = bc.IsCasting || (isTargetCasting && bc.Address == (DService.Targets.Target?.Address ?? nint.Zero));
+            if (isCasting)
             {
                 castTextNode->SetAlpha(0);
 
@@ -291,7 +293,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             
             textNode.FontSize = ModuleConfig.FontSize;
             
-            if (bc.IsCasting && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName))
+            if (isCasting && !ModuleConfig.CastInfoTargetBlacklist.Contains(targetName))
             {
                 var castTimeLeft = MathF.Max(bc.TotalCastTime - bc.CurrentCastTime, 0f);
                 
@@ -313,8 +315,8 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
             var textSize = textNode.GetTextDrawSize(textNode.Text);
             
-            backgroundNode.Position = new(Math.Max(68, *castWidth + 1) + (bc.IsCasting ? 12.5f : 0) + ModuleConfig.TextOffset.X, 6 + ModuleConfig.TextOffset.Y);
-            backgroundNode.Size     = new(textSize.X                   + 47                     + (bc.IsCasting ? -18 : 0), textSize.Y * 0.7f);
+            backgroundNode.Position = new(Math.Max(68, *castWidth + 1) + (isCasting ? 12.5f : 0) + ModuleConfig.TextOffset.X, 6 + ModuleConfig.TextOffset.Y);
+            backgroundNode.Size     = new(textSize.X                   + 47                      + (isCasting ? -18 : 0), textSize.Y * 0.7f);
         }
     }
     
