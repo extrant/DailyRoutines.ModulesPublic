@@ -85,11 +85,13 @@ public class AutoMoveGearsNotInSet : DailyModuleBase
                         IsEnabled = true,
                     };
 
-                    Button.BackgroundNode.TexturePath        = "ui/uld/partyfinder_hr1.tex";
-                    Button.BackgroundNode.TextureCoordinates = new(38);
-                    Button.BackgroundNode.TextureSize        = new(32, 34);
-                    Button.BackgroundNode.LeftOffset         = 0;
-                    Button.BackgroundNode.RightOffset        = 0f;
+                    var backgroundNode = (SimpleNineGridNode)Button.BackgroundNode;
+
+                    backgroundNode.TexturePath        = "ui/uld/partyfinder_hr1.tex";
+                    backgroundNode.TextureCoordinates = new(38);
+                    backgroundNode.TextureSize        = new(32, 34);
+                    backgroundNode.LeftOffset         = 0;
+                    backgroundNode.RightOffset        = 0f;
                     
                     Service.AddonController.AttachNode(Button, ArmouryBoard->RootNode);
                 }
