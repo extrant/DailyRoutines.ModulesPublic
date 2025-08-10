@@ -4,6 +4,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.System.Input;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -40,10 +41,11 @@ public class AutoQTE : DailyModuleBase
         return orig;
     }
 
-    private static void OnQTEAddon(AddonEvent type, AddonArgs args)
+    private static unsafe void OnQTEAddon(AddonEvent type, AddonArgs args)
     {
         Throttler.Throttle("AutoQTE-QTE", 1_000, true);
         SendKeypress(Keys.Space);
+        AtkStage.Instance()->ClearFocus();
     }
 
     protected override void Uninit() => 
