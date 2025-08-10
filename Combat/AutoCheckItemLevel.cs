@@ -118,7 +118,12 @@ public unsafe class AutoCheckItemLevel : DailyModuleBase
                 var avgItemLevel = (uint)(totalIL / itemSlotAmount);
                 
                 SendNotification(member, avgItemLevel, lowestIL);
+                
                 CharacterInspect->Close(true);
+                agentInspect->FetchCharacterDataStatus = 0;
+                agentInspect->FetchSearchCommentStatus = 0;
+                agentInspect->FetchCharacterDataStatus = 0;
+                
                 return true;
             }, "检查装等");
 
