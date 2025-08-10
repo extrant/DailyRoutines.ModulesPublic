@@ -3,6 +3,7 @@ using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using KamiToolKit.Nodes;
@@ -75,13 +76,20 @@ public class AutoMoveGearsNotInSet : DailyModuleBase
                 {
                     Button = new TextButtonNode
                     {
-                        Size      = new(240, 28f),
-                        Position  = new(72, 20),
+                        Size      = new(50),
+                        Position  = new(12, 515),
                         IsVisible = true,
-                        Label     = GetLoc("AutoMoveGearsNotInSet-Button"),
+                        Label     = new SeStringBuilder().AddIcon(BitmapFontIcon.SwordSheathed).Build(),
+                        Tooltip   = GetLoc("AutoMoveGearsNotInSet-Button"),
                         OnClick   = () => ChatHelper.SendMessage($"/pdr {Command}"),
                         IsEnabled = true,
                     };
+
+                    Button.BackgroundNode.TexturePath        = "ui/uld/partyfinder_hr1.tex";
+                    Button.BackgroundNode.TextureCoordinates = new(38);
+                    Button.BackgroundNode.TextureSize        = new(32, 34);
+                    Button.BackgroundNode.LeftOffset         = 0;
+                    Button.BackgroundNode.RightOffset        = 0f;
                     
                     Service.AddonController.AttachNode(Button, ArmouryBoard->RootNode);
                 }
