@@ -51,7 +51,8 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
 
         FrameworkManager.Register(OnUpdate, throttleMS: 5_000);
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_CharaSelectRemain", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_CharaSelectRemain", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_CharaSelectRemain", OnAddon);
     }
 
     protected override void ConfigUI()
@@ -120,7 +121,8 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
     
     private void OnAddon(AddonEvent type, AddonArgs args)
     {
-        if (CharaSelectRemain == null || !Throttler.Throttle("AutoRecordSubTimeLeft-OnAddonDraw")) return;
+        if (CharaSelectRemain == null) return;
+        if (type == AddonEvent.PostDraw && !Throttler.Throttle("AutoRecordSubTimeLeft-OnAddonDraw")) return;
 
         var agent = AgentLobby.Instance();
         if (agent == null) return;
@@ -174,14 +176,6 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
                           timeInfo.MonthTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.MonthTime),
                           timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
                 ModuleConfig.Save(this);
-
-                if (CharaSelectRemain != null)
-                {
-                    var textNode = CharaSelectRemain->GetTextNodeById(7);
-                    if (textNode != null)
-                        textNode->SetText($"剩余天数: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.MonthTime))}\n" +
-                                          $"剩余时长: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.PointTime))}");
-                }
 
                 RefreshEntry(contentID);
             }
