@@ -24,10 +24,17 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
     private static TextNode? TargetHPTextNode;
     private static TextNode? FocusTargetHPTextNode;
     private static TextNode? MainTargetSplitHPTextNode;
+    
     private static TextNode? TargetCastBarTextNode;
+    private static TextNode? TargetSplitCastBarTextNode;
     private static TextNode? FocusTargetCastBarTextNode;
     
+    private static TextButtonNode? ClearFocusButtonNode;
+    
     private static int NumberPreview = 12345678;
+    
+    private static int CurrentSecondRowOffset = 41;
+    private static int LastPlayerStatusCount  = -1;
     
     protected override void Init()
     {
@@ -44,6 +51,12 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
     }
 
     protected override void ConfigUI()
@@ -147,6 +160,70 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ref ModuleConfig.HideAutoAttack,
                                 false,
                                 ref ModuleConfig.FocusCastBarIsEnabled);
+        
+        ImGui.NewLine();
+
+        // 状态效果
+        using (ImRaii.PushId("Status"))
+        {
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextColored(LightSkyBlue, LuminaWrapper.GetAddonText(215));
+
+            ImGui.SameLine(0, 8f * GlobalFontScale);
+            if (ImGui.Checkbox($"{GetLoc("Enable")}", ref ModuleConfig.StatusIsEnabled))
+            {
+                SaveConfig(ModuleConfig);
+
+                if (!ModuleConfig.StatusIsEnabled)
+                {
+                    OnAddonTargetInfoCastBar(AddonEvent.PreFinalize, null);
+                    OnAddonTargetInfoBuffDebuff(AddonEvent.PreFinalize, null);
+                }
+            }
+
+            if (!ModuleConfig.StatusIsEnabled) return;
+
+            ImGui.Spacing();
+
+            using (ImRaii.PushIndent())
+            {
+                ImGui.SetNextItemWidth(150f * GlobalFontScale);
+                if (ImGui.InputFloat($"{GetLoc("Scale")}", ref ModuleConfig.StatusScale, 0.1f, 0.1f, format: "%.2f"))
+                    ModuleConfig.StatusScale = Math.Clamp(ModuleConfig.StatusScale, 0.1f, 10f);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    SaveConfig(ModuleConfig);
+                    
+                    OnAddonTargetInfoCastBar(AddonEvent.PreFinalize, null);
+                    OnAddonTargetInfoBuffDebuff(AddonEvent.PreFinalize, null);
+                }
+            }
+        }
+        
+        ImGui.NewLine();
+
+        // 清除焦点目标
+        using (ImRaii.PushId("ClearFocus"))
+        {
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextColored(LightSkyBlue, $"{GetLoc("OptimizedTargetInfo-ClearFocusTarget")}");
+
+            ImGui.SameLine(0, 8f * GlobalFontScale);
+            if (ImGui.Checkbox($"{GetLoc("Enable")}", ref ModuleConfig.ClearFocusIsEnabled))
+                SaveConfig(ModuleConfig);
+
+            if (!ModuleConfig.ClearFocusIsEnabled) return;
+
+            ImGui.Spacing();
+
+            using (ImRaii.PushIndent())
+            {
+                ImGui.SetNextItemWidth(150f * GlobalFontScale);
+                ImGui.InputFloat2($"{GetLoc("OptimizedTargetInfo-PosOffset")}", ref ModuleConfig.ClearFocusPosition, "%.2f");
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    SaveConfig(ModuleConfig);
+            }
+        }
     }
     
     protected override void Uninit()
@@ -162,6 +239,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         
         DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfoCastBar);
         OnAddonTargetInfoCastBar(AddonEvent.PreFinalize, null);
+        
+        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfoBuffDebuff);
+        OnAddonTargetInfoBuffDebuff(AddonEvent.PreFinalize, null);
     }
 
     private void DrawTargetConfigSection(
@@ -229,7 +309,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
             SaveConfig(ModuleConfig);
     }
 
-    private static void OnAddonTargetInfo(AddonEvent type, AddonArgs args) =>
+    private static void OnAddonTargetInfo(AddonEvent type, AddonArgs args)
+    {
         HandleAddonEventTargetInfo(type,
                                    ModuleConfig.IsEnabled,
                                    ModuleConfig.HideAutoAttack,
@@ -245,6 +326,106 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                    ModuleConfig.CustomColor,
                                    () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
                                    (width, height) => new Vector2(width - 5, height + 2));
+        
+        HandleAddonEventCastBar(type,
+                                ModuleConfig.CastBarIsEnabled,
+                                TargetInfo,
+                                ref TargetCastBarTextNode,
+                                10,
+                                12,
+                                ModuleConfig.CastBarPosition,
+                                ModuleConfig.CastBarAlignLeft,
+                                ModuleConfig.CastBarFontSize,
+                                ModuleConfig.CastBarCustomColor,
+                                () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
+                                (width, height) => new Vector2(width - 5, height));
+        
+        switch (type)
+        {
+            case AddonEvent.PreFinalize:
+                if (TargetInfo == null) return;
+                
+                for (var i = 0; i < 15; i++)
+                {
+                    var node = TargetInfo->UldManager.NodeList[32 - i];
+                    node->ScaleX    =  1.0f;
+                    node->ScaleY    =  1.0f;
+                    node->X         =  i * 25;
+                    node->Y         =  0;
+                    node->DrawFlags |= 0x1;
+                }
+
+                for (var i = 18; i >= 3; i--)
+                {
+                    TargetInfo->UldManager.NodeList[i]->Y         =  41;
+                    TargetInfo->UldManager.NodeList[i]->DrawFlags |= 0x1;
+                }
+
+                TargetInfo->UldManager.NodeList[2]->DrawFlags |= 0x4;
+                
+                LastPlayerStatusCount  = -1;
+                CurrentSecondRowOffset = 41;
+                break;
+            case AddonEvent.PostDraw:
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
+                    !ModuleConfig.StatusIsEnabled                     ||
+                    TargetInfo == null                                ||
+                    DService.Targets.Target is not IBattleChara target)
+                    return;
+                
+                var playerStatusCount = 0;
+                for (var i = 0; i < 30; i++)
+                {
+                    if (target.StatusList[i].SourceId == LocalPlayerState.EntityID)
+                        playerStatusCount++;
+                }
+
+                if (LastPlayerStatusCount == playerStatusCount) return;
+                LastPlayerStatusCount = playerStatusCount;
+                
+                var adjustOffsetY = -(int)(41 * (ModuleConfig.StatusScale - 1.0f) / 4.5);
+                var xIncrement = (int)((ModuleConfig.StatusScale - 1.0f) * 25);
+                
+                var growingOffsetX = 0;
+                for (var i = 0; i < 15; i++)
+                {
+                    var node = TargetInfo->UldManager.NodeList[32 - i];
+                    node->X = (i * 25) + growingOffsetX;
+
+                    if (i < playerStatusCount)
+                    {
+                        node->ScaleX   =  ModuleConfig.StatusScale;
+                        node->ScaleY   =  ModuleConfig.StatusScale;
+                        node->Y        =  adjustOffsetY;
+                        growingOffsetX += xIncrement;
+                    }
+                    else
+                    {
+                        node->ScaleX = 1.0f;
+                        node->ScaleY = 1.0f;
+                        node->Y      = 0;
+                    }
+
+                    node->DrawFlags |= 0x1;
+                }
+
+                var newSecondRowOffset = (playerStatusCount > 0) ? (int)(ModuleConfig.StatusScale * 41) : 41;
+                if (newSecondRowOffset != CurrentSecondRowOffset)
+                {
+                    for (var i = 17; i >= 3; i--)
+                    {
+                        TargetInfo->UldManager.NodeList[i]->Y         =  newSecondRowOffset;
+                        TargetInfo->UldManager.NodeList[i]->DrawFlags |= 0x1;
+                    }
+
+                    CurrentSecondRowOffset = newSecondRowOffset;
+                }
+
+                TargetInfo->UldManager.NodeList[2]->DrawFlags |= 0x4;
+                TargetInfo->UldManager.NodeList[2]->DrawFlags |= 0x1;
+                break;
+        }
+    }
 
     private static void OnAddonTargetInfoSplitTarget(AddonEvent type, AddonArgs args) =>
         HandleAddonEventTargetInfo(type,
@@ -285,7 +466,6 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ModuleConfig.FocusCastBarIsEnabled,
                                 FocusTargetInfo,
                                 ref FocusTargetCastBarTextNode,
-                                "OptimizedTargetInfo-FocusCastBar",
                                 3,
                                 5,
                                 ModuleConfig.FocusCastBarPosition,
@@ -294,14 +474,47 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ModuleConfig.FocusCastBarCustomColor,
                                 () => DService.Targets.FocusTarget as IBattleChara,
                                 (width, height) => new Vector2(width - 5, height));
+
+        switch (type)
+        {
+            case AddonEvent.PreFinalize:
+                Service.AddonController.DetachNode(ClearFocusButtonNode);
+                ClearFocusButtonNode = null;
+                break;
+            case AddonEvent.PostDraw:
+                if (FocusTargetInfo == null) return;
+                
+                if (ClearFocusButtonNode == null)
+                {
+                    ClearFocusButtonNode = new()
+                    {
+                        IsVisible = true,
+                        Size = new(32),
+                        Position = new(-13, 12),
+                        Label = "\ue04c",
+                        Tooltip   = GetLoc("OptimizedTargetInfo-ClearFocusTarget"),
+                        OnClick = () => DService.Targets.FocusTarget = null
+                    };
+                    ClearFocusButtonNode.BackgroundNode.IsVisible = false;
+                    
+                    Service.AddonController.AttachNode(ClearFocusButtonNode, FocusTargetInfo->RootNode);
+                }
+
+                if (Throttler.Throttle("OptimizedTargetInfo-ClearFocusTarget"))
+                {
+                    ClearFocusButtonNode.IsVisible = ModuleConfig.ClearFocusIsEnabled;
+                    ClearFocusButtonNode.Position  = new Vector2(-13, 12) + ModuleConfig.ClearFocusPosition;
+                }
+                
+                break;
+        }
     }
 
     private static void OnAddonTargetInfoCastBar(AddonEvent type, AddonArgs args) =>
         HandleAddonEventCastBar(type,
                                 ModuleConfig.CastBarIsEnabled,
                                 TargetInfoCastBar,
-                                ref TargetCastBarTextNode,
-                                "OptimizedTargetInfo-CastBar",
+                                ref TargetSplitCastBarTextNode,
                                 2,
                                 4,
                                 ModuleConfig.CastBarPosition,
@@ -310,6 +523,97 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ModuleConfig.CastBarCustomColor,
                                 () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
                                 (width, height) => new Vector2(width - 5, height));
+    
+    private static void OnAddonTargetInfoBuffDebuff(AddonEvent type, AddonArgs args)
+    {
+        switch (type)
+        {
+            case AddonEvent.PreFinalize:
+                if (TargetInfoBuffDebuff == null) return;
+                
+                for (var i = 0; i < 15; i++)
+                {
+                    var node = TargetInfoBuffDebuff->UldManager.NodeList[31 - i];
+                    node->ScaleX    =  1.0f;
+                    node->ScaleY    =  1.0f;
+                    node->X         =  i * 25;
+                    node->Y         =  0;
+                    node->DrawFlags |= 0x1;
+                }
+
+                for (var i = 17; i >= 2; i--)
+                {
+                    TargetInfoBuffDebuff->UldManager.NodeList[i]->Y         =  41;
+                    TargetInfoBuffDebuff->UldManager.NodeList[i]->DrawFlags |= 0x1;
+                }
+                    
+                TargetInfoBuffDebuff->UldManager.NodeList[1]->DrawFlags |= 0x4;
+                
+                LastPlayerStatusCount  = -1;
+                CurrentSecondRowOffset = 41;
+                break;
+            case AddonEvent.PostDraw:
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
+                    !ModuleConfig.StatusIsEnabled                     ||
+                    TargetInfoBuffDebuff == null                      ||
+                    DService.Targets.Target is not IBattleChara target)
+                    return;
+                
+                var playerStatusCount = 0;
+                for (var i = 0; i < 30; i++)
+                {
+                    if (target.StatusList[i].SourceId == LocalPlayerState.EntityID)
+                        playerStatusCount++;
+                }
+
+                if (LastPlayerStatusCount == playerStatusCount) return;
+
+                LastPlayerStatusCount = playerStatusCount;
+
+                var adjustOffsetY = -(int)(41 * (ModuleConfig.StatusScale - 1.0f) / 4.5);
+
+                var xIncrement = (int)((ModuleConfig.StatusScale - 1.0f) * 25);
+
+                var growingOffsetX = 0;
+                for (var i = 0; i < 15; i++)
+                {
+                    var node = TargetInfoBuffDebuff->UldManager.NodeList[31 - i];
+                    node->X = (i * 25) + growingOffsetX;
+
+                    if (i < playerStatusCount)
+                    {
+                        node->ScaleX   =  ModuleConfig.StatusScale;
+                        node->ScaleY   =  ModuleConfig.StatusScale;
+                        node->Y        =  adjustOffsetY;
+                        growingOffsetX += xIncrement;
+                    }
+                    else
+                    {
+                        node->ScaleX = 1.0f;
+                        node->ScaleY = 1.0f;
+                        node->Y      = 0;
+                    }
+
+                    node->DrawFlags |= 0x1;
+                }
+                
+                var newSecondRowOffset = (playerStatusCount > 0) ? (int)(ModuleConfig.StatusScale * 41) : 41;
+                if (newSecondRowOffset != CurrentSecondRowOffset)
+                {
+                    for (var i = 16; i >= 2; i--)
+                    {
+                        TargetInfoBuffDebuff->UldManager.NodeList[i]->Y         =  newSecondRowOffset;
+                        TargetInfoBuffDebuff->UldManager.NodeList[i]->DrawFlags |= 0x1;
+                    }
+
+                    CurrentSecondRowOffset = newSecondRowOffset;
+                }
+
+                TargetInfoBuffDebuff->UldManager.NodeList[1]->DrawFlags |= 0x4;
+                TargetInfoBuffDebuff->UldManager.NodeList[1]->DrawFlags |= 0x1;
+                break;
+        }
+    }
 
     private static void HandleAddonEventTargetInfo(
         AddonEvent                type,
@@ -400,7 +704,6 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         bool                      isEnabled,
         AtkUnitBase*              addon,
         ref TextNode?             textNode,
-        string                    throttleKey,
         uint                      nodeIDToAttach,
         uint                      textNodeID,
         Vector2                   position,
@@ -433,9 +736,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
                     Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
                 }
-
-                // if (!Throttler.Throttle(throttleKey, 10)) return;
-
+                
                 textNode.IsVisible = isEnabled;
                 if (!textNode.IsVisible) return;
 
@@ -444,7 +745,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;
 
-                    textNode.IsVisible = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Hud2)->IntArray[69] != -1;
+                    textNode.IsVisible = target.CurrentCastTime > 0;
                     if (!textNode.IsVisible) return;
 
                     textNode.Position         = position + new Vector2(4, -12);
@@ -464,6 +765,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 break;
         }
     }
+    
 
     private static string FormatNumber(uint num, DisplayFormat? displayFormat = null)
     {
@@ -548,6 +850,12 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         public Vector4 FocusCastBarCustomColor = new(1, 1, 1, 0);
         public byte    FocusCastBarFontSize    = 14;
         public bool    FocusCastBarAlignLeft;
+
+        public bool  StatusIsEnabled = true;
+        public float StatusScale     = 1.4f;
+        
+        public bool    ClearFocusIsEnabled = true;
+        public Vector2 ClearFocusPosition  = new(0);
     }
     
     public enum DisplayFormat
