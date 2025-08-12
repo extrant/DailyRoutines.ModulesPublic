@@ -14,8 +14,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = "目标情报界面优化",
-        Description = "对目标情报与焦点目标情报界面进行优化, 显示目标体力值与目标技能咏唱剩余时间, 放大自身状态效果, 并支持快捷取消焦点目标",
+        Title       = GetLoc("OptimizedTargetInfoTitle"),
+        Description = GetLoc("OptimizedTargetInfoDescription"),
         Category    = ModuleCategories.UIOptimization,
     };
 
@@ -24,6 +24,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
     private static TextNode? TargetHPTextNode;
     private static TextNode? FocusTargetHPTextNode;
     private static TextNode? MainTargetSplitHPTextNode;
+    private static TextNode? TargetCastBarTextNode;
+    private static TextNode? FocusTargetCastBarTextNode;
     
     private static int NumberPreview = 12345678;
     
@@ -39,6 +41,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_FocusTargetInfo", OnAddonFocusTargetInfo);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_FocusTargetInfo", OnAddonFocusTargetInfo);
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
     }
 
     protected override void ConfigUI()
@@ -116,6 +121,47 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ref ModuleConfig.HideAutoAttack,
                                 false,
                                 ref ModuleConfig.FocusIsEnabled);
+        
+        ImGui.NewLine();
+        
+        // 咏唱栏
+        DrawTargetConfigSection(LuminaWrapper.GetAddonText(1032),
+                                "CastBar",
+                                ref ModuleConfig.CastBarAlignLeft,
+                                ref ModuleConfig.CastBarPosition,
+                                ref ModuleConfig.CastBarCustomColor,
+                                ref ModuleConfig.CastBarFontSize,
+                                ref ModuleConfig.HideAutoAttack,
+                                false,
+                                ref ModuleConfig.CastBarIsEnabled);
+        
+        ImGui.NewLine();
+        
+        // 咏唱栏
+        DrawTargetConfigSection($"{LuminaWrapper.GetAddonText(1110)} {LuminaWrapper.GetAddonText(1032)}",
+                                "FocusCastBar",
+                                ref ModuleConfig.FocusCastBarAlignLeft,
+                                ref ModuleConfig.FocusCastBarPosition,
+                                ref ModuleConfig.FocusCastBarCustomColor,
+                                ref ModuleConfig.FocusCastBarFontSize,
+                                ref ModuleConfig.HideAutoAttack,
+                                false,
+                                ref ModuleConfig.FocusCastBarIsEnabled);
+    }
+    
+    protected override void Uninit()
+    {
+        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfo);
+        OnAddonTargetInfo(AddonEvent.PreFinalize, null);
+        
+        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfoSplitTarget);
+        OnAddonTargetInfoSplitTarget(AddonEvent.PreFinalize, null);
+        
+        DService.AddonLifecycle.UnregisterListener(OnAddonFocusTargetInfo);
+        OnAddonFocusTargetInfo(AddonEvent.PreFinalize, null);
+        
+        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfoCastBar);
+        OnAddonTargetInfoCastBar(AddonEvent.PreFinalize, null);
     }
 
     private void DrawTargetConfigSection(
@@ -217,7 +263,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                    () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
                                    (width, height) => new Vector2(width - 5, height + 2));
 
-    private static void OnAddonFocusTargetInfo(AddonEvent type, AddonArgs args) =>
+    private static void OnAddonFocusTargetInfo(AddonEvent type, AddonArgs args)
+    {
         HandleAddonEventTargetInfo(type,
                                    ModuleConfig.FocusIsEnabled,
                                    false,
@@ -233,6 +280,36 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                    ModuleConfig.FocusCustomColor,
                                    () => DService.Targets.FocusTarget as IBattleChara,
                                    (width, height) => new Vector2(width - 5, height + 2));
+        
+        HandleAddonEventCastBar(type,
+                                ModuleConfig.FocusCastBarIsEnabled,
+                                FocusTargetInfo,
+                                ref FocusTargetCastBarTextNode,
+                                "OptimizedTargetInfo-FocusCastBar",
+                                3,
+                                5,
+                                ModuleConfig.FocusCastBarPosition,
+                                ModuleConfig.FocusCastBarAlignLeft,
+                                ModuleConfig.FocusCastBarFontSize,
+                                ModuleConfig.FocusCastBarCustomColor,
+                                () => DService.Targets.FocusTarget as IBattleChara,
+                                (width, height) => new Vector2(width - 5, height));
+    }
+
+    private static void OnAddonTargetInfoCastBar(AddonEvent type, AddonArgs args) =>
+        HandleAddonEventCastBar(type,
+                                ModuleConfig.CastBarIsEnabled,
+                                TargetInfoCastBar,
+                                ref TargetCastBarTextNode,
+                                "OptimizedTargetInfo-CastBar",
+                                2,
+                                4,
+                                ModuleConfig.CastBarPosition,
+                                ModuleConfig.CastBarAlignLeft,
+                                ModuleConfig.CastBarFontSize,
+                                ModuleConfig.CastBarCustomColor,
+                                () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
+                                (width, height) => new Vector2(width - 5, height));
 
     private static void HandleAddonEventTargetInfo(
         AddonEvent                type,
@@ -318,6 +395,76 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         }
     }
 
+    private static void HandleAddonEventCastBar(
+        AddonEvent                type,
+        bool                      isEnabled,
+        AtkUnitBase*              addon,
+        ref TextNode?             textNode,
+        string                    throttleKey,
+        uint                      nodeIDToAttach,
+        uint                      textNodeID,
+        Vector2                   position,
+        bool                      alignLeft,
+        byte                      fontSize,
+        Vector4                   customColor,
+        Func<IBattleChara?>       getTarget,
+        Func<uint, uint, Vector2> getSizeFunc)
+    {
+        switch (type)
+        {
+            case AddonEvent.PostDraw:
+                if (addon == null) return;
+
+                if (textNode == null)
+                {
+                    var sourceTextNode = addon->GetTextNodeById(textNodeID);
+                    if (sourceTextNode == null) return;
+
+                    textNode = new()
+                    {
+                        IsVisible        = isEnabled,
+                        Position         = position + new Vector2(4, -12),
+                        AlignmentType    = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight,
+                        FontSize         = fontSize,
+                        TextFlags        = TextFlags.Edge | TextFlags.Bold,
+                        TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
+                        TextOutlineColor = sourceTextNode->EdgeColor.ToVector4(),
+                    };
+
+                    Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
+                }
+
+                // if (!Throttler.Throttle(throttleKey, 10)) return;
+
+                textNode.IsVisible = isEnabled;
+                if (!textNode.IsVisible) return;
+
+                if (getTarget() is { } target)
+                {
+                    var sourceTextNode = addon->GetTextNodeById(textNodeID);
+                    if (sourceTextNode == null) return;
+
+                    textNode.IsVisible = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Hud2)->IntArray[69] != -1;
+                    if (!textNode.IsVisible) return;
+
+                    textNode.Position         = position + new Vector2(4, -12);
+                    textNode.Size             = getSizeFunc(sourceTextNode->Width, sourceTextNode->Height);
+                    textNode.AlignmentType    = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight;
+                    textNode.FontSize         = fontSize;
+                    textNode.TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
+                    textNode.TextOutlineColor = sourceTextNode->EdgeColor.ToVector4();
+
+                    textNode.Text = $"{target.TotalCastTime - target.CurrentCastTime:F2}";
+                }
+
+                break;
+            case AddonEvent.PreFinalize:
+                Service.AddonController.DetachNode(textNode);
+                textNode = null;
+                break;
+        }
+    }
+
     private static string FormatNumber(uint num, DisplayFormat? displayFormat = null)
     {
         displayFormat ??= ModuleConfig.DisplayFormat;
@@ -371,19 +518,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 return num.ToString("N0");
         }
     }
-
-    protected override void Uninit()
-    {
-        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfo);
-        OnAddonTargetInfo(AddonEvent.PreFinalize, null);
-        
-        DService.AddonLifecycle.UnregisterListener(OnAddonTargetInfoSplitTarget);
-        OnAddonTargetInfoSplitTarget(AddonEvent.PreFinalize, null);
-        
-        DService.AddonLifecycle.UnregisterListener(OnAddonFocusTargetInfo);
-        OnAddonFocusTargetInfo(AddonEvent.PreFinalize, null);
-    }
-
+    
     private class Config : ModuleConfiguration
     {
         public DisplayFormat DisplayFormat       = DisplayFormat.ChineseOnePrecision;
@@ -401,6 +536,18 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         public Vector4 FocusCustomColor = new(1, 1, 1, 0);
         public byte    FocusFontSize    = 14;
         public bool    FocusAlignLeft;
+        
+        public bool    CastBarIsEnabled   = true;
+        public Vector2 CastBarPosition    = new(0);
+        public Vector4 CastBarCustomColor = new(1, 1, 1, 0);
+        public byte    CastBarFontSize    = 14;
+        public bool    CastBarAlignLeft;
+        
+        public bool    FocusCastBarIsEnabled   = true;
+        public Vector2 FocusCastBarPosition    = new(0);
+        public Vector4 FocusCastBarCustomColor = new(1, 1, 1, 0);
+        public byte    FocusCastBarFontSize    = 14;
+        public bool    FocusCastBarAlignLeft;
     }
     
     public enum DisplayFormat
