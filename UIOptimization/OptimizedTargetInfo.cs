@@ -221,7 +221,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
             using (ImRaii.PushIndent())
             {
                 ImGui.SetNextItemWidth(150f * GlobalFontScale);
-                ImGui.InputFloat2($"{GetLoc("OptimizedTargetInfo-PosOffset")}", ref ModuleConfig.ClearFocusPosition, "%.2f");
+                ImGui.InputFloat2($"{GetLoc("OptimizedTargetInfo-PosOffset")}", ref ModuleConfig.ClearFocusPosition, format: "%.2f");
                 if (ImGui.IsItemDeactivatedAfterEdit())
                     SaveConfig(ModuleConfig);
             }
@@ -299,7 +299,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         }
         
         ImGui.SetNextItemWidth(150f * GlobalFontScale);
-        ImGui.InputFloat2($"{GetLoc("OptimizedTargetInfo-PosOffset")}###Position", ref position, "%.2f");
+        ImGui.InputFloat2($"{GetLoc("OptimizedTargetInfo-PosOffset")}###Position", ref position, format: "%.2f");
         if (ImGui.IsItemDeactivatedAfterEdit())
             SaveConfig(ModuleConfig);
 
