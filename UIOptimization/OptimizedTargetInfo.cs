@@ -369,9 +369,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 CurrentSecondRowOffset = 41;
                 break;
             case AddonEvent.PostDraw:
-                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
-                    !ModuleConfig.StatusIsEnabled                     ||
-                    TargetInfo == null                                ||
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status", 100) ||
+                    !ModuleConfig.StatusIsEnabled                          ||
+                    TargetInfo == null                                     ||
                     DService.Targets.Target is not IBattleChara target)
                     return;
                 
@@ -555,9 +555,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 CurrentSecondRowOffset = 41;
                 break;
             case AddonEvent.PostDraw:
-                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
-                    !ModuleConfig.StatusIsEnabled                     ||
-                    TargetInfoBuffDebuff == null                      ||
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status", 100) ||
+                    !ModuleConfig.StatusIsEnabled                          ||
+                    TargetInfoBuffDebuff == null                           ||
                     DService.Targets.Target is not IBattleChara target)
                     return;
                 
