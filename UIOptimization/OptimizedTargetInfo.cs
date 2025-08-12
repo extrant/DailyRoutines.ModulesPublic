@@ -19,6 +19,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
     };
 
+    private static readonly Vector4 EdgeColor = new(0, 0.372549f, 1, 1);
+
     private static Config ModuleConfig = null!;
     
     private static TextNode? TargetHPTextNode;
@@ -731,7 +733,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         FontSize         = fontSize,
                         TextFlags        = TextFlags.Edge | TextFlags.Bold,
                         TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
-                        TextOutlineColor = sourceTextNode->EdgeColor.ToVector4(),
+                        TextOutlineColor = EdgeColor,
                     };
 
                     Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
@@ -748,12 +750,11 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     textNode.IsVisible = target.CurrentCastTime > 0;
                     if (!textNode.IsVisible) return;
 
-                    textNode.Position         = position + new Vector2(4, -12);
-                    textNode.Size             = getSizeFunc(sourceTextNode->Width, sourceTextNode->Height);
-                    textNode.AlignmentType    = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight;
-                    textNode.FontSize         = fontSize;
-                    textNode.TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
-                    textNode.TextOutlineColor = sourceTextNode->EdgeColor.ToVector4();
+                    textNode.Position      = position + new Vector2(4, -12);
+                    textNode.Size          = getSizeFunc(sourceTextNode->Width, sourceTextNode->Height);
+                    textNode.AlignmentType = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight;
+                    textNode.FontSize      = fontSize;
+                    textNode.TextColor     = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
 
                     textNode.Text = $"{target.TotalCastTime - target.CurrentCastTime:F2}";
                 }
