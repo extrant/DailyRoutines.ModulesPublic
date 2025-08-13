@@ -1,18 +1,17 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoInDutySelectYes : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoInDutySelectYesTitle"),
+        Title       = GetLoc("AutoInDutySelectYesTitle"),
         Description = GetLoc("AutoInDutySelectYesDescription"),
-        Category = ModuleCategories.Combat,
+        Category    = ModuleCategories.Combat,
     };
 
     private static readonly AhoCorasick Blacklist = new(
@@ -28,13 +27,13 @@ public class AutoInDutySelectYes : DailyModuleBase
         var currentZone = DService.ClientState.TerritoryType;
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-        if (PresetSheet.Contents.ContainsKey(currentZone)) 
+        if (GameState.ContentFinderCondition > 0) 
             OnZoneChanged(currentZone);
     }
 
     private static void OnZoneChanged(ushort zone)
     {
-        if (PresetSheet.Contents.ContainsKey(zone))
+        if (GameState.ContentFinderCondition > 0)
             DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
         else
             DService.AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
