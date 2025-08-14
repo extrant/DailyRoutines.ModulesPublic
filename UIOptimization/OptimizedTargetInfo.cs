@@ -734,6 +734,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         TextFlags        = TextFlags.Edge | TextFlags.Bold,
                         TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
                         TextOutlineColor = EdgeColor,
+                        FontType         = FontType.Miedinger
                     };
 
                     Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
