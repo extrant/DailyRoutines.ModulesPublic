@@ -240,8 +240,8 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         ref uint       extraParam,
         ref byte       a7)
     {
-        ActionsToHighlight.Remove(actionId);
-        LastActionID = actionId;
+        ActionsToHighlight.Remove(actionID);
+        LastActionID = actionID;
     }
 
     private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionId)
