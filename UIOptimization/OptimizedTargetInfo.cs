@@ -369,9 +369,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 CurrentSecondRowOffset = 41;
                 break;
             case AddonEvent.PostDraw:
-                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
-                    !ModuleConfig.StatusIsEnabled                     ||
-                    TargetInfo == null                                ||
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status", 100) ||
+                    !ModuleConfig.StatusIsEnabled                          ||
+                    TargetInfo == null                                     ||
                     DService.Targets.Target is not IBattleChara target)
                     return;
                 
@@ -555,9 +555,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 CurrentSecondRowOffset = 41;
                 break;
             case AddonEvent.PostDraw:
-                if (!Throttler.Throttle("OptimizedTargetInfo-Status") ||
-                    !ModuleConfig.StatusIsEnabled                     ||
-                    TargetInfoBuffDebuff == null                      ||
+                if (!Throttler.Throttle("OptimizedTargetInfo-Status", 100) ||
+                    !ModuleConfig.StatusIsEnabled                          ||
+                    TargetInfoBuffDebuff == null                           ||
                     DService.Targets.Target is not IBattleChara target)
                     return;
                 
@@ -631,7 +631,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         bool                      alignLeft,
         byte                      fontSize,
         Vector4                   customColor,
-        Func<IBattleChara?>       getTarget,
+        Func<IGameObject?>       getTarget,
         Func<uint, uint, Vector2> getSizeFunc)
     {
         switch (type)
@@ -673,7 +673,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 textNode.IsVisible = isEnabled;
                 if (!isEnabled) return;
 
-                if (getTarget() is { } target)
+                if (getTarget() is IBattleChara target)
                 {
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;
@@ -712,7 +712,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         bool                      alignLeft,
         byte                      fontSize,
         Vector4                   customColor,
-        Func<IBattleChara?>       getTarget,
+        Func<IGameObject?>        getTarget,
         Func<uint, uint, Vector2> getSizeFunc)
     {
         switch (type)
@@ -734,6 +734,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         TextFlags        = TextFlags.Edge | TextFlags.Bold,
                         TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
                         TextOutlineColor = EdgeColor,
+                        FontType         = FontType.Miedinger
                     };
 
                     Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
@@ -742,7 +743,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 textNode.IsVisible = isEnabled;
                 if (!textNode.IsVisible) return;
 
-                if (getTarget() is { } target)
+                if (getTarget() is IBattleChara target)
                 {
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;

@@ -16,7 +16,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 using Status = Lumina.Excel.Sheets.Status;
 
-
 namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoHighlightStatusAction : DailyModuleBase
@@ -29,38 +28,36 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         Author      = ["HaKu"]
     };
 
-    private static readonly CompSig isActionHighlightedSig = new("E8 ?? ?? ?? ?? 88 47 41 80 BB C9 00 00 00 01");
-
+    private static readonly CompSig IsActionHighlightedSig = new("E8 ?? ?? ?? ?? 88 47 41 80 BB C9 00 00 00 01");
     [return: MarshalAs(UnmanagedType.U1)]
     private delegate bool IsActionHighlightedDelegate(ActionManager* actionManager, ActionType actionType, uint actionId);
+    private static Hook<IsActionHighlightedDelegate>? IsActionHighlightedHook;
 
-    private static Hook<IsActionHighlightedDelegate>? isActionHighlightedHook;
+    private static Config ModuleConfig = null!;
 
-    private static Config moduleConfig = null!;
-
-    private static StatusSelectCombo? statusCombo;
-    private static ActionSelectCombo? actionCombo;
+    private static StatusSelectCombo? StatusCombo;
+    private static ActionSelectCombo? ActionCombo;
 
     public static readonly  HashSet<uint>            ActionsToHighlight = [];
-    private static          uint                     lastActionId;
-    private static readonly Dictionary<ushort, uint> lastStatusTarget = new();
+    private static          uint                     LastActionID;
+    private static readonly Dictionary<ushort, uint> LastStatusTarget = [];
 
     protected override void Init()
     {
-        moduleConfig = LoadConfig<Config>() ??
+        ModuleConfig = LoadConfig<Config>() ??
                        new()
                        {
                            StatusToMonitor = statusToAction.ToDictionary(x => x.Key, x => x.Value)
                        };
 
-        statusCombo ??= new("StatusCombo", PresetSheet.Statuses.Values);
-        actionCombo ??= new("ActionCombo", PresetSheet.PlayerActions.Values);
+        StatusCombo ??= new("StatusCombo", PresetSheet.Statuses.Values);
+        ActionCombo ??= new("ActionCombo", PresetSheet.PlayerActions.Values);
 
-        isActionHighlightedHook = isActionHighlightedSig.GetHook<IsActionHighlightedDelegate>(IsActionHighlightedDetour);
-        isActionHighlightedHook.Enable();
+        IsActionHighlightedHook = IsActionHighlightedSig.GetHook<IsActionHighlightedDelegate>(IsActionHighlightedDetour);
+        IsActionHighlightedHook.Enable();
 
         UseActionManager.RegPreUseActionLocation(OnPreUseActionLocation);
-        FrameworkManager.Register(OnUpdate, throttleMS: 200);
+        FrameworkManager.Register(OnUpdate, throttleMS: 500);
     }
 
     protected override void Uninit()
@@ -74,38 +71,38 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     protected override void ConfigUI()
     {
         ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        if (ImGui.SliderFloat($"{GetLoc("Threshold")} (s)##ReminderThreshold", ref moduleConfig.Threshold, 2.0f, 10.0f, "%.1f"))
-            SaveConfig(moduleConfig);
+        if (ImGui.SliderFloat($"{GetLoc("Threshold")} (s)##ReminderThreshold", ref ModuleConfig.Threshold, 2.0f, 10.0f, "%.1f"))
+            SaveConfig(ModuleConfig);
         ImGuiOm.HelpMarker(GetLoc("AutoHighlightStatusAction-ThresholdHelp"));
         ImGui.NewLine();
 
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         using (ImRaii.PushId("Status"))
-            statusCombo.DrawRadio();
+            StatusCombo.DrawRadio();
         ImGui.TextDisabled("↓");
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         using (ImRaii.PushId("Action"))
-            actionCombo.DrawCheckbox();
+            ActionCombo.DrawCheckbox();
 
         if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
         {
-            if (statusCombo.SelectedStatusID != 0 && actionCombo.SelectedActionIDs.Count > 0)
+            if (StatusCombo.SelectedStatusID != 0 && ActionCombo.SelectedActionIDs.Count > 0)
             {
-                moduleConfig.StatusToMonitor[statusCombo.SelectedStatusID] = actionCombo.SelectedActionIDs.ToList();
-                moduleConfig.Save(this);
+                ModuleConfig.StatusToMonitor[StatusCombo.SelectedStatusID] = ActionCombo.SelectedActionIDs.ToList();
+                ModuleConfig.Save(this);
             }
         }
 
         ImGui.Spacing();
 
-        foreach (var (status, actions) in moduleConfig.StatusToMonitor)
+        foreach (var (status, actions) in ModuleConfig.StatusToMonitor)
         {
             using var id = ImRaii.PushId($"{status}");
 
             if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.TrashAlt, GetLoc("Delete")))
             {
-                moduleConfig.StatusToMonitor.Remove(status);
-                moduleConfig.Save(this);
+                ModuleConfig.StatusToMonitor.Remove(status);
+                ModuleConfig.Save(this);
             }
 
             if (!LuminaGetter.TryGetRow<Status>(status, out var statusRow) ||
@@ -117,7 +114,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
-                statusCombo.SelectedStatusID = status;
+                StatusCombo.SelectedStatusID = status;
 
             ImGui.SameLine();
             ImGui.TextDisabled("→");
@@ -139,7 +136,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
-                actionCombo.SelectedActionIDs = actions.ToHashSet();
+                ActionCombo.SelectedActionIDs = actions.ToHashSet();
         }
     }
 
@@ -149,7 +146,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         {
             // clear record when leaving combat
             ActionsToHighlight.Clear();
-            lastStatusTarget.Clear();
+            LastStatusTarget.Clear();
             return;
         }
 
@@ -162,12 +159,13 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
         foreach (var status in localPlayer->StatusManager.Status)
         {
-            if (!moduleConfig.StatusToMonitor.TryGetValue(status.StatusId, out var actions))
+            if (status.SourceObject != localPlayer->GetGameObjectId()) continue;
+            if (!ModuleConfig.StatusToMonitor.TryGetValue(status.StatusId, out var actions))
                 continue;
 
             foreach (var action in actions)
                 actionToHighlight[action] = status.RemainingTime;
-            lastStatusTarget[status.StatusId] = localPlayer->EntityId;
+            LastStatusTarget[status.StatusId] = localPlayer->EntityId;
         }
 
         // status on current target
@@ -176,17 +174,18 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         {
             foreach (var status in battleNpc.ToBCStruct()->StatusManager.Status)
             {
-                if (!moduleConfig.StatusToMonitor.TryGetValue(status.StatusId, out var actions))
+                if (status.SourceObject != localPlayer->GetGameObjectId()) continue;
+                if (!ModuleConfig.StatusToMonitor.TryGetValue(status.StatusId, out var actions))
                     continue;
 
                 foreach (var action in actions)
                     actionToHighlight[action] = status.RemainingTime;
-                lastStatusTarget[status.StatusId] = battleNpc.EntityId;
+                LastStatusTarget[status.StatusId] = battleNpc.EntityId;
             }
         }
 
         // status in cache
-        foreach (var status in lastStatusTarget)
+        foreach (var status in LastStatusTarget)
         {
             // check entity is still valid
             var lastTarget = CharacterManager.Instance()->LookupBattleCharaByEntityId(status.Value);
@@ -208,7 +207,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                     continue;
 
                 // manually add action to highlight
-                if (!moduleConfig.StatusToMonitor.TryGetValue(status.Key, out var actions))
+                if (!ModuleConfig.StatusToMonitor.TryGetValue(status.Key, out var actions))
                     continue;
 
                 foreach (var action in actions)
@@ -223,9 +222,9 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         {
             var actionChain = FetchComboChain(actionId);
 
-            var cutoff        = moduleConfig.Threshold * actionChain.Length;
+            var cutoff        = ModuleConfig.Threshold * actionChain.Length;
             var notInChain    = actionChain.All(id => !manager->IsActionHighlighted(ActionType.Action, id));
-            var notLastAction = actionChain[..^1].All(id => id != lastActionId);
+            var notLastAction = actionChain[..^1].All(id => id != LastActionID);
 
             if (time <= cutoff && notInChain && notLastAction)
                 ActionsToHighlight.Add(actionChain[0]);
@@ -241,12 +240,12 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         ref uint       extraParam,
         ref byte       a7)
     {
-        ActionsToHighlight.Remove(actionID);
-        lastActionId = actionID;
+        ActionsToHighlight.Remove(actionId);
+        LastActionID = actionId;
     }
 
     private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionId)
-        => ActionsToHighlight.Contains(actionId) || isActionHighlightedHook!.Original(actionManager, actionType, actionId);
+        => ActionsToHighlight.Contains(actionId) || IsActionHighlightedHook!.Original(actionManager, actionType, actionId);
 
     private static uint[] FetchComboChain(uint actionId)
     {
