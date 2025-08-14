@@ -16,6 +16,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace DailyRoutines.ModulesPublic;
@@ -189,11 +190,16 @@ public class AutoCountPlayers : DailyModuleBase
         }
     }
 
-    private void OnUpdate(IReadOnlyList<IPlayerCharacter> characters)
+    private unsafe void OnUpdate(IReadOnlyList<IPlayerCharacter> characters)
     {
         if (Entry == null) return;
 
-        Entry.Shown = !DService.Condition[ConditionFlag.InCombat];
+        // 新月岛
+        if (GameState.TerritoryIntendedUse == 61)
+            Entry.Shown = true;
+        else
+            Entry.Shown = !DService.Condition[ConditionFlag.InCombat];
+        
         if (!Entry.Shown)
         {
             Overlay.IsOpen = false;
