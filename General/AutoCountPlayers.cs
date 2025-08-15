@@ -81,7 +81,9 @@ public unsafe class AutoCountPlayers : DailyModuleBase
 
     private static void OnFrameworkUpdate(IFramework framework)
     {
-        if (GameState.TerritoryIntendedUse != 61) return;
+        if (GameState.TerritoryIntendedUse != 61 ||
+            AgentModule.Instance()->GetAgentByInternalId(AgentId.ContentMemberList)->IsAgentActive())
+            return;
 
         var proxy = (InfoProxy24*)InfoModule.Instance()->GetInfoProxyById((InfoProxyId)24);
         if (proxy == null) return;
