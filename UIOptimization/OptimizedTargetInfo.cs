@@ -4,6 +4,7 @@ using System.Numerics;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Nodes;
 using KamiToolKit.Extensions;
@@ -670,7 +671,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         autoAttackNode->ToggleVisibility(false);
                 }
 
-                textNode.IsVisible = isEnabled;
+                textNode.IsVisible = isEnabled && !DService.Condition[ConditionFlag.Gathering];
                 if (!isEnabled) return;
 
                 if (getTarget() is IBattleChara target)
