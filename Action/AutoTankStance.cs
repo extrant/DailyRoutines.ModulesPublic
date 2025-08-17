@@ -55,7 +55,10 @@ public class AutoTankStance : DailyModuleBase
         TaskHelper.Abort();
         
         if (!IsValidPVEDuty()) return;
-        if (ModuleConfig.OnlyAutoStanceWhenOneTank && GameState.ContentFinderConditionData.ContentMemberType.Value.TanksPerParty != 1) return;
+        
+        // TODO: 表数据定义歪了, 所以
+        if (ModuleConfig.OnlyAutoStanceWhenOneTank && 
+            GameState.ContentFinderConditionData.ContentMemberType.Value.HealersPerParty != 1) return;
         
         TaskHelper.DelayNext(1000);
         TaskHelper.Enqueue(CheckCurrentJob);
