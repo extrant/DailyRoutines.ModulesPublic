@@ -38,11 +38,14 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     private static StatusSelectCombo? StatusCombo;
     private static ActionSelectCombo? ActionCombo;
+    
+    public static float Countdown                = 4.0f;
+    public static bool  KeepHighlightAfterExpire = true;
 
     public static readonly  HashSet<uint>            ActionsToHighlight = [];
     private static          uint                     LastActionID;
     private static readonly Dictionary<ushort, uint> LastStatusTarget = [];
-
+    
     protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
@@ -71,15 +74,16 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     protected override void ConfigUI()
     {
         ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        if (ImGui.SliderFloat($"{GetLoc("AutoHighlightStatusAction-Countdown")} (s)##ReminderThreshold", ref ModuleConfig.Threshold, 2.0f, 10.0f, "%.1f"))
+        if (ImGui.SliderFloat($"{GetLoc("AutoHighlightStatusAction-Countdown")}##ReminderThreshold", ref Countdown, 2.0f, 10.0f, "%.1f"))
             SaveConfig(ModuleConfig);
-        ImGuiOm.HelpMarker(GetLoc("AutoHighlightStatusAction-ThresholdHelp"));
+        ImGuiOm.HelpMarker(GetLoc("AutoHighlightStatusAction-Countdown-Help"));
 
         ImGui.SameLine(0, 5f * GlobalFontScale);
-        if (ImGui.Checkbox($"{GetLoc("AutoHighlightStatusAction-Renew")}##Renew", ref ModuleConfig.Renew))
+        if (ImGui.Checkbox($"{GetLoc("AutoHighlightStatusAction-KeepHighlightAfterExpire")}##KeepHighlightAfterExpire", ref KeepHighlightAfterExpire))
             SaveConfig(ModuleConfig);
+        ImGuiOm.HelpMarker(GetLoc("AutoHighlightStatusAction-KeepHighlightAfterExpire-Help"));
 
-        ImGui.NewLine();
+        ImGui.Spacing();
 
         ImGui.SetNextItemWidth(300f * GlobalFontScale);
         using (ImRaii.PushId("Status"))
@@ -89,7 +93,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         using (ImRaii.PushId("Action"))
             ActionCombo.DrawCheckbox();
 
-        ImGui.NewLine();
+        ImGui.Spacing();
 
         if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
         {
@@ -98,8 +102,8 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                 ModuleConfig.MonitoredStatus[StatusCombo.SelectedStatusID] = new StatusConfig
                 {
                     BindActions = ActionCombo.SelectedActionIDs.ToList(),
-                    Countdown   = ModuleConfig.Threshold,
-                    Renew       = ModuleConfig.Renew,
+                    Countdown   = Countdown,
+                    KeepHighlight       = KeepHighlightAfterExpire,
                 };
                 ModuleConfig.Save(this);
             }
@@ -107,16 +111,15 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
         ImGui.NewLine();
 
-        using var table = ImRaii.Table("PlayersInList", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.ScrollY, new Vector2(0, 180f * GlobalFontScale));
+        using var table = ImRaii.Table("PlayersInList", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.ScrollY, new(0, 200f * GlobalFontScale));
         if (!table)
             return;
-
-        var availableWidth = ImGui.GetContentRegionAvail().X;
-        ImGui.TableSetupColumn("##Delete", ImGuiTableColumnFlags.WidthFixed);
-        ImGui.TableSetupColumn(GetLoc("Status"), ImGuiTableColumnFlags.WidthFixed, availableWidth * 0.15f);
-        ImGui.TableSetupColumn(GetLoc("Action"), ImGuiTableColumnFlags.WidthFixed, availableWidth * 0.4f);
-        ImGui.TableSetupColumn(GetLoc("AutoHighlightStatusAction-Countdown"), ImGuiTableColumnFlags.WidthFixed, availableWidth * 0.2f);
-        ImGui.TableSetupColumn(GetLoc("AutoHighlightStatusAction-Renew"), ImGuiTableColumnFlags.WidthFixed, availableWidth * 0.2f);
+        
+        ImGui.TableSetupColumn("##Delete",                                                   ImGuiTableColumnFlags.WidthFixed);
+        ImGui.TableSetupColumn(GetLoc("Status"),                                             ImGuiTableColumnFlags.WidthStretch, 15);
+        ImGui.TableSetupColumn(GetLoc("Action"),                                             ImGuiTableColumnFlags.WidthStretch, 40);
+        ImGui.TableSetupColumn(GetLoc("AutoHighlightStatusAction-Countdown"),                ImGuiTableColumnFlags.WidthStretch, 20);
+        ImGui.TableSetupColumn(GetLoc("AutoHighlightStatusAction-KeepHighlightAfterExpire"), ImGuiTableColumnFlags.WidthStretch, 20);
 
         ImGui.TableHeadersRow();
 
@@ -159,17 +162,24 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
                     ImGui.SameLine();
                 }
             }
-
-            ImGui.TableNextColumn();
-            ImGui.TextDisabled($"{statusConfig.Countdown:0.0}s");
-
-            ImGui.TableNextColumn();
-            ImGui.TextDisabled(statusConfig.Renew ? GetLoc("Yes") : GetLoc("No"));
-
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
                 ActionCombo.SelectedActionIDs = statusConfig.BindActions.ToHashSet();
+
+            ImGui.TableNextColumn();
+            ImGui.Text($"{statusConfig.Countdown:0.0}");
+            if (ImGui.IsItemHovered())
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            if (ImGui.IsItemClicked())
+                Countdown = statusConfig.Countdown;
+
+            ImGui.TableNextColumn();
+            ImGui.Text(statusConfig.KeepHighlight ? GetLoc("Yes") : GetLoc("No"));
+            if (ImGui.IsItemHovered())
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            if (ImGui.IsItemClicked())
+                KeepHighlightAfterExpire = statusConfig.KeepHighlight;
         }
     }
 
@@ -243,7 +253,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
                 // manually add action to highlight
                 // when status is no longer active and renew is enabled
-                if (!ModuleConfig.MonitoredStatus.TryGetValue(status.Key, out var statusConfig) || !statusConfig.Renew)
+                if (!ModuleConfig.MonitoredStatus.TryGetValue(status.Key, out var statusConfig) || !statusConfig.KeepHighlight)
                     continue;
 
                 foreach (var action in statusConfig.BindActions)
@@ -279,8 +289,8 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
         LastActionID = actionID;
     }
 
-    private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionID)
-        => ActionsToHighlight.Contains(actionID) || IsActionHighlightedHook!.Original(actionManager, actionType, actionID);
+    private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionID) => 
+        ActionsToHighlight.Contains(actionID) || IsActionHighlightedHook.Original(actionManager, actionType, actionID);
 
     private static uint[] FetchComboChain(uint actionId)
     {
@@ -303,9 +313,6 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     private class Config : ModuleConfiguration
     {
-        public float Threshold = 4.0f;
-        public bool  Renew     = true;
-
         public Dictionary<uint, StatusConfig> MonitoredStatus = [];
     }
 
@@ -313,38 +320,38 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     private static readonly Dictionary<uint, StatusConfig> statusConfigs = new()
     {
         // AST
-        [838]  = new StatusConfig { BindActions = [3599], Countdown  = 4.0f, Renew  = true },
-        [843]  = new StatusConfig { BindActions = [3608], Countdown  = 4.0f, Renew  = true },
-        [1881] = new StatusConfig { BindActions = [16554], Countdown = 4.0f, Renew  = true },
-        [1248] = new StatusConfig { BindActions = [8324], Countdown  = 10.0f, Renew = false },
+        [838]  = new StatusConfig { BindActions = [3599], Countdown  = 4.0f, KeepHighlight  = true },
+        [843]  = new StatusConfig { BindActions = [3608], Countdown  = 4.0f, KeepHighlight  = true },
+        [1881] = new StatusConfig { BindActions = [16554], Countdown = 4.0f, KeepHighlight  = true },
+        [1248] = new StatusConfig { BindActions = [8324], Countdown  = 10.0f, KeepHighlight = false },
         // WHM
-        [143]  = new StatusConfig { BindActions = [121], Countdown   = 4.0f, Renew = true },
-        [144]  = new StatusConfig { BindActions = [132], Countdown   = 4.0f, Renew = true },
-        [1871] = new StatusConfig { BindActions = [16532], Countdown = 4.0f, Renew = true },
+        [143]  = new StatusConfig { BindActions = [121], Countdown   = 4.0f, KeepHighlight = true },
+        [144]  = new StatusConfig { BindActions = [132], Countdown   = 4.0f, KeepHighlight = true },
+        [1871] = new StatusConfig { BindActions = [16532], Countdown = 4.0f, KeepHighlight = true },
         // SGE
-        [2614] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, Renew = true },
-        [2615] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, Renew = true },
-        [2616] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, Renew = true },
+        [2614] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, KeepHighlight = true },
+        [2615] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, KeepHighlight = true },
+        [2616] = new StatusConfig { BindActions = [24290], Countdown = 6.0f, KeepHighlight = true },
         // SCH
-        [179]  = new StatusConfig { BindActions = [17864], Countdown = 4.0f, Renew = true },
-        [189]  = new StatusConfig { BindActions = [17865], Countdown = 4.0f, Renew = true },
-        [1895] = new StatusConfig { BindActions = [16540], Countdown = 4.0f, Renew = true },
+        [179]  = new StatusConfig { BindActions = [17864], Countdown = 4.0f, KeepHighlight = true },
+        [189]  = new StatusConfig { BindActions = [17865], Countdown = 4.0f, KeepHighlight = true },
+        [1895] = new StatusConfig { BindActions = [16540], Countdown = 4.0f, KeepHighlight = true },
         // BARD
-        [124]  = new StatusConfig { BindActions = [100], Countdown        = 4.0f, Renew = true },
-        [1200] = new StatusConfig { BindActions = [7406, 3560], Countdown = 4.0f, Renew = true },
-        [129]  = new StatusConfig { BindActions = [113], Countdown        = 4.0f, Renew = true },
-        [1201] = new StatusConfig { BindActions = [7407, 3560], Countdown = 4.0f, Renew = true },
+        [124]  = new StatusConfig { BindActions = [100], Countdown        = 4.0f, KeepHighlight = true },
+        [1200] = new StatusConfig { BindActions = [7406, 3560], Countdown = 4.0f, KeepHighlight = true },
+        [129]  = new StatusConfig { BindActions = [113], Countdown        = 4.0f, KeepHighlight = true },
+        [1201] = new StatusConfig { BindActions = [7407, 3560], Countdown = 4.0f, KeepHighlight = true },
         // SAM
-        [1299] = new StatusConfig { BindActions = [7485], Countdown  = 4.0f, Renew = true },
-        [2719] = new StatusConfig { BindActions = [25772], Countdown = 4.0f, Renew = true },
+        [1299] = new StatusConfig { BindActions = [7485], Countdown  = 4.0f, KeepHighlight = true },
+        [2719] = new StatusConfig { BindActions = [25772], Countdown = 4.0f, KeepHighlight = true },
         // WAR
-        [2677] = new StatusConfig { BindActions = [45], Countdown = 4.0f, Renew = true },
+        [2677] = new StatusConfig { BindActions = [45], Countdown = 4.0f, KeepHighlight = true },
     };
 
     private class StatusConfig
     {
         public List<uint> BindActions { get; init; } = [];
         public float      Countdown   { get; init; } = 4.0f;
-        public bool       Renew       { get; init; } = true;
+        public bool       KeepHighlight       { get; init; } = true;
     }
 }
