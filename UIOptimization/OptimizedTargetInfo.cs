@@ -749,7 +749,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;
 
-                    textNode.IsVisible = target.CurrentCastTime > 0;
+                    var leftCastTime = target.TotalCastTime - target.CurrentCastTime;
+                    
+                    textNode.IsVisible = target.CurrentCastTime > 0 && leftCastTime > 0;
                     if (!textNode.IsVisible) return;
 
                     textNode.Position      = position + new Vector2(4, -12);
