@@ -5,6 +5,7 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Nodes;
 using KamiToolKit.Extensions;
@@ -632,7 +633,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         bool                      alignLeft,
         byte                      fontSize,
         Vector4                   customColor,
-        Func<IGameObject?>       getTarget,
+        Func<IGameObject?>        getTarget,
         Func<uint, uint, Vector2> getSizeFunc)
     {
         switch (type)
@@ -674,7 +675,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                 textNode.IsVisible = isEnabled && !DService.Condition[ConditionFlag.Gathering];
                 if (!isEnabled) return;
 
-                if (getTarget() is IBattleChara target)
+                if (getTarget() is IBattleChara { ObjectKind: not ObjectKind.GatheringPoint } target)
                 {
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;
@@ -749,7 +750,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     var sourceTextNode = addon->GetTextNodeById(textNodeID);
                     if (sourceTextNode == null) return;
 
-                    textNode.IsVisible = target.CurrentCastTime > 0;
+                    var leftCastTime = target.TotalCastTime - target.CurrentCastTime;
+                    
+                    textNode.IsVisible = target.CurrentCastTime > 0 && leftCastTime > 0;
                     if (!textNode.IsVisible) return;
 
                     textNode.Position      = position + new Vector2(4, -12);
