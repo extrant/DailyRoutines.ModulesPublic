@@ -1,9 +1,10 @@
-using System.Numerics;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using KamiToolKit.Nodes;
+using KamiToolKit.Classes;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -15,60 +16,89 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         Description = GetLoc("AutoDesynthesizeItemsDescription"),
         Category    = ModuleCategories.UIOperation,
     };
-    
-    private static Config ModuleConfig = null!;
+
+    private static Config             ModuleConfig = null!;
+    private static HorizontalListNode LayoutNode;
+    private static CheckboxNode       CheckboxNode;
+    private static TextButtonNode     ButtonNode;
 
     protected override void Init()
     {
         TaskHelper ??= new() { TimeLimitMS = 10_000 };
-        Overlay    ??= new(this);
 
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageItemSelector", OnAddonList);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "SalvageItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SalvageItemSelector", OnAddonList);
-        if (IsAddonAndNodesReady(SalvageItemSelector)) 
-            OnAddonList(AddonEvent.PostSetup, null);
-    }
-
-    protected override void OverlayUI()
-    {
-        var addon = SalvageItemSelector;
-        if (addon == null) return;
-
-        var pos = new Vector2(addon->GetX() - ImGui.GetWindowSize().X, addon->GetY() + 6);
-        ImGui.SetWindowPos(pos);
-
-        ImGui.TextColored(LightSkyBlue, GetLoc("AutoDesynthesizeItemsTitle"));
-
-        ImGui.Separator();
-
-        using (ImRaii.Disabled(TaskHelper.IsBusy))
-        {
-            if (ImGui.Checkbox(GetLoc("AutoDesynthesizeItems-SkipHQ"), ref ModuleConfig.SkipWhenHQ))
-                SaveConfig(ModuleConfig);
-
-            if (ImGui.Button(GetLoc("Start"))) 
-                StartDesynthesize();
-        }
-        
-        ImGui.SameLine();
-        if (ImGui.Button(GetLoc("Stop"))) 
-            TaskHelper.Abort();
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
+        if (IsAddonAndNodesReady(SalvageItemSelector))
+            OnAddonList(AddonEvent.PostDraw, null);
     }
 
     private void OnAddonList(AddonEvent type, AddonArgs? args)
     {
-        Overlay.IsOpen = type switch
+        switch (type)
         {
-            AddonEvent.PostSetup   => true,
-            AddonEvent.PreFinalize => false,
-            _                      => Overlay.IsOpen,
-        };
-        
-        if (type == AddonEvent.PreFinalize)
-            TaskHelper.Abort();
+            case AddonEvent.PostDraw:
+                if (SalvageItemSelector == null) return;
+
+                if (CheckboxNode == null)
+                {
+                    CheckboxNode = new()
+                    {
+                        IsVisible = true,
+                        Position = new(0,2),
+                        Size = new(16, 16),
+                        IsChecked = ModuleConfig.SkipWhenHQ,
+                        LabelText = GetLoc("AutoDesynthesizeItems-SkipHQ"),
+                        OnClick = newState =>
+                        {
+                            ModuleConfig.SkipWhenHQ = newState;
+                            SaveConfig(ModuleConfig);
+                        }
+                    };
+                }
+
+                if (ButtonNode == null)
+                {
+                    ButtonNode = new()
+                    {
+                        IsVisible = true,
+                        Size = new (200, 28),
+                        Label = $"{Info.Title}",
+                        OnClick = () =>
+                        {
+                            StartDesynthesizeAll();
+                            ToggleButtonNode(true);
+                        },
+                    };
+                }
+                
+                if (LayoutNode == null)
+                {
+                    LayoutNode = new()
+                    {
+                        Width     = SalvageItemSelector->GetScaledWidth(true),
+                        IsVisible = true,
+                        Position  = new(-30, 8),
+                        Alignment = HorizontalListAnchor.Right
+                    };
+                    LayoutNode.AddNode(ButtonNode, CheckboxNode);
+                    Service.AddonController.AttachNode(LayoutNode, SalvageItemSelector->RootNode);
+                }
+                break;
+            
+            case AddonEvent.PreFinalize:
+                Service.AddonController.DetachNode(CheckboxNode);
+                CheckboxNode = null;
+                Service.AddonController.DetachNode(ButtonNode);
+                ButtonNode = null;
+                Service.AddonController.DetachNode(LayoutNode);
+                LayoutNode = null;
+                
+                TaskHelper.Abort();
+                break;
+        }
     }
 
     private static void OnAddon(AddonEvent type, AddonArgs args)
@@ -79,18 +109,47 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         Callback(SalvageDialog, true, 0, 0);
     }
 
+    private void ToggleButtonNode(bool toStop)
+    {
+        if (toStop)
+        {
+            ButtonNode.Label = GetLoc("Stop");
+            ButtonNode.OnClick = () =>
+            {
+                TaskHelper.Abort();
+                ToggleButtonNode(false);
+            };
+        }
+        else
+        {
+            ButtonNode.Label = $"{Info.Title}";
+            ButtonNode.OnClick = () =>
+            {
+                StartDesynthesizeAll();
+                ToggleButtonNode(true);
+            };
+        }
+    }
+
+    private void StartDesynthesizeAll()
+    {
+        if (TaskHelper.IsBusy) return;
+        TaskHelper.Enqueue(StartDesynthesize, "开始分解全部装备");
+    }
+
     private bool? StartDesynthesize()
     {
         if (OccupiedInEvent) return false;
         if (!IsAddonAndNodesReady(SalvageItemSelector)) return false;
-        
+
         var itemAmount = SalvageItemSelector->AtkValues[9].Int;
         if (itemAmount == 0)
         {
             TaskHelper.Abort();
+            ToggleButtonNode(false);
             return true;
         }
-        
+
         for (var i = 0; i < itemAmount; i++)
         {
             var itemName = MemoryHelper.ReadStringNullTerminated((nint)SalvageItemSelector->AtkValues[(i * 8) + 14].String.Value);
