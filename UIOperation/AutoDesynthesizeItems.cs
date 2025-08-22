@@ -31,8 +31,6 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "SalvageItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SalvageItemSelector", OnAddonList);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
-        if (IsAddonAndNodesReady(SalvageItemSelector))
-            OnAddonList(AddonEvent.PostDraw, null);
     }
 
     private void OnAddonList(AddonEvent type, AddonArgs? args)
@@ -42,50 +40,55 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
             case AddonEvent.PostDraw:
                 if (SalvageItemSelector == null) return;
 
-                if (CheckboxNode == null)
+                CheckboxNode ??= new()
                 {
-                    CheckboxNode = new()
+                    IsVisible = true,
+                    Position  = new(50, 2),
+                    Size      = new(20, 28),
+                    IsChecked = ModuleConfig.SkipWhenHQ,
+                    Tooltip   = GetLoc("AutoDesynthesizeItems-SkipHQ"),
+                    OnClick = newState =>
                     {
-                        IsVisible = true,
-                        Position = new(0,2),
-                        Size = new(16, 16),
-                        IsChecked = ModuleConfig.SkipWhenHQ,
-                        LabelText = GetLoc("AutoDesynthesizeItems-SkipHQ"),
-                        OnClick = newState =>
-                        {
-                            ModuleConfig.SkipWhenHQ = newState;
-                            SaveConfig(ModuleConfig);
-                        }
-                    };
-                }
+                        ModuleConfig.SkipWhenHQ = newState;
+                        SaveConfig(ModuleConfig);
+                    }
+                };
 
-                if (ButtonNode == null)
+                ButtonNode ??= new()
                 {
-                    ButtonNode = new()
-                    {
-                        IsVisible = true,
-                        Size = new (200, 28),
-                        Label = $"{Info.Title}",
-                        OnClick = () =>
-                        {
-                            StartDesynthesizeAll();
-                            ToggleButtonNode(true);
-                        },
-                    };
-                }
+                    IsVisible = true,
+                    Size      = new(200, 28),
+                    Label     = $"{Info.Title}",
+                    OnClick   = StartDesynthesizeAll,
+                };
                 
                 if (LayoutNode == null)
                 {
                     LayoutNode = new()
                     {
-                        Width     = SalvageItemSelector->GetScaledWidth(true),
                         IsVisible = true,
-                        Position  = new(-30, 8),
+                        Size      = new(SalvageItemSelector->WindowNode->Width, 28),
+                        Position  = new(-33, 10),
                         Alignment = HorizontalListAnchor.Right
                     };
                     LayoutNode.AddNode(ButtonNode, CheckboxNode);
                     Service.AddonController.AttachNode(LayoutNode, SalvageItemSelector->RootNode);
                 }
+
+                if (Throttler.Throttle("AutoDesynthesizeItems-PostDraw"))
+                {
+                    if (TaskHelper.IsBusy)
+                    {
+                        ButtonNode.Label = GetLoc("Stop");
+                        ButtonNode.OnClick = () => TaskHelper.Abort();
+                    }
+                    else
+                    {
+                        ButtonNode.Label = $"{Info.Title}";
+                        ButtonNode.OnClick = StartDesynthesizeAll;
+                    }
+                }
+                
                 break;
             
             case AddonEvent.PreFinalize:
@@ -109,28 +112,6 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         Callback(SalvageDialog, true, 0, 0);
     }
 
-    private void ToggleButtonNode(bool toStop)
-    {
-        if (toStop)
-        {
-            ButtonNode.Label = GetLoc("Stop");
-            ButtonNode.OnClick = () =>
-            {
-                TaskHelper.Abort();
-                ToggleButtonNode(false);
-            };
-        }
-        else
-        {
-            ButtonNode.Label = $"{Info.Title}";
-            ButtonNode.OnClick = () =>
-            {
-                StartDesynthesizeAll();
-                ToggleButtonNode(true);
-            };
-        }
-    }
-
     private void StartDesynthesizeAll()
     {
         if (TaskHelper.IsBusy) return;
@@ -146,7 +127,6 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         if (itemAmount == 0)
         {
             TaskHelper.Abort();
-            ToggleButtonNode(false);
             return true;
         }
 
@@ -155,7 +135,7 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
             var itemName = MemoryHelper.ReadStringNullTerminated((nint)SalvageItemSelector->AtkValues[(i * 8) + 14].String.Value);
             if (ModuleConfig.SkipWhenHQ)
             {
-                if (itemName.Contains('')) // HQ 符号
+                if (itemName.Contains('\ue03c')) // HQ 符号
                     continue;
             }
 
@@ -173,7 +153,7 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         DService.AddonLifecycle.UnregisterListener(OnAddonList);
         DService.AddonLifecycle.UnregisterListener(OnAddon);
 
-        base.Uninit();
+        OnAddonList(AddonEvent.PreFinalize, null);
     }
 
     private class Config : ModuleConfiguration
