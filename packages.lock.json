@@ -19,6 +19,12 @@
         "requested": "[9.0.1, )",
         "resolved": "9.0.1",
         "contentHash": "2J5uq+2smnj+u1jlyVJ6BGGqaK9fHcK/EwN7mbsuPqTI6dZr86br8Cg6o/5B+icQ9ANTvTDpJjnhDNtYYZijHQ=="
+      },
+      "TimeAgo": {
+        "type": "Direct",
+        "requested": "[1.0.8, )",
+        "resolved": "1.0.8",
+        "contentHash": "sXT3CxKDXyoG1/JxClqBBTfHjDENhsqJSVbhseW08lc/rSsMjOnhOh6YTrqIXtm9eTcbWEo4DEtn57KDlIxZaA=="
       }
     }
   }
