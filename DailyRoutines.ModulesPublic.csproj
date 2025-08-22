@@ -46,7 +46,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="System.CodeDom" Version="9.0.1" />
-        <PackageReference Include="TimeAgo" Version="1.0.8" />
+        <PackageReference Include="TimeAgo.Core" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>
