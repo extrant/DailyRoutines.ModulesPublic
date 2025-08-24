@@ -68,9 +68,23 @@ public class AutoReplyChatBot : DailyModuleBase
 
         using (ImRaii.PushIndent())
         {
-            using (var combo = ImRaii.Combo($"{GetLoc("AutoReplyChatBot-ValidChatTypes")}"))
+            ImGui.SetNextItemWidth(fieldW);
+            using (var combo = ImRaii.Combo($"{GetLoc("AutoReplyChatBot-ValidChatTypes")}", 
+                                            string.Join(',', ModuleConfig.ValidChatTypes), 
+                                            ImGuiComboFlags.HeightLarge))
             {
-                if (combo) { }
+                if (combo)
+                {
+                    foreach (var (chatType, loc) in ValidChatTypes)
+                    {
+                        if (ImGui.Selectable($"{loc}##{chatType}", ModuleConfig.ValidChatTypes.Contains(chatType)))
+                        {
+                            if (!ModuleConfig.ValidChatTypes.Remove(chatType))
+                                ModuleConfig.ValidChatTypes.Add(chatType);
+                            ModuleConfig.Save(this);
+                        }
+                    }
+                }
             }
 
             if (ModuleConfig.ValidChatTypes.Contains(XivChatType.TellIncoming) &&
@@ -689,14 +703,14 @@ public class AutoReplyChatBot : DailyModuleBase
         [XivChatType.Ls7] = LuminaWrapper.GetAddonText(4506),
         [XivChatType.Ls8] = LuminaWrapper.GetAddonText(4507),
         // 跨服贝
-        [XivChatType.CrossLinkShell1] = LuminaWrapper.GetAddonText(8390),
-        [XivChatType.CrossLinkShell2] = LuminaWrapper.GetAddonText(8391),
-        [XivChatType.CrossLinkShell3] = LuminaWrapper.GetAddonText(8392),
-        [XivChatType.CrossLinkShell4] = LuminaWrapper.GetAddonText(8393),
-        [XivChatType.CrossLinkShell5] = LuminaWrapper.GetAddonText(8394),
-        [XivChatType.CrossLinkShell6] = LuminaWrapper.GetAddonText(8395),
-        [XivChatType.CrossLinkShell7] = LuminaWrapper.GetAddonText(8396),
-        [XivChatType.CrossLinkShell8] = LuminaWrapper.GetAddonText(8397),
+        [XivChatType.CrossLinkShell1] = LuminaWrapper.GetAddonText(7866),
+        [XivChatType.CrossLinkShell2] = LuminaWrapper.GetAddonText(8390),
+        [XivChatType.CrossLinkShell3] = LuminaWrapper.GetAddonText(8391),
+        [XivChatType.CrossLinkShell4] = LuminaWrapper.GetAddonText(8392),
+        [XivChatType.CrossLinkShell5] = LuminaWrapper.GetAddonText(8393),
+        [XivChatType.CrossLinkShell6] = LuminaWrapper.GetAddonText(8394),
+        [XivChatType.CrossLinkShell7] = LuminaWrapper.GetAddonText(8395),
+        [XivChatType.CrossLinkShell8] = LuminaWrapper.GetAddonText(8396),
     };
     
     private const string DefaultSystemPrompt =
