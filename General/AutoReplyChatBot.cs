@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Numerics;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -33,6 +34,7 @@ public class AutoReplyChatBot : DailyModuleBase
     private static string TestChatInput = "";
     
     private static DateTime LastTs = DateTime.MinValue;
+    private static int HistKeyIndex = 0;
     
     protected override void Init()
     {
@@ -107,11 +109,16 @@ public class AutoReplyChatBot : DailyModuleBase
         {
             if (string.IsNullOrWhiteSpace(TestChatInput)) return;
 
+            const string histKey = "Tester@DailyRoutines";
             var text = TestChatInput;
             Task.Run(async () =>
             {
                 var reply = string.Empty;
-                try { reply = await GenerateReplyAsync(text, ModuleConfig, CancellationToken.None); }
+                AppendHistory(histKey, "user", text);
+                try
+                {
+                    reply = await GenerateReplyAsync(ModuleConfig, histKey, CancellationToken.None);
+                }
                 catch (Exception ex)
                 {
                     NotificationError(GetLoc("AutoReplyChatBot-ErrorTitle"));
@@ -122,6 +129,7 @@ public class AutoReplyChatBot : DailyModuleBase
 
                 if (string.IsNullOrWhiteSpace(reply)) return;
 
+                AppendHistory(histKey, "assistant", reply);
                 var builder = new SeStringBuilder();
 
                 builder.AddUiForeground(25)
@@ -147,12 +155,67 @@ public class AutoReplyChatBot : DailyModuleBase
             ImGui.SetNextItemWidth(promptW);
             ImGui.InputText("##TestInput", ref TestChatInput, 1024);
         }
+        
+        ImGui.NewLine();
+        ImGui.TextColored(LightSkyBlue, GetLoc("AutoReplyChatBot-ChatHistory"));
+
+        using (ImRaii.PushIndent())
+        {
+            var keys = Histories.Keys.ToArray();
+
+            var noneLabel = GetLoc("None");
+            var displayKeys = new List<string>(keys.Length + 1) { string.Empty };
+            displayKeys.AddRange(keys);
+            
+            if (HistKeyIndex < 0 || HistKeyIndex >= displayKeys.Count)
+                HistKeyIndex = 0;
+            
+            var currentLabel = HistKeyIndex == 0 ? noneLabel : displayKeys[HistKeyIndex];
+
+            ImGui.SetNextItemWidth(fieldW);
+            using (var combo = ImRaii.Combo(GetLoc("AutoReplyChatBot-UserKey"), currentLabel))
+            {
+                if (combo)
+                {
+                    for (var i = 0; i < displayKeys.Count; i++)
+                    {
+                        var label    = i == 0 ? noneLabel : displayKeys[i];
+                        var selected = (i == HistKeyIndex);
+                        if (ImGui.Selectable(label, selected))
+                            HistKeyIndex = i;
+                    }
+                }
+            }
+
+            if (HistKeyIndex > 0)
+            {
+                var currentKey = displayKeys[HistKeyIndex];
+                var entries = Histories.TryGetValue(currentKey, out var list) ? list.ToList() : [];
+
+                using (ImRaii.Child("##histViewer", new System.Numerics.Vector2(promptW, promptH), true))
+                {
+                    var isAtBottom = ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 2f;
+
+                    foreach (var (role, text) in entries)
+                    {
+                        var isUser = role.Equals("user", StringComparison.OrdinalIgnoreCase);
+                        var color  = isUser
+                                         ? new System.Numerics.Vector4(0.85f, 0.90f, 1f, 1f)
+                                         : new System.Numerics.Vector4(0.90f, 0.85f, 1f, 1f);
+                        using (ImRaii.PushColor(ImGuiCol.Text, color))
+                            ImGui.TextWrapped($"[{role}] {text}");
+                        ImGui.Separator();
+                    }
+                    if (isAtBottom)
+                        ImGui.SetScrollHereY(1f);
+                }
+            }
+        }
     }
     
     private static void OnChat(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (type != XivChatType.TellIncoming) return;
-        if (!IsCooldownReady()) return;
         
         var (name, worldId, worldName) = ExtractNameWorld(ref sender);
         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(worldName)) return;
@@ -160,8 +223,12 @@ public class AutoReplyChatBot : DailyModuleBase
         
         var userText = message.TextValue;
         if (string.IsNullOrWhiteSpace(userText)) return;
-
-        _ = GenerateAndReplyAsync(name, worldName, userText);
+        
+        AppendHistory($"{name}@{worldName}", "user", userText);
+        
+        if (!IsCooldownReady()) return;
+        
+        _ = GenerateAndReplyAsync(name, worldName);
     }
 
     private static (string name, ushort worldId, string? worldName) ExtractNameWorld(ref SeString sender)
@@ -183,14 +250,14 @@ public class AutoReplyChatBot : DailyModuleBase
         return (nm, 0, wn);
     }
     
-    private static async Task GenerateAndReplyAsync(string name, string world, string userText)
+    private static async Task GenerateAndReplyAsync(string name, string world)
     {
         var target = $"{name}@{world}";
         var reply = string.Empty;
         
         try
         {
-            reply = await GenerateReplyAsync(userText, ModuleConfig, CancellationToken.None);
+            reply = await GenerateReplyAsync(ModuleConfig, target, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -207,9 +274,10 @@ public class AutoReplyChatBot : DailyModuleBase
         
         ChatHelper.SendMessage($"/tell {target} {reply}");
         NotificationInfo(reply, $"{GetLoc("AutoReplyChatBot-AutoRepliedTo")}{target}");
+        AppendHistory(target, "assistant", reply);
     }
 
-    private static async Task<string?> GenerateReplyAsync(string userText, Config cfg, CancellationToken ct)
+    private static async Task<string?> GenerateReplyAsync(Config cfg, string historyKey, CancellationToken ct)
     {
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseUrl.IsNullOrWhitespace() || cfg.Model.IsNullOrWhitespace())
             return null;
@@ -219,16 +287,23 @@ public class AutoReplyChatBot : DailyModuleBase
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cfg.APIKey);
 
         var sys  = string.IsNullOrWhiteSpace(cfg.SystemPrompt) ? DefaultSystemPrompt : cfg.SystemPrompt;
+        var context = BuildContextSummary(); 
+        var hist = Histories.TryGetValue(historyKey, out var list) ? list.ToList() : [];
+        
+        var messages = new List<object>
+        {
+            new { role = "system", content = sys },
+            new { role = "system", content = context }
+        };
+        foreach (var (role, text) in hist)
+            messages.Add(new { role, content = text });
+        
         var body = new
         {
             model       = cfg.Model,
-            messages    = new object[]
-            {
-                new { role = "system", content = sys },
-                new { role = "user",   content = userText }
-            },
-            max_tokens  = 800,
-            temperature = 1.4
+            messages    = messages,
+            max_tokens  = cfg.MaxTokens,
+            temperature = cfg.Temperature
         };
 
         var json = JsonSerializer.Serialize(body);
@@ -265,6 +340,33 @@ public class AutoReplyChatBot : DailyModuleBase
         }
         return false;
     }
+
+    private static void AppendHistory(string key, string role, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        var list = Histories.GetOrAdd(key, _ => new());
+        {
+            list.Add((role, text));
+            if (list.Count > ModuleConfig.MaxHistory)
+                list.RemoveAt(0);
+        }
+    }
+
+    private static string BuildContextSummary()
+    {
+        var jobText  = LocalPlayerState.ClassJobData.Name;
+        var level  = LocalPlayerState.CurrentLevel;
+        var myName   = LocalPlayerState.Name;
+        var myWorld = GameState.CurrentWorldData.Name;
+        var terrName = LuminaWrapper.GetZonePlaceName(GameState.TerritoryType);
+        
+        return $"[GAME CONTEXT] [ABOUT YOU] \n" +
+               $"YourName:{myName}, YourJob:{jobText}, Level:{level}, HomeWorld:{myWorld}\n" +
+               $"CurrentTerritory:{terrName}";
+    }
+    
+    private static readonly ConcurrentDictionary<string, List<(string role, string text)>> Histories =
+        new(StringComparer.OrdinalIgnoreCase);
     
     private static string DefaultSystemPrompt { get; } =
         GetLoc("AutoReplyChatBot-DefaultPrompt")
@@ -291,5 +393,8 @@ public class AutoReplyChatBot : DailyModuleBase
         public string BaseUrl                = "https://api.deepseek.com/v1";
         public string Model                  = "deepseek-chat";
         public string SystemPrompt           = DefaultSystemPrompt;
+        public int    MaxHistory             = 16;
+        public int    MaxTokens              = 2048;
+        public float  Temperature            = 1.4f;
     }
 }
