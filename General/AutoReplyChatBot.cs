@@ -118,17 +118,21 @@ public class AutoReplyChatBot : DailyModuleBase
             if (apiTab)
             {
                 // API Select
-                ImGui.SetNextItemWidth(fieldW);
-                ImGui.TextColored(LightSkyBlue, GetLoc("AutoReplyChatBot-APISelection"));
+                ImGui.TextColored(LightSkyBlue, GetLoc("Type"));
 
-                var currentProvider = ModuleConfig.Provider;
-                if (ImGui.RadioButton("OpenAI", currentProvider == APIProvider.OpenAI))
-                    ModuleConfig.Provider = APIProvider.OpenAI;
+                using (ImRaii.PushIndent())
+                {
+                    var currentProvider = ModuleConfig.Provider;
+                    if (ImGui.RadioButton("OpenAI", currentProvider == APIProvider.OpenAI))
+                        ModuleConfig.Provider = APIProvider.OpenAI;
 
-                ImGui.SameLine();
-                if (ImGui.RadioButton("Ollama", currentProvider == APIProvider.Ollama))
-                    ModuleConfig.Provider = APIProvider.Ollama;
-                SaveConfig(ModuleConfig);
+                    ImGui.SameLine();
+                    if (ImGui.RadioButton("Ollama", currentProvider == APIProvider.Ollama))
+                        ModuleConfig.Provider = APIProvider.Ollama;
+                    SaveConfig(ModuleConfig);
+                }
+                
+                ImGui.NewLine();
 
                 // API Key
                 ImGui.SetNextItemWidth(fieldW);
