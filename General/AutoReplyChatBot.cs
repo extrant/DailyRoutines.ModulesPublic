@@ -967,16 +967,11 @@ public class AutoReplyChatBot : DailyModuleBase
         if (!string.IsNullOrWhiteSpace(worldBookContext))
             messages.Add(new { role = "system", content = worldBookContext });
 
-        // 根据MaxContextMessages限制发送的历史记录数量，从最新的开始取
         var messagesToSend = hist;
-        if (cfg.EnableContextLimit && cfg.MaxContextMessages > 0)
+        if (cfg is { EnableContextLimit: true, MaxContextMessages: > 0 })
         {
-            // 计算需要取的消息数量（确保至少有一条用户消息）
-            var userMessages = hist.Where(x => x.Role == "user").ToList();
-            var assistantMessages = hist.Where(x => x.Role == "assistant").ToList();
-            
-            // 确保对话的完整性，取最近的几轮对话
-            var totalMessagesToTake = Math.Min(cfg.MaxContextMessages * 2, hist.Count); // 每轮对话包含用户和助手消息
+            // 每轮对话包含用户和 AI 消息
+            var totalMessagesToTake = Math.Min(cfg.MaxContextMessages * 2, hist.Count);
             messagesToSend = hist.Skip(Math.Max(0, hist.Count - totalMessagesToTake)).ToList();
         }
 
@@ -1269,15 +1264,12 @@ public class AutoReplyChatBot : DailyModuleBase
 
     private class ChatMessage
     {
-        public string Role { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-        public long Timestamp { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string Role      { get; set; } = string.Empty;
+        public string Text      { get; set; } = string.Empty;
+        public long   Timestamp { get; set; }
+        public string Name      { get; set; } = string.Empty;
 
-        public ChatMessage() 
-        {
-            Timestamp = GameState.ServerTimeUnix;
-        }
+        public ChatMessage() => Timestamp = GameState.ServerTimeUnix;
 
         public ChatMessage(string role, string text, string name = null)
         {
@@ -1321,9 +1313,9 @@ public class AutoReplyChatBot : DailyModuleBase
         public int                        MaxWorldBookContext = 1024;
         
         // 聊天上下文限制配置
-        public bool                EnableContextLimit;
-        public int                 MaxContextMessages = 10;
-        public APIProvider         Provider           = APIProvider.OpenAI;
+        public bool        EnableContextLimit;
+        public int         MaxContextMessages = 10;
+        public APIProvider Provider           = APIProvider.OpenAI;
 
         // 游戏上下文配置
         public bool                              EnableGameContext   = true;
