@@ -755,6 +755,7 @@ public class AutoReplyChatBot : DailyModuleBase
 
         using (var child = ImRaii.Child("##ChatMessages", new(chatWidth, chatHeight - (60f * GlobalFontScale)), true))
         {
+            var isAtBottom = ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 2f;
             if (child)
             {
                 var historyKey = currentWindow.HistoryKey;
@@ -828,6 +829,9 @@ public class AutoReplyChatBot : DailyModuleBase
                     ScaledDummy(0, 6f);
                 }
             }
+            
+            if (isAtBottom)
+                ImGui.SetScrollHereY(1f);
         }
 
         ImGui.SetNextItemWidth(chatWidth - ImGui.CalcTextSize(GetLoc("AutoReplyChatBot-Send")).X - (4 * ImGui.GetStyle().ItemSpacing.X));
@@ -1175,6 +1179,7 @@ public class AutoReplyChatBot : DailyModuleBase
         CurrentWorld,
         CurrentZone,
         Weather,
+        LocalTime
     }
     
     private class ChatWindow
@@ -1291,6 +1296,7 @@ public class AutoReplyChatBot : DailyModuleBase
             };
             return body;
         }
+        
         public string? ParseContent(JObject jsonObject)
         {
             var msg = jsonObject["choices"] is JArray { Count: > 0 } choices ? choices[0]["message"] : null;
@@ -1392,7 +1398,8 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.HomeWorld]    = LuminaWrapper.GetAddonText(12515),
         [GameContextType.CurrentWorld] = LuminaWrapper.GetAddonText(12516),
         [GameContextType.CurrentZone]  = LuminaWrapper.GetAddonText(2213),
-        [GameContextType.Weather]      = LuminaWrapper.GetAddonText(8555)
+        [GameContextType.Weather]      = LuminaWrapper.GetAddonText(8555),
+        [GameContextType.LocalTime]    = LuminaWrapper.GetAddonText(1127)
     };
 
     private static readonly Dictionary<GameContextType, Func<string>> GameContextValueMap = new()
@@ -1403,7 +1410,8 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.HomeWorld]    = () => GameState.HomeWorldData.Name.ExtractText(),
         [GameContextType.CurrentWorld] = () => GameState.CurrentWorldData.Name.ExtractText(),
         [GameContextType.CurrentZone]  = () => LuminaWrapper.GetZonePlaceName(GameState.TerritoryType),
-        [GameContextType.Weather]      = () => GameState.WeatherData.Name.ExtractText()
+        [GameContextType.Weather]      = () => GameState.WeatherData.Name.ExtractText(),
+        [GameContextType.LocalTime]    = () => new DateTimeOffset(DateTime.Now).ToString("yyyy-MM-dd HH:mm"),
     };
     
     private const string DefaultSystemPrompt =
