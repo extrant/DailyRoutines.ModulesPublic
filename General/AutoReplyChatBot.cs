@@ -1179,7 +1179,8 @@ public class AutoReplyChatBot : DailyModuleBase
         CurrentWorld,
         CurrentZone,
         Weather,
-        LocalTime
+        LocalTime,
+        EorzeaTime
     }
     
     private class ChatWindow
@@ -1268,8 +1269,8 @@ public class AutoReplyChatBot : DailyModuleBase
         public string Name    = GetLoc("Default");
         public string Content = DefaultSystemPrompt;
     }
-    
-    static readonly Dictionary<APIProvider, IChatBackend> Backends = new()
+
+    private static readonly Dictionary<APIProvider, IChatBackend> Backends = new()
     {
         [APIProvider.OpenAI] = new OpenAIBackend(),
         [APIProvider.Ollama] = new OllamaBackend(),
@@ -1280,8 +1281,8 @@ public class AutoReplyChatBot : DailyModuleBase
         OpenAI = 0,
         Ollama = 1,
     }
-    
-    class OpenAIBackend : IChatBackend
+
+    private class OpenAIBackend : IChatBackend
     {
         public string BuildUrl(string baseUrl) => baseUrl.TrimEnd('/') + "/chat/completions";
         
@@ -1304,7 +1305,7 @@ public class AutoReplyChatBot : DailyModuleBase
         }
     }
 
-    class OllamaBackend : IChatBackend
+    private class OllamaBackend : IChatBackend
     {
         public string BuildUrl(string baseUrl) => baseUrl.TrimEnd('/') + "/chat";
 
@@ -1332,7 +1333,7 @@ public class AutoReplyChatBot : DailyModuleBase
         }
     }
 
-    interface IChatBackend
+    private interface IChatBackend
     {
         string BuildUrl(string baseUrl);
         
@@ -1345,7 +1346,6 @@ public class AutoReplyChatBot : DailyModuleBase
         /// <param name="temperature">采样温度</param>
         /// <returns>序列化前的请求体字典</returns>
         Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature);
-
         
         /// <summary>
         /// 从后端返回的 JSON 字符串中解析出最终的回复文本。
@@ -1399,7 +1399,8 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.CurrentWorld] = LuminaWrapper.GetAddonText(12516),
         [GameContextType.CurrentZone]  = LuminaWrapper.GetAddonText(2213),
         [GameContextType.Weather]      = LuminaWrapper.GetAddonText(8555),
-        [GameContextType.LocalTime]    = LuminaWrapper.GetAddonText(1127)
+        [GameContextType.LocalTime]    = LuminaWrapper.GetAddonText(1127),
+        [GameContextType.EorzeaTime]    = LuminaWrapper.GetAddonText(1129),
     };
 
     private static readonly Dictionary<GameContextType, Func<string>> GameContextValueMap = new()
@@ -1411,7 +1412,8 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.CurrentWorld] = () => GameState.CurrentWorldData.Name.ExtractText(),
         [GameContextType.CurrentZone]  = () => LuminaWrapper.GetZonePlaceName(GameState.TerritoryType),
         [GameContextType.Weather]      = () => GameState.WeatherData.Name.ExtractText(),
-        [GameContextType.LocalTime]    = () => new DateTimeOffset(DateTime.Now).ToString("yyyy-MM-dd HH:mm"),
+        [GameContextType.LocalTime]    = () => new DateTimeOffset(DateTime.Now).ToString("yyyy/MM/dd HH:mm"),
+        [GameContextType.EorzeaTime]   = () => EorzeaDate.GetTime().ToString()
     };
     
     private const string DefaultSystemPrompt =
