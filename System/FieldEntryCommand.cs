@@ -56,7 +56,7 @@ public class FieldEntryCommand : DailyModuleBase
     private static readonly Vector3 LowerLaNosceaDefaultPosition          = new(172, 12, 642);
     private static readonly Vector3 IslandDefaultPosition                 = new(-269, 40, 228);
     private static readonly Vector3 CosmicDefaultPosition                 = new(0f, -187.42f, -412f);
-    private static readonly Vector3 TuliyollalPhantomVillageEntryPosition = new(207.15f, -17.96f, 60.74f);
+    private static readonly Vector3 TuliyollalPhantomVillageEntryPosition = new(165.2f, -18.0f, 35.4f);
     private static readonly Vector3 PhantomVillagePosition                = new(-71.93f, 5f, -16.02f);
 
     protected override void Init()
