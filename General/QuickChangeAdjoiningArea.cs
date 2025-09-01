@@ -42,25 +42,6 @@ public class QuickChangeAdjoiningArea : DailyModuleBase
             if (ImGui.Button($"Change###{(long)pExitRange:X}"))
             {
                 TaskHelper.Enqueue(() => PopRangeManager.Instance()->PopRange((ILayoutInstance*)pExitRange));
-                /*var agentMap = AgentMap.Instance();
-                if (agentMap->IsFlagMarkerSet && agentMap->FlagMapMarker.TerritoryId == GameState.TerritoryType)
-                {
-                    TaskHelper.Enqueue(() =>
-                    {
-                        if (!BetweenAreas) return true;
-
-                        if (LocalPlayerState.DistanceTo2D(new(agentMap->FlagMapMarker.XFloat, agentMap->FlagMapMarker.YFloat)) > 9)
-                        {
-                            var pos = new Vector3(agentMap->FlagMapMarker.XFloat, LocalPlayerState.Object.Position.Y, agentMap->FlagMapMarker.YFloat);
-                            MovementManager.TPPlayerAddress(pos);
-                        }
-                        else
-                            MovementManager.TPGround();
-                                
-                        return false;
-                    });
-                }*/
-                        
                 TaskHelper.Enqueue(() => BetweenAreas);
                 TaskHelper.Enqueue(() => PopRangeManager.Instance()->PopRange((ILayoutInstance*)pExitRange));
             }
