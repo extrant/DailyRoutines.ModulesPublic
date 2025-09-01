@@ -412,7 +412,7 @@ public unsafe class OptimizedCastBar : DailyModuleBase
         public Vector2 CastTimeTextPosition        = new(130, 30);
         public byte    CastTimeTextSize            = 20;
         
-        public SlideCastHighlightType SlideCastHighlightType = SlideCastHighlightType.None;
+        public SlideCastHighlightType SlideCastHighlightType = SlideCastHighlightType.Zone;
 
         public int SlideCastZoneAdjust = 500;
         
