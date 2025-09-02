@@ -755,6 +755,7 @@ public class AutoReplyChatBot : DailyModuleBase
 
         using (var child = ImRaii.Child("##ChatMessages", new(chatWidth, chatHeight - (60f * GlobalFontScale)), true))
         {
+            var isAtBottom = ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 2f;
             if (child)
             {
                 var historyKey = currentWindow.HistoryKey;
@@ -828,6 +829,9 @@ public class AutoReplyChatBot : DailyModuleBase
                     ScaledDummy(0, 6f);
                 }
             }
+            
+            if (isAtBottom)
+                ImGui.SetScrollHereY(1f);
         }
 
         ImGui.SetNextItemWidth(chatWidth - ImGui.CalcTextSize(GetLoc("AutoReplyChatBot-Send")).X - (4 * ImGui.GetStyle().ItemSpacing.X));
@@ -926,17 +930,7 @@ public class AutoReplyChatBot : DailyModuleBase
             }
         }
 
-        var url = cfg.BaseUrl.TrimEnd('/');
-        var currentAPI = ModuleConfig.Provider;
-        switch (currentAPI)
-        {
-            case APIProvider.OpenAI:
-                url += "/chat/completions";
-                break;
-            case APIProvider.Ollama:
-                url += "/chat";
-                break;
-        }
+        var url = Backends[cfg.Provider].BuildUrl(cfg.BaseUrl);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cfg.APIKey);
@@ -978,23 +972,7 @@ public class AutoReplyChatBot : DailyModuleBase
         foreach (var message in messagesToSend)
             messages.Add(new { role = message.Role, content = message.Text });
 
-        var body = new Dictionary<string, object>
-        {
-            ["messages"] = messages,
-            ["model"]   = cfg.Model,
-        };
-        
-        switch (currentAPI)
-        {
-            case APIProvider.OpenAI:
-                body["max_token"] = cfg.MaxTokens;
-                body["temprature"] = cfg.Temperature;
-                break;
-            case APIProvider.Ollama:
-                body["think"] = false;
-                body["stream"] = false;
-                break;
-        }
+        var body = Backends[cfg.Provider].BuildRequestBody(messages, cfg.Model, cfg.MaxTokens, cfg.Temperature);
 
         var json = JsonConvert.SerializeObject(body);
         req.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -1006,18 +984,8 @@ public class AutoReplyChatBot : DailyModuleBase
 
         var jObj         = JObject.Parse(jsonResponse);
 
-        if (currentAPI switch
-            {
-                APIProvider.OpenAI when jObj["choices"] is JArray { Count: > 0 } choices => choices[0]["message"],
-                APIProvider.Ollama                                                       => jObj["message"],
-                _                                                                        => null
-            }
-            is not { } jToken)
-            return null;
-
-        var content = jToken["content"];
-
-        var final = content?.Value<string>();
+        var final = Backends[cfg.Provider].ParseContent(jObj);
+        
         return final.StartsWith("[ATTACK") ? string.Empty : final;
     }
 
@@ -1026,17 +994,7 @@ public class AutoReplyChatBot : DailyModuleBase
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseUrl.IsNullOrWhitespace() || cfg.FilterModel.IsNullOrWhitespace())
             return userMessage;
 
-        var url = cfg.BaseUrl.TrimEnd('/');
-        var currentAPI = ModuleConfig.Provider;
-        switch (currentAPI)
-        {
-            case APIProvider.OpenAI:
-                url += "/chat/completions";
-                break;
-            case APIProvider.Ollama:
-                url += "/chat";
-                break;
-        }
+        var url = Backends[cfg.Provider].BuildUrl(cfg.BaseUrl);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cfg.APIKey);
@@ -1048,23 +1006,7 @@ public class AutoReplyChatBot : DailyModuleBase
             new { role = "user", content   = userMessage }
         };
 
-        var body = new Dictionary<string, object>
-        {
-            ["messages"] = messages,
-            ["model"] = cfg.FilterModel,
-        };
-        
-        switch (currentAPI)
-        {
-            case APIProvider.OpenAI:
-                body["max_token"] = 512;    // 过滤器不需要太多token
-                body["temprature"] = 0.0f;  // 极低温度，确保严格按照规则执行
-                break;
-            case APIProvider.Ollama:
-                body["think"] = false;
-                body["stream"] = false;
-                break;
-        }
+        var body = Backends[cfg.Provider].BuildRequestBody(messages, cfg.Model, 512, 0.0f); // 过滤器不需要太多token & 极低温度，确保严格按照规则执行
 
         var json = JsonConvert.SerializeObject(body);
         req.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -1077,17 +1019,7 @@ public class AutoReplyChatBot : DailyModuleBase
             var jsonResponse = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             var jObj = JObject.Parse(jsonResponse);
 
-            var message = currentAPI switch
-            {
-                APIProvider.OpenAI when jObj["choices"] is JArray { Count: > 0 } choices => choices[0]["message"],
-                APIProvider.Ollama => jObj["message"],
-                _ => null
-            };
-
-            if (message is null)
-                return null;
-
-            var content = message?["content"]?.Value<string>();
+            var content = Backends[cfg.Provider].ParseContent(jObj);
 
             return string.IsNullOrWhiteSpace(content) ? null : content.Trim();
         }
@@ -1247,6 +1179,8 @@ public class AutoReplyChatBot : DailyModuleBase
         CurrentWorld,
         CurrentZone,
         Weather,
+        LocalTime,
+        EorzeaTime
     }
     
     private class ChatWindow
@@ -1336,10 +1270,94 @@ public class AutoReplyChatBot : DailyModuleBase
         public string Content = DefaultSystemPrompt;
     }
 
+    private static readonly Dictionary<APIProvider, IChatBackend> Backends = new()
+    {
+        [APIProvider.OpenAI] = new OpenAIBackend(),
+        [APIProvider.Ollama] = new OllamaBackend(),
+    };
+
     private enum APIProvider
     {
         OpenAI = 0,
         Ollama = 1,
+    }
+
+    private class OpenAIBackend : IChatBackend
+    {
+        public string BuildUrl(string baseUrl) => baseUrl.TrimEnd('/') + "/chat/completions";
+        
+        public Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature)
+        {
+            var body = new Dictionary<string, object>
+            {
+                ["messages"] = messages,
+                ["model"]    = model,
+                ["max_tokens"] = maxTokens,
+                ["temperature"] = temperature
+            };
+            return body;
+        }
+        
+        public string? ParseContent(JObject jsonObject)
+        {
+            var msg = jsonObject["choices"] is JArray { Count: > 0 } choices ? choices[0]["message"] : null;
+            return msg?["content"]?.Value<string>();
+        }
+    }
+
+    private class OllamaBackend : IChatBackend
+    {
+        public string BuildUrl(string baseUrl) => baseUrl.TrimEnd('/') + "/chat";
+
+        public Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature)
+        {
+            var body = new Dictionary<string, object>
+            {
+                ["messages"] = messages,
+                ["model"]    = model,
+                ["stream"]   = false,
+                ["think"]    = false,
+                ["options"]  = new Dictionary<string, object>
+                {
+                    ["num_predict"] = maxTokens,
+                    ["temperature"] = temperature
+                }
+            };
+            return body;
+        }
+        
+        public string? ParseContent(JObject jsonObject)
+        {
+            var messageToken = jsonObject["message"];
+            return messageToken?["content"]?.Value<string>();
+        }
+    }
+
+    private interface IChatBackend
+    {
+        string BuildUrl(string baseUrl);
+        
+        /// <summary>
+        /// 组装完整的请求体，包括 messages / model 以及 provider 特定参数。
+        /// </summary>
+        /// <param name="messages">聊天消息数组</param>
+        /// <param name="model">model name</param>
+        /// <param name="maxTokens">最大 token</param>
+        /// <param name="temperature">采样温度</param>
+        /// <returns>序列化前的请求体字典</returns>
+        Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature);
+        
+        /// <summary>
+        /// 从后端返回的 JSON 字符串中解析出最终的回复文本。
+        /// </summary>
+        /// <param name="jsonObject">
+        /// 已经解析好的 <see cref="JObject"/>，对应完整的接口响应。
+        /// </param>
+        /// <returns>
+        /// - 如果成功，返回 <c>string</c> 类型的对话回复内容。<br/>
+        /// - 如果失败（没有 content 字段或结构不符），返回 <c>null</c>。
+        /// </returns>
+        string? ParseContent(JObject jsonObject);
     }
 
     #region 预设数据
@@ -1380,7 +1398,9 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.HomeWorld]    = LuminaWrapper.GetAddonText(12515),
         [GameContextType.CurrentWorld] = LuminaWrapper.GetAddonText(12516),
         [GameContextType.CurrentZone]  = LuminaWrapper.GetAddonText(2213),
-        [GameContextType.Weather]      = LuminaWrapper.GetAddonText(8555)
+        [GameContextType.Weather]      = LuminaWrapper.GetAddonText(8555),
+        [GameContextType.LocalTime]    = LuminaWrapper.GetAddonText(1127),
+        [GameContextType.EorzeaTime]    = LuminaWrapper.GetAddonText(1129),
     };
 
     private static readonly Dictionary<GameContextType, Func<string>> GameContextValueMap = new()
@@ -1391,7 +1411,9 @@ public class AutoReplyChatBot : DailyModuleBase
         [GameContextType.HomeWorld]    = () => GameState.HomeWorldData.Name.ExtractText(),
         [GameContextType.CurrentWorld] = () => GameState.CurrentWorldData.Name.ExtractText(),
         [GameContextType.CurrentZone]  = () => LuminaWrapper.GetZonePlaceName(GameState.TerritoryType),
-        [GameContextType.Weather]      = () => GameState.WeatherData.Name.ExtractText()
+        [GameContextType.Weather]      = () => GameState.WeatherData.Name.ExtractText(),
+        [GameContextType.LocalTime]    = () => new DateTimeOffset(DateTime.Now).ToString("yyyy/MM/dd HH:mm"),
+        [GameContextType.EorzeaTime]   = () => EorzeaDate.GetTime().ToString()
     };
     
     private const string DefaultSystemPrompt =
