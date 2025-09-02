@@ -80,8 +80,8 @@ public class CrossDCPartyFinder : DailyModuleBase
             OnAddon(AddonEvent.PostSetup, null);
 
         AgentLookingForGroupReceiveEventHook ??=
-            DService.Hook.HookFromAddress<AgentReceiveEventDelegate>(AgentLookingForGroup.Instance()->VirtualTable->ReceiveEvent,
-                                                                     AgentLookingForGroupReceiveEventDetour);
+            DService.Hook.HookFromAddress<AgentReceiveEventDelegate>(
+                GetVFuncByName(AgentLookingForGroup.Instance()->VirtualTable, "ReceiveEvent"), AgentLookingForGroupReceiveEventDetour);
         AgentLookingForGroupReceiveEventHook.Enable();
     }
 
