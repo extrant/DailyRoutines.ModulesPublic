@@ -20,11 +20,6 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
         Category    = ModuleCategories.UIOperation,
     };
 
-    // TODO: 7.3 FFCS
-    private delegate void RefreshPartyFinderDelegate(AgentLookingForGroup* agent);
-    private static readonly RefreshPartyFinderDelegate RefreshPartyFinder =
-        new CompSig("E8 ?? ?? ?? ?? 8B 8B ?? ?? ?? ?? 85 C9 75 12").GetDelegate<RefreshPartyFinderDelegate>();
-
     private static Config ModuleConfig = null!;
     
     private static Timer? PFRefreshTimer;
@@ -113,7 +108,7 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
         Cooldown = ModuleConfig.RefreshInterval;
         UpdateNextRefreshTime(Cooldown);
 
-        DService.Framework.Run(() => RefreshPartyFinder(AgentLookingForGroup.Instance()));
+        DService.Framework.Run(() => AgentLookingForGroup.Instance()->RequestListingsUpdate());
     }
 
     private static void CleanNodes()

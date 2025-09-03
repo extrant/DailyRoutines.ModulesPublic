@@ -82,7 +82,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(-1f);
-                if (ImGui.InputInt("###PreviewNumberInput", ref NumberPreview, 0, 0))
+                if (ImGui.InputInt("###PreviewNumberInput", ref NumberPreview))
                     NumberPreview = (int)Math.Clamp(NumberPreview, 0, uint.MaxValue);
 
                 ImGui.Separator();
@@ -315,6 +315,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
     private static void OnAddonTargetInfo(AddonEvent type, AddonArgs args)
     {
+        if (ModuleConfig == null) return;
+        
         HandleAddonEventTargetInfo(type,
                                    ModuleConfig.IsEnabled,
                                    ModuleConfig.HideAutoAttack,
@@ -431,7 +433,10 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         }
     }
 
-    private static void OnAddonTargetInfoSplitTarget(AddonEvent type, AddonArgs args) =>
+    private static void OnAddonTargetInfoSplitTarget(AddonEvent type, AddonArgs args)
+    {
+        if (ModuleConfig == null) return;
+        
         HandleAddonEventTargetInfo(type,
                                    ModuleConfig.IsEnabled,
                                    ModuleConfig.HideAutoAttack,
@@ -447,9 +452,12 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                    ModuleConfig.CustomColor,
                                    () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
                                    (width, height) => new Vector2(width - 5, height + 2));
+    }
 
     private static void OnAddonFocusTargetInfo(AddonEvent type, AddonArgs args)
     {
+        if (ModuleConfig == null) return;
+        
         HandleAddonEventTargetInfo(type,
                                    ModuleConfig.FocusIsEnabled,
                                    false,
@@ -514,7 +522,10 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         }
     }
 
-    private static void OnAddonTargetInfoCastBar(AddonEvent type, AddonArgs args) =>
+    private static void OnAddonTargetInfoCastBar(AddonEvent type, AddonArgs args)
+    {
+        if (ModuleConfig == null) return;
+        
         HandleAddonEventCastBar(type,
                                 ModuleConfig.CastBarIsEnabled,
                                 TargetInfoCastBar,
@@ -527,9 +538,12 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                                 ModuleConfig.CastBarCustomColor,
                                 () => (DService.Targets.SoftTarget ?? DService.Targets.Target) as IBattleChara,
                                 (width, height) => new Vector2(width - 5, height));
-    
+    }
+
     private static void OnAddonTargetInfoBuffDebuff(AddonEvent type, AddonArgs args)
     {
+        if (ModuleConfig == null) return;
+        
         switch (type)
         {
             case AddonEvent.PreFinalize:
