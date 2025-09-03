@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
@@ -13,6 +14,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using KamiToolKit.Extensions;
 using KamiToolKit.Nodes;
 
 namespace DailyRoutines.ModulesPublic;
@@ -34,7 +36,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
     private static Dictionary<uint, int> HaterInfo = [];
     
-    private static readonly List<(uint ComponentNodeID, TextNode TextNode, NineGridNode BackgroundNode, CastBarProgressBarNode CastBarNode)> TextNodes = [];
+    private static readonly List<(uint ComponentNodeID, TextNode TextNode, NineGridNode BackgroundNode, EnemyCastProgressBarNode CastBarNode)> TextNodes = [];
 
     private static string CastInfoTargetBlacklistInput = string.Empty;
 
@@ -297,18 +299,12 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                     castBackgroundNode->SetAlpha(0);
                 
                 castBarNode.IsVisible = true;
-                castBarNode.Progress  = bc.CurrentCastTime / bc.TotalCastTime;
+                castBarNode.ProgressNode.Width  = 105 * (bc.CurrentCastTime / bc.TotalCastTime);
 
                 if (bc.IsCastInterruptible)
-                    castBarNode.BorderImageNode.MultiplyColor = new(1, 0, 0);
+                    castBarNode.AddColor = KnownColor.Red.Vector().AsVector3Color();
                 else
-                {
-                    var borderImage = (SimpleNineGridNode)castBarNode.BorderImageNode;
-                    borderImage.TexturePath        = "ui/uld/enemylist_hr1.tex";
-                    borderImage.TextureCoordinates = new(0, 120);
-                    borderImage.TextureSize        = new(120, 16);
-                    borderImage.MultiplyColor      = new(0.392f);
-                }
+                    castBarNode.AddColor = KnownColor.Yellow.Vector().AsVector3Color() / 255f;
             }
             else
             {
@@ -398,30 +394,16 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
             };
 
-            var castBarNode = new CastBarProgressBarNode()
+            var castBarNode = new EnemyCastProgressBarNode
             {
                 IsVisible = true,
-                Position  = new(90, 16),
-                Size      = new(120, 16),
+                Position  = new(85, 13.7f),
+                Size      = new(120, 20)
             };
 
-            var progressNode = (SimpleNineGridNode)castBarNode.ProgressNode;
-            progressNode.TexturePath        =  "ui/uld/enemylist_hr1.tex";
-            progressNode.TextureCoordinates =  new(0, 104);
-            progressNode.TextureSize        =  new(120, 16);
-            progressNode.Position           += new Vector2(1, 0);
-            
-            var borderImageNode = (SimpleNineGridNode)castBarNode.BorderImageNode;
-            borderImageNode.TexturePath        =  "ui/uld/enemylist_hr1.tex";
-            borderImageNode.TextureCoordinates =  new(0, 120);
-            borderImageNode.TextureSize        =  new(120, 16);
-            borderImageNode.Size               += new Vector2(2, 0);
-
-            castBarNode.ProgressNode.AddColor = new(1);
-            
-            castBarNode.BackgroundImageNode.IsVisible = false;
-
-            // castBarNode.ProgressNode.Size -= castBarNode.Size / 2;
+            castBarNode.ProgressNode.Height   -= 12f;
+            castBarNode.ProgressNode.Position += new Vector2(7.7f, 6.5f);
+            castBarNode.ProgressNode.AddColor =  new(1);
             
             Service.AddonController.AttachNode(backgroundNode, node);
             Service.AddonController.AttachNode(textNode,       node);
