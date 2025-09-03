@@ -310,23 +310,23 @@ public unsafe class OptimizedFriendList : DailyModuleBase
             
             PlayerNameNode = new()
             {
-                IsVisible        = true,
-                Position         = new(10, 36),
-                Size             = new(100, 48),
-                Text             = new SeStringBuilder().Append(Name).AddIcon(BitmapFontIcon.CrossWorld).Append(WorldName).Build(),
-                FontSize         = 24,
-                AlignmentType    = AlignmentType.Left,
+                IsVisible     = true,
+                Position      = new(10, 36),
+                Size          = new(100, 48),
+                SeString      = new SeStringBuilder().Append(Name).AddIcon(BitmapFontIcon.CrossWorld).Append(WorldName).Build(),
+                FontSize      = 24,
+                AlignmentType = AlignmentType.Left,
             };
             AttachNode(PlayerNameNode);
             
             NicknameNode = new()
             {
-                IsVisible        = true,
-                Position         = new(10, 80),
-                Size             = new(100, 28),
-                Text             = $"{LuminaWrapper.GetAddonText(15207)}",
-                FontSize         = 14,
-                AlignmentType    = AlignmentType.Left,
+                IsVisible     = true,
+                Position      = new(10, 80),
+                Size          = new(100, 28),
+                SeString      = $"{LuminaWrapper.GetAddonText(15207)}",
+                FontSize      = 14,
+                AlignmentType = AlignmentType.Left,
             };
             AttachNode(NicknameNode);
 
@@ -364,7 +364,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 IsVisible     = true,
                 Position      = new(10, 140),
                 Size          = new(100, 28),
-                Text          = $"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}",
+                SeString      = $"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}",
                 FontSize      = 14,
                 AlignmentType = AlignmentType.Left,
             };
@@ -404,7 +404,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 Position  = new(10, 208),
                 Size      = new(140, 28),
                 IsVisible = true,
-                Label     = GetLoc("Confirm"),
+                SeString  = GetLoc("Confirm"),
                 OnClick = () =>
                 {
                     ModuleConfig.PlayerInfos[ContentID] = new()
@@ -427,7 +427,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 Position  = new(160, 208),
                 Size      = new(140, 28),
                 IsVisible = true,
-                Label     = GetLoc("Clear"),
+                SeString  = GetLoc("Clear"),
                 OnClick = () =>
                 {
                     ModuleConfig.PlayerInfos.Remove(ContentID);
@@ -442,7 +442,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 Position  = new(310, 208),
                 Size      = new(140, 28),
                 IsVisible = true,
-                Label     = GetLoc("OptimizedFriendList-ObtainUsedNames"),
+                SeString  = GetLoc("OptimizedFriendList-ObtainUsedNames"),
                 OnClick = () =>
                 {
                     var request = OnlineDataManager.GetRequest<PlayerUsedNamesRequest>();

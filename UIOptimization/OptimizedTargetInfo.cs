@@ -493,11 +493,11 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     ClearFocusButtonNode = new()
                     {
                         IsVisible = true,
-                        Size = new(32),
-                        Position = new(-13, 12),
-                        Label = "\ue04c",
+                        Size      = new(32),
+                        Position  = new(-13, 12),
+                        SeString  = "\ue04c",
                         Tooltip   = GetLoc("OptimizedTargetInfo-ClearFocusTarget"),
-                        OnClick = () => DService.Targets.FocusTarget = null
+                        OnClick   = () => DService.Targets.FocusTarget = null
                     };
                     ClearFocusButtonNode.BackgroundNode.IsVisible = false;
                     
@@ -690,9 +690,9 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     textNode.TextColor        = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
                     textNode.TextOutlineColor = sourceTextNode->EdgeColor.ToVector4();
 
-                    textNode.Text = string.Format(ModuleConfig.DisplayFormatString,
-                                                  FormatNumber(target.MaxHp),
-                                                  FormatNumber(target.CurrentHp));
+                    textNode.SeString = string.Format(ModuleConfig.DisplayFormatString,
+                                                      FormatNumber(target.MaxHp),
+                                                      FormatNumber(target.CurrentHp));
                 }
 
                 break;
@@ -761,7 +761,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     textNode.FontSize      = fontSize;
                     textNode.TextColor     = customColor.W != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
 
-                    textNode.Text = $"{target.TotalCastTime - target.CurrentCastTime:F2}";
+                    textNode.SeString = $"{target.TotalCastTime - target.CurrentCastTime:F2}";
                 }
 
                 break;
