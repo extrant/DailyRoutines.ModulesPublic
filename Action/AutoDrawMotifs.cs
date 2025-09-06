@@ -126,8 +126,6 @@ public class AutoDrawMotifs : DailyModuleBase
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
         DService.Condition.ConditionChange    -= OnConditionChanged;
         DService.DutyState.DutyCompleted      -= OnDutyCompleted;
-
-        base.Uninit();
     }
 
     private class Config : ModuleConfiguration
