@@ -99,9 +99,9 @@ public class OptimizedRecipeNote : DailyModuleBase
                 {
                     RecipeCaculationButton = new()
                     {
-                        Position  = new(228, 490),
-                        Size      = new(140, 32),
-                        Label     = GetLoc("OptimizedRecipeNote-Button-CaculateRecipe"),
+                        Position = new(228, 490),
+                        Size     = new(140, 32),
+                        SeString = GetLoc("OptimizedRecipeNote-Button-CaculateRecipe"),
                     };
                     RecipeCaculationButton.OnClick = () =>
                     {
@@ -174,9 +174,9 @@ public class OptimizedRecipeNote : DailyModuleBase
                 {
                     SwitchJobButton = new()
                     {
-                        Position  = new(228, 490),
-                        Size      = new(140, 32),
-                        Label     = GetLoc("OptimizedRecipeNote-Button-SwitchJob"),
+                        Position = new(228, 490),
+                        Size     = new(140, 32),
+                        SeString = GetLoc("OptimizedRecipeNote-Button-SwitchJob"),
                     };
                     SwitchJobButton.OnClick = () =>
                     {
@@ -393,13 +393,13 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Text = new SeStringBuilder()
-                       .AddText($"{LuminaWrapper.GetAddonText(294)}: ")
-                       .AddIcon(Result.GetJob().ToBitmapFontIcon())
-                       .AddText(Result.GetJob().Name.ExtractText())
-                       .Build()
+                SeString = new SeStringBuilder()
+                           .AddText($"{LuminaWrapper.GetAddonText(294)}: ")
+                           .AddIcon(Result.GetJob().ToBitmapFontIcon())
+                           .AddText(Result.GetJob().Name.ExtractText())
+                           .Build()
             };
-            jobTextNode.Size =  jobTextNode.GetTextDrawSize($"{jobTextNode.Text}123");
+            jobTextNode.Size =  jobTextNode.GetTextDrawSize($"{jobTextNode.SeString}123");
             statsRow.Width   += jobTextNode.Width;
             statsRow.AddNode(jobTextNode);
 
@@ -407,7 +407,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Text      = $"{LuminaWrapper.GetAddonText(3261)}: {Result.Craftmanship}"
+                SeString  = $"{LuminaWrapper.GetAddonText(3261)}: {Result.Craftmanship}"
             };
             statsRow.Width += craftmanshipTextNode.Width;
             statsRow.AddNode(craftmanshipTextNode);
@@ -419,7 +419,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Text      = $"{LuminaWrapper.GetAddonText(3262)}: {Result.Control}"
+                SeString  = $"{LuminaWrapper.GetAddonText(3262)}: {Result.Control}"
             };
             statsRow.Width       += controlTextNode.Width;
             statsRow.AddNode(controlTextNode);
@@ -431,7 +431,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Text      = $"{LuminaWrapper.GetAddonText(3223)}: {Result.CraftPoint}"
+                SeString  = $"{LuminaWrapper.GetAddonText(3223)}: {Result.CraftPoint}"
             };
             statsRow.Width          += craftPointTextNode.Width;
             statsRow.AddNode(craftPointTextNode);
@@ -449,7 +449,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 Size      = new(100, 24),
-                Label     = GetLoc("Execute"),
+                SeString  = GetLoc("Execute"),
                 OnClick = () =>
                 {
                     if (Synthesis == null) return;
@@ -486,7 +486,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 {
                     IsVisible = true,
                     Size      = new(120, 24),
-                    Label     = GetLoc("OptimizedRecipeNote-Button-CopyMacro", macroIndex + 1),
+                    SeString  = GetLoc("OptimizedRecipeNote-Button-CopyMacro", macroIndex + 1),
                     OnClick = () =>
                     {
                         var startIndex = macroIndex * 15;
@@ -576,7 +576,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 {
                     IsVisible        = true,
                     Position         = new(-4),
-                    Text             = $"{index + 1}",
+                    SeString         = $"{index + 1}",
                     FontType         = FontType.MiedingerMed,
                     TextFlags        = TextFlags.Edge,
                     TextOutlineColor = KnownColor.OrangeRed.Vector()

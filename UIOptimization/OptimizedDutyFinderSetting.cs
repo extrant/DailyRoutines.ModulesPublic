@@ -23,11 +23,10 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
         Author      = ["Mizami", "Cyf5119"]
     };
 
-    private static readonly CompSig SetContentsFinderSettingsInitSig = new("E8 ?? ?? ?? ?? 49 8B 06 33 ED");
-
-    private delegate void SetContentsFinderSettingsInitDelegate(byte* a1, nint a2);
-
-    private static Hook<SetContentsFinderSettingsInitDelegate>? SetContentsFinderSettingsInitHook;
+    private static readonly CompSig SetContentsFinderSettingsInitSig =
+        new("E8 ?? ?? ?? ?? 49 8B 06 45 33 FF 49 8B CE 45 89 7E 20 FF 50 28 B0 01");
+    private delegate        void                                         SetContentsFinderSettingsInitDelegate(byte* a1, nint a2);
+    private static          Hook<SetContentsFinderSettingsInitDelegate>? SetContentsFinderSettingsInitHook;
 
     private static readonly Dictionary<string, List<IconButtonNode>> DutyFinderButtonNodes = [];
     private static readonly Dictionary<string, List<IconImageNode>>  DutyFinderImageNodes  = [];
@@ -201,8 +200,8 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
             {
                 IsVisible = true,
                 Size      = new(originalNode->Width, originalNode->Height),
-                Position  = new(originalNode->X,     originalNode->Y),
-                Label     = string.Empty,
+                Position  = new(originalNode->X, originalNode->Y),
+                SeString  = string.Empty,
                 OnClick   = () => OnLanguageClick(langSetting.Setting)
             };
 
