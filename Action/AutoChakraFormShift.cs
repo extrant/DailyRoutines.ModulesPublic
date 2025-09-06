@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.JobGauge.Types;
@@ -26,7 +25,7 @@ public class AutoChakraFormShift : DailyModuleBase
 
     protected override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
+        TaskHelper ??= new() { TimeLimitMS = 30_000 };
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
@@ -76,20 +75,18 @@ public class AutoChakraFormShift : DailyModuleBase
         TaskHelper.Enqueue(UseRelatedActions, "UseRelatedActions", 5_000, true, 1);
         return true;
     }
-    
-    private static bool IsValidPVEDuty()
-    {
-        var contentData = LuminaGetter.GetRow<ContentFinderCondition>(GameState.ContentFinderCondition);
-        
-        return !GameState.IsInPVPArea && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
-    }
+
+    private static bool IsValidPVEDuty() =>
+        !GameState.IsInPVPArea &&
+        (GameState.ContentFinderCondition == 0 ||
+         !InvalidContentTypes.Contains(GameState.ContentFinderConditionData.ContentType.RowId));
 
     // 脱战
     private void OnConditionChanged(ConditionFlag flag, bool value)
     {
-        if (flag is not ConditionFlag.InCombat) return;
+        if (flag != ConditionFlag.InCombat) return;
+        
         TaskHelper.Abort();
-
         if (!value) 
             TaskHelper.Enqueue(CheckCurrentJob);
     }
@@ -115,7 +112,5 @@ public class AutoChakraFormShift : DailyModuleBase
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced -= OnDutyRecommenced;
         DService.Condition.ConditionChange -= OnConditionChanged;
-
-        base.Uninit();
     }
 }
