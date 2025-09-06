@@ -567,7 +567,7 @@ public class HealerHelper : DailyModuleBase
                 AutoPlayCardService.NeedReorder         = false;
             }
         }
-        catch (Exception)
+        catch
         {
             // ignored
         }
@@ -606,17 +606,17 @@ public class HealerHelper : DailyModuleBase
             {
                 var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/card-order");
                 var resp = JsonConvert.DeserializeObject<AutoPlayCardManager.PlayCardOrder>(json);
-                if (resp is null)
-                    Error($"[HealerHelper] 远程发卡顺序文件解析失败: {json}");
-                else
-                {
-                    AutoPlayCardService.InitDefaultCardOrder(resp);
-                    // init custom if empty
-                    if (!AutoPlayCardService.CustomCardOrderLoaded)
-                        AutoPlayCardService.InitCustomCardOrder();
-                }
+                if (resp is null) return;
+
+                AutoPlayCardService.InitDefaultCardOrder(resp);
+                // init custom if empty
+                if (!AutoPlayCardService.CustomCardOrderLoaded)
+                    AutoPlayCardService.InitCustomCardOrder();
             }
-            catch (Exception ex) { Error($"[HealerHelper] 远程发卡顺序文件获取失败: {ex}"); }
+            catch
+            {
+                // ignored
+            }
         }
 
         public static async Task FetchHealActions()
@@ -628,18 +628,18 @@ public class HealerHelper : DailyModuleBase
             {
                 var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/heal-action");
                 var resp = JsonConvert.DeserializeObject<Dictionary<string, List<EasyHealManager.HealAction>>>(json);
-                if (resp is null)
-                    Error($"[HealerHelper] 远程治疗技能文件解析失败: {json}");
-                else
-                {
-                    EasyHealService.InitTargetHealActions(resp.SelectMany(kv => kv.Value).ToDictionary(act => act.Id, act => act));
+                if (resp is null) return;
+                
+                EasyHealService.InitTargetHealActions(resp.SelectMany(kv => kv.Value).ToDictionary(act => act.Id, act => act));
 
-                    // when active is empty, set with default on heal actions
-                    if (!EasyHealService.ActiveHealActionsLoaded)
-                        EasyHealService.InitActiveHealActions();
-                }
+                // when active is empty, set with default on heal actions
+                if (!EasyHealService.ActiveHealActionsLoaded)
+                    EasyHealService.InitActiveHealActions();
             }
-            catch (Exception ex) { Error($"[HealerHelper] 远程治疗技能文件获取失败: {ex}"); }
+            catch 
+            {
+                // ignored
+            }
         }
 
         public static async Task FetchAll()
@@ -649,7 +649,11 @@ public class HealerHelper : DailyModuleBase
                 var tasks = new[] { FetchPlayCardOrder(), FetchHealActions() };
                 await Task.WhenAll(tasks);
             }
-            catch (Exception ex) { Error($"[HealerHelper] 远程资源获取失败: {ex}"); } finally
+            catch
+            {
+                // ignored
+            } 
+            finally
             {
                 // action select combo
                 ActionSelect ??= new("##ActionSelect", LuminaGetter.Get<LuminaAction>().Where(x => EasyHealService.TargetHealActions.ContainsKey(x.RowId)));
