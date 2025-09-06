@@ -20,13 +20,13 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
         Author      = ["qingsiweisan"]
     };
     
-    private const int    AbilityLockTimeMs   = 800;
+    private const int    AbilityLockTimeMs   = 600;
     private const float  UseInGcdWindowStart = 60;
     private const float  UseInGcdWindowEnd   = 95;
     private const uint   LucidDreamingID     = 7562;
     private const ushort TranscendentStatus  = 418;
 
-    private static readonly HashSet<uint> ClassJobArr = [6, 7, 15, 19, 20, 21, 23, 24, 26, 27, 28, 33, 35, 36, 40];
+    private static readonly HashSet<uint> ValidClassJobs = [6, 7, 15, 19, 20, 21, 23, 24, 26, 27, 28, 33, 35, 36, 40];
 
     private static Config ModuleConfig = null!;
     
@@ -61,13 +61,9 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
             SaveConfig(ModuleConfig);
     }
 
-    protected override void Uninit()
-    {
+    protected override void Uninit() => 
         DService.Condition.ConditionChange -= OnConditionChanged;
-        
-        base.Uninit();
-    }
-    
+
     private void OnConditionChanged(ConditionFlag flag, bool value)
     {
         if (flag != ConditionFlag.InCombat) return;
@@ -98,7 +94,7 @@ public unsafe class AutoLucidDreaming : DailyModuleBase
             return;
         }
 
-        if (!DService.Condition[ConditionFlag.InCombat] || !ClassJobArr.Contains(LocalPlayerState.ClassJob) ||
+        if (!DService.Condition[ConditionFlag.InCombat] || !ValidClassJobs.Contains(LocalPlayerState.ClassJob) ||
             !IsActionUnlocked(LucidDreamingID))
             return;
 
