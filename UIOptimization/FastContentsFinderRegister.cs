@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -20,6 +19,11 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         ModulesPrerequisite = ["ContentFinderCommand"]
     };
+
+    private const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.NoDecoration    | ImGuiWindowFlags.AlwaysAutoResize   |
+                                                 ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove             |
+                                                 ImGuiWindowFlags.NoDocking       | ImGuiWindowFlags.NoFocusOnAppearing |
+                                                 ImGuiWindowFlags.NoNav           | ImGuiWindowFlags.NoBackground;
 
     protected override void Init()
     {
@@ -57,11 +61,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         foreach (var item in cachedData.Items)
         {
             ImGui.SetNextWindowPos(item.Position);
-            if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{item.NodeId}",
-                            ImGuiWindowFlags.NoDecoration    | ImGuiWindowFlags.AlwaysAutoResize   |
-                            ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove             |
-                            ImGuiWindowFlags.NoDocking       | ImGuiWindowFlags.NoFocusOnAppearing |
-                            ImGuiWindowFlags.NoNav           | ImGuiWindowFlags.NoBackground))
+            if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{item.NodeId}", WindowFlags))
             {
                 if (cachedData.InDutyQueue)
                 {
@@ -161,10 +161,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
     protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
-        
         ContentFinderDataManager.ClearCache();
-        
-        base.Uninit();
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
@@ -211,17 +208,13 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
     private static class ContentFinderDataManager
     {
         private static          ContentFinderCacheData? cachedData;
-        private static readonly Lock                    lockObject = new();
 
         public static ContentFinderCacheData? GetCachedData()
         {
-            lock (lockObject)
-            {
-                if (cachedData != null && DateTime.Now - cachedData.LastUpdateTime > TimeSpan.FromSeconds(5))
-                    cachedData = null;
+            if (cachedData != null && DateTime.Now - cachedData.LastUpdateTime > TimeSpan.FromSeconds(5))
+                cachedData = null;
                 
-                return cachedData;
-            }
+            return cachedData;
         }
 
         public static void UpdateCacheData()
@@ -288,7 +281,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
                         NodeId    = listItemComponent->NodeId,
                         Name      = name,
                         Level     = level,
-                        Position  = new Vector2(levelNode->ScreenX + (newData.CurrentTab == 0 ? 24f : 0f), levelNode->ScreenY - 8f),
+                        Position  = new(levelNode->ScreenX + (newData.CurrentTab == 0 ? 24f : 0f), levelNode->ScreenY - 8f),
                         IsLocked  = lockNode->IsVisible(),
                         IsVisible = levelNode->IsVisible(),
                         CleanName = name.Replace(" ", string.Empty)
@@ -299,8 +292,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
 
                 newData.Items = items;
 
-                lock (lockObject)
-                    cachedData = newData;
+                cachedData = newData;
             }
             catch
             {
@@ -308,10 +300,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
             }
         }
 
-        public static void ClearCache()
-        {
-            lock (lockObject)
-                cachedData = null;
-        }
+        public static void ClearCache() => 
+            cachedData = null;
     }
 }
