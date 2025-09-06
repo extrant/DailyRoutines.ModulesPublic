@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
@@ -20,6 +21,8 @@ public unsafe class OptimizedCastBar : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         Author      = ["Middo"]
     };
+
+    private static readonly HashSet<ConditionFlag> ValidFlags = [ConditionFlag.BetweenAreas, ConditionFlag.Mounted];
     
     private static Config ModuleConfig = null!;
 
@@ -32,6 +35,8 @@ public unsafe class OptimizedCastBar : DailyModuleBase
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_CastBar", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_CastBar", OnAddon);
+
+        DService.Condition.ConditionChange += OnConditionChanged;
     }
 
     protected override void ConfigUI()
@@ -229,10 +234,19 @@ public unsafe class OptimizedCastBar : DailyModuleBase
 
     protected override void Uninit()
     {
+        DService.Condition.ConditionChange -= OnConditionChanged;
+        
         DService.AddonLifecycle.UnregisterListener(OnAddon);
         OnAddon(AddonEvent.PreFinalize, null);
     }
 
+    private static void OnConditionChanged(ConditionFlag flag, bool value)
+    {
+        if (!ValidFlags.Contains(flag)) return;
+        
+        OnAddon(AddonEvent.PreFinalize, null);
+    }
+    
     private static void OnAddon(AddonEvent type, AddonArgs args)
     {
         switch (type)
@@ -256,7 +270,10 @@ public unsafe class OptimizedCastBar : DailyModuleBase
                 var progressBarNode = (AtkNineGridNode*)CastBar->GetNodeById(11);
                 if (progressBarNode == null) return;
 
-                UpdateOriginalAddonNodes();
+                if (Throttler.Throttle("OptimizedCastBar-PostDraw-UpdateOriginal"))
+                    UpdateOriginalAddonNodes();
+                
+                if (!Throttler.Throttle("OptimizedCastBar-PostDraw-UpdateSlideCast", 10)) return;
                 
                 var slidePerercentage = ((float)(addon->CastTime * 10) - ModuleConfig.SlideCastZoneAdjust) / (addon->CastTime * 10);
                 var slidePosition     = 160                                                                * slidePerercentage;
@@ -283,7 +300,7 @@ public unsafe class OptimizedCastBar : DailyModuleBase
                                 Offsets            = new(12)
                             };
 
-                            Service.AddonController.AttachNode(SlideMarkerZoneNode, CastBar->GetNodeById(10));
+                            Service.AddonController.AttachNode(SlideMarkerZoneNode, progressBarNode->ParentNode);
                         }
 
                         SlideMarkerZoneNode.IsVisible = true;
@@ -345,9 +362,6 @@ public unsafe class OptimizedCastBar : DailyModuleBase
             actionNameTextNode->FontSize        = ModuleConfig.NameTextSize;
             actionNameTextNode->SetPositionFloat(ModuleConfig.NameTextPosition.X, ModuleConfig.NameTextPosition.Y);
         }
-        
-        var barNode = CastBar->GetNodeById(9);
-        if (barNode == null) return;
 
         var iconNode = (AtkComponentNode*)CastBar->GetNodeById(8);
         if (iconNode != null)

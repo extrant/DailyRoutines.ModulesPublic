@@ -755,8 +755,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
                     Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
                 }
-                
-                textNode.IsVisible = isEnabled;
+
+                textNode.IsVisible = isEnabled && getTarget() != null;
                 if (!textNode.IsVisible) return;
 
                 if (getTarget() is IBattleChara target)
