@@ -10,6 +10,7 @@ using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
@@ -369,7 +370,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     InternalName          = "DRAutoCaculateRecipe",
                     Title                 = $"{GetLoc("OptimizedRecipeNote-AddonTitle")}",
                     Subtitle              = $"{GetLoc("OptimizedRecipeNote-Message-StepsInfo", result.Actions.Count, result.Actions.Count * 3)}",
-                    Size                  = new(500f, 150f + (50f * (rowCount - 1))),
+                    Size                  = new(500f, 160f + (50f * (rowCount - 1))),
                     Position              = new(800f, 350f),
                     NativeController      = Service.AddonController,
                     RememberClosePosition = true,
@@ -441,7 +442,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             var operationRow = new HorizontalFlexNode
             {
                 IsVisible = true,
-                Position  = new(8, 60),
+                Position  = new(8, 65),
                 Size      = new(0, 44)
             };
 
@@ -513,7 +514,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             var container = new VerticalListNode
             {
                 IsVisible = true,
-                Position  = new(12, 88),
+                Position  = new(12, 97),
                 Size      = new(44)
             };
             
@@ -598,6 +599,16 @@ public class OptimizedRecipeNote : DailyModuleBase
 
         protected override unsafe void OnUpdate(AtkUnitBase* addon)
         {
+            if (DService.KeyState[VirtualKey.ESCAPE])
+            {
+                Close();
+                
+                if (SystemMenu != null)
+                    SystemMenu->Close(true);
+                
+                return;
+            }
+            
             if (ExecuteButton != null && TaskHelper.TryGetTarget(out var taskHelper)) 
                 ExecuteButton.IsEnabled = Synthesis != null && !taskHelper.IsBusy;
         }
