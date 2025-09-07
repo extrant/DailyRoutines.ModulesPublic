@@ -285,7 +285,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             try
             {
-                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/mitigation");
+                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/mitigation.json");
                 var resp = JsonConvert.DeserializeObject<MitigationManager.MMStatus[]>(json);
                 if (resp == null)
                     Error($"[AutoDisplayMitigationInfo] 远程减伤技能文件解析失败: {json}");
