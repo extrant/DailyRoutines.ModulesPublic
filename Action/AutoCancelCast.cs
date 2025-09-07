@@ -3,10 +3,9 @@ using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 
 namespace DailyRoutines.ModulesPublic;
@@ -20,7 +19,7 @@ public unsafe class AutoCancelCast : DailyModuleBase
         Category    = ModuleCategories.Action,
     };
 
-    private static readonly HashSet<ObjectKind> ValidObjectKinds = [ObjectKind.Pc, ObjectKind.BattleNpc];
+    private static readonly HashSet<ObjectKind> ValidObjectKinds = [ObjectKind.Player, ObjectKind.BattleNpc];
 
     private static readonly HashSet<ConditionFlag> ValidConditions = [ConditionFlag.Casting, ConditionFlag.Casting87];
 
@@ -60,15 +59,27 @@ public unsafe class AutoCancelCast : DailyModuleBase
             return;
         }
 
-        var obj = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)player.CastTargetObjectId);
-        if (obj == null                                 ||
-            !ValidObjectKinds.Contains(obj->ObjectKind) ||
-            obj->Health == 0                            ||
-            ActionManager.CanUseActionOnTarget(player.CastActionId, (GameObject*)obj))
-            return;
+        var obj = player.CastTargetObject;
+        if (obj is not IBattleChara battleChara || !ValidObjectKinds.Contains(battleChara.ObjectKind)) return;
 
-        if (Throttler.Throttle("AutoCancelCast-CancelCast")) 
-            ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
+        if (battleChara.IsDead || !battleChara.IsTargetable || battleChara.CurrentHp == 0)
+        {
+            ExecuteCancast();
+            return;
+        }
+        
+        if (ActionManager.CanUseActionOnTarget(player.CastActionId, obj.ToStruct()))
+            return;
+        
+        ExecuteCancast();
+        
+        return;
+
+        void ExecuteCancast()
+        {
+            if (Throttler.Throttle("AutoCancelCast-CancelCast", 100))
+                ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
+        }
     }
 
     protected override void Uninit()
