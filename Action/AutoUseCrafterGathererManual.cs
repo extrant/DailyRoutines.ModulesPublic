@@ -1,16 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
 {
@@ -22,8 +19,17 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
         Author      = ["Shiyuvi", "AtmoOmen"]
     };
 
-    private static readonly HashSet<uint> Gatherers;
-    private static readonly HashSet<uint> Crafters;
+    private static readonly HashSet<uint> Gatherers =
+        LuminaGetter.Get<ClassJob>()
+                    .Where(x => x.ClassJobCategory.RowId == 32)
+                    .Select(x => x.RowId)
+                    .ToHashSet();
+
+    private static readonly HashSet<uint> Crafters =
+        LuminaGetter.Get<ClassJob>()
+                    .Where(x => x.ClassJobCategory.RowId == 33)
+                    .Select(x => x.RowId)
+                    .ToHashSet();
 
     private static readonly uint[] GathererManuals = [26553, 12668, 4635, 4633];
     private static readonly uint[] CrafterManuals  = [26554, 12667, 4634, 4632];
@@ -35,23 +41,10 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
 
     private static Config ModuleConfig = null!;
 
-    static AutoUseCrafterGathererManual()
-    {
-        Gatherers = LuminaGetter.Get<ClassJob>()
-                               .Where(x => x.ClassJobCategory.RowId == 32)
-                               .Select(x => x.RowId)
-                               .ToHashSet();
-        
-        Crafters = LuminaGetter.Get<ClassJob>()
-                              .Where(x => x.ClassJobCategory.RowId == 33)
-                              .Select(x => x.RowId)
-                              .ToHashSet();
-    }
-
     protected override void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 15_000 };
+        TaskHelper ??= new() { TimeLimitMS = 15_000 };
 
         DService.Condition.ConditionChange    += OnConditionChanged;
         DService.ClientState.TerritoryChanged += OnZoneChanged;
@@ -73,8 +66,6 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.ClientState.ClassJobChanged  -= OnClassJobChanged;
         DService.ClientState.LevelChanged     -= OnLevelChanged;
-
-        base.Uninit();
     }
 
     private void OnConditionChanged(ConditionFlag flag, bool value)
@@ -83,11 +74,14 @@ public unsafe class AutoUseCrafterGathererManual : DailyModuleBase
         EnqueueCheck();
     }
     
-    private void OnZoneChanged(ushort zone) => EnqueueCheck();
+    private void OnZoneChanged(ushort zone) => 
+        EnqueueCheck();
     
-    private void OnLevelChanged(uint classJobId, uint level) => EnqueueCheck();
+    private void OnLevelChanged(uint classJobId, uint level) => 
+        EnqueueCheck();
 
-    private void OnClassJobChanged(uint classJobID) => EnqueueCheck();
+    private void OnClassJobChanged(uint classJobID) => 
+        EnqueueCheck();
     
     private void EnqueueCheck()
     {
