@@ -34,9 +34,8 @@ public class AutoTankStance : DailyModuleBase
 
     protected override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new();
-
-        TaskHelper ??= new() { TimeLimitMS = 30_000 };
+        ModuleConfig =   LoadConfig<Config>() ?? new();
+        TaskHelper   ??= new() { TimeLimitMS = 30_000 };
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
@@ -93,8 +92,6 @@ public class AutoTankStance : DailyModuleBase
     {
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced -= OnDutyRecommenced;
-
-        base.Uninit();
     }
 
     private class Config : ModuleConfiguration
