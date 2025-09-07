@@ -1,5 +1,4 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -12,7 +11,7 @@ public unsafe class AutoStellarSprint : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = GetLoc("AutoStellarSprintTitle"), // 自动月球冲刺
+        Title       = GetLoc("AutoStellarSprintTitle"),
         Description = GetLoc("AutoStellarSprintDescription"),
         Category    = ModuleCategories.Action,
         Author      = ["Due"]
@@ -34,7 +33,7 @@ public unsafe class AutoStellarSprint : DailyModuleBase
         TaskHelper.Abort();
         FrameworkManager.Unregister(OnFrameworkUpdate);
 
-        if (!LuminaGetter.TryGetRow<TerritoryType>(zone, out var zoneData) || zoneData is not { TerritoryIntendedUse.RowId: 60 }) return;
+        if (GameState.TerritoryIntendedUse != 60) return;
         FrameworkManager.Register(OnFrameworkUpdate, throttleMS: 2_000);
     }
 
@@ -68,7 +67,5 @@ public unsafe class AutoStellarSprint : DailyModuleBase
     {
         FrameworkManager.Unregister(OnFrameworkUpdate);
         DService.ClientState.TerritoryChanged -= OnTerritoryChange;
-        
-        base.Uninit();
     }
 }
