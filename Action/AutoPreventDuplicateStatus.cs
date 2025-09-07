@@ -164,8 +164,8 @@ public unsafe class AutoPreventDuplicateStatus : DailyModuleBase
         var gameObj = DService.ObjectTable.SearchById(targetID);
 
         var targetIDDetection = targetID;
-        if (canTargetSelf && !ActionManager.CanUseActionOnTarget(adjustedActionID, gameObj.ToStruct()))
-            targetIDDetection = DService.ObjectTable.LocalPlayer.EntityId;
+        if (canTargetSelf && (gameObj == null || !ActionManager.CanUseActionOnTarget(adjustedActionID, gameObj.ToStruct())))
+            targetIDDetection = LocalPlayerState.EntityID;
 
         if (info.ShouldPrevent(targetIDDetection))
         {
