@@ -56,7 +56,7 @@ public class AutoSoulsow : DailyModuleBase
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return false;
-        if (DService.Condition[ConditionFlag.InCombat] || LocalPlayerState.ClassJob == 39 || !IsValidPVEDuty())
+        if (DService.Condition[ConditionFlag.InCombat] || LocalPlayerState.ClassJob != 39 || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -66,13 +66,12 @@ public class AutoSoulsow : DailyModuleBase
         return true;
     }
     
-    private unsafe bool? UseRelatedActions()
+    private bool? UseRelatedActions()
     {
         if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return false;
-        var statusManager = localPlayer.ToStruct()->StatusManager;
 
         // 播魂种
-        if (statusManager.HasStatus(2594) || !IsActionUnlocked(24387))
+        if (localPlayer.StatusList.HasStatus(2594) || !IsActionUnlocked(24387))
         {
             TaskHelper.Abort();
             return true;
