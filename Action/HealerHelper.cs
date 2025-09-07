@@ -19,7 +19,6 @@ using Lumina.Text.ReadOnly;
 using Newtonsoft.Json;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 
-
 namespace DailyRoutines.ModulesPublic;
 
 public class HealerHelper : DailyModuleBase
