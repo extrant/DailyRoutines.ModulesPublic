@@ -1,24 +1,25 @@
+using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.Sheets;
-using System.Collections.Generic;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoSoulsow : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoSoulsowTitle"),
+        Title       = GetLoc("AutoSoulsowTitle"),
         Description = GetLoc("AutoSoulsowDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
+    
+    private static readonly HashSet<uint> InvalidContentTypes = [16, 17, 18, 19, 31, 32, 34, 35];
 
     protected override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
+        TaskHelper ??= new() { TimeLimitMS = 30_000 };
 
         DService.ClientState.TerritoryChanged += OnZoneChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
@@ -35,9 +36,10 @@ public class AutoSoulsow : DailyModuleBase
     // 进入副本
     private void OnZoneChanged(ushort zone)
     {
-        if (LuminaGetter.GetRow<TerritoryType>(zone) is not { ContentFinderCondition.RowId: > 0 }) return;
-
         TaskHelper.Abort();
+        
+        if (GameState.ContentFinderCondition == 0) return;
+
         TaskHelper.Enqueue(CheckCurrentJob);
     }
     
@@ -54,8 +56,7 @@ public class AutoSoulsow : DailyModuleBase
     private bool? CheckCurrentJob()
     {
         if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return false;
-        if (DService.Condition[ConditionFlag.InCombat] || 
-            DService.ObjectTable.LocalPlayer is not { ClassJob.RowId: 39 } || !IsValidPVEDuty())
+        if (DService.Condition[ConditionFlag.InCombat] || LocalPlayerState.ClassJob == 39 || !IsValidPVEDuty())
         {
             TaskHelper.Abort();
             return true;
@@ -77,30 +78,21 @@ public class AutoSoulsow : DailyModuleBase
             return true;
         }
 
-        TaskHelper.Enqueue(() => UseActionManager.UseAction(ActionType.Action, 24387), $"UseAction_{24387}",
-                           5_000, true, 1);
+        TaskHelper.Enqueue(() => UseActionManager.UseAction(ActionType.Action, 24387), $"UseAction_{24387}", 5_000, true, 1);
         TaskHelper.DelayNext(2_000);
-        TaskHelper.Enqueue(() => CheckCurrentJob(), $"SecondCheck", null, true, 1);
+        TaskHelper.Enqueue(CheckCurrentJob, "SecondCheck", null, true, 1);
         return true;
     }
 
-    private static unsafe bool IsValidPVEDuty()
-    {
-        HashSet<uint> InvalidContentTypes = [16, 17, 18, 19, 31, 32, 34, 35];
-
-        var isPVP = GameMain.IsInPvPArea() || GameMain.IsInPvPInstance();
-
-        var contentData = LuminaGetter.GetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId);
-        
-        return !isPVP && (contentData == null || !InvalidContentTypes.Contains(contentData.Value.ContentType.RowId));
-    }
+    private static bool IsValidPVEDuty() =>
+        !GameState.IsInPVPArea &&
+        (GameState.ContentFinderCondition == 0 ||
+         !InvalidContentTypes.Contains(GameState.ContentFinderConditionData.ContentType.RowId));
 
     protected override void Uninit()
     {
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
         DService.DutyState.DutyRecommenced    -= OnDutyRecommenced;
         DService.Condition.ConditionChange    -= OnConditionChanged;
-
-        base.Uninit();
     }
 }
