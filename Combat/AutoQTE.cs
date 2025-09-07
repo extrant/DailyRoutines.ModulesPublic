@@ -34,6 +34,8 @@ public class AutoQTE : DailyModuleBase
     private static unsafe byte IsInputIDPressedDetour(void* data, InputId id)
     {
         var orig = IsInputIDPressedHook.Original(data, id);
+        if (GameState.ContentFinderCondition == 0)
+            return orig;
         
         if (!Throttler.Check("AutoQTE-QTE"))
             return 0;
