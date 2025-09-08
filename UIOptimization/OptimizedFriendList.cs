@@ -28,6 +28,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         ModulesPrerequisite = ["WorldTravelCommand"]
     };
 
+    // TODO: FFCS 7.3
     private delegate void RequestFriendOnlineStatusDelegate(AgentFriendlist* agent, ulong contentID);
     private static readonly RequestFriendOnlineStatusDelegate RequestFriendOnlineStatus =
         new CompSig("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA 48 8B 49 ?? 48 8B 01 FF 90 ?? ?? ?? ?? 48 8B D7")
