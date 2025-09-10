@@ -603,7 +603,7 @@ public class HealerHelper : DailyModuleBase
 
             try
             {
-                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/card-order");
+                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/card-order.json");
                 var resp = JsonConvert.DeserializeObject<AutoPlayCardManager.PlayCardOrder>(json);
                 if (resp is null) return;
 
@@ -625,7 +625,7 @@ public class HealerHelper : DailyModuleBase
 
             try
             {
-                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/heal-action");
+                var json = await HttpClientHelper.Get().GetStringAsync($"{Uri}/heal-action.json");
                 var resp = JsonConvert.DeserializeObject<Dictionary<string, List<EasyHealManager.HealAction>>>(json);
                 if (resp is null) return;
                 
