@@ -74,7 +74,7 @@ public class AutoReplyChatBot : DailyModuleBase
             {
                 ImGui.SetNextItemWidth(fieldW);
                 using (var combo = ImRaii.Combo($"{GetLoc("AutoReplyChatBot-ValidChatTypes")}", 
-                                                string.Join(',', ModuleConfig.ValidChatTypes), 
+                                                string.Join(',', ModuleConfig.ValidChatTypes.Select(x => ValidChatTypes.GetValueOrDefault(x, string.Empty))), 
                                                 ImGuiComboFlags.HeightLarge))
                 {
                     if (combo)
