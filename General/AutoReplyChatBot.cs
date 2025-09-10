@@ -81,7 +81,7 @@ public class AutoReplyChatBot : DailyModuleBase
                     {
                         foreach (var (chatType, loc) in ValidChatTypes)
                         {
-                            if (ImGui.Selectable($"{loc}##{chatType}", ModuleConfig.ValidChatTypes.Contains(chatType)))
+                            if (ImGui.Selectable($"{loc}##{chatType}", ModuleConfig.ValidChatTypes.Contains(chatType), ImGuiSelectableFlags.DontClosePopups))
                             {
                                 if (!ModuleConfig.ValidChatTypes.Remove(chatType))
                                     ModuleConfig.ValidChatTypes.Add(chatType);
