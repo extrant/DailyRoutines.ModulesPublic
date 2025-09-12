@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
@@ -19,6 +20,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Addon;
+using KamiToolKit.Classes.TimelineBuilding;
 using KamiToolKit.Nodes;
 using Lumina.Excel.Sheets;
 using ActionKind = FFXIVClientStructs.FFXIV.Client.UI.Agent.ActionKind;
@@ -35,11 +37,22 @@ public class OptimizedRecipeNote : DailyModuleBase
     };
 
     private static readonly Dictionary<uint, CaculationResult> CaculationResults = [];
+
+    private static readonly Dictionary<uint, List<Recipe>> SameItemRecipes =
+        LuminaGetter.Get<Recipe>()
+                    .GroupBy(x => x.ItemResult.RowId)
+                    .DistinctBy(x => x.Key)
+                    .Where(x => x.Key > 0 && x.Count() > 1)
+                    .ToDictionary(x => x.Key, x => x.DistinctBy(d => d.CraftType.RowId).ToList());
     
     private static Hook<AgentReceiveEventDelegate>? AgentRecipeNoteReceiveEventHook;
     
     private static TextButtonNode? RecipeCaculationButton;
     private static TextButtonNode? SwitchJobButton;
+    private static TextButtonNode? DisplayOthersButton;
+    
+    private static HorizontalListNode? DisplayOthersIconsLayout;
+    private static List<IconButtonNode> DisplayOthersJobButtons = [];
     
     private static DalamudLinkPayload? InstallRaphaelLinkPayload;
     private static Task?               InstallRaphaelTask;
@@ -88,6 +101,15 @@ public class OptimizedRecipeNote : DailyModuleBase
                 
                 Service.AddonController.DetachNode(SwitchJobButton);
                 SwitchJobButton = null;
+                
+                Service.AddonController.DetachNode(DisplayOthersButton);
+                DisplayOthersButton = null;
+                
+                Service.AddonController.DetachNode(DisplayOthersIconsLayout);
+                DisplayOthersIconsLayout = null;
+                
+                DisplayOthersJobButtons.ForEach(x => Service.AddonController.DetachNode(x));
+                DisplayOthersJobButtons.Clear();
                 break;
             case AddonEvent.PostSetup:
                 if (AddonActionsPreview.Addon?.Nodes is not { Count: > 0 } nodes) return;
@@ -108,22 +130,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     {
                         if (!IPCManager.IsIPCAvailable<RaphaelIPC>())
                         {
-                            InstallRaphaelLinkPayload ??= LinkPayloadManager.Register(OnClickInstallRaphaelPayload, out _);
-                            
-                            var message = new SeStringBuilder().AddIcon(BitmapFontIcon.Warning)
-                                                               .AddText($" {GetLoc("OptimizedRecipeNote-Message-InstallRapheal")}")
-                                                               .Add(NewLinePayload.Payload)
-                                                               .AddText($"{GetLoc("Operation")}: ")
-                                                               .Add(RawPayload.LinkTerminator)
-                                                               .Add(InstallRaphaelLinkPayload)
-                                                               .AddText("[")
-                                                               .AddUiForeground(35)
-                                                               .AddText($"{GetLoc("Enable")} / {GetLoc("Install")}")
-                                                               .AddUiForegroundOff()
-                                                               .AddText("]")
-                                                               .Add(RawPayload.LinkTerminator)
-                                                               .Build();
-                            Chat(message);
+                            PrintInstallRaphaelPluginMessage();
                             return;
                         }
 
@@ -183,22 +190,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     {
                         if (!IPCManager.IsIPCAvailable<RaphaelIPC>())
                         {
-                            InstallRaphaelLinkPayload ??= LinkPayloadManager.Register(OnClickInstallRaphaelPayload, out _);
-                            
-                            var message = new SeStringBuilder().AddIcon(BitmapFontIcon.Warning)
-                                                               .AddText($" {GetLoc("OptimizedRecipeNote-Message-InstallRapheal")}")
-                                                               .Add(NewLinePayload.Payload)
-                                                               .AddText($"{GetLoc("Operation")}: ")
-                                                               .Add(RawPayload.LinkTerminator)
-                                                               .Add(InstallRaphaelLinkPayload)
-                                                               .AddText("[")
-                                                               .AddUiForeground(35)
-                                                               .AddText($"{GetLoc("Enable")} / {GetLoc("Install")}")
-                                                               .AddUiForegroundOff()
-                                                               .AddText("]")
-                                                               .Add(RawPayload.LinkTerminator)
-                                                               .Build();
-                            Chat(message);
+                            PrintInstallRaphaelPluginMessage();
                             return;
                         }
 
@@ -221,6 +213,87 @@ public class OptimizedRecipeNote : DailyModuleBase
                     };
                     
                     Service.AddonController.AttachNode(SwitchJobButton, InfosOm.RecipeNote->GetNodeById(57));
+                }
+
+                if (DisplayOthersButton == null)
+                {
+                    DisplayOthersButton = new()
+                    {
+                        Position  = new(0, -32),
+                        Size      = new(140, 32),
+                        Label     = GetLoc("OptimizedRecipeNote-Button-ShowOtherRecipes"),
+                        IsVisible = true,
+                        OnClick = () =>
+                        {
+                            if (!IPCManager.IsIPCAvailable<RaphaelIPC>())
+                            {
+                                PrintInstallRaphaelPluginMessage();
+                                return;
+                            }
+
+                            var recipeID = RaphaelIPC.GetCurrentRecipeID();
+                            if (recipeID == 0                                            ||
+                                !LuminaGetter.TryGetRow(recipeID, out Recipe recipe)     ||
+                                recipe.ItemResult.Value is not { RowId: > 0 } resultItem ||
+                                !SameItemRecipes.TryGetValue(resultItem.RowId, out _))
+                                return;
+
+                            AgentRecipeNote.Instance()->SearchRecipeByItemId(resultItem.RowId);
+                        }
+                    };
+
+                    var labelNode = DisplayOthersButton.LabelNode;
+                    while (labelNode.FontSize > 1 && labelNode.GetTextDrawSize(labelNode.Text).X > labelNode.Size.X)
+                        labelNode.FontSize--;
+                    
+                    Service.AddonController.AttachNode(DisplayOthersButton, InfosOm.RecipeNote->GetNodeById(57));
+                }
+
+                if (DisplayOthersIconsLayout == null)
+                {
+                    DisplayOthersIconsLayout = new()
+                    {
+                        IsVisible   = true,
+                        ItemSpacing = 5,
+                        Size        = new(240, 24),
+                        Position    = new(145, -28),
+                    };
+
+                    for (var i = 0U; i < 8; i++)
+                    {
+                        var iconButtonNode = new IconButtonNode
+                        {
+                            IconId    = 62008 + i,
+                            Size      = new(24),
+                            IsVisible = true,
+                        };
+                        
+                        var iconNode = new IconImageNode
+                        {
+                            IconId    = 62008 + i,
+                            Size      = new(24),
+                            IsVisible = true,
+                        };
+
+                        iconNode.AddTimeline(new TimelineBuilder()
+                                             .AddFrameSetWithFrame(1,  10, 1,  position: Vector2.Zero, alpha: 255, multiplyColor: new(100.0f))
+                                             .AddFrameSetWithFrame(11, 17, 11, position: Vector2.Zero, alpha: 255, multiplyColor: new(100.0f))
+                                             .AddFrameSetWithFrame(18, 26, 18, position: Vector2.Zero + new Vector2(0.0f, 1.0f), alpha: 255,
+                                                                   multiplyColor: new(100.0f))
+                                             .AddFrameSetWithFrame(27, 36, 27, position: Vector2.Zero, alpha: 153, multiplyColor: new(80.0f))
+                                             .AddFrameSetWithFrame(37, 46, 37, position: Vector2.Zero, alpha: 255, multiplyColor: new(100.0f))
+                                             .AddFrameSetWithFrame(47, 53, 47, position: Vector2.Zero, alpha: 255, multiplyColor: new(100.0f))
+                                             .Build());
+                        
+                        iconButtonNode.BackgroundNode.IsVisible = false;
+                        iconButtonNode.ImageNode.IsVisible      = false;
+                        Service.AddonController.AttachNode(iconNode, iconButtonNode);
+                        
+                        DisplayOthersJobButtons.Add(iconButtonNode);
+                        DisplayOthersIconsLayout.AddNode(iconButtonNode);
+                    }
+                    
+                    Service.AddonController.AttachNode(DisplayOthersIconsLayout, InfosOm.RecipeNote->GetNodeById(57));
                 }
 
                 if (Throttler.Throttle("OptimizedRecipeNote-UpdateAddon", 1000))
@@ -279,16 +352,53 @@ public class OptimizedRecipeNote : DailyModuleBase
 
     private static unsafe void UpdateRecipeAddonButton()
     {
-        if (InfosOm.RecipeNote == null || RecipeCaculationButton == null) return;
+        if (InfosOm.RecipeNote == null) return;
         
         if (!IPCManager.IsIPCAvailable<RaphaelIPC>()) return;
                     
         var recipeID = RaphaelIPC.GetCurrentRecipeID();
         if (recipeID == 0 || !LuminaGetter.TryGetRow(recipeID, out Recipe recipe))
         {
-            RecipeCaculationButton.IsVisible = false;
-            SwitchJobButton.IsVisible        = false;
+            RecipeCaculationButton.IsVisible   = false;
+            SwitchJobButton.IsVisible          = false;
+            DisplayOthersButton.IsVisible      = false;
+            DisplayOthersIconsLayout.IsVisible = false;
             return;
+        }
+
+        if (SameItemRecipes.TryGetValue(recipe.ItemResult.RowId, out var allRecipes))
+        {
+            DisplayOthersButton.IsVisible      = true;
+            DisplayOthersIconsLayout.IsVisible = true;
+            
+            var allCraftTypes = allRecipes.ToDictionary(x => x.CraftType.RowId, x => x.RowId);
+            for (var i = 0U; i < 8; i++)
+            {
+                var node = DisplayOthersJobButtons[(int)i];
+                if (allCraftTypes.TryGetValue(i, out var otherRecipeID))
+                {
+                    node.Alpha     = 1;
+                    node.IsEnabled = true;
+                    node.OnClick = () =>
+                    {
+                        var agent = AgentRecipeNote.Instance();
+                        if (RaphaelIPC.GetCurrentRecipeID() == otherRecipeID) return;
+                        
+                        agent->OpenRecipeByRecipeId(otherRecipeID);
+                    };
+                }
+                else
+                {
+                    node.Alpha     = 0.2f;
+                    node.IsEnabled = false;
+                    node.OnClick = () => { };
+                }
+            }
+        }
+        else
+        {
+            DisplayOthersButton.IsVisible      = false;
+            DisplayOthersIconsLayout.IsVisible = false;
         }
 
         if (recipe.CraftType.RowId != LocalPlayerState.ClassJob - 8)
@@ -337,6 +447,26 @@ public class OptimizedRecipeNote : DailyModuleBase
                .AddText("]")
                .Add(RawPayload.LinkTerminator);
         Chat(builder.Build());
+    }
+
+    private static void PrintInstallRaphaelPluginMessage()
+    {
+        InstallRaphaelLinkPayload ??= LinkPayloadManager.Register(OnClickInstallRaphaelPayload, out _);
+                            
+        var message = new SeStringBuilder().AddIcon(BitmapFontIcon.Warning)
+                                           .AddText($" {GetLoc("OptimizedRecipeNote-Message-InstallRapheal")}")
+                                           .Add(NewLinePayload.Payload)
+                                           .AddText($"{GetLoc("Operation")}: ")
+                                           .Add(RawPayload.LinkTerminator)
+                                           .Add(InstallRaphaelLinkPayload)
+                                           .AddText("[")
+                                           .AddUiForeground(35)
+                                           .AddText($"{GetLoc("Enable")} / {GetLoc("Install")}")
+                                           .AddUiForegroundOff()
+                                           .AddText("]")
+                                           .Add(RawPayload.LinkTerminator)
+                                           .Build();
+        Chat(message);
     }
 
     private class AddonActionsPreview(TaskHelper taskHelper, CaculationResult result) : NativeAddon
