@@ -47,15 +47,18 @@ public class OptimizedRecipeNote : DailyModuleBase
     
     private static Hook<AgentReceiveEventDelegate>? AgentRecipeNoteReceiveEventHook;
     
-    private static TextButtonNode? RecipeCaculationButton;
-    private static TextButtonNode? SwitchJobButton;
-    private static TextButtonNode? DisplayOthersButton;
+    private static TextButtonNode?    RecipeCaculationButton;
+    private static TextButtonNode?    SwitchJobButton;
+    private static TextureButtonNode? ClearSearchButton;
     
-    private static HorizontalListNode? DisplayOthersIconsLayout;
+    private static TextButtonNode?      DisplayOthersButton;
+    private static HorizontalListNode?  DisplayOthersIconsLayout;
     private static List<IconButtonNode> DisplayOthersJobButtons = [];
     
     private static DalamudLinkPayload? InstallRaphaelLinkPayload;
     private static Task?               InstallRaphaelTask;
+
+    private static uint LastRecipeID;
     
     protected override unsafe void Init()
     {
@@ -110,6 +113,9 @@ public class OptimizedRecipeNote : DailyModuleBase
                 
                 DisplayOthersJobButtons.ForEach(x => Service.AddonController.DetachNode(x));
                 DisplayOthersJobButtons.Clear();
+                
+                Service.AddonController.DetachNode(ClearSearchButton);
+                ClearSearchButton = null;
                 break;
             case AddonEvent.PostSetup:
                 if (AddonActionsPreview.Addon?.Nodes is not { Count: > 0 } nodes) return;
@@ -296,6 +302,30 @@ public class OptimizedRecipeNote : DailyModuleBase
                     Service.AddonController.AttachNode(DisplayOthersIconsLayout, InfosOm.RecipeNote->GetNodeById(57));
                 }
 
+                if (ClearSearchButton == null)
+                {
+                    ClearSearchButton = new()
+                    {
+                        IsVisible          = true,
+                        Position           = new(130, 25),
+                        Size               = new(28),
+                        TexturePath        = "ui/uld/WindowA_Button_hr1.tex",
+                        TextureCoordinates = Vector2.Zero,
+                        TextureSize        = new(28),
+                        OnClick = () =>
+                        {
+                            if (LastRecipeID == 0) return;
+
+                            var agent = AgentRecipeNote.Instance();
+                            if (!agent->RecipeSearchOpen) return;
+                            
+                            agent->OpenRecipeByRecipeId(LastRecipeID);
+                        }
+                    };
+                    
+                    Service.AddonController.AttachNode(ClearSearchButton, InfosOm.RecipeNote->GetNodeById(24));
+                }
+
                 if (Throttler.Throttle("OptimizedRecipeNote-UpdateAddon", 1000))
                     UpdateRecipeAddonButton();
                 
@@ -346,7 +376,14 @@ public class OptimizedRecipeNote : DailyModuleBase
         ulong           eventKind)
     {
         var orig = AgentRecipeNoteReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
+        
         DService.Framework.RunOnTick(UpdateRecipeAddonButton, TimeSpan.FromMilliseconds(100));
+        DService.Framework.RunOnTick(() =>
+        {
+            if (AgentRecipeNote.Instance()->RecipeSearchOpen) return;
+            LastRecipeID = RaphaelIPC.GetCurrentRecipeID();
+        }, TimeSpan.FromMilliseconds(100));
+        
         return orig;
     }
 
@@ -355,7 +392,9 @@ public class OptimizedRecipeNote : DailyModuleBase
         if (InfosOm.RecipeNote == null) return;
         
         if (!IPCManager.IsIPCAvailable<RaphaelIPC>()) return;
-                    
+
+        ClearSearchButton.IsVisible = AgentRecipeNote.Instance()->RecipeSearchOpen && LastRecipeID != 0;
+        
         var recipeID = RaphaelIPC.GetCurrentRecipeID();
         if (recipeID == 0 || !LuminaGetter.TryGetRow(recipeID, out Recipe recipe))
         {
