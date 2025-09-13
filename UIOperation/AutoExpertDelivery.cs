@@ -436,7 +436,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
 
         protected override void OnFinalize(AtkUnitBase* addon)
         {
-            if (GrandCompanySupplyList == null) return;
+            if (GrandCompanySupplyList == null || Instance.TaskHelper.IsBusy) return;
             GrandCompanySupplyList->Close(true);
         }
     }
