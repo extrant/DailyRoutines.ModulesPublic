@@ -57,6 +57,10 @@ public class OptimizedRecipeNote : DailyModuleBase
     private static List<IconButtonNode> DisplayOthersJobButtons = [];
 
     private static List<IconButtonNode> GetShopInfoButtons = [];
+
+    private static TextButtonNode? LevelRecipeButton;
+    private static TextButtonNode? SpecialRecipeButton;
+    private static TextButtonNode? MasterRecipeButton;
     
     private static DalamudLinkPayload? InstallRaphaelLinkPayload;
     private static Task?               InstallRaphaelTask;
@@ -125,6 +129,15 @@ public class OptimizedRecipeNote : DailyModuleBase
                 
                 GetShopInfoButtons.ForEach(x => Service.AddonController.DetachNode(x));
                 GetShopInfoButtons.Clear();
+                
+                Service.AddonController.DetachNode(LevelRecipeButton);
+                LevelRecipeButton = null;
+                
+                Service.AddonController.DetachNode(SpecialRecipeButton);
+                SpecialRecipeButton = null;
+                
+                Service.AddonController.DetachNode(MasterRecipeButton);
+                MasterRecipeButton = null;
                 break;
             case AddonEvent.PostSetup:
                 if (AddonActionsPreview.Addon?.Nodes is not { Count: > 0 } nodes) return;
@@ -391,6 +404,84 @@ public class OptimizedRecipeNote : DailyModuleBase
                         GetShopInfoButtons.Add(buttonNode);
                         Service.AddonController.AttachNode(buttonNode, componentNode);
                     }
+                }
+
+                if (LevelRecipeButton == null)
+                {
+                    LevelRecipeButton = new()
+                    {
+                        IsVisible = true,
+                        Position  = new(0, 32),
+                        Size      = new(58, 38),
+                        Tooltip = LuminaWrapper.GetAddonText(1710),
+                        OnClick = () =>
+                        {
+                            AgentRecipeNote.Instance()->SelectedRecipeCategoryPage = 2;
+                            var button = InfosOm.RecipeNote->GetComponentButtonById(35);
+                            if (button != null)
+                            {
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                            }
+                        }
+                    };
+                    LevelRecipeButton.BackgroundNode.IsVisible = false;
+                    
+                    Service.AddonController.AttachNode(LevelRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
+                }
+                
+                if (SpecialRecipeButton == null)
+                {
+                    SpecialRecipeButton = new()
+                    {
+                        IsVisible = true,
+                        Position  = new(50, 32),
+                        Size      = new(58, 38),
+                        Tooltip   = LuminaWrapper.GetAddonText(1711),
+                        OnClick = () =>
+                        {
+                            AgentRecipeNote.Instance()->SelectedRecipeCategoryPage = 0;
+                            var button = InfosOm.RecipeNote->GetComponentButtonById(35);
+                            if (button != null)
+                            {
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                            }
+                        }
+                    };
+                    SpecialRecipeButton.BackgroundNode.IsVisible = false;
+                    
+                    Service.AddonController.AttachNode(SpecialRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
+                }
+                
+                if (MasterRecipeButton == null)
+                {
+                    MasterRecipeButton = new()
+                    {
+                        IsVisible = true,
+                        Position  = new(102, 32),
+                        Size      = new(58, 38),
+                        Tooltip   = LuminaWrapper.GetAddonText(14212),
+                        OnClick = () =>
+                        {
+                            AgentRecipeNote.Instance()->SelectedRecipeCategoryPage = 1;
+                            var button = InfosOm.RecipeNote->GetComponentButtonById(35);
+                            if (button != null)
+                            {
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                                DService.Framework.Run(() => button->ClickAddonButton(InfosOm.RecipeNote));
+                            }
+                        }
+                    };
+                    MasterRecipeButton.BackgroundNode.IsVisible = false;
+                    
+                    Service.AddonController.AttachNode(MasterRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
                 }
 
                 if (Throttler.Throttle("OptimizedRecipeNote-UpdateAddon", 1000))
