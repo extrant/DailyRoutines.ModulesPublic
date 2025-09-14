@@ -138,6 +138,21 @@ public class OptimizedRecipeNote : DailyModuleBase
                 
                 Service.AddonController.DetachNode(MasterRecipeButton);
                 MasterRecipeButton = null;
+
+                if (InfosOm.RecipeNote != null)
+                {
+                    var resNode0 = InfosOm.RecipeNote->GetNodeById(95);
+                    if (resNode0 != null)
+                        resNode0->SetXFloat(46);
+
+                    var resNode1 = InfosOm.RecipeNote->GetNodeById(88);
+                    if (resNode1 != null)
+                        resNode1->SetXFloat(0);
+                    
+                    var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
+                    if (resNode2 != null)
+                        resNode2->SetXFloat(0);
+                }
                 break;
             case AddonEvent.PostSetup:
                 if (AddonActionsPreview.Addon?.Nodes is not { Count: > 0 } nodes) return;
@@ -550,6 +565,18 @@ public class OptimizedRecipeNote : DailyModuleBase
         if (InfosOm.RecipeNote == null) return;
         
         if (!IPCManager.IsIPCAvailable<RaphaelIPC>()) return;
+        
+        var resNode0 = InfosOm.RecipeNote->GetNodeById(95);
+        if (resNode0 != null)
+            resNode0->SetXFloat(56);
+
+        var resNode1 = InfosOm.RecipeNote->GetNodeById(88);
+        if (resNode1 != null)
+            resNode1->SetXFloat(10);
+                    
+        var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
+        if (resNode2 != null)
+            resNode2->SetXFloat(10);
 
         ClearSearchButton.IsVisible = AgentRecipeNote.Instance()->RecipeSearchOpen && LastRecipeID != 0;
         
