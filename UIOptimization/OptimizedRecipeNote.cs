@@ -564,8 +564,15 @@ public class OptimizedRecipeNote : DailyModuleBase
             return;
         }
 
-        var maxIngredientAmount = recipe.AmountIngredient.Max();
-        var appendOffset        = maxIngredientAmount >= 10 ? 30 : 10;
+        var maxIngredientAmount = 0;
+        for (var i = 0; i < recipe.Ingredient.Count; i++)
+        {
+            if (recipe.Ingredient[i] is not { IsValid:true, RowId: > 100 }) continue;
+            if (recipe.AmountIngredient[i] is var amount && amount > maxIngredientAmount)
+                maxIngredientAmount = amount;
+        }
+        
+        var appendOffset = maxIngredientAmount >= 10 ? 30 : 10;
         
         var resNode0 = InfosOm.RecipeNote->GetNodeById(95);
         if (resNode0 != null)
