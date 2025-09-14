@@ -14,7 +14,6 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Hooking;
 using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -46,8 +45,6 @@ public class OptimizedRecipeNote : DailyModuleBase
                     .Where(x => x.Key > 0 && x.Count() > 1)
                     .ToDictionary(x => x.Key, x => x.DistinctBy(d => d.CraftType.RowId).ToList());
     
-    private static Hook<AgentReceiveEventDelegate>? AgentRecipeNoteReceiveEventHook;
-    
     private static TextButtonNode?    RecipeCaculationButton;
     private static TextButtonNode?    SwitchJobButton;
     private static TextureButtonNode? ClearSearchButton;
@@ -67,7 +64,7 @@ public class OptimizedRecipeNote : DailyModuleBase
 
     private static uint LastRecipeID;
     
-    protected override unsafe void Init()
+    protected override void Init()
     {
         TaskHelper ??= new() { TimeLimitMS = 15_000 };
         
@@ -75,11 +72,6 @@ public class OptimizedRecipeNote : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "RecipeNote", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "RecipeNote", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "RecipeNote", OnAddon);
-
-        AgentRecipeNoteReceiveEventHook ??= DService.Hook.HookFromAddress<AgentReceiveEventDelegate>(
-            GetVFuncByName(AgentRecipeNote.Instance()->VirtualTable, "ReceiveEvent"),
-            AgentRecipeNoteReceiveEventDetour);
-        AgentRecipeNoteReceiveEventHook.Enable();
     }
 
     protected override void Uninit()
@@ -162,6 +154,9 @@ public class OptimizedRecipeNote : DailyModuleBase
             case AddonEvent.PostRequestedUpdate:
                 try
                 {
+                    if (!AgentRecipeNote.Instance()->RecipeSearchOpen)
+                        LastRecipeID = RaphaelIPC.GetCurrentRecipeID();
+                    
                     UpdateRecipeAddonButton();
                 }
                 catch
@@ -550,25 +545,6 @@ public class OptimizedRecipeNote : DailyModuleBase
         ImGui.SetClipboardText(builder.ToString());
         
         NotificationSuccess($"{GetLoc("CopiedToClipboard")}");
-    }
-    
-    private static unsafe AtkValue* AgentRecipeNoteReceiveEventDetour(
-        AgentInterface* agent,
-        AtkValue*       returnValues,
-        AtkValue*       values,
-        uint            valueCount,
-        ulong           eventKind)
-    {
-        var orig = AgentRecipeNoteReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
-        
-        DService.Framework.RunOnTick(UpdateRecipeAddonButton, TimeSpan.FromMilliseconds(100));
-        DService.Framework.RunOnTick(() =>
-        {
-            if (AgentRecipeNote.Instance()->RecipeSearchOpen) return;
-            LastRecipeID = RaphaelIPC.GetCurrentRecipeID();
-        }, TimeSpan.FromMilliseconds(100));
-        
-        return orig;
     }
 
     private static unsafe void UpdateRecipeAddonButton()
