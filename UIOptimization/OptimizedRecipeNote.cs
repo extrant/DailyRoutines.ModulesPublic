@@ -381,7 +381,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                             IconId    = 60412,
                             Size      = new(32),
                             IsVisible = true,
-                            Position  = new(-6, 8f),
+                            Position  = new(-26, 8f),
                             OnClick = () =>
                             {
                                 if (!IPCManager.IsIPCAvailable<RaphaelIPC>())
@@ -550,20 +550,7 @@ public class OptimizedRecipeNote : DailyModuleBase
     private static unsafe void UpdateRecipeAddonButton()
     {
         if (InfosOm.RecipeNote == null) return;
-        
         if (!IPCManager.IsIPCAvailable<RaphaelIPC>()) return;
-        
-        var resNode0 = InfosOm.RecipeNote->GetNodeById(95);
-        if (resNode0 != null)
-            resNode0->SetXFloat(56);
-
-        var resNode1 = InfosOm.RecipeNote->GetNodeById(88);
-        if (resNode1 != null)
-            resNode1->SetXFloat(10);
-                    
-        var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
-        if (resNode2 != null)
-            resNode2->SetXFloat(10);
         
         ClearSearchButton.IsVisible = AgentRecipeNote.Instance()->RecipeSearchOpen && LastRecipeID != 0;
         
@@ -577,6 +564,21 @@ public class OptimizedRecipeNote : DailyModuleBase
             return;
         }
 
+        var maxIngredientAmount = recipe.AmountIngredient.Max();
+        var appendOffset        = maxIngredientAmount >= 10 ? 30 : 10;
+        
+        var resNode0 = InfosOm.RecipeNote->GetNodeById(95);
+        if (resNode0 != null)
+            resNode0->SetXFloat(46 + appendOffset);
+
+        var resNode1 = InfosOm.RecipeNote->GetNodeById(88);
+        if (resNode1 != null)
+            resNode1->SetXFloat(0 + appendOffset);
+                    
+        var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
+        if (resNode2 != null)
+            resNode2->SetXFloat(0 + appendOffset);
+        
         for (var d = 0; d < GetShopInfoButtons.Count; d++)
         {
             if (!recipe.Ingredient[d].IsValid) break;
@@ -586,6 +588,8 @@ public class OptimizedRecipeNote : DailyModuleBase
 
             var button     = GetShopInfoButtons[d];
             var sourceText = string.Empty;
+
+            button.X = -6 + (maxIngredientAmount >= 10 ? -20 : 0);
             
             // 既能 NPC 买到又能市场布告板
             if (item.ItemSearchCategory.RowId > 0 && itemInfo != null)
@@ -1036,8 +1040,8 @@ public class OptimizedRecipeNote : DailyModuleBase
             var itemInfoRow = new HorizontalListNode
             {
                 IsVisible   = true,
-                Size        = ContentSize with { Y = 48 },
-                Position    = ContentStartPosition,
+                Size        = new Vector2(ContentSize.X - 5, 48),
+                Position    = ContentStartPosition + new Vector2(5, 0),
                 ItemSpacing = 5
             };
             AttachNode(itemInfoRow);
@@ -1076,8 +1080,8 @@ public class OptimizedRecipeNote : DailyModuleBase
 
             var scrollingAreaNode = new ScrollingAreaNode<VerticalListNode>
             {
-                Position      = ContentStartPosition + new Vector2(0, 48),
-                Size          = ContentSize          - new Vector2(0, 48),
+                Position      = ContentStartPosition + new Vector2(5, 48),
+                Size          = ContentSize          - new Vector2(5, 48),
                 ContentHeight = ShopInfo.NPCInfos.Count(x => x.Location != null) * 33,
                 ScrollSpeed   = 100,
                 IsVisible     = true,
