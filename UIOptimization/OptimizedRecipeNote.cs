@@ -71,9 +71,10 @@ public class OptimizedRecipeNote : DailyModuleBase
     {
         TaskHelper ??= new() { TimeLimitMS = 15_000 };
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "RecipeNote", OnAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "RecipeNote", OnAddon);
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "RecipeNote", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,           "RecipeNote", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "RecipeNote", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "RecipeNote", OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "RecipeNote", OnAddon);
 
         AgentRecipeNoteReceiveEventHook ??= DService.Hook.HookFromAddress<AgentReceiveEventDelegate>(
             GetVFuncByName(AgentRecipeNote.Instance()->VirtualTable, "ReceiveEvent"),
@@ -157,7 +158,17 @@ public class OptimizedRecipeNote : DailyModuleBase
             case AddonEvent.PostSetup:
                 if (AddonActionsPreview.Addon?.Nodes is not { Count: > 0 } nodes) return;
                     nodes.ForEach(x => x.Alpha = 1);
-                    break;
+                break;
+            case AddonEvent.PostRequestedUpdate:
+                try
+                {
+                    UpdateRecipeAddonButton();
+                }
+                catch
+                {
+                    // ignored
+                }
+                break;
             case AddonEvent.PostDraw:
                 if (InfosOm.RecipeNote == null) return;
 
@@ -577,7 +588,7 @@ public class OptimizedRecipeNote : DailyModuleBase
         var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
         if (resNode2 != null)
             resNode2->SetXFloat(10);
-
+        
         ClearSearchButton.IsVisible = AgentRecipeNote.Instance()->RecipeSearchOpen && LastRecipeID != 0;
         
         var recipeID = RaphaelIPC.GetCurrentRecipeID();
