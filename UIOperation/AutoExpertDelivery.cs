@@ -53,6 +53,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         };
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanySupplyList", OnAddonSupplyList);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "GrandCompanySupplyList", OnAddonSupplyList);
         if (IsAddonAndNodesReady(GrandCompanySupplyList)) 
             OnAddonSupplyList(AddonEvent.PostSetup, null);
     }
@@ -193,14 +194,21 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
     }
 
     // 悬浮窗控制
-    private static void OnAddonSupplyList(AddonEvent type, AddonArgs? args)
+    private void OnAddonSupplyList(AddonEvent type, AddonArgs? args)
     {
-        if (GrandCompanySupplyList == null) return;
-
-        Addon?.Open();
-
-        if (ModuleConfig.AutoSwitchWhenOpen)
-            Callback(GrandCompanySupplyList, true, 0, ModuleConfig.DefaultPage);
+        switch (type)
+        {
+            case AddonEvent.PostSetup:
+                if (GrandCompanySupplyList == null) return;
+        
+                if (ModuleConfig.AutoSwitchWhenOpen)
+                    Callback(GrandCompanySupplyList, true, 0, ModuleConfig.DefaultPage);
+                break;
+            case AddonEvent.PostDraw:
+                if (TaskHelper.IsBusy || Addon.IsOpen || !IsAddonAndNodesReady(GrandCompanySupplyList)) return;
+                Addon.Open();
+                break;
+        }
     }
 
     protected override void Uninit()
