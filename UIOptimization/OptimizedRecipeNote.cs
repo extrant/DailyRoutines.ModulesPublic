@@ -270,7 +270,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     {
                         Position  = new(0, -32),
                         Size      = new(140, 32),
-                        Label     = GetLoc("OptimizedRecipeNote-Button-ShowOtherRecipes"),
+                        SeString  = GetLoc("OptimizedRecipeNote-Button-ShowOtherRecipes"),
                         IsVisible = true,
                         OnClick = () =>
                         {
@@ -292,7 +292,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     };
 
                     var labelNode = DisplayOthersButton.LabelNode;
-                    while (labelNode.FontSize > 1 && labelNode.GetTextDrawSize(labelNode.Text).X > labelNode.Size.X)
+                    while (labelNode.FontSize > 1 && labelNode.GetTextDrawSize(labelNode.SeString).X > labelNode.Size.X)
                         labelNode.FontSize--;
                     
                     Service.AddonController.AttachNode(DisplayOthersButton, InfosOm.RecipeNote->GetNodeById(57));
@@ -1065,7 +1065,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 IsVisible = true,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Text      = LuminaWrapper.GetItemName(ShopInfo.ItemID),
+                SeString  = LuminaWrapper.GetItemName(ShopInfo.ItemID),
                 FontSize  = 18,
                 Position  = new(0, 6)
             };
@@ -1075,12 +1075,12 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 var marketButtonNode = new IconButtonNode
                 {
-                    IconId   = 60570,
-                    Tooltip  = LuminaWrapper.GetAddonText(548),
-                    Size     = new(32),
-                    Position = itemInfoRow.Position + new Vector2(itemNameNode.GetTextDrawSize(itemNameNode.Text).X + itemIconNode.Size.X + 15f, 2),
+                    IconId    = 60570,
+                    Tooltip   = LuminaWrapper.GetAddonText(548),
+                    Size      = new(32),
+                    Position  = itemInfoRow.Position + new Vector2(itemNameNode.GetTextDrawSize(itemNameNode.SeString).X + itemIconNode.Size.X + 15f, 2),
                     IsVisible = true,
-                    OnClick = () => ChatHelper.SendMessage($"/pdr market {ShopInfo.GetItem().Name}")
+                    OnClick   = () => ChatHelper.SendMessage($"/pdr market {ShopInfo.GetItem().Name}")
                 };
                 AttachNode(marketButtonNode);
             }
@@ -1128,8 +1128,8 @@ public class OptimizedRecipeNote : DailyModuleBase
                 var npcNameNode = new TextNode
                 {
                     IsVisible = true,
-                    Text     = npcInfo.Name,
-                    Position = new(0, 4)
+                    SeString  = npcInfo.Name,
+                    Position  = new(0, 4)
                 };
                 Service.AddonController.AttachNode(npcNameNode, row);
 
@@ -1137,7 +1137,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 var npcLocationNode = new TextButtonNode
                 {
                     IsVisible = true,
-                    Label     = locationName,
+                    SeString  = locationName,
                     Size      = new(locationColumnWidth, 28f),
                     Position  = new(nameColumnWidth, 0),
                     IsEnabled = npcInfo.Location.TerritoryID != 282,
@@ -1186,7 +1186,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     {
                         IsVisible = true,
                         TextFlags = TextFlags.AutoAdjustNodeSize,
-                        Text      = costInfo.ToString().Replace(LuminaWrapper.GetItemName(costInfo.ItemID), string.Empty).Trim(),
+                        SeString  = costInfo.ToString().Replace(LuminaWrapper.GetItemName(costInfo.ItemID), string.Empty).Trim(),
                         Position  = new(0, 0)
                     };
                     costInfoComponent.AddNode(costNode);

@@ -701,7 +701,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
             var searchTypeTitleNode = new TextNode
             {
                 IsVisible = true,
-                Text      = GetLoc("OptimizedFriendList-SearchType"),
+                SeString  = GetLoc("OptimizedFriendList-SearchType"),
                 FontSize  = 16,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
                 Position  = new(10f, 42f)
@@ -721,7 +721,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 IsVisible = true,
                 IsChecked = ModuleConfig.SearchName,
                 IsEnabled = true,
-                LabelText = GetLoc("Name"),
+                SeString  = GetLoc("Name"),
                 OnClick = newState =>
                 {
                     ModuleConfig.SearchName = newState;
@@ -738,7 +738,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 IsVisible = true,
                 IsChecked = ModuleConfig.SearchNickname,
                 IsEnabled = true,
-                LabelText = LuminaWrapper.GetAddonText(15207),
+                SeString  = LuminaWrapper.GetAddonText(15207),
                 OnClick = newState =>
                 {
                     ModuleConfig.SearchNickname = newState;
@@ -755,7 +755,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 IsVisible = true,
                 IsChecked = ModuleConfig.SearchRemark,
                 IsEnabled = true,
-                LabelText = LuminaWrapper.GetAddonText(13294).TrimEnd(':'),
+                SeString  = LuminaWrapper.GetAddonText(13294).TrimEnd(':'),
                 OnClick = newState =>
                 {
                     ModuleConfig.SearchRemark = newState;
@@ -772,7 +772,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
             var searchGroupIgnoreTitleNode = new TextNode
             {
                 IsVisible = true,
-                Text      = GetLoc("OptimizedFriendList-SearchIgnoreGroup"),
+                SeString  = GetLoc("OptimizedFriendList-SearchIgnoreGroup"),
                 FontSize  = 16,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
                 Position  = new(10f, searchTypeLayoutNode.Position.Y + searchTypeLayoutNode.Height + 28f)
@@ -799,7 +799,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                     IsVisible = true,
                     IsChecked = ModuleConfig.IgnoredGroup[i],
                     IsEnabled = true,
-                    LabelText = groupFormatText,
+                    SeString  = groupFormatText,
                     OnClick = newState =>
                     {
                         ModuleConfig.IgnoredGroup[index] = newState;
