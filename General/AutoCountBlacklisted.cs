@@ -23,7 +23,7 @@ public unsafe class AutoCountBlacklisted : DailyModuleBase
     };
     
     private static readonly CompSig InfoProxyBlackListUpdateSig = new("4C 8B 91 ?? ?? ?? ?? 33 C0 48 89 42");
-    private delegate        void InfoProxyBlackListUpdateDelegate(InfoProxyBlacklist.BlockResult* outBlockResult, ulong accountId, ulong contentId);
+    private delegate        void InfoProxyBlackListUpdateDelegate(InfoProxyBlacklist.BlockResult* outBlockResult, ulong accountID, ulong contentID);
     private static          Hook<InfoProxyBlackListUpdateDelegate>? InfoProxyBlackListUpdateHook;
 
     private static Config         ModuleConfig = null!;

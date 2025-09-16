@@ -61,7 +61,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         foreach (var item in cachedData.Items)
         {
             ImGui.SetNextWindowPos(item.Position);
-            if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{item.NodeId}", WindowFlags))
+            if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{item.NodeID}", WindowFlags))
             {
                 if (cachedData.InDutyQueue)
                 {
@@ -187,7 +187,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
     // 数据结构定义
     public class ContentFinderItemData
     {
-        public uint    NodeId    { get; init; }
+        public uint    NodeID    { get; init; }
         public string  Name      { get; init; } = string.Empty;
         public string  Level     { get; init; } = string.Empty;
         public Vector2 Position  { get; init; }
@@ -278,7 +278,7 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
 
                     var itemData = new ContentFinderItemData
                     {
-                        NodeId    = listItemComponent->NodeId,
+                        NodeID    = listItemComponent->NodeId,
                         Name      = name,
                         Level     = level,
                         Position  = new(levelNode->ScreenX + (newData.CurrentTab == 0 ? 8f : -7f), levelNode->ScreenY - 8f),

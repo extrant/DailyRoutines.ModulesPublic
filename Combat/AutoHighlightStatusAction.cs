@@ -31,7 +31,7 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
 
     private static readonly CompSig IsActionHighlightedSig = new("E8 ?? ?? ?? ?? 88 47 41 80 BB C9 00 00 00 01");
     [return: MarshalAs(UnmanagedType.U1)]
-    private delegate bool IsActionHighlightedDelegate(ActionManager* actionManager, ActionType actionType, uint actionId);
+    private delegate bool IsActionHighlightedDelegate(ActionManager* actionManager, ActionType actionType, uint actionID);
     private static Hook<IsActionHighlightedDelegate>? IsActionHighlightedHook;
 
     private static Config ModuleConfig = null!;
@@ -293,11 +293,11 @@ public unsafe class AutoHighlightStatusAction : DailyModuleBase
     private static bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionID) => 
         ActionsToHighlight.Contains(actionID) || IsActionHighlightedHook.Original(actionManager, actionType, actionID);
 
-    private static uint[] FetchComboChain(uint actionId)
+    private static uint[] FetchComboChain(uint actionID)
     {
         var chain = new List<uint>();
 
-        var cur = actionId;
+        var cur = actionID;
         while (cur != 0 && LuminaGetter.TryGetRow<LuminaAction>(cur, out var action))
         {
             chain.Add(cur);

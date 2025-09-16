@@ -35,7 +35,7 @@ public class HealerHelper : DailyModuleBase
     };
 
     // const
-    private const uint UnspecificTargetId = 0xE000_0000;
+    private const uint UnspecificTargetID = 0xE000_0000;
 
     // cache
     private static readonly Dictionary<ReadOnlySeString, ReadOnlySeString> JobNameMap =
@@ -271,7 +271,7 @@ public class HealerHelper : DailyModuleBase
             if (ImGui.BeginDragDropSource())
             {
                 customCardOrderDragIndex = index;
-                ImGui.SetDragDropPayload("##CustomCardOrder", [], 0);
+                ImGui.SetDragDropPayload("##CustomCardOrder", []);
                 ImGui.EndDragDropSource();
             }
 
@@ -635,7 +635,7 @@ public class HealerHelper : DailyModuleBase
                 var resp = JsonConvert.DeserializeObject<Dictionary<string, List<EasyHealManager.HealAction>>>(json);
                 if (resp is null) return;
                 
-                EasyHealService.InitTargetHealActions(resp.SelectMany(kv => kv.Value).ToDictionary(act => act.Id, act => act));
+                EasyHealService.InitTargetHealActions(resp.SelectMany(kv => kv.Value).ToDictionary(act => act.ID, act => act));
 
                 // when active is empty, set with default on heal actions
                 if (!EasyHealService.ActiveHealActionsLoaded)
@@ -821,7 +821,7 @@ public class HealerHelper : DailyModuleBase
             rangeCandidateOrder.Sort((a, b) => b.priority.CompareTo(a.priority));
         }
 
-        private uint FetchCandidateId(string role)
+        private uint FetchCandidateID(string role)
         {
             var candidates = role switch
             {
@@ -829,7 +829,7 @@ public class HealerHelper : DailyModuleBase
                 "Range" => rangeCandidateOrder
             };
 
-            var fallbackId       = LocalPlayerState.EntityID;
+            var fallbackID       = LocalPlayerState.EntityID;
             var fallbackPriority = 0.0;
 
             foreach (var member in candidates)
@@ -848,7 +848,7 @@ public class HealerHelper : DailyModuleBase
                 // weakness: use as fallback
                 if (candidate.Statuses.Any(x => x.StatusId is 43 or 44))
                 {
-                    fallbackId       = member.id;
+                    fallbackID       = member.id;
                     fallbackPriority = member.priority;
                     continue;
                 }
@@ -858,28 +858,28 @@ public class HealerHelper : DailyModuleBase
                     return member.id;
             }
 
-            return fallbackId;
+            return fallbackID;
         }
 
-        public void OnPrePlayCard(ref ulong targetId, ref uint actionId)
+        public void OnPrePlayCard(ref ulong targetID, ref uint actionID)
         {
             var partyMemberIds = DService.PartyList.Select(m => m.ObjectId).ToHashSet();
-            if (!partyMemberIds.Contains((uint)targetId))
+            if (!partyMemberIds.Contains((uint)targetID))
             {
-                targetId = actionId switch
+                targetID = actionID switch
                 {
-                    37023 => FetchCandidateId("Melee"),
-                    37026 => FetchCandidateId("Range")
+                    37023 => FetchCandidateID("Melee"),
+                    37026 => FetchCandidateID("Range")
                 };
 
-                var member = FetchMember((uint)targetId);
+                var member = FetchMember((uint)targetID);
                 if (member is not null)
                 {
                     var name         = member.Name.ExtractText();
                     var classJobIcon = member.ClassJob.ValueNullable.ToBitmapFontIcon();
                     var classJobName = member.ClassJob.Value.Name.ExtractText();
 
-                    var locKey = actionId switch
+                    var locKey = actionID switch
                     {
                         37023 => "Melee",
                         37026 => "Range"
@@ -944,7 +944,7 @@ public class HealerHelper : DailyModuleBase
         public class HealAction
         {
             [JsonProperty("id")]
-            public uint Id { get; private set; }
+            public uint ID { get; private set; }
 
             [JsonProperty("name")]
             public string Name { get; private set; }
@@ -995,18 +995,18 @@ public class HealerHelper : DailyModuleBase
         public void InitActiveHealActions()
             => config.ActiveHealActions = config.TargetHealActions.Where(act => act.Value.On).Select(act => act.Key).ToHashSet();
 
-        private uint TargetNeedHeal(uint actionId)
+        private uint TargetNeedHeal(uint actionID)
         {
             var partyList  = DService.PartyList;
             var lowRatio   = 2f;
-            var needHealId = UnspecificTargetId;
+            var needHealID = UnspecificTargetID;
 
             foreach (var member in partyList)
             {
                 if (member.ObjectId == 0)
                     continue;
 
-                var maxDistance = ActionManager.GetActionRange(actionId);
+                var maxDistance = ActionManager.GetActionRange(actionID);
                 var withinRange = Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance;
                 var memberDead  = member.GameObject.IsDead || member.CurrentHP <= 0;
                 if (memberDead || !withinRange)
@@ -1016,11 +1016,11 @@ public class HealerHelper : DailyModuleBase
                 if (ratio < lowRatio && ratio <= config.NeedHealThreshold)
                 {
                     lowRatio   = ratio;
-                    needHealId = member.ObjectId;
+                    needHealID = member.ObjectId;
                 }
             }
 
-            return needHealId;
+            return needHealID;
         }
 
         private static uint TargetNeedDispel(bool reverse = false)
@@ -1057,10 +1057,10 @@ public class HealerHelper : DailyModuleBase
                 }
             }
 
-            return UnspecificTargetId;
+            return UnspecificTargetID;
         }
 
-        private static uint TargetNeedRaise(uint actionId, bool reverse = false)
+        private static uint TargetNeedRaise(uint actionID, bool reverse = false)
         {
             var partyList = DService.PartyList;
 
@@ -1073,7 +1073,7 @@ public class HealerHelper : DailyModuleBase
                 if (member.ObjectId == 0)
                     continue;
 
-                var maxDistance  = ActionManager.GetActionRange(actionId);
+                var maxDistance  = ActionManager.GetActionRange(actionID);
                 var withinRange  = Vector3.DistanceSquared(member.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance;
                 var memberRaised = member.Statuses.Any(x => x.StatusId is 148);
                 var memberDead   = member.GameObject.IsDead || member.CurrentHP <= 0;
@@ -1081,7 +1081,7 @@ public class HealerHelper : DailyModuleBase
                     return member.ObjectId;
             }
 
-            return UnspecificTargetId;
+            return UnspecificTargetID;
         }
 
         public static unsafe bool IsHealable(IGameObject? gameObject)
@@ -1090,14 +1090,14 @@ public class HealerHelper : DailyModuleBase
             return battleChara is not null && ActionManager.CanUseActionOnTarget(3595, (GameObject*)battleChara);
         }
 
-        public void OnPreHeal(ref ulong targetId, ref uint actionId, ref bool isPrevented)
+        public void OnPreHeal(ref ulong targetID, ref uint actionID, ref bool isPrevented)
         {
-            var currentTarget = DService.ObjectTable.SearchById(targetId);
-            if (targetId == UnspecificTargetId || !IsHealable(currentTarget))
+            var currentTarget = DService.ObjectTable.SearchById(targetID);
+            if (targetID == UnspecificTargetID || !IsHealable(currentTarget))
             {
                 // find the target with the lowest HP ratio within range and satisfy the threshold
-                targetId = TargetNeedHeal(actionId);
-                if (targetId == UnspecificTargetId)
+                targetID = TargetNeedHeal(actionID);
+                if (targetID == UnspecificTargetID)
                 {
                     switch (config.OverhealTarget)
                     {
@@ -1106,27 +1106,27 @@ public class HealerHelper : DailyModuleBase
                             return;
 
                         case OverhealTarget.Local:
-                            targetId = LocalPlayerState.EntityID;
+                            targetID = LocalPlayerState.EntityID;
                             break;
 
                         case OverhealTarget.FirstTank:
                             var partyList       = DService.PartyList;
                             var sortedPartyList = partyList.OrderBy(member => FetchMemberIndex(member.ObjectId) ?? 0).ToList();
                             var firstTank       = sortedPartyList.FirstOrDefault(m => m.ClassJob.Value.Role == 1);
-                            var maxDistance     = ActionManager.GetActionRange(actionId);
-                            targetId = firstTank is not null &&
+                            var maxDistance     = ActionManager.GetActionRange(actionID);
+                            targetID = firstTank is not null &&
                                        Vector3.DistanceSquared(firstTank.Position, DService.ObjectTable.LocalPlayer.Position) <= maxDistance * maxDistance
                                            ? firstTank.ObjectId
                                            : LocalPlayerState.EntityID;
                             break;
 
                         default:
-                            targetId = LocalPlayerState.EntityID;
+                            targetID = LocalPlayerState.EntityID;
                             break;
                     }
                 }
 
-                var member = FetchMember((uint)targetId);
+                var member = FetchMember((uint)targetID);
                 if (member is not null)
                 {
                     var name         = member.Name.ExtractText();
@@ -1141,21 +1141,21 @@ public class HealerHelper : DailyModuleBase
             }
         }
 
-        public void OnPreDispel(ref ulong targetId, ref bool isPrevented)
+        public void OnPreDispel(ref ulong targetID, ref bool isPrevented)
         {
-            var currentTarget = DService.ObjectTable.SearchById(targetId);
-            if (currentTarget is IBattleNpc || targetId == UnspecificTargetId)
+            var currentTarget = DService.ObjectTable.SearchById(targetID);
+            if (currentTarget is IBattleNpc || targetID == UnspecificTargetID)
             {
                 // find target with dispellable status within range
-                targetId = TargetNeedDispel(config.DispelOrder is DispelOrderStatus.Reverse);
-                if (targetId == UnspecificTargetId)
+                targetID = TargetNeedDispel(config.DispelOrder is DispelOrderStatus.Reverse);
+                if (targetID == UnspecificTargetID)
                 {
                     isPrevented = true;
                     return;
                 }
 
                 // dispel target
-                var member = FetchMember((uint)targetId);
+                var member = FetchMember((uint)targetID);
                 if (member is not null)
                 {
                     var name         = member.Name.ExtractText();
@@ -1170,21 +1170,21 @@ public class HealerHelper : DailyModuleBase
             }
         }
 
-        public void OnPreRaise(ref ulong targetId, ref uint actionId, ref bool isPrevented)
+        public void OnPreRaise(ref ulong targetID, ref uint actionID, ref bool isPrevented)
         {
-            var currentTarget = DService.ObjectTable.SearchById(targetId);
-            if (currentTarget is IBattleNpc || targetId == UnspecificTargetId)
+            var currentTarget = DService.ObjectTable.SearchById(targetID);
+            if (currentTarget is IBattleNpc || targetID == UnspecificTargetID)
             {
                 // find target with dead status within range
-                targetId = TargetNeedRaise(actionId, config.RaiseOrder is RaiseOrderStatus.Reverse);
-                if (targetId == UnspecificTargetId)
+                targetID = TargetNeedRaise(actionID, config.RaiseOrder is RaiseOrderStatus.Reverse);
+                if (targetID == UnspecificTargetID)
                 {
                     isPrevented = true;
                     return;
                 }
 
                 // raise target
-                var member = FetchMember((uint)targetId);
+                var member = FetchMember((uint)targetID);
                 if (member is not null)
                 {
                     var name         = member.Name.ExtractText();

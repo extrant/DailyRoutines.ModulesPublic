@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -25,20 +26,20 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         Author = ["status102"]
     };
 
-    private const int DefaultIconId = 61201;
+    private const int DefaultIconID = 61201;
     private static readonly (short X, short Y) BasePosition = (41, 35);
     private static ExcelSheet<Marker>? MarkerSheet;
 
     private static readonly CompSig LocalMarkingSig = new("E8 ?? ?? ?? ?? 4C 8B C5 8B D7 48 8B CB E8");
     public static Hook<LocalMarkingFunc>? LocalMarkingHook;
-    public delegate void LocalMarkingFunc(nint manager, uint markingType, nint objectId, nint a4);
+    public delegate void LocalMarkingFunc(nint manager, uint markingType, nint objectID, nint a4);
 
     private static          Config?              ModuleConfig;
     private static readonly List<nint>           ImageNodes   = new(8);
     private static readonly Dictionary<int, int> MarkedObject = new(8); // markId, memberIndex
     private static          bool                 IsBuilt, NeedClear;
     
-    private static readonly object Lock = new();
+    private static readonly Lock Lock = new();
 
     protected override void Init()
     {
@@ -114,8 +115,8 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         if (pPartyList is null || ModuleConfig == null || (!ModuleConfig.HidePartyListIndexNumber && !visible))
             return;
 
-        var memberIdList = Enumerable.Range(10, 8).ToList();
-        foreach (var id in memberIdList)
+        var memberIDList = Enumerable.Range(10, 8).ToList();
+        foreach (var id in memberIDList)
         {
             var member = pPartyList->GetNodeById((uint)id);
             if (member is null || member->GetComponent() is null)
@@ -194,7 +195,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
         node->PartsList = partsList;
 
-        node->LoadIconTexture(DefaultIconId, 0);
+        node->LoadIconTexture(DefaultIconID, 0);
         node->AtkResNode.SetPriority(5);
         return node;
     }
@@ -258,7 +259,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         }
     }
 
-    private static void ShowImageNode(int i, int iconId)
+    private static void ShowImageNode(int i, int iconID)
     {
         if (i is < 0 or > 7 || PartyList is null || ImageNodes.Count <= i)
             return;
@@ -269,7 +270,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
         var component = PartyList->GetNodeById((uint)(10 + i));
         var (x, y) = (component->X + BasePosition.X + ModuleConfig.IconOffset.X, component->Y + BasePosition.Y + ModuleConfig.IconOffset.Y);
-        node->LoadIconTexture((uint)iconId, 0);
+        node->LoadIconTexture((uint)iconID, 0);
         node->AtkResNode.SetHeight((ushort)ModuleConfig.Size);
         node->AtkResNode.SetWidth((ushort)ModuleConfig.Size);
         node->AtkResNode.SetPositionFloat(x, y);
@@ -331,7 +332,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     private static void PartyListFinalizeHandle(AddonEvent type, AddonArgs args) => ReleaseImageNodes();
 
-    private static void ProcMarkIconSetted(uint markIndex, uint entityId)
+    private static void ProcMarkIconSetted(uint markIndex, uint entityID)
     {
         if (AgentHUD.Instance() is null || InfoProxyCrossRealm.Instance() is null)
             return;
@@ -340,19 +341,19 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         var mark = (int)(markIndex + 1);
         if (mark <= 0 || mark > MarkerSheet.Count)
         {
-            if (FindMember(entityId, out index))
+            if (FindMember(entityID, out index))
                 RemoveMemberMark(index);
             return;
         }
 
         var icon = MarkerSheet.ElementAt(mark);
-        if (entityId is 0xE000_0000 or 0xE00_0000)
+        if (entityID is 0xE000_0000 or 0xE00_0000)
         {
             RemoveMark(icon.Icon);
             return;
         }
 
-        if (!FindMember(entityId, out index))
+        if (!FindMember(entityID, out index))
             RemoveMark(icon.Icon);
         else if (MarkedObject.TryGetValue(icon.Icon, out var outValue) && outValue == index)
         {
@@ -365,10 +366,10 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         }
     }
 
-    private static void AddMemberMark(int memberIndex, int markId)
+    private static void AddMemberMark(int memberIndex, int markID)
     {
-        MarkedObject[markId] = memberIndex;
-        ShowImageNode(memberIndex, markId);
+        MarkedObject[markID] = memberIndex;
+        ShowImageNode(memberIndex, markID);
         NeedClear = false;
     }
 
@@ -384,21 +385,21 @@ public unsafe class MarkerInPartyList : DailyModuleBase
             NeedClear = true;
     }
 
-    private static void RemoveMark(int markId)
+    private static void RemoveMark(int markID)
     {
-        if (MarkedObject.Remove(markId, out var outValue))
+        if (MarkedObject.Remove(markID, out var outValue))
             HideImageNode(outValue);
         if (MarkedObject.Count == 0)
             NeedClear = true;
     }
 
-    private static bool FindMember(uint entityId, out int index)
+    private static bool FindMember(uint entityID, out int index)
     {
         var pAgentHUD = AgentHUD.Instance();
         for (var i = 0; i < pAgentHUD->PartyMemberCount; ++i)
         {
             var charData = pAgentHUD->PartyMembers[i];
-            if (entityId == charData.EntityId)
+            if (entityID == charData.EntityId)
             {
                 index = i;
                 return true;
@@ -408,7 +409,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         if (InfoProxyCrossRealm.Instance()->IsCrossRealm)
         {
             var myGroup      = InfoProxyCrossRealm.GetMemberByEntityId((uint)DService.ObjectTable.LocalPlayer!.GameObjectId);
-            var pGroupMember = InfoProxyCrossRealm.GetMemberByEntityId(entityId);
+            var pGroupMember = InfoProxyCrossRealm.GetMemberByEntityId(entityID);
             if (myGroup is not null && pGroupMember is not null && pGroupMember->GroupIndex == myGroup->GroupIndex)
             {
                 index = pGroupMember->MemberIndex;
@@ -425,15 +426,15 @@ public unsafe class MarkerInPartyList : DailyModuleBase
 
     #region Hook
 
-    private void DetourLocalMarkingFunc(nint manager, uint markingType, nint objectId, nint a4)
+    private void DetourLocalMarkingFunc(nint manager, uint markingType, nint objectID, nint a4)
     {
         // 自身标记会触发两回，第一次a4: E000_0000, 第二次a4: 自身GameObjectId
         // 队友标记只会触发一回，a4: 队友GameObjectId
         // 鲶鱼精local a4: 0
         // if (a4 != (nint?)DService.ObjectTable.LocalPlayer?.GameObjectId)
 
-        TaskHelper.Insert(() => ProcMarkIconSetted(markingType, (uint)objectId));
-        LocalMarkingHook!.Original(manager, markingType, objectId, a4);
+        TaskHelper.Insert(() => ProcMarkIconSetted(markingType, (uint)objectID));
+        LocalMarkingHook!.Original(manager, markingType, objectID, a4);
     }
 
     #endregion
