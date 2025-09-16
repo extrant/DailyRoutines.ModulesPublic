@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using LuminaAction = Lumina.Excel.Sheets.Action;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -20,19 +19,15 @@ public unsafe class AutoCancelCast : DailyModuleBase
         Category    = ModuleCategories.Action,
     };
 
-    private static readonly HashSet<ObjectKind> InvalidInterruptKinds =
-    [
-        ObjectKind.Treasure, ObjectKind.Aetheryte, ObjectKind.GatheringPoint, ObjectKind.EventObj, ObjectKind.Mount,
-        ObjectKind.Companion, ObjectKind.Retainer, ObjectKind.AreaObject, ObjectKind.HousingEventObject, ObjectKind.Cutscene,
-        ObjectKind.ReactionEventObject, ObjectKind.Ornament, ObjectKind.CardStand
-    ];
+    private static readonly HashSet<ObjectKind> ValidObjectKinds = [ObjectKind.Player, ObjectKind.BattleNpc];
 
-    private static readonly CompSig CancelCastSig = new("48 83 EC 38 33 D2 C7 44 24 20 00 00 00 00 45 33 C9");
-    private static readonly Action CancelCast = CancelCastSig.GetDelegate<Action>();
+    private static readonly HashSet<ConditionFlag> ValidConditions = [ConditionFlag.Casting, ConditionFlag.Casting87];
 
-    private static HashSet<uint> TargetAreaActions { get; } = LuminaGetter.Get<Lumina.Excel.Sheets.Action>()
-                                                                          .Where(x => x.TargetArea)
-                                                                          .Select(x => x.RowId).ToHashSet();
+    private static HashSet<uint> TargetAreaActions { get; } =
+        LuminaGetter.Get<LuminaAction>()
+                    .Where(x => x.TargetArea)
+                    .Select(x => x.RowId).ToHashSet();
+    
     private static bool IsOnCasting;
 
     protected override void Init()
@@ -43,7 +38,8 @@ public unsafe class AutoCancelCast : DailyModuleBase
 
     private static void OnConditionChanged(ConditionFlag flag, bool value)
     {
-        if (flag is not (ConditionFlag.Casting or ConditionFlag.Casting87)) return;
+        if (!ValidConditions.Contains(flag)) return;
+        
         IsOnCasting = value;
     }
 
@@ -63,21 +59,27 @@ public unsafe class AutoCancelCast : DailyModuleBase
             return;
         }
 
-        var obj = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)player.CastTargetObjectId);
-        if (obj == null || 
-            InvalidInterruptKinds.Contains(obj->ObjectKind) ||
-            ActionManager.CanUseActionOnTarget(player.CastActionId, (GameObject*)obj)) 
+        var obj = player.CastTargetObject;
+        if (obj is not IBattleChara battleChara || !ValidObjectKinds.Contains(battleChara.ObjectKind)) return;
+
+        if (battleChara.IsDead || !battleChara.IsTargetable || battleChara.CurrentHp == 0)
+        {
+            ExecuteCancast();
             return;
-
-        CancelCastCombined();
-    }
-
-    private static void CancelCastCombined()
-    {
-        if (!Throttler.Throttle("AutoCancelCast-CancelCast")) return;
+        }
         
-        CancelCast();
-        ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
+        if (ActionManager.CanUseActionOnTarget(player.CastActionId, obj.ToStruct()))
+            return;
+        
+        ExecuteCancast();
+        
+        return;
+
+        void ExecuteCancast()
+        {
+            if (Throttler.Throttle("AutoCancelCast-CancelCast", 100))
+                ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.CancelCast);
+        }
     }
 
     protected override void Uninit()

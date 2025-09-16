@@ -1,12 +1,9 @@
-using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using System.Collections.Generic;
+using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
-using Dalamud.Hooking;
+using DailyRoutines.Managers;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoThrottleTenChiJin : DailyModuleBase
 {
@@ -29,8 +26,7 @@ public unsafe class AutoThrottleTenChiJin : DailyModuleBase
     {
         if (opcode != GamePacketOpcodes.UseActionOpcode) return;
 
-        var localPlayer = Control.GetLocalPlayer();
-        if (localPlayer == null || localPlayer->ClassJob != 30) return;
+        if (LocalPlayerState.ClassJob != 30) return;
         
         var data = (UseActionPacket*)packet;
         if (ShinobiActionsStart.Contains(data->ID))

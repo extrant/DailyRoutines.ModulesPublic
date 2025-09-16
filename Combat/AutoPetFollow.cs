@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
@@ -14,7 +13,7 @@ public class AutoPetFollow : DailyModuleBase
     {
         Title       = GetLoc("AutoPetFollowTitle"),
         Description = GetLoc("AutoPetFollowDescription"),
-        Category    = ModuleCategories.Action,
+        Category    = ModuleCategories.Combat,
     };
 
     private static readonly HashSet<uint> ValidClassJobs = [26, 27, 28];
@@ -51,7 +50,7 @@ public class AutoPetFollow : DailyModuleBase
 
         ExecuteCommandManager.ExecuteCommandComplex(ExecuteCommandComplexFlag.PetAction, 0xE0000000, 2);
 
-        if (ModuleConfig.SendNotification)
+        if (ModuleConfig.SendNotification && Throttler.Throttle("AutoPetFollow-SendNotification", 10_000))
             NotificationInfo(GetLoc("AutoPetFollow-Notification"));
     }
 

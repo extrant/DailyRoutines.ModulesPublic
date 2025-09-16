@@ -3,11 +3,13 @@ using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Addon;
 using KamiToolKit.Nodes;
+using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -22,28 +24,15 @@ public class AutoAethericMimicry : DailyModuleBase
 
     private static readonly HashSet<uint> Status = [2124, 2125, 2126];
     
-    private static AddonDRAutoAethericMimicry Addon;
-
-    protected override void Init()
-    {
-        Addon ??= new()
-        {
-            InternalName     = "DRAutoAethericMimicry",
-            Title            = string.Empty,
-            Size             = new Vector2(180f, 50f),
-            Position         = new Vector2(800f, 350f),
-            NativeController = Service.AddonController,
-        };
-
+    protected override void Init() => 
         UseActionManager.RegPreUseAction(OnPreUseAction);
-    }
 
     protected override void Uninit()
     {
         UseActionManager.Unreg(OnPreUseAction);
         
-        Addon?.Dispose();
-        Addon = null;
+        AddonDRAutoAethericMimicry.Addon?.Dispose();
+        AddonDRAutoAethericMimicry.Addon = null;
     }
 
     private static void OnPreUseAction(ref bool isPrevented, ref ActionType actionType, ref uint actionID, ref ulong targetID, ref uint extraParam, ref ActionManager.UseActionMode queueState, ref uint comboRouteID)
@@ -52,15 +41,33 @@ public class AutoAethericMimicry : DailyModuleBase
         if (targetID   != 0xE0000000 && targetID        != LocalPlayerState.EntityID) return;
         if (Status.Any(x => LocalPlayerState.HasStatus(x, out _))) return;
         
-        Addon.Toggle();
+        AddonDRAutoAethericMimicry.OpenWithNewInstance();
         isPrevented = true;
     }
 
     private class AddonDRAutoAethericMimicry : NativeAddon
     {
+        public static AddonDRAutoAethericMimicry? Addon;
+        
         private IconButtonNode TankButton;
         private IconButtonNode HealerButton;
         private IconButtonNode DPSButton;
+
+        public static void OpenWithNewInstance()
+        {
+            Addon?.Dispose();
+            
+            Addon = new()
+            {
+                InternalName     = "DRAutoAethericMimicry",
+                Title            = string.Empty,
+                Size             = new(180f, 50f),
+                NativeController = Service.AddonController,
+            };
+            Addon.Position = ImGui.GetMousePos() - Addon.Size with { X = Addon.Size.X / 1.5f };
+            
+            Addon.Open();
+        }
         
         protected override unsafe void OnSetup(AtkUnitBase* addon)
         {
@@ -136,9 +143,12 @@ public class AutoAethericMimicry : DailyModuleBase
 
         protected override unsafe void OnUpdate(AtkUnitBase* addon)
         {
-            if (LocalPlayerState.ClassJob != 36)
+            if (LocalPlayerState.ClassJob != 36 || DService.KeyState[VirtualKey.ESCAPE])
             {
                 Close();
+                
+                if (SystemMenu != null)
+                    SystemMenu->Close(true);
                 return;
             }
             

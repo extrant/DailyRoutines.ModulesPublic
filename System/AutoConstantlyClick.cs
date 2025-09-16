@@ -13,7 +13,7 @@ public unsafe class AutoConstantlyClick : DailyModuleBase
     {
         Title       = GetLoc("AutoConstantlyClickTitle"),
         Description = GetLoc("AutoConstantlyClickDescription"),
-        Category    = ModuleCategories.Combat,
+        Category    = ModuleCategories.System,
         Author      = ["AtmoOmen", "KirisameVanilla"],
     };
 

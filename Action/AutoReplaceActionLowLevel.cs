@@ -1,21 +1,19 @@
+using System.Collections.Generic;
 using DailyRoutines.Abstracts;
 using Dalamud.Hooking;
-using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
-using System.Collections.Generic;
-using System.Numerics;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("AutoReplaceActionLowLevelTitle"),
+        Title       = GetLoc("AutoReplaceActionLowLevelTitle"),
         Description = GetLoc("AutoReplaceActionLowLevelDescription"),
-        Category = ModuleCategories.Action,
+        Category    = ModuleCategories.Action,
     };
 
     private static readonly CompSig IsActionReplaceableSig =
@@ -23,37 +21,13 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
     private delegate        bool IsActionReplaceableDelegate(uint actionID);
     private static          Hook<IsActionReplaceableDelegate> IsActionReplaceableHook;
 
-    private static readonly CompSig GetAdjustedActionIDSig = new("E8 ?? ?? ?? ?? 89 03 8B 03");
-    private delegate uint GetAdjustedActionIDDelegate(ActionManager* manager, uint actionID);
-    private static Hook<GetAdjustedActionIDDelegate> GetAdjustedActionIDHook;
+    private static readonly CompSig                           GetAdjustedActionIDSig = new("E8 ?? ?? ?? ?? 89 03 8B 03");
+    private delegate        uint                              GetAdjustedActionIDDelegate(ActionManager* manager, uint actionID);
+    private static          Hook<GetAdjustedActionIDDelegate> GetAdjustedActionIDHook;
 
     private static readonly CompSig GetIconIDForSlotSig = new("E8 ?? ?? ?? ?? 85 C0 89 83 ?? ?? ?? ?? 0F 94 C0");
-    private delegate uint GetIconIDForSlotDelegate(
-        RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint actionID);
-    private static Hook<GetIconIDForSlotDelegate> GetIconIDForSlotHook;
-
-    // 原技能 ID - 替换后技能 ID (递归替换)
-    private static readonly Dictionary<uint, uint> ActionReplacements = new()
-    {
-        // 狂喜之心 - 医济
-        [16534] = 133,
-        // 医济 - 医治
-        [133] = 124,
-        // 安慰之心 - 救疗
-        [16531] = 135,
-        // 救疗 - 治疗
-        [135] = 120,
-        // 鼓舞激励之策 - 医术
-        [185] = 190,
-        // 福星 - 吉星
-        [3610] = 3594,
-        // 阳星相位 - 阳星
-        [3601] = 3600,
-        // 异言 - 悖论
-        [16507] = 7422,
-        // 必杀剑·闪影 - 必杀剑·红莲
-        [16481] = 7496
-    };
+    private delegate        uint GetIconIDForSlotDelegate(RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint actionID);
+    private static          Hook<GetIconIDForSlotDelegate> GetIconIDForSlotHook;
 
     protected override void Init()
     {
@@ -69,13 +43,12 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
 
     protected override void ConfigUI()
     {
-        var tableSize = new Vector2(ImGui.GetContentRegionAvail().X / 2, 0);
-        using var table = ImRaii.Table("ActionReplacementDisplayTable", 3, ImGuiTableFlags.None, tableSize);
+        using var table = ImRaii.Table("ActionReplacementDisplayTable", 3, ImGuiTableFlags.None, new(ImGui.GetContentRegionAvail().X / 2, 0));
         if (!table) return;
 
         // 让它们在视觉上看起来更平均
         ImGui.TableSetupColumn("技能1", ImGuiTableColumnFlags.None, 40);
-        ImGui.TableSetupColumn("箭头", ImGuiTableColumnFlags.None, 10);
+        ImGui.TableSetupColumn("箭头",  ImGuiTableColumnFlags.None, 10);
         ImGui.TableSetupColumn("技能2", ImGuiTableColumnFlags.None, 40);
 
         foreach (var (action0, action1) in ActionReplacements)
@@ -124,11 +97,11 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
         }
     }
 
-    private static uint GetIconIDForSlotDetour(
-        RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint actionID)
+    private static uint GetIconIDForSlotDetour(RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint actionID)
     {
         if (type != RaptureHotbarModule.HotbarSlotType.Action)
             return GetIconIDForSlotHook.Original(slot, type, actionID);
+        
         return !TryGetReplacement(actionID, out var adjustedActionID)
                    ? GetIconIDForSlotHook.Original(slot, type, actionID)
                    : LuminaGetter.TryGetRow<Action>(adjustedActionID, out var row)
@@ -136,5 +109,29 @@ public unsafe class AutoReplaceActionLowLevel : DailyModuleBase
                        : 0u;
     }
 
-    private static bool IsActionReplaceableDetour(uint actionID) => true;
+    private static bool IsActionReplaceableDetour(uint actionID) => 
+        ActionReplacements.ContainsKey(actionID) || IsActionReplaceableHook.Original(actionID);
+    
+    // 原技能 ID - 替换后技能 ID (递归替换)
+    private static readonly Dictionary<uint, uint> ActionReplacements = new()
+    {
+        // 狂喜之心 - 医济
+        [16534] = 133,
+        // 医济 - 医治
+        [133] = 124,
+        // 安慰之心 - 救疗
+        [16531] = 135,
+        // 救疗 - 治疗
+        [135] = 120,
+        // 鼓舞激励之策 - 医术
+        [185] = 190,
+        // 福星 - 吉星
+        [3610] = 3594,
+        // 阳星相位 - 阳星
+        [3601] = 3600,
+        // 异言 - 悖论
+        [16507] = 7422,
+        // 必杀剑·闪影 - 必杀剑·红莲
+        [16481] = 7496
+    };
 }

@@ -4,31 +4,30 @@ using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
-namespace DailyRoutines.AutoPeloton;
+namespace DailyRoutines.ModulesPublic;
 
 public class AutoPeloton : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = GetLoc("AutoPelotonTitle"),       // "自动释放速行"
-        Description = GetLoc("AutoPelotonDescription"), // "使用远敏职业时，自动尝试释放速行"
+        Title       = GetLoc("AutoPelotonTitle"),
+        Description = GetLoc("AutoPelotonDescription"),
         Category    = ModuleCategories.Action,
         Author      = ["yamiYori"]
     };
     
     // 诗人 机工 舞者
-    private readonly HashSet<uint> s_ClassJobArr = [23, 31, 38];
-    
-    private readonly uint s_PelotoningActionId = 7557;
+    private readonly HashSet<uint> ValidClassJobs = [23, 31, 38];
 
-    private Configs Config = null!;
+    private const uint PelotoningActionID = 7557;
+
+    private static Config ModuleConfig = null!;
 
     protected override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 30_000 };
-        Config     =   LoadConfig<Configs>() ?? new();
+        TaskHelper   ??= new() { TimeLimitMS = 30_000 };
+        ModuleConfig =   LoadConfig<Config>() ?? new();
 
         DService.ClientState.TerritoryChanged += OnTerritoryChanged;
         DService.DutyState.DutyRecommenced    += OnDutyRecommenced;
@@ -41,16 +40,16 @@ public class AutoPeloton : DailyModuleBase
 
     protected override void ConfigUI()
     {
-        if (ImGui.Checkbox(GetLoc("OnlyInDuty"), ref Config.OnlyInDuty)) // "只在副本中使用"
+        if (ImGui.Checkbox(GetLoc("OnlyInDuty"), ref ModuleConfig.OnlyInDuty))
         {
-            SaveConfig(Config);
+            SaveConfig(ModuleConfig);
             
             TaskHelper.Abort();
             TaskHelper.Enqueue(OneTimeConditionCheck);
         }
 
-        if (ImGui.Checkbox(GetLoc("AutoPeloton-DisableInWalk"), ref Config.DisableInWalk)) // "走路模式时禁用"
-            SaveConfig(Config);
+        if (ImGui.Checkbox(GetLoc("AutoPeloton-DisableInWalk"), ref ModuleConfig.DisableInWalk))
+            SaveConfig(ModuleConfig);
     }
 
     protected override void Uninit()
@@ -60,11 +59,6 @@ public class AutoPeloton : DailyModuleBase
         DService.Condition.ConditionChange    -= OnConditionChanged;
         DService.ClientState.LevelChanged     -= OnLevelChanged;
         DService.ClientState.ClassJobChanged  -= OnClassJobChanged;
-
-        if (Config != null) 
-            SaveConfig(Config);
-
-        base.Uninit();
     }
 
     // 重新挑战
@@ -79,7 +73,7 @@ public class AutoPeloton : DailyModuleBase
     {
         TaskHelper.Abort();
 
-        if (Config.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+        if (ModuleConfig.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
         TaskHelper.Enqueue(OneTimeConditionCheck);
     }
 
@@ -95,7 +89,7 @@ public class AutoPeloton : DailyModuleBase
     {
         TaskHelper.Abort();
 
-        if (!s_ClassJobArr.Contains(classJobId)) return;
+        if (!ValidClassJobs.Contains(classJobId)) return;
 
         TaskHelper.Enqueue(OneTimeConditionCheck);
     }
@@ -103,18 +97,17 @@ public class AutoPeloton : DailyModuleBase
     // 战斗状态
     private void OnConditionChanged(ConditionFlag flag, bool value)
     {
-        if (flag is not ConditionFlag.InCombat) return;
+        if (flag != ConditionFlag.InCombat) return;
+        
         TaskHelper.Abort();
         if (!value) 
             TaskHelper.Enqueue(OneTimeConditionCheck);
     }
 
-    private unsafe bool? OneTimeConditionCheck()
+    private bool? OneTimeConditionCheck()
     {
-        // re-entry by OnTerritoryChanged()
-        if (Config.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return true;
-        if (GameMain.IsInPvPArea() || GameMain.IsInPvPInstance()) return true;
-        // re-entry by OnConditionChanged()
+        if (ModuleConfig.OnlyInDuty && GameState.ContentFinderCondition == 0) return true;
+        if (GameState.IsInPVPArea) return true;
         if (DService.Condition[ConditionFlag.InCombat]) return true;
 
         TaskHelper.Enqueue(MainProcess);
@@ -125,18 +118,21 @@ public class AutoPeloton : DailyModuleBase
     {
         if (delayMs > 0) 
             TaskHelper.DelayNext(delayMs);
+        
         TaskHelper.Enqueue(MainProcess);
         return true;
     }
 
     private unsafe bool? MainProcess()
     {
-        if (BetweenAreas || !IsScreenReady() || OccupiedInEvent) return Cycle(1_000);
-        if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return Cycle(1_000);
-        if (!s_ClassJobArr.Contains(localPlayer.ClassJob.RowId)) return true;
-        if (!IsActionUnlocked(s_PelotoningActionId)) return true;
-
-        if (Config.DisableInWalk && Control.Instance()->IsWalking) return Cycle(1_000);
+        if (BetweenAreas || !IsScreenReady() || OccupiedInEvent || DService.ObjectTable.LocalPlayer is not { } localPlayer)
+            return Cycle(1_000);
+        if (!ValidClassJobs.Contains(localPlayer.ClassJob.RowId))
+            return true;
+        if (!IsActionUnlocked(PelotoningActionID))
+            return true;
+        if (ModuleConfig.DisableInWalk && Control.Instance()->IsWalking)
+            return Cycle(1_000);
 
         TaskHelper.Enqueue(UsePeloton, "UsePeloton", 5_000, true, 1);
         return Cycle(1_000);
@@ -149,18 +145,18 @@ public class AutoPeloton : DailyModuleBase
         var statusManager = localPlayer.ToStruct()->StatusManager;
 
         // PeletonNotReady
-        if (actionManager->GetActionStatus(ActionType.Action, s_PelotoningActionId) != 0) return true;
+        if (actionManager->GetActionStatus(ActionType.Action, PelotoningActionID) != 0) return true;
         // AlreadyHasPeletonBuff
         if (statusManager.HasStatus(1199) || statusManager.HasStatus(50)) return true;
         // NotMoving
-        if (!AgentMap.Instance()->IsPlayerMoving) return true;
+        if (!LocalPlayerState.IsMoving) return true;
 
-        TaskHelper.Enqueue(() => UseActionManager.UseAction(ActionType.Action, s_PelotoningActionId),
-                           $"UseAction_{s_PelotoningActionId}", 5_000, true, 1);
+        TaskHelper.Enqueue(() => UseActionManager.UseAction(ActionType.Action, PelotoningActionID),
+                           $"UseAction_{PelotoningActionID}", 5_000, true, 1);
         return true;
     }
     
-    private class Configs : ModuleConfiguration
+    private class Config : ModuleConfiguration
     {
         public bool OnlyInDuty    = true;
         public bool DisableInWalk = true;

@@ -5,7 +5,7 @@ using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using FFXIVClientStructs.FFXIV.Client.Game;
 
-namespace DailyRoutines.Modules;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class AutoDance : DailyModuleBase
 {
@@ -16,17 +16,23 @@ public unsafe class AutoDance : DailyModuleBase
         Category    = ModuleCategories.Action,
     };
 
-    private static HashSet<uint> DanceActions = [15997, 15998];
+    private static readonly HashSet<uint> DanceActions = [15997, 15998];
 
     protected override void Init()
     {
-        TaskHelper ??= new TaskHelper { TimeLimitMS = 5_000 };
+        TaskHelper ??= new() { TimeLimitMS = 5_000 };
 
         UseActionManager.RegUseActionLocation(OnPostUseAction);
     }
 
     private void OnPostUseAction(
-        bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7)
+        bool       result,
+        ActionType actionType,
+        uint       actionID,
+        ulong      targetID,
+        Vector3    location,
+        uint       extraParam,
+        byte       a7)
     {
         if (!result || actionType != ActionType.Action || !DanceActions.Contains(actionID)) return;
         
@@ -49,7 +55,10 @@ public unsafe class AutoDance : DailyModuleBase
         if (gauge.CompletedSteps < (isTechnicalStep ? 4 : 2))
         {
             var nextStep = gauge.NextStep;
-            if (ActionManager.Instance()->GetActionStatus(ActionType.Action, nextStep) != 0) return false;
+            
+            if (ActionManager.Instance()->GetActionStatus(ActionType.Action, nextStep) != 0) 
+                return false;
+            
             if (UseActionManager.UseActionLocation(ActionType.Action, nextStep))
             {
                 TaskHelper.Enqueue(() => DanceStep(isTechnicalStep));

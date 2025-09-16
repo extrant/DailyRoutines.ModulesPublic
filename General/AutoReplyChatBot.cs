@@ -74,14 +74,14 @@ public class AutoReplyChatBot : DailyModuleBase
             {
                 ImGui.SetNextItemWidth(fieldW);
                 using (var combo = ImRaii.Combo($"{GetLoc("AutoReplyChatBot-ValidChatTypes")}", 
-                                                string.Join(',', ModuleConfig.ValidChatTypes), 
+                                                string.Join(',', ModuleConfig.ValidChatTypes.Select(x => ValidChatTypes.GetValueOrDefault(x, string.Empty))), 
                                                 ImGuiComboFlags.HeightLarge))
                 {
                     if (combo)
                     {
                         foreach (var (chatType, loc) in ValidChatTypes)
                         {
-                            if (ImGui.Selectable($"{loc}##{chatType}", ModuleConfig.ValidChatTypes.Contains(chatType)))
+                            if (ImGui.Selectable($"{loc}##{chatType}", ModuleConfig.ValidChatTypes.Contains(chatType), ImGuiSelectableFlags.DontClosePopups))
                             {
                                 if (!ModuleConfig.ValidChatTypes.Remove(chatType))
                                     ModuleConfig.ValidChatTypes.Add(chatType);

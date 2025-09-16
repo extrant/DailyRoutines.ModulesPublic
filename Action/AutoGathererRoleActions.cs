@@ -39,8 +39,7 @@ public class AutoGathererRoleActions : DailyModuleBase
         TaskHelper ??= new() { TimeLimitMS = 5_000 };
 
         DService.ClientState.ClassJobChanged += OnJobChanged;
-        if (DService.ObjectTable.LocalPlayer != null)
-            OnJobChanged(DService.ObjectTable.LocalPlayer.ClassJob.RowId);
+        OnJobChanged(LocalPlayerState.ClassJob);
     }
 
     private unsafe void OnJobChanged(uint jobID)
@@ -62,6 +61,7 @@ public class AutoGathererRoleActions : DailyModuleBase
                 {
                     if (!Throttler.Throttle("AutoGathererRoleActions-UseAction")) return false;
                     if (localPlayer->StatusManager.HasStatus(status) || !IsActionUnlocked(action)) return true;
+                    
                     UseActionManager.UseActionLocation(ActionType.Action, action);
                     return localPlayer->StatusManager.HasStatus(status);
                 });
@@ -69,10 +69,6 @@ public class AutoGathererRoleActions : DailyModuleBase
         });
     }
 
-    protected override void Uninit()
-    {
+    protected override void Uninit() => 
         DService.ClientState.ClassJobChanged -= OnJobChanged;
-
-        base.Uninit();
-    }
 }
