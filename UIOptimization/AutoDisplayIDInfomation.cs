@@ -323,9 +323,9 @@ public unsafe class AutoDisplayIDInfomation : DailyModuleBase
         if (!ModuleConfig.ShowWeatherID) return;
 
         var weatherID = WeatherManager.Instance()->WeatherId;
-        if (!LuminaGetter.TryGetRow<Weather>(weatherID, out _)) return;
+        if (!LuminaGetter.TryGetRow<Weather>(weatherID, out var weather)) return;
 
-        WeatherTooltipModifyGuid = GameTooltipManager.AddWeatherTooltipModify($" [{weatherID}]", TooltipModifyMode.Append);
+        WeatherTooltipModifyGuid = GameTooltipManager.AddWeatherTooltipModify($"{weather.Name} [{weatherID}]");
     }
     
     private static void AddStatusToMap(StatusManager statusManager, ref Dictionary<uint, uint> map)
