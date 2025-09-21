@@ -381,7 +381,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     if (textNode == null) continue;
                     
                     textNode->SetText($"{leftCastTime:F2}");
-                    textNode->FontSize = 14;
+                    textNode->FontSize = 16;
                 }
                 
                 break;
