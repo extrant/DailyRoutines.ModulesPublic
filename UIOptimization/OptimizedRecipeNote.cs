@@ -188,11 +188,10 @@ public class OptimizedRecipeNote : DailyModuleBase
 
                         // 职业不对
                         if (recipe.CraftType.RowId != LocalPlayerState.ClassJob - 8) return;
-
-                        // TODO: FFCS 7.3
-                        var craftPoint    = PlayerState.Instance()->Attributes[11];
-                        var craftsmanship = PlayerState.Instance()->Attributes[70];
-                        var control       = PlayerState.Instance()->Attributes[71];
+                        
+                        var craftPoint    = PlayerState.Instance()->GetAttributeByIndex(PlayerAttribute.CraftingPoints);
+                        var craftsmanship = PlayerState.Instance()->GetAttributeByIndex(PlayerAttribute.Craftsmanship);
+                        var control       = PlayerState.Instance()->GetAttributeByIndex(PlayerAttribute.Control);
                         var id            = RaphaelIPC.StartCalculation();
                         RecipeCaculationButton.IsEnabled = false;
                         TaskHelper.Enqueue(() =>
