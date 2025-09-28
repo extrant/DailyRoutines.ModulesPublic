@@ -664,11 +664,25 @@ public class OptimizedRecipeNote : DailyModuleBase
         {
             RecipeCaculationButton.IsVisible = false;
             SwitchJobButton.IsVisible        = true;
+
+            for (var i = 102U; i < 105; i++)
+            {
+                var buttonNode = InfosOm.RecipeNote->GetComponentButtonById(i);
+                if (buttonNode != null)
+                    buttonNode->SetEnabledState(false);
+            }
         }
         else
         {
             RecipeCaculationButton.IsVisible = true;
             SwitchJobButton.IsVisible        = false;
+            
+            for (var i = 102U; i < 105; i++)
+            {
+                var buttonNode = InfosOm.RecipeNote->GetComponentButtonById(i);
+                if (buttonNode != null)
+                    buttonNode->SetEnabledState(true);
+            }
         }
     }
 
