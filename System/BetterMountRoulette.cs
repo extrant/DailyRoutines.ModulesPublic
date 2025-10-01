@@ -254,10 +254,10 @@ public class BetterMountRoulette : DailyModuleBase
     
     private static readonly HashSet<uint> MountRouletteActionIDs = [9, 24];
     
-    private static readonly Vector4 ButtonNormalColor   = ImGui.ColorConvertU32ToFloat4(ImGui.GetColorU32(ImGuiCol.Button)).WithAlpha(0f);
-    private static readonly Vector4 ButtonActiveColor   = ImGui.ColorConvertU32ToFloat4(ImGui.GetColorU32(ImGuiCol.ButtonActive)).WithAlpha(0.8f);
-    private static readonly Vector4 ButtonHoveredColor  = ImGui.ColorConvertU32ToFloat4(ImGui.GetColorU32(ImGuiCol.ButtonHovered)).WithAlpha(0.4f);
-    private static readonly Vector4 ButtonSelectedColor = ImGui.ColorConvertU32ToFloat4(ImGui.GetColorU32(ImGuiCol.Button)).WithAlpha(0.6f);
+    private static readonly Vector4 ButtonNormalColor   = ImGuiCol.Button.ToVector4().WithAlpha(0f);
+    private static readonly Vector4 ButtonActiveColor   = ImGuiCol.ButtonActive.ToVector4().WithAlpha(0.8f);
+    private static readonly Vector4 ButtonHoveredColor  = ImGuiCol.ButtonHovered.ToVector4().WithAlpha(0.4f);
+    private static readonly Vector4 ButtonSelectedColor = ImGuiCol.Button.ToVector4().WithAlpha(0.6f);
 
     #endregion
 }
