@@ -36,6 +36,11 @@ public class AutoSortItems : DailyModuleBase
 
     protected override void ConfigUI()
     {
+        if (ImGui.Button(LuminaWrapper.GetAddonText(1389)))
+            TaskHelper.Enqueue(CheckCanSort);
+
+		ImGui.NewLine();
+
         if (ImGui.Checkbox(GetLoc("SendChat"), ref ModuleConfig.SendChat))
             SaveConfig(ModuleConfig);
         
