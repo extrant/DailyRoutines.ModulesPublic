@@ -771,10 +771,11 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             PartyActiveStatus.Clear();
             BattleNPCActiveStatus.Clear();
             PartyMitigationCache.Clear();
+            PartyMemberIndexCache.Clear();
         }
 
-        public static bool IsLocalEmpty()
-            => LocalActiveStatus.Count == 0 && LocalShield == 0 && BattleNPCActiveStatus.Count == 0;
+        public static bool IsLocalEmpty() => 
+            LocalActiveStatus.Count == 0 && LocalShield == 0 && BattleNPCActiveStatus.Count == 0;
 
         public static float[] FetchLocal()
         {
