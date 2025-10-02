@@ -78,7 +78,10 @@ public class BetterMountRoulette : DailyModuleBase
         var searchText = handler.SearchText;
         ImGui.SetNextItemWidth(-1f);
         if (ImGui.InputTextWithHint($"##Search{tabLabel}", GetLoc("Search"), ref searchText, 128))
+        {
             handler.SearchText = searchText;
+            handler.Searcher.Search(searchText);
+        }
 
         // 显示坐骑区域
         var       childSize = new Vector2(ImGui.GetContentRegionAvail().X, 400 * GlobalFontScale);
