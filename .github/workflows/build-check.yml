@@ -1,4 +1,4 @@
-name: Code Analysis on PR
+name: 代码分析
 
 on:
   pull_request:
@@ -11,27 +11,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: 安装 .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Detect project file
+      - name: 检测项目文件
         id: proj
         shell: pwsh
         run: |
           $p = (Get-ChildItem -Path $env:GITHUB_WORKSPACE -Filter *.csproj -Recurse | Select-Object -First 1).FullName
-          if (-not $p) { Write-Error "No .csproj found."; exit 1 }
+          if (-not $p) { Write-Error "未找到 .csproj 文件"; exit 1 }
           Add-Content -Path $env:GITHUB_OUTPUT -Value "path=$p"
 
-      - name: Restore dependencies
+      - name: 安装 Dalamud CN 依赖
+        shell: pwsh
+        run: |
+          $installPath = "$env:USERPROFILE\AppData\Roaming\XIVLauncherCN\addon\Hooks\dev"
+          if (-not (Test-Path $installPath)) {
+            New-Item -ItemType Directory -Path $installPath -Force | Out-Null
+          }
+
+          # 获取最新 release 中的 latest.7z 下载链接
+          $apiUrl = "https://api.github.com/repos/AtmoOmen/Dalamud/releases/latest"
+          Write-Host "获取 Dalamud 最新版本信息..."
+          $release = Invoke-RestMethod -Uri $apiUrl
+          $asset = $release.assets | Where-Object { $_.name -eq "latest.7z" } | Select-Object -First 1
+          if (-not $asset) { Write-Error "未找到 latest.7z 资源"; exit 1 }
+
+          $downloadUrl = $asset.browser_download_url
+          $archivePath = "$env:RUNNER_TEMP\latest.7z"
+
+          Write-Host "下载 Dalamud CN：$downloadUrl"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath
+
+          Write-Host "解压 latest.7z 到 $installPath ..."
+          7z x $archivePath -o"$installPath" -y | Out-Null
+          Write-Host "Dalamud CN 安装完成。"
+
+      - name: 还原依赖
         run: dotnet restore "${{ steps.proj.outputs.path }}"
 
-      - name: Build with analysis (fail on non-suppressed warnings)
+      - name: 编译并进行代码分析（未被抑制的警告视为错误）
         id: build
         run: dotnet build "${{ steps.proj.outputs.path }}" --configuration Release --no-restore /warnaserror /p:ContinuousIntegrationBuild=true
 
-      - name: Close PR on failure
+      - name: 构建失败时关闭 PR
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -40,9 +65,8 @@ jobs:
             const { owner, repo } = context.repo;
             const prNumber = context.payload.pull_request.number;
 
-            const message = "❌ PR has been automatically closed due to code analysis failure.\n"
-                           + "Please fix all build-breaking warnings/errors "
-                           + "(anything not suppressed by the project's <NoWarn>) and open a new PR.";
+            const message = "❌ 此 PR 已因代码分析失败被自动关闭。\n"
+                           + "请修复所有导致失败的警告或错误（未被项目 `<NoWarn>` 抑制的警告），然后重新提交 PR。";
 
             await github.rest.issues.createComment({
               owner,
