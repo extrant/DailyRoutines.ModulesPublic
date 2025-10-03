@@ -1,0 +1,61 @@
+name: Code Analysis on PR
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  code-analysis:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Detect project file
+        id: proj
+        shell: pwsh
+        run: |
+          $p = Get-ChildItem -Path $Env:GITHUB_WORKSPACE -Filter *.csproj -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $p) { Write-Error "No .csproj found."; exit 1 }
+          "path=$p" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ steps.proj.outputs.path }}"
+
+      - name: Build with analysis (fail on warnings not suppressed by csproj)
+        id: build
+        run: dotnet build "${{ steps.proj.outputs.path }}" --configuration Release --no-restore /warnaserror /p:ContinuousIntegrationBuild=true
+
+      - name: Close PR on failure
+        if: failure() && steps.build.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+
+            const message = `
+❌ PR 已被自动关闭, 存在未被解决的编译警告.
+
+请修复后打开一个新的 PR.
+            `;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: message
+            });
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number: prNumber,
+              state: "closed"
+            });
