@@ -32,7 +32,6 @@ jobs:
             New-Item -ItemType Directory -Path $installPath -Force | Out-Null
           }
 
-          # 获取最新 release 中的 latest.7z 下载链接
           $apiUrl = "https://api.github.com/repos/AtmoOmen/Dalamud/releases/latest"
           Write-Host "获取 Dalamud 最新版本信息..."
           $release = Invoke-RestMethod -Uri $apiUrl
@@ -48,6 +47,23 @@ jobs:
           Write-Host "解压 latest.7z 到 $installPath ..."
           7z x $archivePath -o"$installPath" -y | Out-Null
           Write-Host "Dalamud CN 安装完成。"
+
+      - name: 安装 DailyRoutines 插件依赖
+        shell: pwsh
+        run: |
+          $pluginUrl = "https://github.com/AtmoOmen/DalamudPlugins/raw/main/Plugins/DailyRoutines/latest.zip"
+          $pluginZip = "$env:RUNNER_TEMP\dailyroutines.zip"
+          $outputDir = "$env:GITHUB_WORKSPACE\bin\Release"
+
+          Write-Host "下载 DailyRoutines 插件包..."
+          Invoke-WebRequest -Uri $pluginUrl -OutFile $pluginZip
+
+          Write-Host "解压 DailyRoutines 插件到 $outputDir ..."
+          if (-not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+          }
+          7z x $pluginZip -o"$outputDir" -y | Out-Null
+          Write-Host "DailyRoutines 插件依赖已安装。"
 
       - name: 还原依赖
         run: dotnet restore "${{ steps.proj.outputs.path }}"
