@@ -100,7 +100,8 @@ public class BetterMountRoulette : DailyModuleBase
             if (string.IsNullOrEmpty(zoneName)) continue;
 
             var pOpen = true;
-            using var id = ImRaii.PushId((int)zoneID);
+            
+            using var id  = ImRaii.PushId((int)zoneID);
             using var tab = ImRaii.TabItem(zoneName, ref pOpen);
             if (tab)
                 DrawSearchAndMountsGrid(zoneName, handler);
@@ -121,35 +122,28 @@ public class BetterMountRoulette : DailyModuleBase
     {
         if (ZoneSelector == null) return;
 
-        var shouldFocus = false;
         if (ImGui.TabItemButton("+", ImGuiTabItemFlags.Trailing | ImGuiTabItemFlags.NoTooltip))
-        {
-            ZoneSelector.SelectedZoneID = 0;
-            shouldFocus = true;
-        }
+            ImGui.OpenPopup("AddNewZonePopup");
 
-        if (ZoneSelector.SelectedZoneID == 0) return;
-        
-        if (shouldFocus)
-            ImGui.SetKeyboardFocusHere();
-        
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(200f * GlobalFontScale);
-
-        if (ZoneSelector.DrawRadio())
+        using (var popup = ImRaii.Popup("AddNewZonePopup"))
         {
-            var newMountSet = new HashSet<uint>();
-            if (ModuleConfig.ZoneRouletteMounts.TryAdd(ZoneSelector.SelectedZoneID, newMountSet))
+            if (popup)
             {
-                ZoneMounts[ZoneSelector.SelectedZoneID] = new MountListHandler(MasterMountsSearcher, newMountSet);
-                SaveConfig(ModuleConfig);
+                if (ZoneSelector.DrawRadio())
+                {
+                    var newMountSet = new HashSet<uint>();
+                    if (ModuleConfig.ZoneRouletteMounts.TryAdd(ZoneSelector.SelectedZoneID, newMountSet))
+                    {
+                        ZoneMounts[ZoneSelector.SelectedZoneID] = new MountListHandler(MasterMountsSearcher, newMountSet);
+                        SaveConfig(ModuleConfig);
+                    }
+                }
             }
         }
     }
 
     private void DrawSearchAndMountsGrid(string tabLabel, MountListHandler handler)
     {
-        // 搜索框
         var searchText = handler.SearchText;
         ImGui.SetNextItemWidth(-1f);
         if (ImGui.InputTextWithHint($"##Search{tabLabel}", GetLoc("Search"), ref searchText, 128))
@@ -158,7 +152,6 @@ public class BetterMountRoulette : DailyModuleBase
             handler.Searcher.Search(searchText);
         }
 
-        // 显示坐骑区域
         var       childSize = new Vector2(ImGui.GetContentRegionAvail().X, 400 * GlobalFontScale);
         using var child     = ImRaii.Child($"##MountsGrid{tabLabel}", childSize, true);
         if (!child) return;
