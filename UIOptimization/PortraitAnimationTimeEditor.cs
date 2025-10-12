@@ -125,11 +125,8 @@ public unsafe class PortraitAnimationTimeEditor : DailyModuleBase
         UpdateDuration(PortraitChara);
     }
 
-    protected override void Uninit()
-    {
+    protected override void Uninit() => 
         DService.AddonLifecycle.UnregisterListener(OnAddon);
-        base.Uninit();
-    }
 
     private void OnAddon(AddonEvent type, AddonArgs? args) =>
         Overlay.IsOpen = type switch

@@ -97,8 +97,6 @@ public unsafe class AutoRecordSubTimeLeft : DailyModuleBase
         
         DService.ClientState.Login  -= OnLogin;
         DService.ClientState.Logout -= OnLogout;
-        
-        base.Uninit();
     }
     
     private void OnLogin()
