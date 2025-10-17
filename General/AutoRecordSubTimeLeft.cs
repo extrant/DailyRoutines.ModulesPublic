@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
@@ -41,13 +43,16 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
     private static Config        ModuleConfig = null!;
     private static IDtrBarEntry? Entry;
     private static Tracker?      PlaytimeTracker;
+    private static Query?        PlaytimeQuery;
 
     protected override unsafe void Init()
     {
         ModuleConfig =   LoadConfig<Config>() ?? new();
         TaskHelper   ??= new();
 
-        PlaytimeTracker ??= new(Path.Join(ConfigDirectoryPath, "PlatimeData.log"));
+        var path = Path.Join(ConfigDirectoryPath, "PlatimeData.log");
+        PlaytimeTracker ??= new(path);
+        PlaytimeQuery   ??= new(path);
 
         Entry         ??= DService.DtrBar.Get("DailyRoutines-GameTimeLeft");
         Entry.OnClick =   OnDTREntryClick;
@@ -108,6 +113,8 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
         PlaytimeTracker?.Dispose();
         PlaytimeTracker = null;
+
+        PlaytimeQuery = null;
 
         DService.ClientState.Login  -= OnLogin;
         DService.ClientState.Logout -= OnLogout;
@@ -244,8 +251,6 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         var isMonth    = info.LeftMonth != TimeSpan.MinValue;
         var expireTime = info.Record + (isMonth ? info.LeftMonth : info.LeftTime);
 
-        var query = new Query(Path.Join(ConfigDirectoryPath, "PlatimeData.log"));
-
         var textBuilder = new SeStringBuilder();
         textBuilder.AddUiForeground($"[{(isMonth ? "月卡" : "点卡")}] ", 25)
                    .AddText($"{expireTime:MM/dd HH:mm}");
@@ -263,15 +268,15 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                       .Add(NewLinePayload.Payload)
                       .AddUiForeground("[本日游玩时长]", 28)
                       .Add(NewLinePayload.Payload)
-                      .AddText($"{FormatTimeSpan(query.GetTotalUsageBetween(DateTime.Today, TimeSpan.FromDays(1)))}")
+                      .AddText($"{FormatTimeSpan(PlaytimeQuery.GetTotalUsageBetween(DateTime.Today, TimeSpan.FromDays(1)))}")
                       .Add(NewLinePayload.Payload)
                       .AddUiForeground("[昨日游玩时长]", 28)
                       .Add(NewLinePayload.Payload)
-                      .AddText($"{FormatTimeSpan(query.GetTotalUsageBetween(DateTime.Today - TimeSpan.FromDays(1), TimeSpan.FromDays(1)))}")
+                      .AddText($"{FormatTimeSpan(PlaytimeQuery.GetTotalUsageBetween(DateTime.Today - TimeSpan.FromDays(1), TimeSpan.FromDays(1)))}")
                       .Add(NewLinePayload.Payload)
                       .AddUiForeground("[七日游玩时长]", 28)
                       .Add(NewLinePayload.Payload)
-                      .AddText($"{FormatTimeSpan(query.GetTotalUsageBetween(DateTime.Today - TimeSpan.FromDays(6), TimeSpan.FromDays(7)))}")
+                      .AddText($"{FormatTimeSpan(PlaytimeQuery.GetTotalUsageBetween(DateTime.Today - TimeSpan.FromDays(6), TimeSpan.FromDays(7)))}")
                       .Add(NewLinePayload.Payload)
                       .Add(NewLinePayload.Payload)
                       .AddText("(左键: ")
@@ -308,28 +313,208 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         public Dictionary<ulong, (DateTime Record, TimeSpan LeftMonth, TimeSpan LeftTime)> Infos = [];
     }
 
-    private static class UsageLogFileUtils
+    internal record UsageEvent(string SessionID, int ProcessID, string EventType, DateTime TimestampUtc);
+
+    private static class UsageLogUtilities
     {
-        internal record UsageEvent(string SessionID, int ProcessID, string EventType, DateTime TsUtc);
+        public static string FormatEventLine(string sessionID, int processID, string eventType, DateTime timestampUtc) =>
+            $"{sessionID}\t{processID}\t{eventType}\t{timestampUtc:o}";
+    }
 
-        internal static IEnumerable<UsageEvent> ReadEvents(string path)
+    private static class UsageLogCache
+    {
+        private static readonly ConcurrentDictionary<string, UsageLogCacheState> Cache = new(StringComparer.OrdinalIgnoreCase);
+
+        internal static UsageLogSnapshot LoadSnapshot(string path, TimeSpan staleGrace, TimeSpan cacheValidity, DateTime nowUtc)
         {
-            if (!File.Exists(path))
-                yield break;
+            var state = Cache.GetOrAdd(path, _ => new UsageLogCacheState());
+            return state.LoadSnapshot(path, staleGrace, cacheValidity, nowUtc);
+        }
 
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var sr = new StreamReader(fs);
+        private sealed class UsageLogCacheState
+        {
+            private readonly ReaderWriterLockSlim             cacheLock       = new();
+            private readonly Dictionary<string, SessionState> sessions        = new(StringComparer.Ordinal);
+            private readonly List<UsageInterval>              closedIntervals = [];
+            private          long                             lastKnownLength;
+            private          DateTime                         lastRefreshUtc;
+            private          bool                             needsSorting;
 
-            while (sr.ReadLine() is { } line)
+            internal UsageLogSnapshot LoadSnapshot(string path, TimeSpan staleGrace, TimeSpan cacheValidity, DateTime nowUtc)
             {
-                var parts = line.Split('\t');
-                if (parts.Length == 4                   &&
-                    int.TryParse(parts[1], out var pid) &&
-                    DateTime.TryParse(parts[3], null, DateTimeStyles.RoundtripKind, out var ts))
-                    yield return new UsageEvent(parts[0], pid, parts[2], ts);
+                cacheLock.EnterUpgradeableReadLock();
+                try
+                {
+                    if (!File.Exists(path)) return UsageLogSnapshot.Empty;
+
+                    var fileLength = new FileInfo(path).Length;
+                    if (fileLength == lastKnownLength && cacheValidity > TimeSpan.Zero && nowUtc - lastRefreshUtc < cacheValidity)
+                        return CreateSnapshot(staleGrace, nowUtc);
+
+                    cacheLock.EnterWriteLock();
+                    try
+                    {
+                        if (!File.Exists(path))
+                        {
+                            ResetState();
+                            return UsageLogSnapshot.Empty;
+                        }
+
+                        fileLength = new FileInfo(path).Length;
+                        if (fileLength < lastKnownLength) 
+                            ResetState();
+
+                        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        stream.Seek(lastKnownLength, SeekOrigin.Begin);
+                        using var reader = new StreamReader(stream, Encoding.UTF8, false, 4096, true);
+
+                        while (reader.ReadLine() is { } line)
+                        {
+                            if (TryParseEvent(line, out var usageEvent))
+                                ApplyEvent(usageEvent);
+                        }
+
+                        lastKnownLength = stream.Position;
+                        lastRefreshUtc  = nowUtc;
+
+                        return CreateSnapshot(staleGrace, nowUtc);
+                    } finally { cacheLock.ExitWriteLock(); }
+                } finally { cacheLock.ExitUpgradeableReadLock(); }
+            }
+
+            private UsageLogSnapshot CreateSnapshot(TimeSpan staleGrace, DateTime nowUtc)
+            {
+                if (needsSorting && closedIntervals.Count > 1)
+                {
+                    closedIntervals.Sort(static (left, right) => DateTime.Compare(left.BeginUtc, right.BeginUtc));
+                    needsSorting = false;
+                }
+
+                var openSessions = new List<OpenSession>();
+                var intervalList = new List<UsageInterval>(closedIntervals.Count + sessions.Count);
+
+                intervalList.AddRange(closedIntervals);
+
+                foreach (var (key, session) in sessions)
+                {
+                    if (!session.ActiveStartUtc.HasValue) continue;
+
+                    var inferredEnd = session.LastEventUtc;
+                    if (inferredEnd > nowUtc)
+                        inferredEnd = nowUtc;
+
+                    if (inferredEnd > session.ActiveStartUtc.Value)
+                        intervalList.Add(new(session.ActiveStartUtc.Value, inferredEnd));
+                    openSessions.Add(new(key, session.ActiveStartUtc.Value, session.LastEventUtc));
+                }
+
+                if (intervalList.Count == 0 && openSessions.Count == 0) return UsageLogSnapshot.Empty;
+
+                return new UsageLogSnapshot(intervalList.ToArray(), openSessions.ToArray());
+            }
+
+            private void ResetState()
+            {
+                sessions.Clear();
+                closedIntervals.Clear();
+                lastKnownLength = 0;
+                lastRefreshUtc  = DateTime.MinValue;
+                needsSorting    = false;
+            }
+
+            private static bool TryParseEvent(string line, out UsageEvent usageEvent)
+            {
+                usageEvent = null;
+                if (string.IsNullOrEmpty(line)) return false;
+
+                var span          = line.AsSpan();
+                var firstTabIndex = span.IndexOf('\t');
+                if (firstTabIndex <= 0) return false;
+
+                var secondTabIndex = span.Slice(firstTabIndex + 1).IndexOf('\t');
+                if (secondTabIndex < 0) return false;
+
+                secondTabIndex += firstTabIndex + 1;
+
+                var thirdTabIndex = span.Slice(secondTabIndex + 1).IndexOf('\t');
+                if (thirdTabIndex < 0) return false;
+
+                thirdTabIndex += secondTabIndex + 1;
+
+                var sessionID   = span[..firstTabIndex].ToString();
+                var processSpan = span.Slice(firstTabIndex + 1, secondTabIndex - firstTabIndex - 1);
+                if (!int.TryParse(processSpan, NumberStyles.Integer, CultureInfo.InvariantCulture, out var processId)) return false;
+
+                var eventType = span.Slice(secondTabIndex + 1, thirdTabIndex - secondTabIndex - 1).ToString();
+                var timeSpan  = span[(thirdTabIndex + 1)..];
+                if (!DateTime.TryParseExact(timeSpan, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestampUtc)) return false;
+
+                usageEvent = new UsageEvent(sessionID, processId, eventType, timestampUtc);
+                return true;
+            }
+
+            private void ApplyEvent(UsageEvent usageEvent)
+            {
+                if (!sessions.TryGetValue(usageEvent.SessionID, out var sessionState)) 
+                    sessionState = new();
+
+                switch (usageEvent.EventType)
+                {
+                    case "start":
+                        if (sessionState.ActiveStartUtc.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUtc.Value)
+                        {
+                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUtc.Value, usageEvent.TimestampUtc));
+                            needsSorting = true;
+                        }
+
+                        sessionState.ActiveStartUtc = usageEvent.TimestampUtc;
+                        break;
+
+                    case "heartbeat":
+                        if (!sessionState.ActiveStartUtc.HasValue || usageEvent.TimestampUtc < sessionState.ActiveStartUtc.Value)
+                            sessionState.ActiveStartUtc = usageEvent.TimestampUtc;
+
+                        break;
+
+                    case "stop":
+                    case "autoClose":
+                        if (sessionState.ActiveStartUtc.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUtc.Value)
+                        {
+                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUtc.Value, usageEvent.TimestampUtc));
+                            needsSorting = true;
+                        }
+
+                        sessionState.ActiveStartUtc = null;
+                        break;
+
+                    default:
+                        return;
+                }
+
+                sessionState.LastEventUtc   = usageEvent.TimestampUtc;
+
+                sessions[usageEvent.SessionID] = sessionState;
+            }
+
+            private sealed class SessionState
+            {
+                public DateTime? ActiveStartUtc { get; set; }
+                public DateTime  LastEventUtc   { get; set; }
             }
         }
     }
+
+    private sealed class UsageLogSnapshot(IReadOnlyList<UsageInterval> intervals, IReadOnlyList<OpenSession> openSessions)
+    {
+        public static readonly UsageLogSnapshot Empty = new([], []);
+
+        public IReadOnlyList<UsageInterval> Intervals    { get; } = intervals;
+        public IReadOnlyList<OpenSession>   OpenSessions { get; } = openSessions;
+    }
+
+    private readonly record struct UsageInterval(DateTime BeginUtc, DateTime EndUtc);
+
+    private readonly record struct OpenSession(string SessionID, DateTime ActiveSinceUtc, DateTime LastEventUtc);
 
     private sealed class Tracker : IDisposable
     {
@@ -340,15 +525,14 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         private readonly TimeSpan staleGrace        = TimeSpan.FromSeconds(90);
         private readonly Mutex    fileMutex;
 
-        private int runState;
-
-        private CancellationTokenSource? cancellation;
-        private Task?                    heartbeatTask;
+        private int                     runState;
+        private CancellationTokenSource cancellation;
+        private Task                    heartbeatTask;
 
         public Tracker(string path)
         {
             logPath = path ?? throw new ArgumentNullException(nameof(path));
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath) ?? throw new InvalidOperationException("Log directory cannot be resolved."));
 
             var mutexName = $@"Global\{nameof(Tracker)}-{GetStableHashCode(Path.GetFullPath(logPath).ToUpperInvariant())}";
             fileMutex = new Mutex(false, mutexName);
@@ -356,71 +540,69 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
             AutoCloseStaleSessions();
         }
 
-        private static uint GetStableHashCode(string str)
+        private static uint GetStableHashCode(string value)
         {
             var hash = 2166136261;
-            foreach (var c in str)
-                hash = (hash * 16777619) ^ c;
+            foreach (var character in value) 
+                hash = (hash * 16777619) ^ character;
 
             return hash;
         }
 
         public void Start()
         {
-            if (Interlocked.CompareExchange(ref runState, 1, 0) == 0)
-            {
-                cancellation = new CancellationTokenSource();
-                WriteEvent("start", DateTime.UtcNow);
+            if (Interlocked.CompareExchange(ref runState, 1, 0) != 0) return;
 
-                var token = cancellation.Token;
-                heartbeatTask = Task.Run(async () =>
+            cancellation = new CancellationTokenSource();
+            WriteEvent("start", DateTime.UtcNow);
+
+            var token = cancellation.Token;
+            heartbeatTask = Task.Run(async () =>
+            {
+                try
                 {
-                    try
-                    {
-                        var timer = new PeriodicTimer(heartbeatInterval);
-                        while (await timer.WaitForNextTickAsync(token))
-                            WriteEvent("heartbeat", DateTime.UtcNow);
-                    }
-                    catch (OperationCanceledException) { }
-                }, token);
-            }
+                    var timer = new PeriodicTimer(heartbeatInterval);
+                    while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false)) 
+                        WriteEvent("heartbeat", DateTime.UtcNow);
+                }
+                catch (OperationCanceledException) { }
+            }, token);
         }
 
         public void Stop()
         {
-            if (Interlocked.CompareExchange(ref runState, 0, 1) == 1)
+            if (Interlocked.CompareExchange(ref runState, 0, 1) != 1) return;
+
+            try
             {
-                try
-                {
-                    cancellation?.Cancel();
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                try
-                {
-                    heartbeatTask?.Wait(TimeSpan.FromSeconds(2));
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                try
-                {
-                    WriteEvent("stop", DateTime.UtcNow);
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                cancellation?.Dispose();
-                cancellation  = null;
-                heartbeatTask = null;
+                cancellation?.Cancel();
             }
+            catch
+            {
+                // ignored
+            }
+
+            try
+            {
+                heartbeatTask?.Wait(TimeSpan.FromSeconds(2));
+            }
+            catch
+            {
+                // ignored
+            }
+
+            try
+            {
+                WriteEvent("stop", DateTime.UtcNow);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            cancellation?.Dispose();
+            cancellation  = null;
+            heartbeatTask = null;
         }
 
         public void Dispose()
@@ -429,78 +611,56 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
             fileMutex.Dispose();
         }
 
-        private void WriteEvent(string type, DateTime utc)
+        private void WriteEvent(string eventType, DateTime utc)
         {
-            var line = $"{sessionID}\t{processID}\t{type}\t{utc:o}" + Environment.NewLine;
-
+            var line = UsageLogUtilities.FormatEventLine(sessionID, processID, eventType, utc);
             try
             {
                 fileMutex.WaitOne();
-                File.AppendAllText(logPath, line);
+                File.AppendAllText(logPath, line + Environment.NewLine);
             } finally { fileMutex.ReleaseMutex(); }
         }
 
         private void AutoCloseStaleSessions()
         {
-            var sessionStates = new Dictionary<string, (DateTime LastEvent, bool HasStop)>();
-
             try
             {
-                foreach (var e in UsageLogFileUtils.ReadEvents(logPath))
+                var nowUtc   = DateTime.UtcNow;
+                var snapshot = UsageLogCache.LoadSnapshot(logPath, staleGrace, TimeSpan.Zero, nowUtc);
+
+                if (snapshot.OpenSessions.Count == 0) return;
+
+                var autoCloseLines = new List<string>();
+                foreach (var session in snapshot.OpenSessions)
                 {
-                    sessionStates.TryGetValue(e.SessionID, out var currentState);
+                    var proposedEnd = session.LastEventUtc + staleGrace;
+                    if (proposedEnd >= nowUtc) continue;
 
-                    var isStopEvent = e.EventType is "stop" or "autoClose";
-
-                    if (e.TsUtc > currentState.LastEvent)
-                        currentState.LastEvent = e.TsUtc;
-
-                    if (isStopEvent)
-                        currentState.HasStop = true;
-
-                    sessionStates[e.SessionID] = currentState;
+                    autoCloseLines.Add(UsageLogUtilities.FormatEventLine(session.SessionID, -1, "autoClose", proposedEnd));
                 }
+
+                if (autoCloseLines.Count == 0) return;
+
+                fileMutex.WaitOne();
+                try { File.AppendAllLines(logPath, autoCloseLines); } finally { fileMutex.ReleaseMutex(); }
+
+                UsageLogCache.LoadSnapshot(logPath, staleGrace, TimeSpan.Zero, DateTime.UtcNow);
             }
-            catch (IOException) { return; }
-
-            var now         = DateTime.UtcNow;
-            var eventsToAdd = new List<string>();
-
-            foreach (var session in sessionStates)
-            {
-                if (session.Value.HasStop) continue;
-
-                var endUtc = session.Value.LastEvent + staleGrace;
-                if (endUtc < now)
-                    eventsToAdd.Add($"{session.Key}\t-1\tautoClose\t{endUtc:o}");
-            }
-
-            if (eventsToAdd.Count > 0)
-            {
-                try
-                {
-                    fileMutex.WaitOne();
-                    File.AppendAllLines(logPath, eventsToAdd);
-                } finally { fileMutex.ReleaseMutex(); }
-            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
     }
 
-    private sealed class Query
+    private sealed class Query(string path)
     {
-        private readonly string   logPath;
-        private readonly bool     exists;
+        private readonly string   logPath    = path ?? throw new ArgumentNullException(nameof(path));
         private readonly TimeSpan staleGrace = TimeSpan.FromSeconds(90);
-
-        public Query(string path)
-        {
-            logPath = path ?? throw new ArgumentNullException(nameof(path));
-            exists  = File.Exists(logPath);
-        }
 
         public TimeSpan GetTotalUsageSince(TimeSpan lookback)
         {
-            if (!exists || lookback <= TimeSpan.Zero) return TimeSpan.Zero;
+            if (lookback <= TimeSpan.Zero)
+                return TimeSpan.Zero;
+
             var endLocal   = DateTime.Now;
             var startLocal = endLocal - lookback;
             return GetTotalUsageBetween(startLocal, lookback);
@@ -508,103 +668,47 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
         public TimeSpan GetTotalUsageBetween(DateTime startLocal, TimeSpan span)
         {
-            if (!exists || span <= TimeSpan.Zero) return TimeSpan.Zero;
+            if (span <= TimeSpan.Zero || !File.Exists(logPath))
+                return TimeSpan.Zero;
 
-            var tz       = TimeZoneInfo.Local;
-            var startUtc = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(startLocal, DateTimeKind.Local), tz);
+            var timeZone = TimeZoneInfo.Local;
+            var startUtc = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(startLocal, DateTimeKind.Local), timeZone);
             var endLocal = startLocal + span;
-            var endUtc   = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(endLocal, DateTimeKind.Local), tz);
+            var endUtc   = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(endLocal, DateTimeKind.Local), timeZone);
 
             var intervals = BuildUsageIntervalsUtc();
-            var total     = IntersectSum(intervals, startUtc, endUtc);
-            return total;
+            return IntersectSum(intervals, startUtc, endUtc);
         }
 
         private List<(DateTime BeginUtc, DateTime EndUtc)> BuildUsageIntervalsUtc()
         {
-            var events = UsageLogFileUtils.ReadEvents(logPath).ToList();
-            events.Sort((a, b) =>
-            {
-                var sidCompare = string.Compare(a.SessionID, b.SessionID, StringComparison.Ordinal);
-                return sidCompare != 0 ? sidCompare : DateTime.Compare(a.TsUtc, b.TsUtc);
-            });
+            var snapshot  = UsageLogCache.LoadSnapshot(logPath, staleGrace, TimeSpan.Zero, DateTime.UtcNow);
+            var intervals = new List<(DateTime, DateTime)>(snapshot.Intervals.Count);
 
-            var       result        = new List<(DateTime, DateTime)>();
-            string?   curSid        = null;
-            DateTime? lastPoint     = null;
-            DateTime? lastEventTime = null;
+            foreach (var interval in snapshot.Intervals)
+                intervals.Add((interval.BeginUtc, interval.EndUtc));
 
-            foreach (var e in events)
-            {
-                if (e.SessionID != curSid)
-                {
-                    if (curSid != null && lastPoint != null && lastEventTime != null)
-                    {
-                        var inferredEnd = MinUtc(DateTime.UtcNow, lastEventTime.Value + staleGrace);
-                        if (inferredEnd > lastPoint.Value)
-                            result.Add((lastPoint.Value, inferredEnd));
-                    }
-
-                    curSid        = e.SessionID;
-                    lastPoint     = null;
-                    lastEventTime = null;
-                }
-
-                switch (e.EventType)
-                {
-                    case "start" or "heartbeat":
-                    {
-                        if (lastPoint != null)
-                            result.Add((lastPoint.Value, e.TsUtc));
-
-                        lastPoint = e.TsUtc;
-
-                        lastEventTime = e.TsUtc;
-                        break;
-                    }
-                    case "stop":
-                    case "autoClose":
-                    {
-                        if (lastPoint != null && e.TsUtc > lastPoint.Value)
-                            result.Add((lastPoint.Value, e.TsUtc));
-
-                        lastPoint     = null;
-                        lastEventTime = e.TsUtc;
-                        break;
-                    }
-                }
-            }
-
-            if (curSid != null && lastPoint != null && lastEventTime != null)
-            {
-                var inferredEnd = MinUtc(DateTime.UtcNow, lastEventTime.Value + staleGrace);
-                if (inferredEnd > lastPoint.Value)
-                    result.Add((lastPoint.Value, inferredEnd));
-            }
-
-            return result;
+            return intervals;
         }
 
         private static TimeSpan IntersectSum(List<(DateTime BeginUtc, DateTime EndUtc)> intervals, DateTime windowBeginUtc, DateTime windowEndUtc)
         {
-            if (windowEndUtc <= windowBeginUtc) return TimeSpan.Zero;
+            if (windowEndUtc <= windowBeginUtc)
+                return TimeSpan.Zero;
 
             long totalTicks = 0;
-            foreach (var iv in intervals)
+            foreach (var interval in intervals)
             {
-                var a = iv.BeginUtc;
-                var b = iv.EndUtc;
-                if (b <= windowBeginUtc || a >= windowEndUtc) continue;
+                if (interval.EndUtc <= windowBeginUtc || interval.BeginUtc >= windowEndUtc)
+                    continue;
 
-                var s = a > windowBeginUtc ? a : windowBeginUtc;
-                var e = b < windowEndUtc ? b : windowEndUtc;
-                if (e > s)
-                    totalTicks += (e - s).Ticks;
+                var segmentStart = interval.BeginUtc > windowBeginUtc ? interval.BeginUtc : windowBeginUtc;
+                var segmentEnd   = interval.EndUtc   < windowEndUtc ? interval.EndUtc : windowEndUtc;
+                if (segmentEnd > segmentStart)
+                    totalTicks += (segmentEnd - segmentStart).Ticks;
             }
 
             return new TimeSpan(totalTicks);
         }
-
-        private static DateTime MinUtc(DateTime a, DateTime b) => a <= b ? a : b;
     }
 }
