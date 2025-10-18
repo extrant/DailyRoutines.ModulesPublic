@@ -226,7 +226,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         return (Convert.ToInt32(month, 16), Convert.ToInt32(point, 16));
     }
 
-    private void UpdateEntryAndTimeInfo(ulong contentID = 0)
+    private static void UpdateEntryAndTimeInfo(ulong contentID = 0)
     {
         if (DService.ClientState.IsLoggedIn)
             PlaytimeTracker.Start();
@@ -305,8 +305,21 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
     }
 
-    private static string FormatTimeSpan(TimeSpan timeSpan) =>
-        $"{timeSpan.Days} 天 {timeSpan.Hours} 小时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒";
+    private static string FormatTimeSpan(TimeSpan timeSpan)
+    {
+        var parts = new List<string>();
+    
+        if (timeSpan.Days    > 0) 
+            parts.Add($"{timeSpan.Days} 天");
+        if (timeSpan.Hours   > 0) 
+            parts.Add($"{timeSpan.Hours} 小时");
+        if (timeSpan.Minutes > 0) 
+            parts.Add($"{timeSpan.Minutes} 分");
+        if (timeSpan.Seconds > 0) 
+            parts.Add($"{timeSpan.Seconds} 秒");
+    
+        return parts.Count > 0 ? string.Join(" ", parts) : "0 秒";
+    }
 
     private class Config : ModuleConfiguration
     {
