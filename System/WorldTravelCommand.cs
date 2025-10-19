@@ -11,6 +11,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -708,19 +709,31 @@ public class WorldTravelCommand : DailyModuleBase
                 if (time == -1) return;
                 
                 var builder = new SeStringBuilder();
-                builder.AddText("超域传送预计等待: ");
+                builder.AddText("超域传送状态:")
+                       .Add(NewLinePayload.Payload)
+                       .AddText("              ");
 
-                if (time == 0)
-                    builder.AddUiForeground("即刻完成", 45);
-                else
-                    builder.AddUiForeground(time.ToString(), 32)
-                           .AddText(" 分钟");
+                switch (time)
+                {
+                    case 0:
+                        builder.AddUiForeground("即刻完成 / 等待 1 分钟以内", 45);
+                        break;
+                    case -999:
+                        builder.AddUiForeground("繁忙 / 无法通行", 518);
+                        break;
+                    default:
+                        builder.AddText("至少需要等待 ")
+                               .AddUiForeground(time.ToString(), 32)
+                               .AddText(" 分钟");
+                        break;
+                }
                     
                     
                 node.Tooltip = builder.Build();
                 var baseColor = time switch
                 {
                     0    => KnownColor.DarkGreen.ToVector4().ToVector3(),
+                    -999 => KnownColor.DarkRed.ToVector4().ToVector3(),
                     >= 5 => KnownColor.Brown.ToVector4().ToVector3(),
                     _    => ColorHelper.GetColor(32).ToVector3()
                 };
