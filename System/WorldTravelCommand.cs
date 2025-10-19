@@ -588,8 +588,10 @@ public class WorldTravelCommand : DailyModuleBase
     {
         private static NodeBase TeleportWidget;
 
+        private static readonly Version MinDCTravelerXVersion = new("0.1.6.0");
+        
         private static bool IsPluginEnabled => 
-            IsPluginEnabled("DCTravelerX");
+            IsPluginEnabled("DCTravelerX", MinDCTravelerXVersion);
 
         private static bool IsPluginValid => 
             IsPluginEnabled && IsDCTravelerValid;
@@ -613,12 +615,18 @@ public class WorldTravelCommand : DailyModuleBase
                 var message = SeString.Empty;
                 
                 if (!IsPluginEnabled)
-                    message = new SeStringBuilder().Append("超域旅行功能依赖 ").AddUiForeground("DCTravlerX", 32).Append(" 插件 (版本 0.1.5.0 及以上)").Build();
+                {
+                    message = new SeStringBuilder().Append("超域旅行功能依赖 ")
+                                                   .AddUiForeground("DCTravlerX", 32)
+                                                   .Append($" 插件 (版本 {MinDCTravelerXVersion} 及以上)")
+                                                   .Build();
+                }
                 else if (!IsDCTravelerValid)
                 {
                     message = new SeStringBuilder().Append("无法连接至超域旅行 API, 请确认已安装并启用 ")
                                                    .AddUiForeground("DCTravlerX", 32)
-                                                   .Append(" 插件 (版本 0.1.5.0 及以上), 若已启用, 请从 XIVLauncherCN 重启游戏").Build();
+                                                   .Append($" 插件 (版本 {MinDCTravelerXVersion} 及以上), 若已启用, 请从 XIVLauncherCN 重启游戏")
+                                                   .Build();
                 }
 
                 if (message != SeString.Empty)
