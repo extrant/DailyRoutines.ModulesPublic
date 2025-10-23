@@ -391,8 +391,16 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                         lastRefreshUtc  = nowUtc;
 
                         return CreateSnapshot(staleGrace, nowUtc);
-                    } finally { cacheLock.ExitWriteLock(); }
-                } finally { cacheLock.ExitUpgradeableReadLock(); }
+                    }
+                    finally 
+                    {
+                        cacheLock.ExitWriteLock();
+                    }
+                }
+                finally 
+                {
+                    cacheLock.ExitUpgradeableReadLock();
+                }
             }
 
             private UsageLogSnapshot CreateSnapshot(TimeSpan staleGrace, DateTime nowUtc)
@@ -410,15 +418,21 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
                 foreach (var (key, session) in sessions)
                 {
-                    if (!session.ActiveStartUtc.HasValue) continue;
+                    if (!session.ActiveStartUTC.HasValue) continue;
 
-                    var inferredEnd = session.LastEventUtc;
-                    if (inferredEnd > nowUtc)
-                        inferredEnd = nowUtc;
-
-                    if (inferredEnd > session.ActiveStartUtc.Value)
-                        intervalList.Add(new(session.ActiveStartUtc.Value, inferredEnd));
-                    openSessions.Add(new(key, session.ActiveStartUtc.Value, session.LastEventUtc));
+                    var timeSinceLastEvent = nowUtc - session.LastEventUTC;
+                    if (timeSinceLastEvent > staleGrace)
+                    {
+                        var staleEndTime = session.LastEventUTC + staleGrace;
+                        if (staleEndTime > session.ActiveStartUTC.Value)
+                            intervalList.Add(new(session.ActiveStartUTC.Value, staleEndTime));
+                    }
+                    else
+                    {
+                        if (nowUtc > session.ActiveStartUTC.Value)
+                            intervalList.Add(new(session.ActiveStartUTC.Value, nowUtc));
+                        openSessions.Add(new(key, session.ActiveStartUTC.Value, session.LastEventUTC));
+                    }
                 }
 
                 if (intervalList.Count == 0 && openSessions.Count == 0) return UsageLogSnapshot.Empty;
@@ -474,45 +488,45 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                 switch (usageEvent.EventType)
                 {
                     case "start":
-                        if (sessionState.ActiveStartUtc.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUtc.Value)
+                        if (sessionState.ActiveStartUTC.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUTC.Value)
                         {
-                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUtc.Value, usageEvent.TimestampUtc));
+                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUTC.Value, usageEvent.TimestampUtc));
                             needsSorting = true;
                         }
 
-                        sessionState.ActiveStartUtc = usageEvent.TimestampUtc;
+                        sessionState.ActiveStartUTC = usageEvent.TimestampUtc;
                         break;
 
                     case "heartbeat":
-                        if (!sessionState.ActiveStartUtc.HasValue || usageEvent.TimestampUtc < sessionState.ActiveStartUtc.Value)
-                            sessionState.ActiveStartUtc = usageEvent.TimestampUtc;
+                        if (!sessionState.ActiveStartUTC.HasValue || usageEvent.TimestampUtc < sessionState.ActiveStartUTC.Value)
+                            sessionState.ActiveStartUTC = usageEvent.TimestampUtc;
 
                         break;
 
                     case "stop":
                     case "autoClose":
-                        if (sessionState.ActiveStartUtc.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUtc.Value)
+                        if (sessionState.ActiveStartUTC.HasValue && usageEvent.TimestampUtc > sessionState.ActiveStartUTC.Value)
                         {
-                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUtc.Value, usageEvent.TimestampUtc));
+                            closedIntervals.Add(new UsageInterval(sessionState.ActiveStartUTC.Value, usageEvent.TimestampUtc));
                             needsSorting = true;
                         }
 
-                        sessionState.ActiveStartUtc = null;
+                        sessionState.ActiveStartUTC = null;
                         break;
 
                     default:
                         return;
                 }
 
-                sessionState.LastEventUtc   = usageEvent.TimestampUtc;
+                sessionState.LastEventUTC   = usageEvent.TimestampUtc;
 
                 sessions[usageEvent.SessionID] = sessionState;
             }
 
             private sealed class SessionState
             {
-                public DateTime? ActiveStartUtc { get; set; }
-                public DateTime  LastEventUtc   { get; set; }
+                public DateTime? ActiveStartUTC { get; set; }
+                public DateTime  LastEventUTC   { get; set; }
             }
         }
     }
@@ -527,7 +541,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
     private readonly record struct UsageInterval(DateTime BeginUtc, DateTime EndUtc);
 
-    private readonly record struct OpenSession(string SessionID, DateTime ActiveSinceUtc, DateTime LastEventUtc);
+    private readonly record struct OpenSession(string SessionID, DateTime ActiveSinceUTC, DateTime LastEventUTC);
 
     private sealed class Tracker : IDisposable
     {
@@ -646,7 +660,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                 var autoCloseLines = new List<string>();
                 foreach (var session in snapshot.OpenSessions)
                 {
-                    var proposedEnd = session.LastEventUtc + staleGrace;
+                    var proposedEnd = session.LastEventUTC + staleGrace;
                     if (proposedEnd >= nowUtc) continue;
 
                     autoCloseLines.Add(UsageLogUtilities.FormatEventLine(session.SessionID, -1, "autoClose", proposedEnd));
@@ -690,7 +704,12 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
             var endUtc   = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(endLocal, DateTimeKind.Local), timeZone);
 
             var intervals = BuildUsageIntervalsUtc();
-            return IntersectSum(intervals, startUtc, endUtc);
+            var result = IntersectSum(intervals, startUtc, endUtc);
+
+            if (result > span)
+                return span;
+
+            return result;
         }
 
         private List<(DateTime BeginUtc, DateTime EndUtc)> BuildUsageIntervalsUtc()
@@ -709,7 +728,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
             if (windowEndUtc <= windowBeginUtc)
                 return TimeSpan.Zero;
 
-            long totalTicks = 0;
+            var clippedIntervals = new List<(DateTime Start, DateTime End)>();
             foreach (var interval in intervals)
             {
                 if (interval.EndUtc <= windowBeginUtc || interval.BeginUtc >= windowEndUtc)
@@ -718,8 +737,33 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                 var segmentStart = interval.BeginUtc > windowBeginUtc ? interval.BeginUtc : windowBeginUtc;
                 var segmentEnd   = interval.EndUtc   < windowEndUtc ? interval.EndUtc : windowEndUtc;
                 if (segmentEnd > segmentStart)
-                    totalTicks += (segmentEnd - segmentStart).Ticks;
+                    clippedIntervals.Add((segmentStart, segmentEnd));
             }
+
+            if (clippedIntervals.Count == 0)
+                return TimeSpan.Zero;
+
+            clippedIntervals.Sort((a, b) => DateTime.Compare(a.Start, b.Start));
+
+            var mergedIntervals = new List<(DateTime Start, DateTime End)>();
+            var current = clippedIntervals[0];
+
+            for (int i = 1; i < clippedIntervals.Count; i++)
+            {
+                var next = clippedIntervals[i];
+                if (next.Start <= current.End)
+                    current = (current.Start, next.End > current.End ? next.End : current.End);
+                else
+                {
+                    mergedIntervals.Add(current);
+                    current = next;
+                }
+            }
+            mergedIntervals.Add(current);
+
+            long totalTicks = 0;
+            foreach (var interval in mergedIntervals)
+                totalTicks += (interval.End - interval.Start).Ticks;
 
             return new TimeSpan(totalTicks);
         }
