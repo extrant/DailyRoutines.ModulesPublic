@@ -180,8 +180,10 @@ public class WorldTravelCommand : DailyModuleBase
     }
     
     // 更新区服数据
-    private static void OnLogin()
+    private void OnLogin()
     {
+        TaskHelper.RemoveAllTasks(1);
+        
         if (GameState.HomeWorld == 0 || GameState.CurrentWorld == 0) return;
         
         var dataCenter = GameState.CurrentWorldData.DataCenter.RowId;
@@ -480,13 +482,13 @@ public class WorldTravelCommand : DailyModuleBase
         }
         catch (Exception ex)
         {
-            DService.Log.Debug($"超域旅行失败: {ex.Message}", ex);
+            Debug($"超域旅行失败: {ex.Message}", ex);
         }
     }
 
     private unsafe void EnqueueLogin(Travel traveldata)
     {
-        TaskHelper.Enqueue(() => CharaSelect != null || CharaSelectListMenu != null, "等待角色选择界面可用");
+        TaskHelper.Enqueue(() => CharaSelect != null || CharaSelectListMenu != null, "等待角色选择界面可用", weight: 1);
 
         TaskHelper.Enqueue(() =>
         {
@@ -519,19 +521,19 @@ public class WorldTravelCommand : DailyModuleBase
                             Callback(addon, true, 29, 0, index);
                             Callback(addon, true, 21, index);
 
-                            TaskHelper.Enqueue(() => ClickSelectYesnoYes(), "点击确认登录");
+                            TaskHelper.Enqueue(() => ClickSelectYesnoYes(), "点击确认登录", weight: 1);
                             return;
                         }
 
                         index++;
                     }
                 }
-                catch (Exception)
+                catch
                 {
                     // ignored
                 }
             }
-        }, "尝试登录");
+        }, "尝试登录", weight: 1);
     }
 
     #endregion
