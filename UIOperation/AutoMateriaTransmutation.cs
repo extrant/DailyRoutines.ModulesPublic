@@ -80,7 +80,7 @@ public unsafe class AutoMateriaTransmutation : DailyModuleBase
             ModuleConfig.Save(this);
     }
     
-        private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon(AddonEvent type, AddonArgs args)
     {
         switch (type)
         {
