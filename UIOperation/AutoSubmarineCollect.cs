@@ -52,7 +52,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
     
     private static readonly CompSig CurrentSubmarineIndexSig = new("48 8D 0D ?? ?? ?? ?? 80 A3");
     
-    private static readonly CompSig                            SubmarineReturnTimeSig = new("E8 ?? ?? ?? ?? E9 AC 0C 00 00 48 8D 4F 10");
+    private static readonly CompSig                            SubmarineReturnTimeSig = new("40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ?? E8 ?? ?? ?? ?? 48 8B D3 48 8D 48 ?? 48 83 C4 ?? 5B E9 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ?? E8 ?? ?? ?? ?? 48 8B D3");
     private delegate        nint                               SubmarineReturnTimeDelegate(SubmarineReturnTimePacket* packet);
     private static          Hook<SubmarineReturnTimeDelegate>? SubmarineReturnTimeHook;
     
