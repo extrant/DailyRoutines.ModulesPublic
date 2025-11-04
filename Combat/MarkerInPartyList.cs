@@ -231,7 +231,7 @@ public unsafe class MarkerInPartyList : DailyModuleBase
         for (var i = 0; i < markers.Length; i++)
         {
             var gameObjectID = markers[i].ObjectId;
-            if (gameObjectID == 0 || gameObjectID == 0xE0000000)
+            if (gameObjectID is 0 or 0xE0000000)
                 continue;
             var index = (uint)i;
             TaskHelper.Insert(() => ProcMarkIconSetted(index, gameObjectID));

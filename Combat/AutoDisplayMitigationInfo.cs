@@ -586,11 +586,11 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
 
                 foreach (var member in partyList)
                 {
-                    if (member.ObjectId == 0)
+                    if (member.EntityId == 0)
                         continue;
 
-                    if (DService.ObjectTable.SearchByID(member.ObjectId) is ICharacter memberChara)
-                        partyShield[member.ObjectId] = ((float)memberChara.ShieldPercentage / 100 * memberChara.CurrentHp);
+                    if (DService.ObjectTable.SearchByID(member.EntityId) is ICharacter memberChara)
+                        partyShield[member.EntityId] = ((float)memberChara.ShieldPercentage / 100 * memberChara.CurrentHp);
                 }
 
                 return partyShield;
@@ -654,11 +654,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                     s.SourceId
                 );
 
-            public static MemberStatus From(FFXIVClientStructs.FFXIV.Client.Game.Status s)
-                => new MemberStatus(
-                    s.StatusId,
-                    s.SourceObject.ObjectId
-                );
+            public static MemberStatus From(FFXIVClientStructs.FFXIV.Client.Game.Status s) =>
+                new(s.StatusId, s.SourceObject.ObjectId);
         }
 
         #endregion
@@ -723,7 +720,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             {
                 foreach (var member in partyList)
                 {
-                    if (member.ObjectId == 0)
+                    if (member.EntityId == 0)
                         continue;
 
                     var activeStatus = new Dictionary<MMStatus, float>();
@@ -731,11 +728,11 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                     {
                         if (status.StatusId == 0)
                             continue;
-                        if (TryGetMitigation(member.ObjectId, MemberStatus.From(status), out var mitigation) && mitigation is not null)
+                        if (TryGetMitigation(member.EntityId, MemberStatus.From(status), out var mitigation) && mitigation is not null)
                             activeStatus.TryAdd(mitigation, status.RemainingTime);
                     }
 
-                    PartyActiveStatus[member.ObjectId] = activeStatus;
+                    PartyActiveStatus[member.EntityId] = activeStatus;
                 }
             }
 
