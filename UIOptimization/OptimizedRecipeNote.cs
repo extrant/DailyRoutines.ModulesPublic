@@ -960,11 +960,11 @@ public class OptimizedRecipeNote : DailyModuleBase
                         Type = actionID > 10_0000 ? DragDropType.CraftingAction : DragDropType.Action,
                         Int2 = (int)actionID,
                     },
-                    OnRollOver = (node, _) =>
+                    OnRollOver = node =>
                         node.ShowTooltip(AtkTooltipManager.AtkTooltipType.Action, actionID > 10_0000 ? ActionKind.CraftingAction : ActionKind.Action),
-                    OnRollOut = (node, _) => node.HideTooltip(),
+                    OnRollOut = node => node.HideTooltip(),
                 };
-                dragDropNode.OnClicked = (_, _) =>
+                dragDropNode.OnClicked = _ =>
                 {
                     if (DService.Condition[ConditionFlag.ExecutingCraftingAction] ||
                         (TaskHelper.TryGetTarget(out var taskHelper) && taskHelper.IsBusy))
@@ -1190,10 +1190,10 @@ public class OptimizedRecipeNote : DailyModuleBase
                         IsVisible = true,
                         Size      = new(28),
                         IconId    = LuminaWrapper.GetItemIconID(costInfo.ItemID),
-                        Position  = new(0, -6),
+                        Position  = new(0, -10),
                         Tooltip = $"{LuminaWrapper.GetItemName(costInfo.ItemID)}"
                     };
-                    costIconNode.SetEventFlags();
+                    costIconNode.SetEventFlags = true;
                     costInfoComponent.AddNode(costIconNode);
 
                     var costNode = new TextNode
@@ -1201,7 +1201,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         IsVisible = true,
                         TextFlags = TextFlags.AutoAdjustNodeSize,
                         SeString  = costInfo.ToString().Replace(LuminaWrapper.GetItemName(costInfo.ItemID), string.Empty).Trim(),
-                        Position  = new(0, 0)
+                        Position  = new(4, 6)
                     };
                     costInfoComponent.AddNode(costNode);
                 }

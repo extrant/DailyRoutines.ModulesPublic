@@ -771,7 +771,7 @@ public partial class OccultCrescentHelper
                                                          .Build());
                     }
 
-                    iconButton.AddEvent(AddonEventType.MouseOver, _ =>
+                    iconButton.AddEvent(AtkEventType.MouseOver, () =>
                     {
                         if (PressedButtonOnce) return;
 
@@ -786,7 +786,7 @@ public partial class OccultCrescentHelper
                         WindowNode.CollisionNode.Size = WindowNode.CollisionNode.Size with { X = 750 };
                     });
 
-                    iconButton.AddEvent(AddonEventType.ButtonPress, _ =>
+                    iconButton.AddEvent(AtkEventType.ButtonPress, () =>
                     {
                         PressedButtonOnce = true;
 
@@ -1090,8 +1090,8 @@ public partial class OccultCrescentHelper
                                 Int2 = (int)trait,
                             },
                             IsClickable = false,
-                            OnRollOver  = (node, _) => node.ShowTooltip(AtkTooltipManager.AtkTooltipType.Action, ActionKind.MKDTrait),
-                            OnRollOut   = (node, _) => node.HideTooltip(),
+                            OnRollOver  = node => node.ShowTooltip(AtkTooltipManager.AtkTooltipType.Action, ActionKind.MKDTrait),
+                            OnRollOut   = node => node.HideTooltip(),
                         };
 
                         row.AddNode(dragDropNode);
@@ -1275,10 +1275,10 @@ public partial class OccultCrescentHelper
                             Int2 = IsRealAction ? (int)ActionID : 31 + ActionIndex,
                         };
 
-                        OnRollOver = (node, _) =>
+                        OnRollOver = node =>
                             node.ShowTooltip(AtkTooltipManager.AtkTooltipType.Action, IsRealAction ? ActionKind.Action : ActionKind.GeneralAction);
-                        OnRollOut = (node, _) => node.HideTooltip();
-                        OnClicked = (_, _) =>
+                        OnRollOut = node => node.HideTooltip();
+                        OnClicked = _ =>
                         {
                             UpdateActionInfo();
 
