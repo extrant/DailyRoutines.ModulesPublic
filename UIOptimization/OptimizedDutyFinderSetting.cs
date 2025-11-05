@@ -93,7 +93,13 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                             Tooltip   = LuminaWrapper.GetAddonText(settingDetail.GetTooltip()),
                         };
 
-                        button.OnClick = () => ToggleSetting(settingDetail.Setting);
+                        button.OnClick = () =>
+                        {
+                            ToggleSetting(settingDetail.Setting);
+                            button.Tooltip = LuminaWrapper.GetAddonText(settingDetail.GetTooltip());
+                            button.HideTooltip();
+                            button.ShowTooltip();
+                        };
 
                         button.BackgroundNode.IsVisible = false;
                         button.ImageNode.IsVisible      = false;
@@ -101,10 +107,11 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                         var origPosition = new Vector2(4, 5);
                         var iconNode = new IconImageNode
                         {
-                            IconId    = settingDetail.GetIcon(),
-                            Size      = new(24),
-                            IsVisible = true,
-                            Position  = origPosition
+                            IconId     = settingDetail.GetIcon(),
+                            Size       = new(24),
+                            IsVisible  = true,
+                            Position   = origPosition,
+                            FitTexture = true
                         };
 
                         iconNode.AddTimeline(new TimelineBuilder()
