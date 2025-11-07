@@ -54,19 +54,29 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
     protected override void ConfigUI()
     {
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), GetLoc("Offset"));
-        
-        ImGui.SameLine();
         ImGui.SetNextItemWidth(200f * GlobalFontScale);
-        ImGui.InputFloat2("###TextOffsetInput", ref ModuleConfig.TextOffset, format: "%.1f");
+        ImGui.InputFloat2($"{GetLoc("Offset")}###TextOffsetInput", ref ModuleConfig.TextOffset, format: "%.1f");
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             ModuleConfig.Save(this);
             UpdateTextNodes();
         }
         
-        ImGui.Spacing();
+        ImGui.SetNextItemWidth(200f * GlobalFontScale);
+        ImGui.InputByte($"{GetLoc("FontSize")}###FontSize", ref ModuleConfig.FontSize);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+        {
+            ModuleConfig.Save(this);
+            UpdateTextNodes();
+        }
+        
+        if (ImGui.Checkbox(GetLoc("OptimizedEnemyList-ShowCastInfo"), ref ModuleConfig.ShowCastInfo))
+        {
+            ModuleConfig.Save(this);
+            UpdateTextNodes();
+        }
+        
+        ImGui.NewLine();
 
         if (ImGui.Checkbox(GetLoc("OptimizedEnemyList-UseCustomColor"), ref ModuleConfig.UseCustomizeTextColor))
         {
@@ -76,45 +86,41 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
         if (ModuleConfig.UseCustomizeTextColor)
         {
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{GetLoc("Color")}:");
+            ModuleConfig.TextColor = ImGuiComponents.ColorPickerWithPalette(0, "###TextColorInput", ModuleConfig.TextColor);
             
             ImGui.SameLine();
-            ModuleConfig.TextColor =
-                ImGuiComponents.ColorPickerWithPalette(0, "###TextColorInput", ModuleConfig.TextColor);
+            ImGui.Text($"{GetLoc("Color")}");
             
-            ImGui.SameLine();
+            ImGui.SameLine(0, 4f * GlobalFontScale);
             ImGui.TextDisabled("|");
 
-            ImGui.SameLine();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{GetLoc("EdgeColor")}:");
+            ImGui.SameLine(0, 4f * GlobalFontScale);
+            ModuleConfig.EdgeColor = ImGuiComponents.ColorPickerWithPalette(1, "###EdgeColorInput", ModuleConfig.EdgeColor);
             
             ImGui.SameLine();
-            ModuleConfig.EdgeColor =
-                ImGuiComponents.ColorPickerWithPalette(1, "###EdgeColorInput", ModuleConfig.EdgeColor);
-            
-            ImGui.SameLine();
+            ImGui.Text($"{GetLoc("EdgeColor")}");
+
+            ImGui.SameLine(0, 4f * GlobalFontScale);
             ImGui.TextDisabled("|");
             
-            ImGui.SameLine();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{GetLoc("BackgroundColor")}:");
+            ImGui.SameLine(0, 4f * GlobalFontScale);
+            ModuleConfig.BackgroundNodeColor = ImGuiComponents.ColorPickerWithPalette(2, "###BackgroundColorInput", ModuleConfig.BackgroundNodeColor);
             
             ImGui.SameLine();
-            ModuleConfig.BackgroundNodeColor =
-                ImGuiComponents.ColorPickerWithPalette(2, "###BackgroundColorInput", ModuleConfig.BackgroundNodeColor);
+            ImGui.Text($"{GetLoc("BackgroundColor")}");
             
-            ImGui.SameLine();
+            ImGui.SameLine(0, 4f * GlobalFontScale);
             ImGui.TextDisabled("|");
             
-            ImGui.SameLine();
-            if (ImGui.Button($"{GetLoc("Save")}"))
+            ImGui.SameLine(0, 4f * GlobalFontScale);
+            if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Save, $"{GetLoc("Save")}"))
             {
                 ModuleConfig.Save(this);
                 UpdateTextNodes();
             }
             
             ImGui.SameLine();
-            if (ImGui.Button($"{GetLoc("Reset")}"))
+            if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Redo, $"{GetLoc("Reset")}"))
             {
                 ModuleConfig.TextColor           = Vector4.One;
                 ModuleConfig.EdgeColor           = new(0, 0.372549f, 1, 1);
@@ -125,8 +131,8 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             }
         }
         
-        ImGui.Spacing();
-
+        ImGui.NewLine();
+        
         if (ImGui.Checkbox(GetLoc("OptimizedEnemyList-UseCustomGeneralInfo"), ref ModuleConfig.UseCustomizeText))
         {
             ModuleConfig.Save(this);
@@ -135,7 +141,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
         if (ModuleConfig.UseCustomizeText)
         {
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeightWithSpacing());
+            ImGui.SetNextItemWidth(300f * GlobalFontScale);
             ImGui.InputText("###CustomizeTextPatternInput", ref ModuleConfig.CustomizeTextPattern);
             if (ImGui.IsItemDeactivatedAfterEdit())
             {
@@ -144,29 +150,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             }
         }
         
-        ImGui.Spacing();
+        ImGui.NewLine();
         
         ImGui.AlignTextToFramePadding();
-        ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), GetLoc("FontSize"));
-        
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(100f * GlobalFontScale);
-        ImGui.InputByte("###FontSize", ref ModuleConfig.FontSize);
-        if (ImGui.IsItemDeactivatedAfterEdit())
-        {
-            ModuleConfig.Save(this);
-            UpdateTextNodes();
-        }
-        
-        ImGui.Spacing();
-        
-        ImGui.AlignTextToFramePadding();
-
-        if (ImGui.Checkbox(GetLoc("OptimizedEnemyList-ShowCastInfo"), ref ModuleConfig.ShowCastInfo))
-        {
-            ModuleConfig.Save(this);
-            UpdateTextNodes();
-        }
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), GetLoc("OptimizedEnemyList-CastInfoDisplayTargetBlacklist"));
         ImGuiOm.HelpMarker(GetLoc("OptimizedEnemyList-CastInfoDisplayTargetBlacklistHelp"));
         
