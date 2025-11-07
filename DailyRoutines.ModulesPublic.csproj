@@ -44,23 +44,23 @@
 
     <ItemGroup>
         <Reference Include="DailyRoutines">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\DailyRoutines.dll</HintPath>
+            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\DailyRoutines.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="TinyPinyin">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\TinyPinyin.dll</HintPath>
+            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\TinyPinyin.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="OmenTools">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\OmenTools.dll</HintPath>
+            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\OmenTools.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="EdgeTTS">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\EdgeTTS.dll</HintPath>
+            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\EdgeTTS.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="KamiToolKit">
-            <HintPath>$(BaseOutputPath)\$(Configuration)\KamiToolKit.dll</HintPath>
+            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\KamiToolKit.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
