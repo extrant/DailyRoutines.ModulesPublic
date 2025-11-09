@@ -46,7 +46,7 @@ public class DungeonLoggerUploader : DailyModuleBase
         DService.DutyState.DutyCompleted      += OnDutyCompleted;
 
         if (!string.IsNullOrEmpty(ModuleConfig.Username) && !string.IsNullOrEmpty(ModuleConfig.Password))
-            Task.Run(() => LoginAsync(true));
+            Task.Run(() => LoginAsync());
     }
 
     protected override void ConfigUI()
