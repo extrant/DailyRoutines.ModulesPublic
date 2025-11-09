@@ -169,11 +169,8 @@ public class DungeonLoggerUploader : DailyModuleBase
         catch (Exception ex)
         {
             IsLoggedIn = false;
-            if (showNotification)
-            {
-                NotificationError($"登录异常: {ex.Message}");
-                Error("登录失败", ex);
-            }
+            NotificationError($"登录 DungeonLogger 异常: {ex.Message}");
+            Error("登录 DungeonLogger 失败", ex);
         }
     }
 
