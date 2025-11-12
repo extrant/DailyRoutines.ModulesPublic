@@ -166,14 +166,17 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                 foreach (var (settingDetail, (buttonNode, imageNode)) in Nodes)
                 {
                     var value = GetCurrentSettingValue(settingDetail.Setting);
+                    
+                    if (imageNode != null)
+                    {
+                        imageNode.IconId = settingDetail.GetIcon();
 
-                    imageNode.IconId = settingDetail.GetIcon();
-
-                    if (settingDetail.Setting is DutyFinderSetting.LevelSync &&
-                        GetCurrentSettingValue(DutyFinderSetting.UnrestrictedParty) == 0)
-                        imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.25f);
-                    else
-                        imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.5f);
+                        if (settingDetail.Setting is DutyFinderSetting.LevelSync &&
+                            GetCurrentSettingValue(DutyFinderSetting.UnrestrictedParty) == 0)
+                            imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.25f);
+                        else
+                            imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.5f);
+                    }
 
                     buttonNode.Tooltip = LuminaWrapper.GetAddonText(settingDetail.GetTooltip());
                 }
