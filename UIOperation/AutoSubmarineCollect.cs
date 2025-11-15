@@ -404,7 +404,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
             return false;
 
         // 没找到入口
-        if (HousingManager.Instance()->OutdoorTerritory->StandingInPlot != workshopInfo.PlotIndex ||
+        if (HousingManager.Instance()->OutdoorTerritory->HouseUnit.PlotIndex != workshopInfo.PlotIndex ||
             DService.ObjectTable
                     .Where(x => x is { ObjectKind: ObjectKind.EventObj, DataID: 2002737 })
                     .OrderBy(x => Vector2.DistanceSquared(x.Position.ToVector2(), workshopInfo.Position.ToVector2())).FirstOrDefault() is not { } entryObject)

@@ -421,8 +421,8 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     utf8String->Dtor(true);
 
                     var inputComponent = (AtkComponentTextInput*)inputNode->Component;
-                    inputComponent->UnkText1.Clear();
-                    inputComponent->UnkText2.Clear();
+                    inputComponent->EvaluatedString.Clear();
+                    inputComponent->RawString.Clear();
                     inputComponent->UnkText01.Clear();
                     inputComponent->UnkText02.Clear();
                     inputComponent->AvailableLines.Clear();
@@ -459,19 +459,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         }
 
         if (ImGui.TabItemButton($"{FontAwesomeIcon.Cog.ToIconString()}###OpenQuickChatPanelSettings"))
-        {
-            if (WindowManager.Get<Main>() is { } main)
-            {
-                main.IsOpen ^= true;
-                if (main.IsOpen)
-                {
-                    Main.TabSearch.SearchString = GetLoc("QuickChatPanelTitle");
-                    return;
-                }
-
-                Main.TabSearch.SearchString = string.Empty;
-            }
-        }
+            ChatHelper.SendMessage($"/pdr search {GetLoc("QuickChatPanelTitle")}");
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
