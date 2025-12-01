@@ -155,7 +155,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 try
                 {
                     if (!AgentRecipeNote.Instance()->RecipeSearchOpen)
-                        LastRecipeID = RaphaelIPC.GetCurrentRecipeID();
+                        LastRecipeID = GetCurrentRecipeID();
                     
                     UpdateRecipeAddonButton();
                 }
@@ -183,7 +183,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                             return;
                         }
 
-                        var recipeID = RaphaelIPC.GetCurrentRecipeID();
+                        var recipeID = GetCurrentRecipeID();
                         if (recipeID == 0 || !LuminaGetter.TryGetRow(recipeID, out Recipe recipe)) return;
 
                         // 职业不对
@@ -242,7 +242,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                             return;
                         }
 
-                        var recipeID = RaphaelIPC.GetCurrentRecipeID();
+                        var recipeID = GetCurrentRecipeID();
                         if (recipeID == 0 || !LuminaGetter.TryGetRow(recipeID, out Recipe recipe)) return;
                         // 职业对了
                         if (recipe.CraftType.RowId == LocalPlayerState.ClassJob - 8) return;
@@ -279,7 +279,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                                 return;
                             }
 
-                            var recipeID = RaphaelIPC.GetCurrentRecipeID();
+                            var recipeID = GetCurrentRecipeID();
                             if (recipeID == 0                                            ||
                                 !LuminaGetter.TryGetRow(recipeID, out Recipe recipe)     ||
                                 recipe.ItemResult.Value is not { RowId: > 0 } resultItem ||
@@ -303,7 +303,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     {
                         IsVisible   = true,
                         ItemSpacing = 5,
-                        Size        = new(240, 24),
+                        Size        = new(220, 24),
                         Position    = new(145, -28),
                     };
 
@@ -321,6 +321,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                             IconId    = 62008 + i,
                             Size      = new(24),
                             IsVisible = true,
+                            ImageNodeFlags = ImageNodeFlags.AutoFit
                         };
 
                         iconNode.AddTimeline(new TimelineBuilder()
@@ -389,7 +390,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                                     return;
                                 }
 
-                                var recipeID = RaphaelIPC.GetCurrentRecipeID();
+                                var recipeID = GetCurrentRecipeID();
                                 if (recipeID == 0                                        ||
                                     !LuminaGetter.TryGetRow(recipeID, out Recipe recipe) ||
                                     !recipe.Ingredient[(int)index].IsValid)
@@ -553,7 +554,7 @@ public class OptimizedRecipeNote : DailyModuleBase
         
         ClearSearchButton.IsVisible = AgentRecipeNote.Instance()->RecipeSearchOpen && LastRecipeID != 0;
         
-        var recipeID = RaphaelIPC.GetCurrentRecipeID();
+        var recipeID = GetCurrentRecipeID();
         if (recipeID == 0 || !LuminaGetter.TryGetRow(recipeID, out Recipe recipe))
         {
             RecipeCaculationButton.IsVisible   = false;
@@ -584,6 +585,10 @@ public class OptimizedRecipeNote : DailyModuleBase
         var resNode2 = InfosOm.RecipeNote->GetNodeById(84);
         if (resNode2 != null)
             resNode2->SetXFloat(0 + appendOffset);
+        
+        var resNodeProgress = InfosOm.RecipeNote->GetNodeById(2);
+        if (resNodeProgress != null)
+            resNodeProgress->SetAlpha(0);
         
         for (var d = 0; d < GetShopInfoButtons.Count; d++)
         {
@@ -641,8 +646,8 @@ public class OptimizedRecipeNote : DailyModuleBase
                     node.OnClick = () =>
                     {
                         var agent = AgentRecipeNote.Instance();
-                        if (RaphaelIPC.GetCurrentRecipeID() == otherRecipeID) return;
-                        
+                        if (GetCurrentRecipeID() == otherRecipeID) return;
+
                         agent->OpenRecipeByRecipeId(otherRecipeID);
                     };
                 }
@@ -740,6 +745,14 @@ public class OptimizedRecipeNote : DailyModuleBase
                                            .Add(RawPayload.LinkTerminator)
                                            .Build();
         Chat(message);
+    }
+
+    private static unsafe uint GetCurrentRecipeID()
+    {
+        var data = UIState.Instance()->RecipeNote.RecipeList->SelectedRecipe;
+        if (data == null) return 0;
+
+        return data->RecipeId;
     }
 
     private class AddonActionsPreview(TaskHelper taskHelper, CaculationResult result) : NativeAddon
