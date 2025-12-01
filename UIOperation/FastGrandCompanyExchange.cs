@@ -19,6 +19,7 @@ using KamiToolKit.Addon;
 using KamiToolKit.Nodes;
 using KamiToolKit.Nodes.TabBar;
 using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -301,7 +302,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
             AttachNode(layoutNode);
         }
 
-        private void UpdateExchangeItem(SeString x)
+        private void UpdateExchangeItem(ReadOnlySeString x)
         {
             ModuleConfig.ExchangeItemName = x.ExtractText();
 

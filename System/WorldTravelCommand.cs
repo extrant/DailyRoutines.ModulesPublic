@@ -635,7 +635,7 @@ public class WorldTravelCommand : DailyModuleBase
                 {
                     var pluginHelpNode = new TextNode
                     {
-                        SeString         = message,
+                        SeString         = message.Encode(),
                         FontSize         = 14,
                         IsVisible        = true,
                         Size             = new(150f, 25f),
@@ -739,7 +739,7 @@ public class WorldTravelCommand : DailyModuleBase
                 }
                     
                     
-                node.Tooltip = builder.Build();
+                node.Tooltip = builder.Build().Encode();
                 var baseColor = time switch
                 {
                     0    => KnownColor.DarkGreen.ToVector4().ToVector3(),
@@ -824,7 +824,7 @@ public class WorldTravelCommand : DailyModuleBase
                 {
                     Size      = new(150f, 40f),
                     IsVisible = true,
-                    SeString  = worldNameBuilder.Build(),
+                    SeString  = worldNameBuilder.Build().Encode(),
                     OnClick = () =>
                     {
                         Addon.Close();

@@ -63,12 +63,12 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
                         ShowLimitText = true,
                         OnInputReceived = x =>
                         {
-                            SearchBarInput = x.TextValue;
+                            SearchBarInput = x.ExtractText();
                             ConductSearch(SearchBarInput);
                         },
                         OnInputComplete = x =>
                         {
-                            SearchBarInput = x.TextValue;
+                            SearchBarInput = x.ExtractText();
                             ConductSearch(SearchBarInput);
                         },
                     };

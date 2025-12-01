@@ -122,7 +122,8 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                         },
                         Tooltip = new SeStringBuilder().AddIcon(BitmapFontIcon.ExclamationRectangle)
                                                        .Append($" {GetLoc("OptimizedFreeCompanyChest-FastMoveHelp")}")
-                                                       .Build(),
+                                                       .Build()
+                                                       .Encode(),
                     };
                     Service.AddonController.AttachNode(FastMoveNode, FreeCompanyChest->GetNodeById(9));
                 }
@@ -158,7 +159,8 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                                                                            .AddRange([NewLinePayload.Payload, NewLinePayload.Payload])
                                                                            .Append(
                                                                                $"{GetLoc("Current")}: {DefaultPages.GetValueOrDefault(ModuleConfig.DefaultPage, LuminaWrapper.GetAddonText(7))}")
-                                                                           .Build();
+                                                                           .Build()
+                                                                           .Encode();
                             DefaultPageNode.HideTooltip();
                             DefaultPageNode.ShowTooltip();
                         },
@@ -167,7 +169,8 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                                                        .AddRange([NewLinePayload.Payload, NewLinePayload.Payload])
                                                        .Append(
                                                            $"{GetLoc("Current")}: {DefaultPages.GetValueOrDefault(ModuleConfig.DefaultPage, LuminaWrapper.GetAddonText(7))}")
-                                                       .Build(),
+                                                       .Build()
+                                                       .Encode(),
                     };
                     Service.AddonController.AttachNode(DefaultPageNode, FreeCompanyChest->GetNodeById(9));
                 }

@@ -77,7 +77,7 @@ public class AutoMoveGearsNotInSet : DailyModuleBase
                         Size      = new(48),
                         Position  = new(12, 500),
                         IsVisible = true,
-                        SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.SwordSheathed).Build(),
+                        SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.SwordSheathed).Build().Encode(),
                         Tooltip   = GetLoc("AutoMoveGearsNotInSet-Button"),
                         OnClick   = () => ChatHelper.SendMessage($"/pdr {Command}"),
                         IsEnabled = true,

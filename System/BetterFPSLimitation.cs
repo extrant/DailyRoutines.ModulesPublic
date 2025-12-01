@@ -206,7 +206,7 @@ public class BetterFPSLimitation : DailyModuleBase
             {
                 var text       = LuminaGetter.GetRow<Addon>(4002).GetValueOrDefault().Text.ToDalamudString();
                 text.Payloads[0] = new TextPayload($"{Framework.Instance()->FrameRate:F0}");
-                FPSDisplayNumberNode.SeString = text;
+                FPSDisplayNumberNode.SeString = text.Encode();
             }
 
             if (IsEnabledNode != null)

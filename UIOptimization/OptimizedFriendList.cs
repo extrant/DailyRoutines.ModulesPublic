@@ -113,12 +113,12 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                         ShowLimitText = true,
                         OnInputReceived = x =>
                         {
-                            SearchString = x.TextValue;
+                            SearchString = x.ExtractText();
                             ApplyFilters(SearchString);
                         },
                         OnInputComplete = x =>
                         {
-                            SearchString = x.TextValue;
+                            SearchString = x.ExtractText();
                             ApplyFilters(SearchString);
                         },
                     };
@@ -510,13 +510,18 @@ public unsafe class OptimizedFriendList : DailyModuleBase
 
             NicknameInput = ModuleConfig.PlayerInfos.GetValueOrDefault(ContentID, new()).Nickname;
             RemarkInput   = ModuleConfig.PlayerInfos.GetValueOrDefault(ContentID, new()).Remark;
-            
+
             PlayerNameNode = new()
             {
-                IsVisible     = true,
-                Position      = new(10, 36),
-                Size          = new(100, 48),
-                SeString      = new SeStringBuilder().Append(Name).AddIcon(BitmapFontIcon.CrossWorld).Append(WorldName).Build(),
+                IsVisible = true,
+                Position  = new(10, 36),
+                Size      = new(100, 48),
+                SeString = new SeStringBuilder()
+                           .Append(Name)
+                           .AddIcon(BitmapFontIcon.CrossWorld)
+                           .Append(WorldName)
+                           .Build()
+                           .Encode(),
                 FontSize      = 24,
                 AlignmentType = AlignmentType.Left,
             };
@@ -801,7 +806,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                     IsVisible = true,
                     IsChecked = ModuleConfig.IgnoredGroup[i],
                     IsEnabled = true,
-                    SeString  = groupFormatText,
+                    SeString  = groupFormatText.Encode(),
                     OnClick = newState =>
                     {
                         ModuleConfig.IgnoredGroup[index] = newState;

@@ -388,7 +388,7 @@ public partial class OccultCrescentHelper
                             Position  = new(-1f, 32f),
                             Size      = new(48, 24),
                             IsVisible = true,
-                            SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.ElementalLevel).Build(),
+                            SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.ElementalLevel).Build().Encode(),
                             Tooltip   = GetLoc("OccultCrescentHelper-Command-PBuff-Help"),
                             OnClick   = () => ChatHelper.SendMessage("/pdr pbuff")
                         };
@@ -426,7 +426,7 @@ public partial class OccultCrescentHelper
                             Position  = new(41, 94),
                             Size      = new(40f, 32f),
                             IsVisible = true,
-                            SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.ExclamationRectangle).Build(),
+                            SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.ExclamationRectangle).Build().Encode(),
                             Tooltip   = MainModule.Info.Title,
                             OnClick   = () => MainModule.Overlay.IsOpen ^= true
                         };
@@ -808,7 +808,7 @@ public partial class OccultCrescentHelper
 
                     var textNode = new TextNode
                     {
-                        SeString      = new SeStringBuilder().AddUiGlow(32).Append($"{data.Unknown0}").AddUiGlowOff().Build(),
+                        SeString      = new SeStringBuilder().AddUiGlow(32).Append($"{data.Unknown0}").AddUiGlowOff().Build().Encode(),
                         FontSize      = 12,
                         IsVisible     = true,
                         Size          = new(53f, 24),
@@ -833,7 +833,12 @@ public partial class OccultCrescentHelper
                     var maxLevelText = presetJob.MaxLevel == 0 ? "∞" : $"{presetJob.MaxLevel}";
                     var currentLevelNode = new TextNode
                     {
-                        SeString      = new SeStringBuilder().AddUiGlow(34).Append($"{presetJob.CurrentLevel} / {maxLevelText}").AddUiGlowOff().Build(),
+                        SeString = new SeStringBuilder()
+                                   .AddUiGlow(34)
+                                   .Append($"{presetJob.CurrentLevel} / {maxLevelText}")
+                                   .AddUiGlowOff()
+                                   .Build()
+                                   .Encode(),
                         FontSize      = 12,
                         IsVisible     = presetJob.CurrentLevel > 0 && presetJob.CurrentLevel != presetJob.MaxLevel,
                         Size          = new(53f, 24),
@@ -1196,9 +1201,11 @@ public partial class OccultCrescentHelper
                         Position  = new(10, 10),
                         Size      = new(Width, 28),
                         SeString  = GetLoc("OccultCrescentHelper-OthersManager-DragRealActionIcon"),
-                        Tooltip = new SeStringBuilder().AddIcon(BitmapFontIcon.ExclamationRectangle)
-                                                       .AddText($" {GetLoc("OccultCrescentHelper-OthersManager-DragRealActionIcon-Help")}")
-                                                       .Build(),
+                        Tooltip = new SeStringBuilder()
+                                  .AddIcon(BitmapFontIcon.ExclamationRectangle)
+                                  .AddText($" {GetLoc("OccultCrescentHelper-OthersManager-DragRealActionIcon-Help")}")
+                                  .Build()
+                                  .Encode(),
                         IsChecked = ModuleConfig.AddonIsDragRealAction,
                         IsEnabled = true,
                         OnClick = value =>

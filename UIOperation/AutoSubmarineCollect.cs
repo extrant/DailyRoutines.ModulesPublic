@@ -721,7 +721,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
                 Position         = new(width - 20, 4),
                 TextOutlineColor = ColorHelper.GetColor((uint)(itemCount > 20 ? 28 : 17)),
                 FontSize         = 16,
-                SeString         = textBuilder.Build() 
+                SeString         = textBuilder.Build().Encode()
             };
             Service.AddonController.AttachNode(CountNode, this);
         }
@@ -735,7 +735,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
                            .AddText(" ");
             textBuilder.AddText($"{itemCount}");
             
-            CountNode.SeString         = textBuilder.Build();
+            CountNode.SeString         = textBuilder.Build().Encode();
             CountNode.TextOutlineColor = ColorHelper.GetColor((uint)(itemCount > 20 ? 28 : 17));
         }
 

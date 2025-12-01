@@ -802,6 +802,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                            .AddIcon(Result.GetJob().ToBitmapFontIcon())
                            .AddText(Result.GetJob().Name.ExtractText())
                            .Build()
+                           .Encode()
             };
             jobTextNode.Size =  jobTextNode.GetTextDrawSize($"{jobTextNode.SeString}123");
             statsRow.Width   += jobTextNode.Width;
@@ -1068,9 +1069,10 @@ public class OptimizedRecipeNote : DailyModuleBase
 
             var itemIconNode = new IconImageNode
             {
-                IsVisible = true,
-                Size      = new(36),
-                IconId    = LuminaWrapper.GetItemIconID(ShopInfo.ItemID)
+                IsVisible      = true,
+                Size           = new(48),
+                IconId         = LuminaWrapper.GetItemIconID(ShopInfo.ItemID),
+                ImageNodeFlags = ImageNodeFlags.AutoFit
             };
             itemInfoRow.AddNode(itemIconNode);
 
@@ -1180,7 +1182,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     IsVisible   = true,
                     Position    = new(nameColumnWidth + locationColumnWidth + 10f, 4),
                     Size        = new(100, 28),
-                    ItemSpacing = 5
+                    ItemSpacing = 10
                 };
 
                 foreach (var costInfo in npcInfo.CostInfos)
@@ -1190,10 +1192,9 @@ public class OptimizedRecipeNote : DailyModuleBase
                         IsVisible = true,
                         Size      = new(28),
                         IconId    = LuminaWrapper.GetItemIconID(costInfo.ItemID),
-                        Position  = new(0, -10),
+                        Position  = new(-10, -4),
                         Tooltip = $"{LuminaWrapper.GetItemName(costInfo.ItemID)}"
                     };
-                    costIconNode.SetEventFlags = true;
                     costInfoComponent.AddNode(costIconNode);
 
                     var costNode = new TextNode
