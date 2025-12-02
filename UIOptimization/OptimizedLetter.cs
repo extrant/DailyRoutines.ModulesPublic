@@ -235,7 +235,7 @@ public class OptimizedLetter : DailyModuleBase
                 SeString  = $"{GetLoc("OptimizedLetter-DeleteMails")} ({GetLoc("OptimizedLetter-DeleteMails-ExceptPlayers")})",
                 OnClick = () =>
                 {
-                    if (!TryFindLetters(x => x.SenderContentID < 100000000000, out var letters)) return;
+                    if (!TryFindLetters(x => x.SenderContentId < 100000000000, out var letters)) return;
                     foreach (var (index, _) in letters)
                     {
                         SendEvent(AgentId.LetterList, 0, 0, index, 0, 1);
@@ -298,11 +298,11 @@ public class OptimizedLetter : DailyModuleBase
             LetterList->Close(true);
         }
 
-        private static unsafe bool TryFindLetters(Predicate<InfoProxyLetterTemp.Letter> predicate, out List<(int Index, InfoProxyLetterTemp.Letter)> letters)
+        private static unsafe bool TryFindLetters(Predicate<InfoProxyLetter.Letter> predicate, out List<(int Index, InfoProxyLetter.Letter)> letters)
         {
             letters = [];
             
-            var info = InfoProxyLetterTemp.Instance();
+            var info = InfoProxyLetter.Instance();
             if (info == null) return false;
 
             for (var index = 0; index < info->Letters.Length; index++)
