@@ -22,7 +22,7 @@ public unsafe class QuickSynthesisMore : DailyModuleBase
     private static readonly MemoryPatch SimpleCraftAmountJudgePatch =
         new(SimpleCraftAmountJudgeSig.Get(), [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]);
 
-    private static readonly CompSig                                       SimpleCraftGetAmountUpperLimitSig = new("4C 8B DC 48 83 EC ?? 48 8B 81");
+    private static readonly CompSig                                       SimpleCraftGetAmountUpperLimitSig = new("4C 8B DC 48 83 EC ?? 48 8B 81 ?? ?? ?? ?? 44 0F B6 CA");
     private delegate        int                                           SimpleCraftGetAmountUpperLimitDelegate(nint agent, bool eventCase);
     private static          Hook<SimpleCraftGetAmountUpperLimitDelegate>? SimpleCraftGetAmountUpperLimitHook;
 
