@@ -6,9 +6,10 @@ using System.Runtime.InteropServices;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using OmenTools.Helpers;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -428,9 +429,9 @@ public partial class OccultCrescentHelper
                 if (treasure.ObjectType != SpecialObjectType.Treasure) continue;
                 if (treasure.GetGameObject() is not { } gameObject) continue;
                 
-                var treasureObj = (TreasureObjectTemp*)gameObject.Address;
-                if (treasureObj->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened) ||
-                    treasureObj->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.FadedOut))
+                var treasureObj = (Treasure*)gameObject.Address;
+                if (treasureObj->Flags.HasFlag(Treasure.TreasureFlags.Opened) ||
+                    treasureObj->Flags.HasFlag(Treasure.TreasureFlags.FadedOut))
                     continue;
                 
                 if (LocalPlayerState.DistanceTo2D(treasure.Position.ToVector2()) > ModuleConfig.DistanceToAutoOpenTreasure) continue;
@@ -457,9 +458,9 @@ public partial class OccultCrescentHelper
 
                     if (treasure.ObjectType == SpecialObjectType.Treasure)
                     {
-                        var treasureObj = (TreasureObjectTemp*)obj.Address;
-                        if (treasureObj->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened) ||
-                            treasureObj->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.FadedOut))
+                        var treasureObj = (Treasure*)obj.Address;
+                        if (treasureObj->Flags.HasFlag(Treasure.TreasureFlags.Opened) ||
+                            treasureObj->Flags.HasFlag(Treasure.TreasureFlags.FadedOut))
                             continue;
                     }
 
@@ -761,13 +762,5 @@ public partial class OccultCrescentHelper
                 }
             }
         }
-    }
-
-    // TODO: 等待国际服 FFCS 合并
-    [StructLayout(LayoutKind.Explicit)]
-    private struct TreasureObjectTemp
-    {
-        [FieldOffset(0x1FC)]
-        public FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags Flags;
     }
 }
