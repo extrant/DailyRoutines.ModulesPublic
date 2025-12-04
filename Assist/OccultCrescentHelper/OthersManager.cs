@@ -784,6 +784,7 @@ public partial class OccultCrescentHelper
                         }
 
                         WindowNode.CollisionNode.Size = WindowNode.CollisionNode.Size with { X = 750 };
+                        WindowNode.Size               = WindowNode.Size with { X = 750 };
                     });
 
                     iconButton.AddEvent(AtkEventType.ButtonPress, () =>
@@ -799,6 +800,7 @@ public partial class OccultCrescentHelper
                         }
 
                         WindowNode.CollisionNode.Size = WindowNode.CollisionNode.Size with { X = 750 };
+                        WindowNode.Size               = WindowNode.Size with { X = 750 };
                     });
 
                     if (presetJob.CurrentLevel == 0)
@@ -1135,6 +1137,7 @@ public partial class OccultCrescentHelper
                             SupportJobChangeAddon.PressedButtonOnce = false;
 
                             SupportJobChangeAddon.WindowNode.CollisionNode.Size = SupportJobChangeAddon.WindowNode.CollisionNode.Size with { X = 500 };
+                            SupportJobChangeAddon.WindowNode.Size = SupportJobChangeAddon.WindowNode.Size with { X = 500 };
                         }
                     };
 
