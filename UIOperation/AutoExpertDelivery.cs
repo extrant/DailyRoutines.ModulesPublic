@@ -49,7 +49,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             Size                  = new(300f, 250f),
             Position              = new(800f, 350f),
             NativeController      = Service.AddonController,
-            RememberClosePosition = true,
+            RememberClosePosition = true
         };
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanySupplyList", OnAddonSupplyList);
@@ -323,9 +323,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             
             ControlTabLayout.AddNode(startNode, stopNode, exchangeShopNode, exchangeShopAndExchangeNode);
             AttachNode(ControlTabLayout);
-            
+
             SettingTabLayout = new()
             {
+                IsVisible   = false,
                 Position    = tabContentPosition + new Vector2(5, 3),
                 FitContents = true,
             };
