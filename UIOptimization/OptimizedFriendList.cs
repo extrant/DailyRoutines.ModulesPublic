@@ -782,7 +782,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
                 SeString  = GetLoc("OptimizedFriendList-SearchIgnoreGroup"),
                 FontSize  = 16,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
-                Position  = new(10f, searchTypeLayoutNode.Position.Y + searchTypeLayoutNode.Height + 28f)
+                Position  = new(10f, searchTypeLayoutNode.Position.Y + searchTypeLayoutNode.Height + 12f)
             };
             AttachNode(searchGroupIgnoreTitleNode);
 
