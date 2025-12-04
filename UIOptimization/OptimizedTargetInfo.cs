@@ -792,7 +792,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     textNode.TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
                     textNode.TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor;
 
-                    textNode.SeString = string.Format(ModuleConfig.DisplayFormatString,
+                    textNode.String = string.Format(ModuleConfig.DisplayFormatString,
                                                       FormatNumber(target.MaxHp),
                                                       FormatNumber(target.CurrentHp));
                 }
@@ -865,7 +865,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     textNode.TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
                     textNode.TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor;
 
-                    textNode.SeString = $"{leftCastTime:F2}";
+                    textNode.String = $"{leftCastTime:F2}";
                 }
 
                 break;

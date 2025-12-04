@@ -234,7 +234,7 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                     LastTotalPrice = TryGetTotalPrice(out var totalPrice) ? totalPrice : 0;
 
                     ComponentNode.IsVisible         = LastTotalPrice > 0;
-                    GilItemsValueCountNode.SeString = $"{FormatNumber(LastTotalPrice)}\ue049";
+                    GilItemsValueCountNode.String = $"{FormatNumber(LastTotalPrice)}\ue049";
                 }
 
                 break;

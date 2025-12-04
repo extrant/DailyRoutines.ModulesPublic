@@ -194,7 +194,7 @@ public unsafe class AutoRefreshPartyFinder : DailyModuleBase
     {
         if (LeftTimeNode == null) return;
 
-        LeftTimeNode.SeString = $"({leftTime})  ";
+        LeftTimeNode.String = $"({leftTime})  ";
     }
 
     protected override void Uninit()

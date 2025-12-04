@@ -322,17 +322,17 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             {
                 var castTimeLeft = MathF.Max(bc.TotalCastTime - bc.CurrentCastTime, 0f);
 
-                textNode.SeString        = $"{GetCastInfoText(bc.CastActionType, bc.CastActionID)}: " + (castTimeLeft != 0 ? $"{castTimeLeft:F1}" : "\ue07f\ue07b");
+                textNode.String          = $"{GetCastInfoText(bc.CastActionType, bc.CastActionID)}: " + (castTimeLeft != 0 ? $"{castTimeLeft:F1}" : "\ue07f\ue07b");
                 backgroundNode.IsVisible = true;
             }            
             else if (!bc.IsTargetable && bc.CurrentHp == bc.MaxHp)
             {
-                textNode.SeString        = string.Empty;
+                textNode.String          = string.Empty;
                 backgroundNode.IsVisible = false;
             }
             else
             {
-                textNode.SeString        = GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity);
+                textNode.String        = GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity);
                 backgroundNode.IsVisible = true;
             }
             

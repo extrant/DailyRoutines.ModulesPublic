@@ -79,12 +79,12 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
                 {
                     if (TaskHelper.IsBusy)
                     {
-                        ButtonNode.SeString = GetLoc("Stop");
+                        ButtonNode.String = GetLoc("Stop");
                         ButtonNode.OnClick  = () => TaskHelper.Abort();
                     }
                     else
                     {
-                        ButtonNode.SeString = $"{Info.Title}";
+                        ButtonNode.String = $"{Info.Title}";
                         ButtonNode.OnClick  = StartDesynthesizeAll;
                     }
                 }

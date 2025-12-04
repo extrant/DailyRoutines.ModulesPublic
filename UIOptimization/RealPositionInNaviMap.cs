@@ -95,7 +95,7 @@ public class RealPositionInNaviMap : DailyModuleBase
                 }
 
                 if (LocalPlayerState.IsMoving && DService.ObjectTable.LocalPlayer is { } localPlayer)
-                    PositionButton.SeString = $"X:{localPlayer.Position.X:F1} Y:{localPlayer.Position.Y:F1} Z:{localPlayer.Position.Z:F1}";
+                    PositionButton.String = $"X:{localPlayer.Position.X:F1} Y:{localPlayer.Position.Y:F1} Z:{localPlayer.Position.Z:F1}";
                 
                 break;
         }
