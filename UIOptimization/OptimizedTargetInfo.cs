@@ -368,26 +368,28 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
             case AddonEvent.PostDraw:
                 if (CastBarEnemy == null) return;
 
-                for (var i = 10; i > 0; i--)
-                {
-                    var node = (AtkComponentNode*)CastBarEnemy->UldManager.NodeList[i];
-                    if (node == null || !node->IsVisible()) continue;
+                var addon = (AddonCastBarEnemy*)CastBarEnemy;
 
-                    var castProgressOffset = 3 + (5 * (10 - i));
-                    var castProgress       = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.CastBarEnemy)->IntArray[castProgressOffset];
-                    if (castProgress == -1) continue;
+                var maxCount     = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.CastBarEnemy)->IntArray[1];
+                var currentCount = 0;
+                foreach (var nodeInfo in addon->CastBarNodes)
+                {
+                    var componentNode = (AtkComponentNode*)nodeInfo.CastBarNode;
+                    if (!componentNode->IsVisible() || !nodeInfo.ProgressBarNode->IsVisible()) continue;
                     
-                    var gameObjectIDOffset = 2 + (5 * (10 - i));
-                    var gameObjectID       = (ulong)AtkStage.Instance()->GetNumberArrayData(NumberArrayType.CastBarEnemy)->IntArray[gameObjectIDOffset];
-                    if (gameObjectID == 0 || DService.ObjectTable.SearchByID(gameObjectID) is not IBattleChara target) continue;
-                    
+                    if (DService.ObjectTable.SearchByID(nodeInfo.ObjectId.Id) is not IBattleChara { IsCasting: true } target) 
+                        continue;
+
+                    currentCount++;
+
+                    var textNode     = componentNode->Component->GetTextNodeById(4);
                     var leftCastTime = target.TotalCastTime - target.CurrentCastTime;
-                    
-                    var textNode = node->Component->GetTextNodeById(4);
-                    if (textNode == null) continue;
                     
                     textNode->SetText($"{leftCastTime:F2}");
                     textNode->FontSize = 16;
+                    
+                    if (currentCount >= maxCount)
+                        break;
                 }
                 
                 break;
