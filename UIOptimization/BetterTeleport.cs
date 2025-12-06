@@ -169,7 +169,7 @@ public unsafe class BetterTeleport : DailyModuleBase
             using var child     = ImRaii.Child("###SearchResultChild", childSize, false, ImGuiWindowFlags.NoBackground);
             if (!child) return;
             
-            foreach (var aetheryte in SearchResult)
+            foreach (var aetheryte in SearchResult.ToList())
                 DrawAetheryte("search", aetheryte);
         }
         else
@@ -183,7 +183,7 @@ public unsafe class BetterTeleport : DailyModuleBase
                     using var child     = ImRaii.Child("###FavoriteChild", childSize, false, ImGuiWindowFlags.NoBackground);
                     if (child)
                     {
-                        foreach (var aetheryte in Favorites)
+                        foreach (var aetheryte in Favorites.ToList())
                             DrawAetheryte("favorite", aetheryte);
                     }
                 }
@@ -192,7 +192,7 @@ public unsafe class BetterTeleport : DailyModuleBase
             var agentLobby = AgentLobby.Instance();
             if (agentLobby == null) return;
             
-            foreach (var (name, aetherytes) in Records)
+            foreach (var (name, aetherytes) in Records.ToList())
             {
                 using var tabItem = ImRaii.TabItem($"{name}##TabItem");
                 if (!tabItem) continue;
@@ -205,7 +205,7 @@ public unsafe class BetterTeleport : DailyModuleBase
                 var lastGroupID = -1;
 
                 var source = name == LuminaWrapper.GetAddonText(832) ? HouseRecords.Concat(aetherytes) : aetherytes;
-                foreach (var aetheryte in source)
+                foreach (var aetheryte in source.ToList())
                 {
                     if (!aetheryte.IsUnlocked() && aetheryte.Group != 255) continue;
                     if (aetheryte.Group                   == 254 &&
@@ -560,7 +560,6 @@ public unsafe class BetterTeleport : DailyModuleBase
         // 当前在有小水晶的城区
         if (DService.ClientState.TerritoryType == aetheryte.ZoneID && aetheryte.Group != 0)
         {
-            Debug("测试城区");
             // 大水晶才要偏移一下
             var offset = new Vector3();
             if (aetheryte.IsAetheryte)
