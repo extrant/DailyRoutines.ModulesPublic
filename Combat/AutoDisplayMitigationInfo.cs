@@ -60,7 +60,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Task.Run(async () => await RemoteRepoManager.FetchMitigationStatuses());
 
         // draw on party list
-        DService.UIBuilder.Draw += Draw;
+        WindowManager.Draw += Draw;
 
         // refresh mitigation status
         FrameworkManager.Reg(OnFrameworkUpdateInterval, throttleMS: 500);
@@ -77,7 +77,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         OnZoneChangd(0);
 
         // draw on party list
-        DService.UIBuilder.Draw -= Draw;
+        WindowManager.Draw -= Draw;
 
         // status bar
         StatusBarManager.Disable();

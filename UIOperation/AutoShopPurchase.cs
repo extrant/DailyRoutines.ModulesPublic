@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Infos;
+using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -234,10 +235,10 @@ public class AutoShopPurchase : DailyModuleBase
         private static int SetNumberInput;
 
         public ShopPresetDisplayTable() => 
-            DService.UIBuilder.Draw += WindowRenderAddNewPreset;
+            WindowManager.Draw += WindowRenderAddNewPreset;
 
         public void Dispose() => 
-            DService.UIBuilder.Draw -= WindowRenderAddNewPreset;
+            WindowManager.Draw -= WindowRenderAddNewPreset;
 
         public void Draw()
         {

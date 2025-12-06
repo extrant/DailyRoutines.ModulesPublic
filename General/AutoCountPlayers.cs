@@ -61,7 +61,7 @@ public unsafe class AutoCountPlayers : DailyModuleBase
         Entry.Shown = true;
         Entry.OnClick += _ => Overlay.IsOpen ^= true;
 
-        DService.UIBuilder.Draw += OnDraw;
+        WindowManager.Draw += OnDraw;
 
         PlayersManager.ReceivePlayersAround += OnUpdate;
         PlayersManager.ReceivePlayersTargetingMe += OnPlayersTargetingMeUpdate;
@@ -353,7 +353,7 @@ public unsafe class AutoCountPlayers : DailyModuleBase
     {
         FrameworkManager.Unreg(OnFrameworkUpdate);
         
-        DService.UIBuilder.Draw -= OnDraw;
+        WindowManager.Draw -= OnDraw;
         PlayersManager.ReceivePlayersAround -= OnUpdate;
         PlayersManager.ReceivePlayersTargetingMe -= OnPlayersTargetingMeUpdate;
         

@@ -79,7 +79,7 @@ public unsafe class RightClickToMoveMode : DailyModuleBase
             GameWindowHandle =   Framework.Instance()->GameWindow->WindowHandle;
             Hook             ??= new(GameWindowHandle, HandleClickResult);
 
-            DService.UIBuilder.Draw += OnPosDraw;
+            WindowManager.Draw += OnPosDraw;
         }
         catch
         {
@@ -292,7 +292,7 @@ public unsafe class RightClickToMoveMode : DailyModuleBase
         if (!IsModuleActive) return;
 
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.UIBuilder.Draw               -= OnPosDraw;
+        WindowManager.Draw               -= OnPosDraw;
 
         Hook?.Dispose();
 
