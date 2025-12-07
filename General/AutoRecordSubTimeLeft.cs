@@ -66,7 +66,9 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         DService.ClientState.Logout += OnLogout;
 
         FrameworkManager.Reg(OnUpdate, throttleMS: 5_000);
-
+        
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "CharaSelect",        OnAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "CharaSelect",        OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_CharaSelectRemain", OnAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_CharaSelectRemain", OnAddon);
     }
@@ -132,7 +134,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         });
     }
 
-    private void OnUpdate(IFramework _) =>
+    private static void OnUpdate(IFramework _) =>
         UpdateEntryAndTimeInfo();
 
     private void OnLogout(int code, int type) =>
@@ -140,8 +142,12 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
     private unsafe void OnAddon(AddonEvent type, AddonArgs args)
     {
-        if (CharaSelectRemain == null) return;
-        if (type == AddonEvent.PostDraw && !Throttler.Throttle("AutoRecordSubTimeLeft-OnAddonDraw")) return;
+        if (CharaSelect == null) return;
+        if (type == AddonEvent.PostDraw)
+        {
+            if (!Throttler.Throttle("AutoRecordSubTimeLeft-OnAddonDraw"))
+                return;
+        }
 
         var agent = AgentLobby.Instance();
         if (agent == null) return;
@@ -159,12 +165,15 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                   timeInfo.PointTime == 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(timeInfo.PointTime));
         ModuleConfig.Save(this);
 
-        var textNode = CharaSelectRemain->GetTextNodeById(7);
-        if (textNode != null)
+        if (CharaSelectRemain != null)
         {
-            textNode->SetPositionFloat(-20, 40);
-            textNode->SetText($"剩余天数: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.MonthTime))}\n" +
-                              $"剩余时长: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.PointTime))}");
+            var textNode = CharaSelectRemain->GetTextNodeById(7);
+            if (textNode != null)
+            {
+                textNode->SetPositionFloat(-20, 40);
+                textNode->SetText($"剩余天数: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.MonthTime))}\n" +
+                                  $"剩余时长: {FormatTimeSpan(TimeSpan.FromSeconds(timeInfo.PointTime))}");
+            }
         }
 
         UpdateEntryAndTimeInfo(contentID);
