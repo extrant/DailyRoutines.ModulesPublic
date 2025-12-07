@@ -744,7 +744,7 @@ public unsafe class BetterTeleport : DailyModuleBase
         Overlay.IsOpen = false;
         TaskHelper.RemoveAllTasks(1);
 
-        if (zone == 0 || GameMain.Instance()->CurrentContentFinderConditionId != 0) return;
+        if (zone == 0 || GameState.ContentFinderCondition != 0 || !DService.ClientState.IsLoggedIn) return;
 
         TaskHelper.Enqueue(() =>
         {
