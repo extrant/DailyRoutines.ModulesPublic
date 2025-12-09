@@ -296,7 +296,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                 if (bc.IsCastInterruptible)
                     castBarNode.AddColor = KnownColor.Red.ToVector4().ToVector3();
                 else
-                    castBarNode.AddColor = KnownColor.Yellow.ToVector4().ToVector3();
+                    castBarNode.AddColor = KnownColor.Yellow.ToVector4().ToVector3() / 255f;
             }
             else
             {
