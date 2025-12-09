@@ -24,11 +24,11 @@ public class AutoLeaveDuty : DailyModuleBase
     {
         ModuleConfig = LoadConfig<Config>() ?? new();
         TaskHelper ??= new();
+        
+        LogMessageManager.Register(OnPreReceiveLogmessage);
 
         DService.DutyState.DutyCompleted      += OnDutyComplete;
         DService.ClientState.TerritoryChanged += OnZoneChanged;
-
-        LogMessageManager.Register(OnPreReceiveLogmessage);
     }
 
     protected override void ConfigUI()
@@ -93,10 +93,10 @@ public class AutoLeaveDuty : DailyModuleBase
 
     protected override void Uninit()
     {
-        LogMessageManager.Unregister(OnPreReceiveLogmessage);
-        
         DService.DutyState.DutyCompleted      -= OnDutyComplete;
         DService.ClientState.TerritoryChanged -= OnZoneChanged;
+        
+        LogMessageManager.Unregister(OnPreReceiveLogmessage);
     }
 
     private class Config : ModuleConfiguration
