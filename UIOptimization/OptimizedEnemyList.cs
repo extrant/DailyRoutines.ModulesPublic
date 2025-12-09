@@ -332,16 +332,19 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             }
             else
             {
-                textNode.String        = GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity);
+                textNode.String          = GetGeneralInfoText((float)bc.CurrentHp / bc.MaxHp * 100, enmity);
                 backgroundNode.IsVisible = true;
             }
             
             textNode.Position = new(Math.Max(95, *castWidth + 28) + ModuleConfig.TextOffset.X, 4 + ModuleConfig.TextOffset.Y);
 
-            var textSize = textNode.GetTextDrawSize(textNode.SeString);
-            
-            backgroundNode.Position = new(Math.Max(68, *castWidth + 1) + (isCasting ? 12.5f : 0) + ModuleConfig.TextOffset.X, 6 + ModuleConfig.TextOffset.Y);
-            backgroundNode.Size     = new(textSize.X                   + 47                      + (isCasting ? -18 : 0), textSize.Y * 0.7f);
+            if (!string.IsNullOrWhiteSpace(textNode.String))
+            {
+                var textSize = textNode.GetTextDrawSize(textNode.SeString);
+
+                backgroundNode.Position = new(Math.Max(68, *castWidth + 1) + (isCasting ? 12.5f : 0) + ModuleConfig.TextOffset.X, 6 + ModuleConfig.TextOffset.Y);
+                backgroundNode.Size     = new(textSize.X                   + 47                      + (isCasting ? -18 : 0), textSize.Y * 0.7f);
+            }
         }
     }
 
