@@ -9,7 +9,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Nodes;
-using KamiToolKit.Extensions;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic;
@@ -24,7 +23,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
     };
 
     private delegate void SetFocusTargetByObjectIDDelegate(TargetSystem* targetSystem, GameObjectId objectID);
-    private static SetFocusTargetByObjectIDDelegate? SetFocusTargetByObjectID =
+    private static readonly SetFocusTargetByObjectIDDelegate? SetFocusTargetByObjectID =
         new CompSig("E8 ?? ?? ?? ?? BA 0C 00 00 00 48 8D 0D").GetDelegate<SetFocusTargetByObjectIDDelegate>();
     
     private static Config ModuleConfig = null!;

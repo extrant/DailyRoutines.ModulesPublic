@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Hooking;
-using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Extensions;
 using KamiToolKit.Nodes;
 
 namespace DailyRoutines.ModulesPublic;
@@ -234,18 +231,21 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             return;
         }
         
-        var numberArray = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.EnemyList);
-        if (numberArray == null) return;
+        var enemyListArray = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.EnemyList);
+        if (enemyListArray == null) return;
+
+        var hudArray = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Hud2);
+        if (hudArray == null) return;
         
         var castWidth  = stackalloc ushort[1];
         var castHeight = stackalloc ushort[1];
-
-        var isTargetCasting = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Hud2)->IntArray[69] != -1;
+        
+        var isTargetCasting = hudArray->IntArray[69] != -1;
         for (var i = 0; i < nodes.Count; i++)
         {
             var offset = 8 + (i * 6);
             
-            var gameObjectID = (ulong)numberArray->IntArray[offset];
+            var gameObjectID = (ulong)enemyListArray->IntArray[offset];
             if (gameObjectID is 0 or 0xE0000000) continue;
 
             var textNode       = nodes[i].TextNode;
@@ -290,13 +290,13 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
                 if (castBackgroundNode != null) 
                     castBackgroundNode->SetAlpha(0);
                 
-                castBarNode.IsVisible = true;
-                castBarNode.ProgressNode.Width  = 105 * (bc.CurrentCastTime / bc.TotalCastTime);
+                castBarNode.IsVisible          = true;
+                castBarNode.ProgressNode.Width = 105 * (bc.CurrentCastTime / bc.TotalCastTime);
 
                 if (bc.IsCastInterruptible)
                     castBarNode.AddColor = KnownColor.Red.ToVector4().ToVector3();
                 else
-                    castBarNode.AddColor = KnownColor.Yellow.ToVector4().ToVector3() / 255f;
+                    castBarNode.AddColor = KnownColor.Yellow.ToVector4().ToVector3();
             }
             else
             {
@@ -308,13 +308,13 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             
             textNode.TextColor = ModuleConfig.UseCustomizeTextColor
                                       ? ModuleConfig.TextColor
-                                      : ConvertByteColorToVector4(castTextNode->TextColor);
+                                      : castTextNode->TextColor.ToVector4();
             textNode.TextOutlineColor = ModuleConfig.UseCustomizeTextColor
                                      ? ModuleConfig.EdgeColor
                                      : new(0, 0.372549f, 1, 1);
             backgroundNode.Color = ModuleConfig.UseCustomizeTextColor
                                        ? ModuleConfig.BackgroundNodeColor
-                                       : ConvertByteColorToVector4(castTextNode->BackgroundColor);
+                                       : castTextNode->BackgroundColor.ToVector4();
             
             textNode.FontSize = ModuleConfig.FontSize;
             
