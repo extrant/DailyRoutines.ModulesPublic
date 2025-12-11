@@ -33,7 +33,7 @@ public unsafe class AutoMarkAetherCurrents : DailyModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     private static bool IsEligibleForTeleporting =>
-        !GameState.IsCN || AuthState.IsPremium;
+        !(GameState.IsCN || GameState.IsTC) || AuthState.IsPremium;
 
     private static TaskHelper? TaskHelperMove;
 

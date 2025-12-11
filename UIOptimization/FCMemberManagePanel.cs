@@ -159,7 +159,7 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
         ImGui.TableSetupColumn("位置", ImGuiTableColumnFlags.WidthStretch, 25);
         ImGui.TableSetupColumn("勾选框", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeight());
 
-        if (GameState.IsCN)
+        if (GameState.IsCN || GameState.IsTC)
             ImGui.TableSetColumnEnabled(5, false);
         
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
