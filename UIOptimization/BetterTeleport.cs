@@ -315,7 +315,6 @@ public unsafe class BetterTeleport : DailyModuleBase
 
         var hasRemark   = ModuleConfig.Remarks.TryGetValue(aetheryte.RowID, out var remark);
         var displayName = hasRemark ? remark : aetheryte.Name;
-        var regionName  = aetheryte.RegionName;
         var cost        = aetheryte.Cost;
 
         using var id = ImRaii.PushId($"{aetheryte.RowID}");
