@@ -82,10 +82,14 @@ public unsafe class BetterTeleport : DailyModuleBase
     }
 
     private static readonly Dictionary<uint, float> HoverProgress = [];
-    private static          AetheryteRecord?        HoveredAetheryte;
-    private static          AetheryteRecord?        LastHoveredAetheryte;
     private static          float                   HoverStartTime;
-    private static          AetheryteRecord?        PinnedAetheryte;
+    
+    private static AetheryteRecord? HoveredAetheryte;
+    private static AetheryteRecord? LastHoveredAetheryte;
+    private static AetheryteRecord? PinnedAetheryte;
+    
+    private static Vector3 ContextMenuTargetPos;
+    private static uint    ContextMenuTargetZone;
 
     protected override void Init()
     {
@@ -476,7 +480,7 @@ public unsafe class BetterTeleport : DailyModuleBase
         using (FontManager.UIFont80.Push())
         {
             var subY = titleY + lineHeight + (2f * GlobalFontScale);
-            drawList.AddText(new Vector2(contentStartX, subY), ImGui.GetColorU32(ImGuiCol.TextDisabled), regionName);
+            drawList.AddText(new Vector2(contentStartX, subY), ImGui.GetColorU32(ImGuiCol.TextDisabled), aetheryte.GetZone().ExtractPlaceName());
         }
 
         var costText    = $"{cost}";
@@ -505,7 +509,7 @@ public unsafe class BetterTeleport : DailyModuleBase
 
     private void DrawHoveredTooltip()
     {
-        if (HoveredAetheryte != null && (IsConflictKeyPressed() || (PinnedAetheryte != null && PinnedAetheryte != HoveredAetheryte)))
+        if (HoveredAetheryte != null && IsConflictKeyPressed())
             PinnedAetheryte = HoveredAetheryte;
 
         if (PinnedAetheryte != null)
@@ -518,7 +522,7 @@ public unsafe class BetterTeleport : DailyModuleBase
             {
                 DrawAetheryteMap(DService.Texture.GetFromGame(PinnedAetheryte.GetMap().GetTexturePath()), PinnedAetheryte, true);
 
-                if (!ImGui.IsWindowFocused())
+                if (!ImGui.IsWindowFocused() && !ImGui.IsPopupOpen("BetterTeleport_Map_ContextMenu"))
                 {
                     PinnedAetheryte = null;
                     ModuleConfig.Save(this);
@@ -567,6 +571,9 @@ public unsafe class BetterTeleport : DailyModuleBase
 
         if (scale <= 0.001f) return;
 
+        if (!isPinned)
+            ScaledDummy(0f, 2f);
+        
         var hint     = isPinned ? GetLoc("BetterTeleport-MapHint-Zoom") : GetLoc("BetterTeleport-MapHint-Pin");
         var hintSize = ImGui.CalcTextSize(hint);
         if (imageSize.X > hintSize.X)
@@ -576,6 +583,62 @@ public unsafe class BetterTeleport : DailyModuleBase
         var orig = ImGui.GetCursorScreenPos();
         
         ImGui.Image(warp.Handle, imageSize);
+
+        if (isPinned                                    &&
+            ImGui.IsItemClicked(ImGuiMouseButton.Right) &&
+            (GameState.TerritoryType != aetheryte.ZoneID || IsWithPermission()))
+        {
+            var mousePos   = ImGui.GetMousePos();
+            var relPos     = mousePos - orig;
+            var texturePos = relPos / scale;
+            var worldPos   = TextureToWorld(texturePos, aetheryte.GetMap());
+
+            var nearest = AllRecords.Where(x => x.GetZone().RowId == aetheryte.GetZone().RowId)
+                                    .MinBy(x => Vector2.DistanceSquared(new(x.Position.X, x.Position.Z), worldPos));
+            if (nearest != null)
+            {
+                ContextMenuTargetZone = nearest.ZoneID;
+                ContextMenuTargetPos  = worldPos.ToVector3(nearest.Position.Y);
+                ImGui.OpenPopup("BetterTeleport_Map_ContextMenu");
+            }
+        }
+
+        using (var popup = ImRaii.Popup("BetterTeleport_Map_ContextMenu"))
+        {
+            if (popup)
+            {
+                if (ImGui.MenuItem(GetLoc("BetterTeleport-TeleportToThisPosition")))
+                {
+                    TaskHelper.Enqueue(() => MovementManager.TPSmart_BetweenZone(ContextMenuTargetZone, ContextMenuTargetPos));
+                    TaskHelper.Enqueue(() =>
+                    {
+                        if (MovementManager.IsManagerBusy || DService.ObjectTable.LocalPlayer == null)
+                            return false;
+
+                        MovementManager.TPGround();
+                        if (BetweenAreas || DService.Condition[ConditionFlag.Jumping]) return false;
+                        
+                        return true;
+                    });
+                    
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+        }
+        
+        if (ImGui.IsPopupOpen("BetterTeleport_Map_ContextMenu"))
+        {
+            var texFlag = DService.Texture.GetFromGameIcon(new(60561)).GetWrapOrEmpty();
+            if (texFlag.Handle != nint.Zero)
+            {
+                var flagPos       = WorldToTexture(ContextMenuTargetPos, aetheryte.GetMap()) * scale;
+                var flagCenterPos = orig + flagPos;
+                var flagSize      = ScaledVector2(24f * ModuleConfig.MapZoom);
+                var flagHalfSize  = flagSize / 2;
+                
+                drawList.AddImage(texFlag.Handle, flagCenterPos - flagHalfSize, flagCenterPos + flagHalfSize);
+            }
+        }
         
         drawList.AddRect(orig, orig + imageSize, ImGui.GetColorU32(ImGuiCol.Border), 0f, ImDrawFlags.None, 2f);
 
@@ -945,8 +1008,12 @@ public unsafe class BetterTeleport : DailyModuleBase
 
     private void OnPostUseAction(
         ref bool                        isPrevented,
-        ref ActionType                  actionType, ref uint actionID, ref ulong targetID, ref uint extraParam,
-        ref ActionManager.UseActionMode queueState, ref uint comboRouteID)
+        ref ActionType                  actionType,
+        ref uint                        actionID,
+        ref ulong                       targetID,
+        ref uint                        extraParam,
+        ref ActionManager.UseActionMode queueState,
+        ref uint                        comboRouteID)
     {
         if (actionType != ActionType.GeneralAction || actionID != 7)
             return;
@@ -1050,6 +1117,9 @@ public unsafe class BetterTeleport : DailyModuleBase
 
         HandleTeleport(result);
     }
+    
+    private static bool IsWithPermission() => false
+        /*!(GameState.IsCN || GameState.IsTC) || AuthState.IsPremium || !MovementManager.SpeedDetectionAreas.Contains(GameState.TerritoryType)*/;
 
     protected override void Uninit()
     {
