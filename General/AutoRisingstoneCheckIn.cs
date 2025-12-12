@@ -209,13 +209,17 @@ public class AutoRisingstoneCheckIn : DailyModuleBase
         }
         catch (Exception ex)
         {
+            var isSame = LastSignInResult == ex.Message;
             LastSignInResult = $"{ex.Message}";
             Error("自动石之家签到失败", ex);
 
-            if (instance.ModuleConfig.SendChat)
-                Chat($"[自动石之家签到] 签到失败\n{LastSignInResult}");
-            if (instance.ModuleConfig.SendNotification)
-                NotificationInfo(LastSignInResult, "[自动石之家签到] 签到失败");
+            if (!isSame)
+            {
+                if (instance.ModuleConfig.SendChat)
+                    Chat($"[自动石之家签到] 签到失败\n{LastSignInResult}");
+                if (instance.ModuleConfig.SendNotification)
+                    NotificationInfo(LastSignInResult, "[自动石之家签到] 签到失败");
+            }
         }
         finally
         {
