@@ -140,7 +140,7 @@ public unsafe class RightClickToMoveMode : DailyModuleBase
                     var validKeys = DService.KeyState.GetValidVirtualKeys();
                     foreach (var keyToSelect in validKeys)
                     {
-                        using var disabled = ImRaii.Disabled(Service.Config.ConflictKey == keyToSelect);
+                        using var disabled = ImRaii.Disabled(DRConfig.Instance().ConflictKey == keyToSelect);
                         if (ImGui.Selectable(keyToSelect.GetFancyName()))
                         {
                             ModuleConfig.ComboKey = keyToSelect;

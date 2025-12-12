@@ -468,7 +468,7 @@ public class WorldTravelCommand : DailyModuleBase
                         TaskHelper.Enqueue(() => CharaSelect != null || CharaSelectListMenu != null, "等待角色选择界面可用");
                     }
                     
-                    if (Service.Config.ModuleEnabled.GetValueOrDefault("AutoLogin", false))
+                    if (DRConfig.Instance().ModuleEnabled.GetValueOrDefault("AutoLogin", false))
                         TaskHelper.EnqueueAsync(() => ModuleManager.LoadAsync(ModuleManager.GetModuleByName("AutoLogin")), "启用自动登录");
                     
                     TaskHelper.Enqueue(() => EnqueueLogin(travelData), "入队登录");
