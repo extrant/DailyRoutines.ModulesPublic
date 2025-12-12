@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -14,12 +13,11 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
-using KamiToolKit.Classes.TimelineBuilding;
+using KamiToolKit;
+using KamiToolKit.Classes.Timelines;
 using KamiToolKit.Nodes;
 using Lumina.Excel.Sheets;
 using ActionKind = FFXIVClientStructs.FFXIV.Client.UI.Agent.ActionKind;
@@ -102,34 +100,34 @@ public class OptimizedRecipeNote : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(RecipeCaculationButton);
+                RecipeCaculationButton?.DetachNode();
                 RecipeCaculationButton = null;
                 
-                Service.AddonController.DetachNode(SwitchJobButton);
+                SwitchJobButton?.DetachNode();
                 SwitchJobButton = null;
                 
-                Service.AddonController.DetachNode(DisplayOthersButton);
+                DisplayOthersButton?.DetachNode();
                 DisplayOthersButton = null;
                 
-                Service.AddonController.DetachNode(DisplayOthersIconsLayout);
+                DisplayOthersIconsLayout?.DetachNode();
                 DisplayOthersIconsLayout = null;
                 
-                DisplayOthersJobButtons.ForEach(x => Service.AddonController.DetachNode(x));
+                DisplayOthersJobButtons.ForEach(x => x?.DetachNode());
                 DisplayOthersJobButtons.Clear();
                 
-                Service.AddonController.DetachNode(ClearSearchButton);
+                ClearSearchButton?.DetachNode();
                 ClearSearchButton = null;
                 
-                GetShopInfoButtons.ForEach(x => Service.AddonController.DetachNode(x));
+                GetShopInfoButtons.ForEach(x => x?.DetachNode());
                 GetShopInfoButtons.Clear();
                 
-                Service.AddonController.DetachNode(LevelRecipeButton);
+                LevelRecipeButton?.DetachNode();
                 LevelRecipeButton = null;
                 
-                Service.AddonController.DetachNode(SpecialRecipeButton);
+                SpecialRecipeButton?.DetachNode();
                 SpecialRecipeButton = null;
                 
-                Service.AddonController.DetachNode(MasterRecipeButton);
+                MasterRecipeButton?.DetachNode();
                 MasterRecipeButton = null;
 
                 if (InfosOm.RecipeNote != null)
@@ -223,7 +221,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }, "请求技能数据");
                     };
                     
-                    Service.AddonController.AttachNode(RecipeCaculationButton, InfosOm.RecipeNote->GetNodeById(57));
+                    RecipeCaculationButton.AttachNode(InfosOm.RecipeNote->GetNodeById(57));
                 }
 
                 if (SwitchJobButton == null)
@@ -260,7 +258,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         TaskHelper.Enqueue(() => AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipeID));
                     };
                     
-                    Service.AddonController.AttachNode(SwitchJobButton, InfosOm.RecipeNote->GetNodeById(57));
+                    SwitchJobButton.AttachNode(InfosOm.RecipeNote->GetNodeById(57));
                 }
 
                 if (DisplayOthersButton == null)
@@ -294,7 +292,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     while (labelNode.FontSize > 1 && labelNode.GetTextDrawSize(labelNode.SeString).X > labelNode.Size.X)
                         labelNode.FontSize--;
                     
-                    Service.AddonController.AttachNode(DisplayOthersButton, InfosOm.RecipeNote->GetNodeById(57));
+                    DisplayOthersButton.AttachNode(InfosOm.RecipeNote->GetNodeById(57));
                 }
 
                 if (DisplayOthersIconsLayout == null)
@@ -336,13 +334,13 @@ public class OptimizedRecipeNote : DailyModuleBase
                         
                         iconButtonNode.BackgroundNode.IsVisible = false;
                         iconButtonNode.ImageNode.IsVisible      = false;
-                        Service.AddonController.AttachNode(iconNode, iconButtonNode);
+                        iconNode.AttachNode(iconButtonNode);
                         
                         DisplayOthersJobButtons.Add(iconButtonNode);
                         DisplayOthersIconsLayout.AddNode(iconButtonNode);
                     }
                     
-                    Service.AddonController.AttachNode(DisplayOthersIconsLayout, InfosOm.RecipeNote->GetNodeById(57));
+                    DisplayOthersIconsLayout.AttachNode(InfosOm.RecipeNote->GetNodeById(57));
                 }
 
                 if (ClearSearchButton == null)
@@ -366,7 +364,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }
                     };
                     
-                    Service.AddonController.AttachNode(ClearSearchButton, InfosOm.RecipeNote->GetNodeById(24));
+                    ClearSearchButton.AttachNode(InfosOm.RecipeNote->GetNodeById(24));
                 }
 
                 if (GetShopInfoButtons.Count == 0)
@@ -423,7 +421,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         backgroundNode.RightOffset        = 0;
                         
                         GetShopInfoButtons.Add(buttonNode);
-                        Service.AddonController.AttachNode(buttonNode, componentNode);
+                        buttonNode.AttachNode(componentNode);
                     }
                 }
 
@@ -449,8 +447,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }
                     };
                     LevelRecipeButton.BackgroundNode.IsVisible = false;
-                    
-                    Service.AddonController.AttachNode(LevelRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
+                    LevelRecipeButton.AttachNode(InfosOm.RecipeNote->GetNodeById(32));
                 }
                 
                 if (SpecialRecipeButton == null)
@@ -475,8 +472,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }
                     };
                     SpecialRecipeButton.BackgroundNode.IsVisible = false;
-                    
-                    Service.AddonController.AttachNode(SpecialRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
+                    SpecialRecipeButton.AttachNode(InfosOm.RecipeNote->GetNodeById(32));
                 }
                 
                 if (MasterRecipeButton == null)
@@ -501,8 +497,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }
                     };
                     MasterRecipeButton.BackgroundNode.IsVisible = false;
-                    
-                    Service.AddonController.AttachNode(MasterRecipeButton, InfosOm.RecipeNote->GetNodeById(32));
+                    MasterRecipeButton.AttachNode(InfosOm.RecipeNote->GetNodeById(32));
                 }
 
                 if (Throttler.Throttle("OptimizedRecipeNote-UpdateAddon", 1000))
@@ -783,13 +778,10 @@ public class OptimizedRecipeNote : DailyModuleBase
                 var rowCount = MathF.Ceiling(result.Actions.Count / 10f);
                 Addon ??= new(taskHelper, result)
                 {
-                    InternalName          = "DRRecipeNoteActionsPreview",
-                    Title                 = $"{GetLoc("OptimizedRecipeNote-AddonTitle")}",
-                    Subtitle              = $"{GetLoc("OptimizedRecipeNote-Message-StepsInfo", result.Actions.Count, result.Actions.Count * 3)}",
-                    Size                  = new(500f, 160f + (50f * (rowCount - 1))),
-                    Position              = new(800f, 350f),
-                    NativeController      = Service.AddonController,
-                    RememberClosePosition = true,
+                    InternalName = "DRRecipeNoteActionsPreview",
+                    Title        = $"{GetLoc("OptimizedRecipeNote-AddonTitle")}",
+                    Subtitle     = $"{GetLoc("OptimizedRecipeNote-Message-StepsInfo", result.Actions.Count, result.Actions.Count * 3)}",
+                    Size         = new(500f, 160f + (50f                                                                         * (rowCount - 1))),
                 };
                 Addon.Open();
             }, TimeSpan.FromMilliseconds(isAddonExisted ? 500 : 0)).ContinueWith(_ => OpenAddonTask = null);
@@ -854,7 +846,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             statsRow.Width          += craftPointTextNode.Width;
             statsRow.AddNode(craftPointTextNode);
             
-            AttachNode(statsRow);
+            statsRow.AttachNode(this);
             
             var operationRow = new HorizontalFlexNode
             {
@@ -926,7 +918,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 operationRow.AddDummy(4);
             }
             
-            AttachNode(operationRow);
+            operationRow.AttachNode(this);
             
             var container = new VerticalListNode
             {
@@ -999,7 +991,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     TextFlags        = TextFlags.Edge,
                     TextOutlineColor = KnownColor.OrangeRed.ToVector4()
                 };
-                Service.AddonController.AttachNode(actionIndexNode, dragDropNode);
+                actionIndexNode.AttachNode(dragDropNode);
 
                 currentRow.AddNode(dragDropNode);
                 currentRow.AddDummy(4);
@@ -1011,7 +1003,7 @@ public class OptimizedRecipeNote : DailyModuleBase
             if (itemsInCurrentRow > 0)
                 container.AddNode(currentRow);
             
-            AttachNode(container);
+            container.AttachNode(this);
         }
 
         protected override unsafe void OnUpdate(AtkUnitBase* addon)
@@ -1053,12 +1045,9 @@ public class OptimizedRecipeNote : DailyModuleBase
             {
                 Addon ??= new(shopInfo)
                 {
-                    InternalName          = "DRRecipeNoteShopsPreview",
-                    Title                 = GetLoc("OptimizedRecipeNote-ShopList"),
-                    Size                  = new(550f, 400f),
-                    Position              = new(800f, 350f),
-                    NativeController      = Service.AddonController,
-                    RememberClosePosition = true,
+                    InternalName = "DRRecipeNoteShopsPreview",
+                    Title        = GetLoc("OptimizedRecipeNote-ShopList"),
+                    Size         = new(550f, 400f),
                 };
                 Addon.Open();
             }, TimeSpan.FromMilliseconds(isAddonExisted ? 500 : 0)).ContinueWith(_ => OpenAddonTask = null);
@@ -1078,7 +1067,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 Position    = ContentStartPosition + new Vector2(5, 0),
                 ItemSpacing = 5
             };
-            AttachNode(itemInfoRow);
+            itemInfoRow.AttachNode(this);
 
             var itemIconNode = new IconImageNode
             {
@@ -1110,7 +1099,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     IsVisible = true,
                     OnClick   = () => ChatHelper.SendMessage($"/pdr market {ShopInfo.GetItem().Name}")
                 };
-                AttachNode(marketButtonNode);
+                marketButtonNode.AttachNode(this);
             }
 
             var scrollingAreaNode = new ScrollingAreaNode<VerticalListNode>
@@ -1122,7 +1111,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                 IsVisible         = true,
                 AutoHideScrollBar = true,
             };
-            AttachNode(scrollingAreaNode);
+            scrollingAreaNode.AttachNode(this);
 
             var contentNode = scrollingAreaNode.ContentNode;
             contentNode.ItemSpacing = 3;
@@ -1160,7 +1149,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     SeString  = npcInfo.Name,
                     Position  = new(0, 4)
                 };
-                Service.AddonController.AttachNode(npcNameNode, row);
+                npcNameNode.AttachNode(row);
 
                 var locationName = npcInfo.Location.TerritoryID == 282 ? LuminaWrapper.GetAddonText(8495) : npcInfo.Location.GetTerritory().ExtractPlaceName();
                 var npcLocationNode = new TextButtonNode
@@ -1188,7 +1177,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         }
                     }
                 };
-                Service.AddonController.AttachNode(npcLocationNode, row);
+                npcLocationNode.AttachNode(row);
 
                 var costInfoComponent = new HorizontalListNode
                 {
@@ -1220,7 +1209,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     costInfoComponent.AddNode(costNode);
                 }
                 
-                Service.AddonController.AttachNode(costInfoComponent, row);
+                costInfoComponent.AttachNode(row);
             }
         }
 

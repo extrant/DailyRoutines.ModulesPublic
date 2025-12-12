@@ -14,9 +14,8 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
+using KamiToolKit;
 using KamiToolKit.Nodes;
-using KamiToolKit.Nodes.TabBar;
 using Lumina.Excel.Sheets;
 using GrandCompany = FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany;
 
@@ -41,14 +40,12 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
         ModuleConfig = LoadConfig<Config>() ?? new();
 
         TaskHelper ??= new() { TimeLimitMS = int.MaxValue };
-        
+
         Addon ??= new(this)
         {
             InternalName          = "DRAutoExpertDelivery",
             Title                 = Info.Title,
             Size                  = new(300f, 250f),
-            Position              = new(800f, 350f),
-            NativeController      = Service.AddonController,
             RememberClosePosition = true
         };
 
@@ -261,7 +258,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 SettingTabLayout.IsVisible = true;
             });
             
-            AttachNode(tabNode);
+            tabNode.AttachNode(this);
             
             ControlTabLayout = new()
             {
@@ -322,7 +319,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             };
             
             ControlTabLayout.AddNode(startNode, stopNode, exchangeShopNode, exchangeShopAndExchangeNode);
-            AttachNode(ControlTabLayout);
+            ControlTabLayout.AttachNode(this);
 
             SettingTabLayout = new()
             {
@@ -427,7 +424,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 SettingTabLayout.AddNode(defaultPageNode);
             }
 
-            AttachNode(SettingTabLayout);
+            SettingTabLayout.AttachNode(this);
         }
 
         protected override void OnUpdate(AtkUnitBase* addon)
@@ -438,7 +435,10 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
                 return;
             }
 
-            var position = new Vector2(GrandCompanySupplyList->RootNode->ScreenX - addon->GetScaledWidth(true), GrandCompanySupplyList->RootNode->ScreenY);
+            var position = new Vector2(GrandCompanySupplyList->RootNode->ScreenX - addon->GetScaledWidth(true),
+                                       GrandCompanySupplyList->RootNode->ScreenY);
+            
+            // TODO: 检查看看是否能用新的 API
             SetPosition(addon,           position);
             SetPosition(addon->RootNode, position);
         }

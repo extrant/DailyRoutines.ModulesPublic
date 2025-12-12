@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
-using DailyRoutines.Windows;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Keys;
@@ -46,7 +44,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
     private static string MessageInput    = string.Empty;
     private static int    DropMacroIndex  = -1;
     
-    private static IconButtonNode ImageButton;
+    private static IconButtonNode? ImageButton;
     
     private static List<PanelTabBase> PanelTabs = [];
 
@@ -500,7 +498,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                                    ModuleConfig.ButtonOffset
                     };
                     
-                    Service.AddonController.AttachNode(ImageButton, textInputNode);
+                    ImageButton?.AttachNode(textInputNode);
                 }
 
                 if (Throttler.Throttle("QuickChatPanel-UpdateButtonNodes"))
@@ -514,7 +512,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(ImageButton);
+                ImageButton?.DetachNode();
                 ImageButton = null;
                 break;
         }

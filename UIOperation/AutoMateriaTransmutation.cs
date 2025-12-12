@@ -166,14 +166,14 @@ public unsafe class AutoMateriaTransmutation : DailyModuleBase
                         },
                         IsEnabled = true,
                     };
-                    Service.AddonController.AttachNode(OperateButtonNode, addon->RootNode);
+                    OperateButtonNode.AttachNode(addon->RootNode);
                 }
 
                 OperateButtonNode.String = GetLoc(TaskHelper.IsBusy ? "Stop" : "AutoMateriaTransmutation-BatchTransmutate");
 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(OperateButtonNode);
+                OperateButtonNode?.DetachNode();
                 OperateButtonNode = null;
                 break;
         }

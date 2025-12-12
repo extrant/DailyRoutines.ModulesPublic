@@ -50,7 +50,7 @@ public class RealPositionInNaviMap : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(PositionButton);
+                PositionButton?.DetachNode();
                 PositionButton = null;
                 break;
             case AddonEvent.PostDraw:
@@ -89,7 +89,7 @@ public class RealPositionInNaviMap : DailyModuleBase
                     PositionButton.LabelNode.TextColor        = ColorHelper.GetColor(8);
                     PositionButton.LabelNode.TextOutlineColor = new(0, 0, 0, 1);
                     
-                    Service.AddonController.AttachNode(PositionButton, NaviMap->GetNodeById(5));
+                    PositionButton.AttachNode(NaviMap->GetNodeById(5));
 
                     NaviMap->GetTextNodeById(6)->ToggleVisibility(false);
                 }

@@ -8,7 +8,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
+using KamiToolKit;
 using KamiToolKit.Nodes;
 using TinyPinyin;
 
@@ -39,12 +39,9 @@ public class OptimizedLetter : DailyModuleBase
         TaskHelper ??= new();
         Addon ??= new(TaskHelper)
         {
-            InternalName          = "DROptimizedLetter",
-            Title                 = Info.Title,
-            Size                  = new(290f, 200f),
-            Position              = new(800f, 350f),
-            NativeController      = Service.AddonController,
-            RememberClosePosition = true,
+            InternalName = "DROptimizedLetter",
+            Title        = Info.Title,
+            Size         = new(290f, 200f),
         };
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesNo);
@@ -77,10 +74,10 @@ public class OptimizedLetter : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(TextInputButton);
+                TextInputButton?.DetachNode();
                 TextInputButton = null;
                 
-                Service.AddonController.DetachNode(ListNode);
+                ListNode?.DetachNode();
                 ListNode = null;
                 break;
             
@@ -96,7 +93,7 @@ public class OptimizedLetter : DailyModuleBase
                         Position  = new(18, 38),
                         OnInputReceived = name =>
                         {
-                            Service.AddonController.DetachNode(ListNode);
+                            ListNode?.DetachNode();
                             ListNode = null;
                             
                             List<string> names = [];
@@ -140,10 +137,10 @@ public class OptimizedLetter : DailyModuleBase
                             if (names.Count <= 8)
                                 ListNode.ScrollBarNode.IsVisible = false;
                             
-                            Service.AddonController.AttachNode(ListNode, LetterAddress->RootNode);
+                            ListNode.AttachNode(LetterAddress->RootNode);
                         }
                     };
-                    Service.AddonController.AttachNode(TextInputButton, LetterAddress->RootNode);
+                    TextInputButton.AttachNode(LetterAddress->RootNode);
                 }
 
                 if (ListNode != null)
@@ -273,8 +270,7 @@ public class OptimizedLetter : DailyModuleBase
                 }
             };
             layoutNode.AddNode(claimAllButton);
-            
-            AttachNode(layoutNode);
+            layoutNode.AttachNode(this);
         }
         
         protected override unsafe void OnUpdate(AtkUnitBase* addon)

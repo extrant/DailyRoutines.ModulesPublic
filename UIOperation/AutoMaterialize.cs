@@ -28,9 +28,9 @@ public unsafe class AutoMaterialize : DailyModuleBase
 
     private static readonly CompSig MaterializeControllerSig = new("48 8D 0D ?? ?? ?? ?? 8B D0 E8 ?? ?? ?? ?? 83 7E");
 
-    private static TextNode       LableNode;
-    private static TextButtonNode StartButtonNode;
-    private static TextButtonNode StopButtonNode;
+    private static TextNode?       LableNode;
+    private static TextButtonNode? StartButtonNode;
+    private static TextButtonNode? StopButtonNode;
     
     private const string Command = "materialize";
     
@@ -152,7 +152,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
                         AlignmentType = AlignmentType.Right,
                         TextFlags     = TextFlags.AutoAdjustNodeSize | TextFlags.Edge
                     };
-                    Service.AddonController.AttachNode(LableNode, Materialize->RootNode);
+                    LableNode.AttachNode(Materialize->RootNode);
                 }
 
                 if (StartButtonNode == null)
@@ -165,7 +165,7 @@ public unsafe class AutoMaterialize : DailyModuleBase
                         SeString  = GetLoc("Start"),
                         OnClick   = StartARoundAll
                     };
-                    Service.AddonController.AttachNode(StartButtonNode, Materialize->RootNode);
+                    StartButtonNode.AttachNode(Materialize->RootNode);
                 }
 
                 StartButtonNode.IsEnabled = !TaskHelper.IsBusy;
@@ -180,17 +180,17 @@ public unsafe class AutoMaterialize : DailyModuleBase
                         SeString  = GetLoc("Stop"),
                         OnClick   = () => TaskHelper.Abort()
                     };
-                    Service.AddonController.AttachNode(StopButtonNode, Materialize->RootNode);
+                    StopButtonNode.AttachNode(Materialize->RootNode);
                 }
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(LableNode);
+                LableNode?.DetachNode();
                 LableNode = null;
         
-                Service.AddonController.DetachNode(StartButtonNode);
+                StartButtonNode?.DetachNode();
                 StartButtonNode = null;
         
-                Service.AddonController.DetachNode(StopButtonNode);
+                StopButtonNode?.DetachNode();
                 StopButtonNode = null;
                 
                 TaskHelper?.Abort();

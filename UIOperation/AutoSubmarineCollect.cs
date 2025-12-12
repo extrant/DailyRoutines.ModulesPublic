@@ -527,13 +527,13 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(ItemListLayout);
+                ItemListLayout?.DetachNode();
                 ItemListLayout = null;
                 
-                Service.AddonController.DetachNode(AutoCollectNode);
+                AutoCollectNode?.DetachNode();
                 AutoCollectNode = null;
                 
-                ItemRenderers.ForEach(x => Service.AddonController.DetachNode(x));
+                ItemRenderers.ForEach(x => x?.DetachNode());
                 ItemRenderers.Clear();
                 break;
             case AddonEvent.PostDraw:
@@ -548,7 +548,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
                         IsVisible = true,
                         Position  = new(22, 15)
                     };
-                    Service.AddonController.AttachNode(ItemListLayout, SelectString->RootNode);
+                    ItemListLayout.AttachNode(SelectString->RootNode);
 
                     AutoCollectNode = new()
                     {
@@ -675,10 +675,10 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
 
     private class ItemDisplayNode : HorizontalListNode
     {
-        public uint          ItemID    { get; init; }
-        public IconImageNode IconNode  { get; private set; }
-        public TextNode      NameNode  { get; private set; }
-        public TextNode      CountNode { get; private set; }
+        public uint           ItemID    { get; init; }
+        public IconImageNode? IconNode  { get; private set; }
+        public TextNode?      NameNode  { get; private set; }
+        public TextNode?      CountNode { get; private set; }
         
         public ItemDisplayNode(uint itemID, float width)
         {
@@ -723,7 +723,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
                 FontSize         = 16,
                 SeString         = textBuilder.Build().Encode()
             };
-            Service.AddonController.AttachNode(CountNode, this);
+            CountNode.AttachNode(this);
         }
 
         public void UpdateItemCount()
@@ -741,13 +741,13 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
 
         ~ItemDisplayNode()
         {
-            Service.AddonController.DetachNode(IconNode);
+            IconNode?.DetachNode();
             IconNode = null;
             
-            Service.AddonController.DetachNode(NameNode);
+            NameNode?.DetachNode();
             NameNode = null;
             
-            Service.AddonController.DetachNode(CountNode);
+            CountNode?.DetachNode();
             CountNode = null;
         }
     }

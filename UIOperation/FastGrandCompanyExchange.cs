@@ -1,23 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Memory;
-using Dalamud.Plugin.Ipc;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
+using KamiToolKit;
 using KamiToolKit.Nodes;
-using KamiToolKit.Nodes.TabBar;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 
@@ -51,8 +45,6 @@ public class FastGrandCompanyExchange : DailyModuleBase
             InternalName          = "DRFastGCExchange",
             Title                 = Info.Title,
             Size                  = new(290f, 240f),
-            Position              = new(800f, 350f),
-            NativeController      = Service.AddonController,
             RememberClosePosition = true,
         };
 
@@ -299,7 +291,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
             
             layoutNode.AddNode(countInputNode);
             
-            AttachNode(layoutNode);
+            layoutNode.AttachNode(this);
         }
 
         private void UpdateExchangeItem(ReadOnlySeString x)
@@ -339,7 +331,10 @@ public class FastGrandCompanyExchange : DailyModuleBase
                 return;
             }
 
-            var position = new Vector2(GrandCompanyExchange->RootNode->ScreenX - addon->GetScaledWidth(true), GrandCompanyExchange->RootNode->ScreenY);
+            var position = new Vector2(GrandCompanyExchange->RootNode->ScreenX - addon->GetScaledWidth(true), 
+                                       GrandCompanyExchange->RootNode->ScreenY);
+            
+            // TODO: 检查新 API
             SetPosition(addon,           position);
             SetPosition(addon->RootNode, position);
         }

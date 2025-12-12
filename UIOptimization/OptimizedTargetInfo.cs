@@ -577,7 +577,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(ClearFocusButtonNode);
+                ClearFocusButtonNode?.DetachNode();
                 ClearFocusButtonNode = null;
                 break;
             case AddonEvent.PostDraw:
@@ -595,8 +595,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         OnClick   = () => SetFocusTargetByObjectID(TargetSystem.Instance(), 0xE0000000)
                     };
                     ClearFocusButtonNode.BackgroundNode.IsVisible = false;
-                    
-                    Service.AddonController.AttachNode(ClearFocusButtonNode, FocusTargetInfo->RootNode);
+                    ClearFocusButtonNode.AttachNode(FocusTargetInfo->RootNode);
                 }
 
                 if (Throttler.Throttle("OptimizedTargetInfo-ClearFocusTarget"))
@@ -763,7 +762,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor,
                     };
 
-                    Service.AddonController.AttachNode(textNode, gauge->OwnerNode);
+                    textNode.AttachNode(gauge->OwnerNode);
                 }
 
                 if (!Throttler.Throttle(throttleKey, 100)) return;
@@ -800,7 +799,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(textNode);
+                textNode?.DetachNode();
                 textNode = null;
                 break;
         }
@@ -843,7 +842,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                         FontType         = FontType.Miedinger
                     };
 
-                    Service.AddonController.AttachNode(textNode, addon->GetNodeById(nodeIDToAttach));
+                    textNode.AttachNode(addon->GetNodeById(nodeIDToAttach));
                 }
 
                 textNode.IsVisible = isEnabled && getTarget() != null;
@@ -871,7 +870,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(textNode);
+                textNode?.DetachNode();
                 textNode = null;
                 break;
         }

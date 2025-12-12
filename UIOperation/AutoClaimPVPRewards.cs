@@ -1,5 +1,4 @@
 using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -16,7 +15,7 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
         Category    = ModuleCategories.UIOperation,
     };
 
-    private static TextButtonNode? Button;
+    private static TextButtonNode? ClaimButton;
 
     protected override void Init()
     {
@@ -31,9 +30,7 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
     protected override void Uninit()
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
-        
-        Service.AddonController.DetachNode(Button);
-        Button = null;
+        OnAddon(AddonEvent.PreFinalize, null);
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
@@ -48,12 +45,12 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
                 if (closeButton != null && closeButton->OwnerNode->IsVisible())
                     closeButton->OwnerNode->ToggleVisibility(false);
                 
-                if (Button == null)
+                if (ClaimButton == null)
                 {
                     var resNode = PvpReward->RootNode;
                     if (resNode == null) return;
                     
-                    Button = new()
+                    ClaimButton = new()
                     {
                         Size      = new(280, 28),
                         Position  = new(370, 500),
@@ -86,15 +83,15 @@ public unsafe class AutoClaimPVPRewards : DailyModuleBase
                         NodeId = 10001
                     };
                     
-                    Service.AddonController.AttachNode(Button, resNode);
+                    ClaimButton.AttachNode(resNode);
                 }
 
-                Button.IsEnabled = !TaskHelper.IsBusy;
+                ClaimButton.IsEnabled = !TaskHelper.IsBusy;
                 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(Button);
-                Button = null;
+                ClaimButton?.DetachNode();
+                ClaimButton = null;
                 break;
         }
     }

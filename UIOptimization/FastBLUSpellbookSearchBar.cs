@@ -18,7 +18,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
 
     private static string SearchBarInput = string.Empty;
     
-    private static TextInputNode SearchBarNode;
+    private static TextInputNode? SearchBarNode;
 
     protected override void Init()
     {
@@ -33,7 +33,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(SearchBarNode);
+                SearchBarNode?.DetachNode();
                 SearchBarNode = null;
                 break;
             case AddonEvent.PostDraw:
@@ -75,7 +75,7 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
                     SearchBarNode.CurrentTextNode.FontSize =  14;
                     SearchBarNode.CurrentTextNode.Position += new Vector2(0, 3);
                     
-                    Service.AddonController.AttachNode(SearchBarNode, component);
+                    SearchBarNode.AttachNode(component);
                 }
 
                 SearchBarNode.IsVisible = AOZNotebook->AtkValues->Int < 9;

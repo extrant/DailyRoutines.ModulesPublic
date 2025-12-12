@@ -6,7 +6,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using KamiToolKit.Classes.TimelineBuilding;
+using KamiToolKit.Classes.Timelines;
 using KamiToolKit.Nodes;
 
 namespace DailyRoutines.ModulesPublic;
@@ -48,13 +48,13 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
             case AddonEvent.PreFinalize:
                 foreach (var (buttonNode, imageNode) in Nodes.Values)
                 {
-                    Service.AddonController.DetachNode(buttonNode);
-                    Service.AddonController.DetachNode(imageNode);
+                    buttonNode?.DetachNode();
+                    imageNode?.DetachNode();
                 }
 
                 Nodes.Clear();
 
-                Service.AddonController.DetachNode(LayoutNode);
+                LayoutNode?.DetachNode();
                 LayoutNode = null;
                 break;
             case AddonEvent.PostRefresh:
@@ -79,7 +79,7 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                         Position    = new(defaultContainer->X - 5, defaultContainer->Y),
                         ItemSpacing = 0
                     };
-                    Service.AddonController.AttachNode(LayoutNode, attchTargetNode);
+                    LayoutNode.AttachNode(attchTargetNode);
 
                     foreach (var settingDetail in DutyFinderSettingIcons)
                     {
@@ -123,7 +123,7 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                                              .AddFrameSetWithFrame(47, 53, 47, position: origPosition)
                                              .Build());
 
-                        Service.AddonController.AttachNode(iconNode, button);
+                        iconNode.AttachNode(button);
 
                         Nodes[settingDetail] = (button, iconNode);
                         LayoutNode.AddNode(button);
@@ -157,7 +157,7 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
                             languageButton.BackgroundNode.IsVisible = false;
                             languageButton.ImageNode.IsVisible      = false;
 
-                            Service.AddonController.AttachNode(languageButton, parentNode);
+                            languageButton.AttachNode(parentNode);
                             Nodes[langSetting] = (languageButton, null!);
                         }
                     }

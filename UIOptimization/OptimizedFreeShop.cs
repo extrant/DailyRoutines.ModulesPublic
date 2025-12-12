@@ -92,7 +92,7 @@ public unsafe class OptimizedFreeShop : DailyModuleBase
                         },
                     };
                     IsEnabledNode.Label.TextFlags = (TextFlags)33;
-                    Service.AddonController.AttachNode(IsEnabledNode, FreeShop->RootNode);
+                    IsEnabledNode.AttachNode(FreeShop->RootNode);
                 }
 
                 if (BatchClaimContainerNode == null)
@@ -138,16 +138,16 @@ public unsafe class OptimizedFreeShop : DailyModuleBase
                         BatchClaimContainerNode.AddDummy();
                     }
                     
-                    Service.AddonController.AttachNode(BatchClaimContainerNode, FreeShop->RootNode);
+                    BatchClaimContainerNode.AttachNode(FreeShop->RootNode);
                 }
 
                 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(IsEnabledNode);
+                IsEnabledNode?.DetachNode();
                 IsEnabledNode = null;
                 
-                Service.AddonController.DetachNode(BatchClaimContainerNode);
+                BatchClaimContainerNode?.DetachNode();
                 BatchClaimContainerNode = null;
                 
                 ClickYesnoHelper?.Abort();

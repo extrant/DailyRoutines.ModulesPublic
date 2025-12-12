@@ -33,7 +33,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
     private static Dictionary<uint, int> HaterInfo = [];
     
-    private static readonly List<(uint ComponentNodeID, TextNode TextNode, NineGridNode BackgroundNode, EnemyCastProgressBarNode CastBarNode)> TextNodes = [];
+    private static readonly List<(uint ComponentNodeID, TextNode TextNode, NineGridNode BackgroundNode, ProgressBarEnemyCastNode CastBarNode)> TextNodes = [];
 
     private static string CastInfoTargetBlacklistInput = string.Empty;
 
@@ -389,7 +389,7 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
 
             };
 
-            var castBarNode = new EnemyCastProgressBarNode
+            var castBarNode = new ProgressBarEnemyCastNode
             {
                 IsVisible = true,
                 Position  = new(85, 13.7f),
@@ -400,9 +400,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
             castBarNode.ProgressNode.Position += new Vector2(7.7f, 6.5f);
             castBarNode.ProgressNode.AddColor =  new(1);
             
-            Service.AddonController.AttachNode(backgroundNode, node);
-            Service.AddonController.AttachNode(textNode,       node);
-            Service.AddonController.AttachNode(castBarNode,    node);
+            backgroundNode.AttachNode(node);
+            textNode.AttachNode(node);
+            castBarNode.AttachNode(node);
             
             TextNodes.Add(new(node->NodeId, textNode, backgroundNode, castBarNode));
         }
@@ -412,9 +412,9 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
     {
         foreach (var (_, textNode, backgroundNode, castBarNode) in TextNodes)
         {
-            Service.AddonController.DetachNode(textNode);
-            Service.AddonController.DetachNode(backgroundNode);
-            Service.AddonController.DetachNode(castBarNode);
+            textNode?.DetachNode();
+            backgroundNode?.DetachNode();
+            castBarNode?.DetachNode();
         }
         
         TextNodes.Clear();

@@ -46,7 +46,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
                 CreateOrUpdateButton(LookingForGroupDetail, TaskHelper);
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(Button);
+                Button?.DetachNode();
                 Button = null;
                 break;
         }
@@ -77,7 +77,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
                 OnClick   = () => Enqueue(taskHelper),
             };
 
-            Service.AddonController.AttachNode(Button, resNode);
+            Button.AttachNode(resNode);
         }
         
         resNode->SetPositionFloat(35, 56);
@@ -145,8 +145,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
     {
         DService.AddonLifecycle.UnregisterListener(OnAddon);
         DService.AddonLifecycle.UnregisterListener(OnAddonYesno);
-        
-        Service.AddonController.DetachNode(Button);
-        Button = null;
+
+        OnAddon(AddonEvent.PreFinalize, null);
     }
 }

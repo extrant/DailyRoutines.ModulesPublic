@@ -5,7 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
+using KamiToolKit;
 using KamiToolKit.Classes;
 using KamiToolKit.Nodes;
 using Action = Lumina.Excel.Sheets.Action;
@@ -79,8 +79,6 @@ public unsafe class AutoTenChiJin : DailyModuleBase
             InternalName          = "DRNinJutsuActionsPreview",
             Title                 = LuminaWrapper.GetActionName(2260),
             Size                  = new(430f, 110f),
-            Position              = new(800f, 350f),
-            NativeController      = Service.AddonController,
             RememberClosePosition = true
         };
 
@@ -299,7 +297,7 @@ public unsafe class AutoTenChiJin : DailyModuleBase
                 flexGrid.AddDummy();
             }
             
-            AttachNode(flexGrid);
+            flexGrid.AttachNode(this);
         }
     }
 

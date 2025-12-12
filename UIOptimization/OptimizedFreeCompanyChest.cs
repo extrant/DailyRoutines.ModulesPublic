@@ -125,7 +125,7 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                                                        .Build()
                                                        .Encode(),
                     };
-                    Service.AddonController.AttachNode(FastMoveNode, FreeCompanyChest->GetNodeById(9));
+                    FastMoveNode.AttachNode(FreeCompanyChest->GetNodeById(9));
                 }
                 FastMoveNode.IsChecked = ModuleConfig.FastMoveItem;
                 FastMoveNode.IsVisible = FreeCompanyChest->AtkValues[1].UInt == 0;
@@ -172,7 +172,7 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                                                        .Build()
                                                        .Encode(),
                     };
-                    Service.AddonController.AttachNode(DefaultPageNode, FreeCompanyChest->GetNodeById(9));
+                    DefaultPageNode.AttachNode(FreeCompanyChest->GetNodeById(9));
                 }
                 
                 var gilRadioButton = FreeCompanyChest->GetNodeById(16);
@@ -223,10 +223,10 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
                         AlignmentType    = AlignmentType.Right,
                     };
                     
-                    Service.AddonController.AttachNode(GilIconNode,            ComponentNode);
-                    Service.AddonController.AttachNode(GilItemsValueNode,      ComponentNode);
-                    Service.AddonController.AttachNode(GilItemsValueCountNode, ComponentNode);
-                    Service.AddonController.AttachNode(ComponentNode,          FreeCompanyChest->GetNodeById(9));
+                    GilIconNode.AttachNode(ComponentNode);
+                    GilItemsValueNode.AttachNode(ComponentNode);
+                    GilItemsValueCountNode.AttachNode(ComponentNode);
+                    ComponentNode.AttachNode(FreeCompanyChest->GetNodeById(9));
                 }
 
                 if (Throttler.Throttle("OptimizedFreeCompanyChest-OnUpdateGilItemsValue", 100))
@@ -317,22 +317,22 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
 
     private static void ClearNodes()
     {
-        Service.AddonController.DetachNode(FastMoveNode);
+        FastMoveNode?.DetachNode();
         FastMoveNode = null;
         
-        Service.AddonController.DetachNode(DefaultPageNode);
+        DefaultPageNode?.DetachNode();
         DefaultPageNode = null;
         
-        Service.AddonController.DetachNode(ComponentNode);
+        ComponentNode?.DetachNode();
         ComponentNode = null;
         
-        Service.AddonController.DetachNode(GilIconNode);
+        GilIconNode?.DetachNode();
         GilIconNode = null;
         
-        Service.AddonController.DetachNode(GilItemsValueCountNode);
+        GilItemsValueCountNode?.DetachNode();
         GilItemsValueCountNode = null;
         
-        Service.AddonController.DetachNode(GilItemsValueNode);
+        GilItemsValueNode?.DetachNode();
         GilItemsValueNode = null;
     }
     

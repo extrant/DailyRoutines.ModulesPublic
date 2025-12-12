@@ -17,10 +17,11 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         Category    = ModuleCategories.UIOperation,
     };
 
-    private static Config             ModuleConfig = null!;
-    private static HorizontalListNode LayoutNode;
-    private static CheckboxNode       CheckboxNode;
-    private static TextButtonNode     ButtonNode;
+    private static Config ModuleConfig = null!;
+    
+    private static HorizontalListNode? LayoutNode;
+    private static CheckboxNode?       CheckboxNode;
+    private static TextButtonNode?     ButtonNode;
 
     protected override void Init()
     {
@@ -72,7 +73,7 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
                         Alignment = HorizontalListAnchor.Right
                     };
                     LayoutNode.AddNode(ButtonNode, CheckboxNode);
-                    Service.AddonController.AttachNode(LayoutNode, SalvageItemSelector->RootNode);
+                    LayoutNode.AttachNode(SalvageItemSelector->RootNode);
                 }
 
                 if (Throttler.Throttle("AutoDesynthesizeItems-PostDraw"))
@@ -92,11 +93,13 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
                 break;
             
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(CheckboxNode);
+                CheckboxNode?.DetachNode();
                 CheckboxNode = null;
-                Service.AddonController.DetachNode(ButtonNode);
+                
+                ButtonNode?.DetachNode();
                 ButtonNode = null;
-                Service.AddonController.DetachNode(LayoutNode);
+                
+                LayoutNode?.DetachNode();
                 LayoutNode = null;
                 
                 TaskHelper.Abort();

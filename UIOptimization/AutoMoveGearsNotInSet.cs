@@ -91,11 +91,11 @@ public class AutoMoveGearsNotInSet : DailyModuleBase
                     backgroundNode.LeftOffset         = 0;
                     backgroundNode.RightOffset        = 0f;
                     
-                    Service.AddonController.AttachNode(Button, ArmouryBoard->RootNode);
+                    Button.AttachNode(ArmouryBoard->RootNode);
                 }
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(Button);
+                Button?.DetachNode();
                 Button = null;
                 break;
         }

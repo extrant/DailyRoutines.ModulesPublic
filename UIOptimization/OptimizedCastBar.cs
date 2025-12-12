@@ -252,10 +252,10 @@ public unsafe class OptimizedCastBar : DailyModuleBase
         switch (type)
         {
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(SlideMarkerZoneNode);
+                SlideMarkerZoneNode?.DetachNode();
                 SlideMarkerZoneNode = null;
 
-                Service.AddonController.DetachNode(SlideMarkerLineNode);
+                SlideMarkerLineNode?.DetachNode();
                 SlideMarkerLineNode = null;
 
                 ModuleConfig = new();
@@ -300,7 +300,7 @@ public unsafe class OptimizedCastBar : DailyModuleBase
                                 Offsets            = new(12)
                             };
 
-                            Service.AddonController.AttachNode(SlideMarkerZoneNode, progressBarNode->ParentNode);
+                            SlideMarkerZoneNode.AttachNode(progressBarNode->ParentNode);
                         }
 
                         SlideMarkerZoneNode.IsVisible = true;
@@ -325,7 +325,7 @@ public unsafe class OptimizedCastBar : DailyModuleBase
                                 NodeFlags          = NodeFlags.AnchorTop | NodeFlags.AnchorLeft,
                             };
 
-                            Service.AddonController.AttachNode(SlideMarkerLineNode, progressBarNode->ParentNode);
+                            SlideMarkerLineNode.AttachNode(progressBarNode->ParentNode);
                         }
 
                         SlideMarkerLineNode.IsVisible = true;

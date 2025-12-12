@@ -20,10 +20,10 @@ public unsafe class AutoSellCards : DailyModuleBase
         ModulesPrerequisite = ["InstantLeaveDuty", "ContentFinderCommand"]
     };
 
-    private static HorizontalListNode LayoutNode;
-    private static TextNode           TitleNode;
-    private static TextButtonNode     StartButton;
-    private static TextButtonNode     StopButton;
+    private static HorizontalListNode? LayoutNode;
+    private static TextNode?           TitleNode;
+    private static TextButtonNode?     StartButton;
+    private static TextButtonNode?     StopButton;
     
     private const string Command = "scards";
 
@@ -69,14 +69,14 @@ public unsafe class AutoSellCards : DailyModuleBase
                         Position         = new(15, 465),
                         SeString         = Info.Title
                     };
-                    Service.AddonController.AttachNode(TitleNode, TripleTriadCoinExchange->RootNode);
+                    TitleNode.AttachNode(TripleTriadCoinExchange->RootNode);
                     
                     LayoutNode = new HorizontalListNode
                     {
                         IsVisible = true,
                         Position  = new(15, 495)
                     };
-                    Service.AddonController.AttachNode(LayoutNode, TripleTriadCoinExchange->RootNode);
+                    LayoutNode.AttachNode(TripleTriadCoinExchange->RootNode);
 
                     StartButton = new()
                     {
@@ -126,16 +126,16 @@ public unsafe class AutoSellCards : DailyModuleBase
                 
                 break;
             case AddonEvent.PreFinalize:
-                Service.AddonController.DetachNode(LayoutNode);
+                LayoutNode?.DetachNode();
                 LayoutNode = null;
                 
-                Service.AddonController.DetachNode(StartButton);
+                StartButton?.DetachNode();
                 StartButton = null;
                 
-                Service.AddonController.DetachNode(StopButton);
+                StopButton?.DetachNode();
                 StopButton = null;
                 
-                Service.AddonController.DetachNode(TitleNode);
+                TitleNode?.DetachNode();
                 TitleNode = null;
                 
                 TaskHelper?.Abort();

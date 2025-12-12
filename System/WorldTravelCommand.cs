@@ -16,11 +16,11 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Addon;
+using KamiToolKit;
 using KamiToolKit.Classes;
 using KamiToolKit.Nodes;
-using KamiToolKit.System;
 using Lumina.Excel.Sheets;
+using AgentWorldTravel = OmenTools.Infos.AgentWorldTravel;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -85,12 +85,11 @@ public class WorldTravelCommand : DailyModuleBase
 
         Addon ??= new(TaskHelper)
         {
-            InternalName     = "DRWorldTravelCommand",
-            Title            = GameState.IsCN ? $"Daily Routines {Info.Title}" : LuminaWrapper.GetAddonText(12510),
-            Size             = new(GameState.IsCN ? 710f : 180f, 480f),
-            Position         = ModuleConfig.AddonPosition,
-            NativeController = Service.AddonController,
+            InternalName = "DRWorldTravelCommand",
+            Title        = GameState.IsCN ? $"Daily Routines {Info.Title}" : LuminaWrapper.GetAddonText(12510),
+            Size         = new(GameState.IsCN ? 710f : 180f, 480f),
         };
+        Addon.SetWindowPosition(ModuleConfig.AddonPosition);
         
         GameState.Login += OnLogin;
         OnLogin();
@@ -644,10 +643,10 @@ public class WorldTravelCommand : DailyModuleBase
                         TextFlags        = TextFlags.Bold | TextFlags.Edge,
                         TextOutlineColor = ColorHelper.GetColor(7)
                     };
-                    AttachNode(pluginHelpNode);
+                    pluginHelpNode.AttachNode(this);
                 }
             }
-            AttachNode(TeleportWidget);
+            TeleportWidget.AttachNode(this);
             
             UpdateWaitTimeInfo();
         }
@@ -693,7 +692,7 @@ public class WorldTravelCommand : DailyModuleBase
         {
             if (addon != null && this != null)
             {
-                ModuleConfig.AddonPosition = Position;
+                ModuleConfig.AddonPosition = RootNode.Position;
                 ModuleConfig.Save(ModuleManager.GetModule<WorldTravelCommand>());
             }
             

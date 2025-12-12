@@ -8,14 +8,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Helpers;
-using DailyRoutines.Managers;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.PartyFinder.Types;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -452,10 +449,10 @@ public class CrossDCPartyFinder : DailyModuleBase
     
     private static void ClearNodes()
     {
-        Service.AddonController.DetachNode(LayoutNode);
+        LayoutNode?.DetachNode();
         LayoutNode = null;
                 
-        CheckboxNodes.Values.ForEach(x => Service.AddonController.DetachNode(x));
+        CheckboxNodes.Values.ForEach(x => x?.DetachNode());
         CheckboxNodes.Clear();
     }
 
@@ -515,7 +512,7 @@ public class CrossDCPartyFinder : DailyModuleBase
                     LayoutNode.AddNode(node);
                 }
             
-                Service.AddonController.AttachNode(LayoutNode, LookingForGroup->GetComponentNodeById(51));
+                LayoutNode.AttachNode(LookingForGroup->GetComponentNodeById(51));
                 break;
             case AddonEvent.PreFinalize:
                 Overlay.IsOpen = false;
