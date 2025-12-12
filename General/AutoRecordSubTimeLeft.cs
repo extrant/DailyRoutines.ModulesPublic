@@ -155,8 +155,10 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
         if (info == null) return;
 
-        var contentID = agent->LobbyData.ContentId;
+        var contentID = agent->HoveredCharacterContentId;
         if (contentID == 0) return;
+
+        if (agent->WorldIndex == -1) return;
 
         var timeInfo = GetLeftTimeSecond(*info);
         ModuleConfig.Infos[contentID]
@@ -188,6 +190,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
 
     private unsafe void UpdateSubInfo(AgentLobby* agent)
     {
+        TaskHelper.Abort();
         TaskHelper.Enqueue(() =>
         {
             try
@@ -195,8 +198,10 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
                 var info = agent->LobbyData.LobbyUIClient.SubscriptionInfo;
                 if (info == null) return false;
 
-                var contentID = agent->LobbyData.ContentId;
+                var contentID = agent->HoveredCharacterContentId;
                 if (contentID == 0) return false;
+
+                if (agent->WorldIndex == -1) return false;
 
                 var timeInfo = GetLeftTimeSecond(*info);
                 ModuleConfig.Infos[contentID]
