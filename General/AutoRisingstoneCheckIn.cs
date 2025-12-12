@@ -42,7 +42,7 @@ public class AutoRisingstoneCheckIn : DailyModuleBase
         }
         catch
         {
-            // ignored
+            RisingstonePort = null;
         }
 
         TaskHelper ??= new() { TimeLimitMS = 30_000 };
@@ -106,6 +106,9 @@ public class AutoRisingstoneCheckIn : DailyModuleBase
 
     private void OnFrameworkUpdate(IFramework framework)
     {
+        if (RisingstonePort is null or 0)
+            return;
+        
         var now        = DateTime.Now;
         var today      = now.Date;
         var lastSignIn = ModuleConfig.LastSignInTime?.Date;
@@ -134,7 +137,7 @@ public class AutoRisingstoneCheckIn : DailyModuleBase
 
     private static async Task<CheckInResult> ExecuteCheckInViaXL(int? risingstonePort)
     {
-        if (!risingstonePort.HasValue)
+        if (risingstonePort is null or 0)
             return new() { Success = false, Message = "连接 XIVLauncherCN 石之家服务失败" };
 
         try
