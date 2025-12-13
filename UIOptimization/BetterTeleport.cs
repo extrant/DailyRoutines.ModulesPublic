@@ -317,7 +317,7 @@ public unsafe class BetterTeleport : DailyModuleBase
         var displayName = hasRemark ? remark : aetheryte.Name;
         var cost        = aetheryte.Cost;
 
-        using var id = ImRaii.PushId($"{aetheryte.RowID}");
+        using var id = ImRaii.PushId($"{aetheryte}");
 
         var startPos   = ImGui.GetCursorScreenPos();
         var width      = ImGui.GetContentRegionAvail().X;
@@ -325,7 +325,7 @@ public unsafe class BetterTeleport : DailyModuleBase
         var padding    = ImGui.GetStyle().ItemSpacing.X;
         var itemHeight = (lineHeight * 2.2f) + padding;
 
-        if (ImGui.InvisibleButton("###ItemBtn", new Vector2(width, itemHeight)))
+        if (ImGui.InvisibleButton("##ItemBtn", new Vector2(width, itemHeight)))
             HandleTeleport(aetheryte);
         var isHovered = ImGui.IsItemHovered();
         var isActive  = ImGui.IsItemActive();
@@ -583,9 +583,8 @@ public unsafe class BetterTeleport : DailyModuleBase
         
         ImGui.Image(warp.Handle, imageSize);
 
-        if (isPinned                                    &&
-            ImGui.IsItemClicked(ImGuiMouseButton.Right) &&
-            (GameState.TerritoryType != aetheryte.ZoneID || IsWithPermission()))
+        if (isPinned &&
+            ImGui.IsItemClicked(ImGuiMouseButton.Right))
         {
             var mousePos   = ImGui.GetMousePos();
             var relPos     = mousePos - orig;
@@ -608,17 +607,31 @@ public unsafe class BetterTeleport : DailyModuleBase
             {
                 if (ImGui.MenuItem(GetLoc("BetterTeleport-TeleportToThisPosition")))
                 {
-                    TaskHelper.Enqueue(() => MovementManager.TPSmart_BetweenZone(ContextMenuTargetZone, ContextMenuTargetPos));
-                    TaskHelper.Enqueue(() =>
+                    if (GameState.TerritoryType != ContextMenuTargetZone || IsWithPermission())
                     {
-                        if (MovementManager.IsManagerBusy || DService.ObjectTable.LocalPlayer == null)
-                            return false;
+                        TaskHelper.Enqueue(() => MovementManager.TPSmart_BetweenZone(ContextMenuTargetZone, ContextMenuTargetPos));
+                        TaskHelper.Enqueue(() =>
+                        {
+                            if (MovementManager.IsManagerBusy || DService.ObjectTable.LocalPlayer == null)
+                                return false;
 
-                        MovementManager.TPGround();
-                        if (BetweenAreas || DService.Condition[ConditionFlag.Jumping]) return false;
-                        
-                        return true;
-                    });
+                            MovementManager.TPGround();
+                            if (BetweenAreas || DService.Condition[ConditionFlag.Jumping]) return false;
+
+                            return true;
+                        });
+                    }
+                    else
+                    {
+                        TaskHelper.Enqueue(() => MovementManager.TeleportNearestAetheryte(ContextMenuTargetPos, ContextMenuTargetZone));
+                        TaskHelper.Enqueue(() => BetweenAreas && DService.ObjectTable.LocalPlayer != null);
+                        TaskHelper.Enqueue(() =>
+                        {
+                            if (!BetweenAreas) return true;
+                            MovementManager.TPSmart_InZone(ContextMenuTargetPos, false);
+                            return false;
+                        });
+                    }
                     
                     ImGui.CloseCurrentPopup();
                 }
@@ -1117,8 +1130,8 @@ public unsafe class BetterTeleport : DailyModuleBase
         HandleTeleport(result);
     }
     
-    private static bool IsWithPermission() => false
-        /*!(GameState.IsCN || GameState.IsTC) || AuthState.IsPremium || !MovementManager.SpeedDetectionAreas.Contains(GameState.TerritoryType)*/;
+    private static bool IsWithPermission() => 
+        !(GameState.IsCN || GameState.IsTC) || AuthState.IsPremium || !MovementManager.SpeedDetectionAreas.Contains(GameState.TerritoryType);
 
     protected override void Uninit()
     {
