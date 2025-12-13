@@ -739,7 +739,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
             CountNode.TextOutlineColor = ColorHelper.GetColor((uint)(itemCount > 20 ? 28 : 17));
         }
 
-        ~ItemDisplayNode()
+        protected override void Dispose(bool disposing, bool isNativeDestructor)
         {
             IconNode?.DetachNode();
             IconNode = null;
@@ -749,6 +749,8 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
             
             CountNode?.DetachNode();
             CountNode = null;
+            
+            base.Dispose(disposing, isNativeDestructor);
         }
     }
 
