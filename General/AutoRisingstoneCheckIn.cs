@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Net.Http;
 using System.Text;
@@ -324,3 +325,4 @@ public class AutoRisingstoneCheckIn : DailyModuleBase
 
     #endregion
 }
+*/
