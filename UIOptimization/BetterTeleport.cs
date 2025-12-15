@@ -806,8 +806,12 @@ public unsafe class BetterTeleport : DailyModuleBase
         var isPosDefault = aetherytePos.Y == 0;
 
         NotificationInfo(GetLoc("BetterTeleport-Notification", aetheryte.Name));
+        
         SearchWord = string.Empty;
         SearchResult.Clear();
+        PinnedAetheryte  = null;
+        HoveredAetheryte = null;
+        Overlay.IsOpen   = false;
 
         switch (aetheryte.Group)
         {
