@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Managers;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
-namespace DailyRoutines.ModulesPublic.Assist;
+namespace DailyRoutines.ModulesPublic;
 
 public class SastashaHelper : DailyModuleBase
 {
