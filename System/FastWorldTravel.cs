@@ -28,8 +28,9 @@ public class FastWorldTravel : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title            = GetLoc("FastWorldTravelTitle"),
-        Description      = GetLoc("FastWorldTravelDescription", Command),
+        Title = GetLoc("FastWorldTravelTitle"),
+        Description = GetLoc("FastWorldTravelDescription", Command) +
+                      (!GameState.IsCN ? string.Empty : "\n支持快捷超域旅行并实时显示各服务器超域旅行拥挤度 [国服特供]"),
         Category         = ModuleCategories.System,
         ModulesRecommend = ["InstantReturn", "InstantTeleport"]
     };
