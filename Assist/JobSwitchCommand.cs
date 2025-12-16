@@ -12,7 +12,7 @@ public class JobSwitchCommand : DailyModuleBase
     {
         Title       = GetLoc("JobSwitchCommandTitle"),
         Description = GetLoc("JobSwitchCommandDescription", Command),
-        Category    = ModuleCategories.System
+        Category    = ModuleCategories.Assist
     };
 
     private const string Command = "job";

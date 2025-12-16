@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Numerics;
 using DailyRoutines.Abstracts;
-using DailyRoutines.Helpers;
-using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -18,7 +16,7 @@ public class FieldEntryCommand : DailyModuleBase
     {
         Title               = GetLoc("FieldEntryCommandTitle"),
         Description         = GetLoc("FieldEntryCommandDescription", Command),
-        Category            = ModuleCategories.General,
+        Category            = ModuleCategories.Assist,
         ModulesPrerequisite = ["AutoTalkSkip"]
     };
 
