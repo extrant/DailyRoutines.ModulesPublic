@@ -31,7 +31,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
         Title               = GetLoc("FastObjectInteractTitle"),
         Description         = GetLoc("FastObjectInteractDescription"),
         Category            = ModuleCategories.UIOptimization,
-        ModulesPrerequisite = ["WorldTravelCommand", "InstanceZoneChangeCommand"]
+        ModulesPrerequisite = ["WorldTravelCommand", "FastInstanceZoneChange"]
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
