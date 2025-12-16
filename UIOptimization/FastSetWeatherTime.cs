@@ -45,8 +45,8 @@ public unsafe class FastSetWeatherTime : DailyModuleBase
     private static readonly MemoryPatchWithPointer<uint> RenderTimePatch = 
         new("48 89 5C 24 ?? 57 48 83 EC 30 4C 8B 15", [0x49, 0xC7, 0xC1, 0x00, 0x00, 0x00, 0x00], 0x19, 3);
 
-    private static readonly CompSig                        PlayWeatherSoundSig = new("E8 ?? ?? ?? ?? 4C 8B D0 48 85 C0 0F 84 ?? ?? ?? ?? 4C 8B 40 10");
-    private delegate        void*                          PlayWeatherSoundDelegate(void* manager, byte weatherID);
+    private static readonly CompSig                        PlayWeatherSoundSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC ?? 45 33 F6 0F 29 74 24");
+    private delegate        void*                          PlayWeatherSoundDelegate(void* manager, byte weatherID, void* a3, void* a4);
     private static          Hook<PlayWeatherSoundDelegate> PlayWeatherSoundHook;
     
     private static readonly CompSig                          UpdateBgmSituationSig = new("48 89 5C 24 ?? 57 48 83 EC 20 B8 ?? ?? ?? ?? 49 8B F9 41 8B D8");
@@ -139,12 +139,12 @@ public unsafe class FastSetWeatherTime : DailyModuleBase
 
     #region 事件
     
-    private static void* PlayWeatherSoundDetour(void* manager, byte weatherID)
+    private static void* PlayWeatherSoundDetour(void* manager, byte weatherID, void* a3, void* a4)
     {
         if (IsWeatherCustom())
             weatherID = GetDisplayWeather();
 
-        return PlayWeatherSoundHook.Original(manager, weatherID);
+        return PlayWeatherSoundHook.Original(manager, weatherID, a3, a4);
     }
 
     private static void* UpdateBgmSituationDetour(void* manager, ushort bgmSituationID, int column, void* a4, void* a5)
