@@ -27,7 +27,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         Title               = GetLoc("OptimizedFriendListTitle"),
         Description         = GetLoc("OptimizedFriendListDescription"),
         Category            = ModuleCategories.UIOptimization,
-        ModulesPrerequisite = ["WorldTravelCommand"]
+        ModulesPrerequisite = ["FastWorldTravel"]
     };
     
     private static          ModifyInfoMenuItem          ModifyInfoItem    = null!;
@@ -902,7 +902,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
 
         public override bool IsDisplay(IMenuOpenedArgs args)
         {
-            if ((ModuleManager.IsModuleEnabled("WorldTravelCommand") ?? false) &&
+            if ((ModuleManager.IsModuleEnabled("FastWorldTravel") ?? false) &&
                 args is { AddonName: "FriendList", Target: MenuTargetDefault { TargetCharacter.CurrentWorld.RowId: var targetWorldID } } &&
                 targetWorldID != GameState.CurrentWorld)
             {
