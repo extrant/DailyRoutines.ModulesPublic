@@ -22,6 +22,8 @@ public unsafe class OptimizedFreeShop : DailyModuleBase
         Category            = ModuleCategories.UIOptimization,
         ModulesPrerequisite = ["AutoClaimItemIgnoringMismatchJobAndLevel"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly CompSig ReceiveEventSig =
         new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC 50 4C 8B BC 24 ?? ?? ?? ??");

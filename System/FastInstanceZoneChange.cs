@@ -23,7 +23,7 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
         ModulesRecommend = ["InstantTeleport"]
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private const string Command = "insc";
 

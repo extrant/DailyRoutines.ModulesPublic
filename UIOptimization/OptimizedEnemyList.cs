@@ -24,6 +24,8 @@ public unsafe class OptimizedEnemyList : DailyModuleBase
         Description = GetLoc("OptimizedEnemyListDescription"),
         Category    = ModuleCategories.UIOptimization
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly CompSig                                AgentHudUpdateEnemyListSig = new("40 55 57 41 56 48 81 EC ?? ?? ?? ?? 4C 8B F1");
     private delegate        void                                   AgentHudUpdateEnemyListDelegate(AgentHUD* agent);

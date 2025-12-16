@@ -10,6 +10,7 @@ using KamiToolKit.Nodes;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 调回原版浅蓝界面修改未完全覆盖问题
 public unsafe class AutoSellCards : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -19,6 +20,8 @@ public unsafe class AutoSellCards : DailyModuleBase
         Category            = ModuleCategories.GoldSaucer,
         ModulesPrerequisite = ["InstantLeaveDuty", "ContentFinderCommand"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static HorizontalListNode? LayoutNode;
     private static TextNode?           TitleNode;

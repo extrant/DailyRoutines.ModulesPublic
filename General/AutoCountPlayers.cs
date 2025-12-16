@@ -28,6 +28,8 @@ public unsafe class AutoCountPlayers : DailyModuleBase
         Category    = ModuleCategories.General,
     };
     
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     private const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar |
                                                  ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoFocusOnAppearing |
                                                  ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize |

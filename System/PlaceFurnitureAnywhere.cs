@@ -15,6 +15,8 @@ public unsafe class PlaceFurnitureAnywhere : DailyModuleBase
         Description = GetLoc("PlaceFurnitureAnywhereDescription"),
         Category    = ModuleCategories.System
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static MemoryPatch? Patch0;
     private static MemoryPatch? Patch1;

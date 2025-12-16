@@ -17,20 +17,23 @@ public class PartyFinderFilter : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = GetLoc("PartyFinderFilterTitle"),
+        Title       = GetLoc("PartyFinderFilterTitle"),
         Description = GetLoc("PartyFinderFilterDescription"),
-        Category = ModuleCategories.UIOptimization,
-        Author = ["status102"]
+        Category    = ModuleCategories.UIOptimization,
+        Author      = ["status102"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static Config ModuleConfig = null!;
 
-    private static int batchIndex;
-    private static bool isSecret;
-    private static bool isRaid;
-    private static readonly HashSet<(ushort, string)> descriptionSet = [];
+    private static int  BatchIndex;
+    private static bool IsSecret;
+    private static bool IsRaid;
     private static bool ManualMode;
-
+    
+    private static readonly HashSet<(ushort, string)> DescriptionSet = [];
+    
     protected override unsafe void Init()
     {
         ModuleConfig = LoadConfig<Config>() ?? new Config();
@@ -175,15 +178,15 @@ public class PartyFinderFilter : DailyModuleBase
 
     private static void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
     {
-        if (batchIndex != args.BatchNumber)
+        if (BatchIndex != args.BatchNumber)
         {
-            isSecret = listing.SearchArea.HasFlag(SearchAreaFlags.Private);
-            isRaid = listing.Category == DutyCategory.HighEndDuty;
-            batchIndex = args.BatchNumber;
-            descriptionSet.Clear();
+            IsSecret = listing.SearchArea.HasFlag(SearchAreaFlags.Private);
+            IsRaid = listing.Category == DutyCategory.HighEndDuty;
+            BatchIndex = args.BatchNumber;
+            DescriptionSet.Clear();
         }
 
-        if (isSecret)
+        if (IsSecret)
             return;
 
         args.Visible &= FilterBySameDescription(listing);
@@ -201,7 +204,7 @@ public class PartyFinderFilter : DailyModuleBase
         if (string.IsNullOrWhiteSpace(description))
             return true;
 
-        return descriptionSet.Add((listing.RawDuty, description));
+        return DescriptionSet.Add((listing.RawDuty, description));
     }
 
     private static bool FilterByRegexList(IPartyFinderListing listing)
@@ -221,7 +224,7 @@ public class PartyFinderFilter : DailyModuleBase
     private static bool FilterByHighEndSameJob(IPartyFinderListing listing)
     {
         if (!ModuleConfig.HighEndFilterSameJob) return true;
-        if (!isRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
+        if (!IsRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var job = localPlayer.ClassJob.Value;
         if (job.Unknown11 == 0)
@@ -239,7 +242,7 @@ public class PartyFinderFilter : DailyModuleBase
     private static bool FilterByHighEndSameRole(IPartyFinderListing listing)
     {
         if (!ModuleConfig.HighEndFilterRoleCount) return true;
-        if (!isRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
+        if (!IsRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var job = localPlayer.ClassJob.Value;
 

@@ -14,6 +14,8 @@ public unsafe class CompanyCreditExchangeMore : DailyModuleBase
         Description = GetLoc("CompanyCreditExchangeMoreDescription"),
         Category    = ModuleCategories.System,
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly CompSig AddonFreeCompanyCreditShopRefreshSig = new("41 56 41 57 48 83 EC ?? 0F B6 81 ?? ?? ?? ?? 4D 8B F8");
     [return: MarshalAs(UnmanagedType.U1)]

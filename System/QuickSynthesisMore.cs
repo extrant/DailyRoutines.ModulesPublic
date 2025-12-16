@@ -12,10 +12,10 @@ public unsafe class QuickSynthesisMore : DailyModuleBase
     {
         Title       = GetLoc("QuickSynthesisMoreTitle"),
         Description = GetLoc("QuickSynthesisMoreDescription"),
-        Category    = ModuleCategories.UIOptimization,
+        Category    = ModuleCategories.System,
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
 
     private static readonly CompSig SimpleCraftAmountJudgeSig = new("0F 87 ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0");
     // ja → nop

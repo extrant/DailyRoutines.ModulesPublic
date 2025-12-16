@@ -14,7 +14,7 @@ public class ContentFinderCommand : DailyModuleBase
     public override ModuleInfo Info { get; } = new()
     {
         Title       = GetLoc("ContentFinderCommandTitle"),
-        Description = GetLoc("ContentFinderCommandDescription"),
+        Description = GetLoc("ContentFinderCommandDescription", Command),
         Category    = ModuleCategories.Assist
     };
 

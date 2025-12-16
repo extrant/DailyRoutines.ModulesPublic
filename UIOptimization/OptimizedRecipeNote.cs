@@ -33,6 +33,8 @@ public class OptimizedRecipeNote : DailyModuleBase
         Category            = ModuleCategories.UIOptimization,
         ModulesPrerequisite = ["BetterMarketBoard", "BetterTeleport"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly Dictionary<uint, CaculationResult> CaculationResults = [];
 

@@ -19,6 +19,8 @@ public unsafe class FastContentsFinderRegister : DailyModuleBase
         Category            = ModuleCategories.UIOptimization,
         ModulesPrerequisite = ["ContentFinderCommand"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.NoDecoration    | ImGuiWindowFlags.AlwaysAutoResize   |
                                                  ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove             |

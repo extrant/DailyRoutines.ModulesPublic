@@ -19,6 +19,8 @@ public class AutoMoveGearsNotInSet : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
 
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     private const string Command = "retrievegears";
 
     private static readonly InventoryType[] ArmoryInventories =

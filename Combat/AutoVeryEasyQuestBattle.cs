@@ -11,7 +11,7 @@ public class AutoVeryEasyQuestBattle : DailyModuleBase
         Category    = ModuleCategories.Combat
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
 
     protected override void Init() => 
         ExecuteCommandManager.Register(OnPreUseCommand);

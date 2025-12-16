@@ -17,6 +17,8 @@ public class SastashaHelper : DailyModuleBase
         Description = GetLoc("SastashaHelperDescription"),
         Category    = ModuleCategories.Assist
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     // Book Data ID - Coral Data ID
     private static readonly Dictionary<uint, (uint CoralDataID, ushort UIColor, ObjectHighlightColor HighlightColor)> BookToCoral = new()

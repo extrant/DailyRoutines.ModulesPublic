@@ -27,6 +27,8 @@ public class BetterFPSLimitation : DailyModuleBase
         Description = GetLoc("BetterFPSLimitationDescription"),
         Category    = ModuleCategories.System
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private const string Command = "fps";
 
@@ -128,8 +130,9 @@ public class BetterFPSLimitation : DailyModuleBase
 
     private static unsafe void Update()
     {
-        *(int*)((byte*)Device.Instance()   + 0xA8) = ModuleConfig.IsEnabled ? 1 : 0;
-        *(short*)((byte*)Device.Instance() + 0xAE) = ModuleConfig.Limitation;
+        // TODO: 需要检查偏移量
+        *(int*)((byte*)Device.Instance() + 0xA8) = ModuleConfig.IsEnabled ? 1 : 0;
+        Device.Instance()->FrameRateLimit        = ModuleConfig.Limitation;
     }
     
     private static void HandleDtrEntry(bool isAdd)

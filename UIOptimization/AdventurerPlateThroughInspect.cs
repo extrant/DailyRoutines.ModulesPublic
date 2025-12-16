@@ -1,5 +1,4 @@
 ﻿using DailyRoutines.Abstracts;
-using DailyRoutines.Infos;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -16,6 +15,8 @@ public unsafe class AdventurerPlateThroughInspect : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
 
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     private static IconButtonNode? OpenButton;
 
     protected override void Init()

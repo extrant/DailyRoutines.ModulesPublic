@@ -20,6 +20,8 @@ public unsafe class OptimizedDutyFinderSetting : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         Author      = ["Mizami", "Cyf5119"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private delegate void SetContentsFinderSettingsInitDelegate(byte* data, UIModule* module);
     private static readonly SetContentsFinderSettingsInitDelegate SetContentsFinderSettingsInit =

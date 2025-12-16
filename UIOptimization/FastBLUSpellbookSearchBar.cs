@@ -15,6 +15,8 @@ public unsafe class FastBLUSpellbookSearchBar : DailyModuleBase
         Description = GetLoc("FastBLUSpellbookSearchBarDescription"),
         Category    = ModuleCategories.UIOptimization,
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static string SearchBarInput = string.Empty;
     

@@ -32,6 +32,8 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         Category    = ModuleCategories.Combat,
         Author      = ["HaKu"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     // storage
     private static ModuleStorage? ModuleConfig;

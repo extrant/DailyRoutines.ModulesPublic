@@ -16,6 +16,8 @@ public unsafe class FastJoinAnotherPartyRecruitment : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
     
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     private static TextButtonNode? Button;
 
     protected override void Init()

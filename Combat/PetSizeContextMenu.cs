@@ -14,6 +14,8 @@ public unsafe class PetSizeContextMenu : DailyModuleBase
         Description = GetLoc("PetSizeContextMenuDescription"),
         Category    = ModuleCategories.Combat,
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly UpperContainerItem ContainerItem = new();
 

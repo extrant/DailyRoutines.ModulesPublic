@@ -16,7 +16,7 @@ public unsafe class QueueCombatTeleport : DailyModuleBase
     {
         Title       = GetLoc("QueueCombatTeleportTitle"),
         Description = GetLoc("QueueCombatTeleportDescription"),
-        Category    = ModuleCategories.UIOptimization,
+        Category    = ModuleCategories.System,
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };

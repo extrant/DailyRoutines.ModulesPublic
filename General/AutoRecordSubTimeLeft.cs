@@ -32,7 +32,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         Author      = ["Due"]
     };
 
-    public override ModulePermission Permission { get; } = new() { CNOnly = true };
+    public override ModulePermission Permission { get; } = new() { CNOnly = true, CNDefaultEnabled = true };
 
     private static readonly CompSig AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 45 ?? ?? E9 ?? ?? ?? ?? 83 FB 03");
 

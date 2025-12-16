@@ -13,6 +13,8 @@ public unsafe class LargerColorantColoringPreviewComponent : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
     };
     
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     // 懒得恢复了, 就这样
     protected override void Init()
     {

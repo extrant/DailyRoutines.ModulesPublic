@@ -26,6 +26,8 @@ public unsafe class OptimizedFreeCompanyChest : DailyModuleBase
         Category    = ModuleCategories.UIOptimization
     };
     
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     private static readonly CompSig SendInventoryRefreshSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B DA 48 8B F1 33 D2 0F B7 FA");
     private delegate        bool                                SendInventoryRefreshDelegate(InventoryManager* instance, int inventoryType);
     private static          Hook<SendInventoryRefreshDelegate>? SendInventoryRefreshHook;

@@ -30,7 +30,7 @@ public unsafe class AutoMarkAetherCurrents : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
 
     private static bool IsEligibleForTeleporting =>
         !(GameState.IsCN || GameState.IsTC) || AuthState.IsPremium;

@@ -11,14 +11,14 @@ public partial class OccultCrescentHelper : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title           = $"{GetLoc("OccultCrescentHelperTitle")}",
-        Description     = $"{GetLoc("OccultCrescentHelperDescription")}",
+        Title           = GetLoc("OccultCrescentHelperTitle"),
+        Description     = GetLoc("OccultCrescentHelperDescription"),
         Category        = ModuleCategories.Assist,
         Author          = ["Fragile"],
         ModulesConflict = ["AutoFaceCameraDirection"]
     };
-
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static Config ModuleConfig = null!;
     

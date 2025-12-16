@@ -21,6 +21,8 @@ public unsafe class OptimizedCastBar : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
         Author      = ["Middo"]
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly HashSet<ConditionFlag> ValidFlags = [ConditionFlag.BetweenAreas, ConditionFlag.Mounted];
     

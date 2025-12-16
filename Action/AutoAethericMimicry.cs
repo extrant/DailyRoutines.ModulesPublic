@@ -18,6 +18,8 @@ public class AutoAethericMimicry : DailyModuleBase
         Description = GetLoc("AutoAethericMimicryDescription"),
         Category    = ModuleCategories.Action
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly HashSet<uint> Status = [2124, 2125, 2126];
     

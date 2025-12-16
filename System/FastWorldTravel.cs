@@ -35,7 +35,7 @@ public class FastWorldTravel : DailyModuleBase
         ModulesRecommend = ["InstantReturn", "InstantTeleport"]
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true };
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     internal const string Command = "worldtravel";
 

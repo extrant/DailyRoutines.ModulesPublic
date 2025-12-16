@@ -21,6 +21,8 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
         Description = GetLoc("OptimizedTargetInfoDescription"),
         Category    = ModuleCategories.UIOptimization,
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private delegate void SetFocusTargetByObjectIDDelegate(TargetSystem* targetSystem, GameObjectId objectID);
     private static readonly SetFocusTargetByObjectIDDelegate? SetFocusTargetByObjectID =

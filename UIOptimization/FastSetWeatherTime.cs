@@ -24,6 +24,8 @@ public unsafe class FastSetWeatherTime : DailyModuleBase
         Description = GetLoc("FastSetWeatherTimeDescription", Command),
         Category    = ModuleCategories.UIOptimization
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private const uint   MaxTime = 60 * 60 * 24;
     private const string Command = "wt";

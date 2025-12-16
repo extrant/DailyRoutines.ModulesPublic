@@ -20,6 +20,8 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         Description = GetLoc("ShopDisplayRealItemIconDescription"),
         Category    = ModuleCategories.UIOptimization
     };
+    
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static List<(uint ID, uint IconID, string Name)> CollectablesShopItemDatas = [];
 

@@ -23,6 +23,8 @@ public class OptimizedLetter : DailyModuleBase
         Category    = ModuleCategories.UIOptimization,
     };
     
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+    
     [IPCSubscriber("DailyRoutines.Modules.OptimizedFriendlist.GetRemarkByContentID", DefaultValue = "")]
     private static IPCSubscriber<ulong, string> GetRemarkByContentID;
     
