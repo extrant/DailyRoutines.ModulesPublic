@@ -650,11 +650,11 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             private MemberStatus(uint statusID, uint sourceID)
                 => (StatusID, SourceID) = (statusID, sourceID);
 
-            public static MemberStatus From(Dalamud.Game.ClientState.Statuses.Status s)
-                => new MemberStatus(
-                    s.StatusId,
-                    s.SourceId
-                );
+            public static MemberStatus From(IStatus s)
+                => new(s.StatusID, s.SourceID);
+
+            public static MemberStatus From(nint statusAddress)
+                => From(IStatus.Create(statusAddress));
 
             public static MemberStatus From(FFXIVClientStructs.FFXIV.Client.Game.Status s) =>
                 new(s.StatusId, s.SourceObject.ObjectId);
@@ -730,7 +730,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                     {
                         if (status.StatusId == 0)
                             continue;
-                        if (TryGetMitigation(member.EntityId, MemberStatus.From(status), out var mitigation) && mitigation is not null)
+                        if (TryGetMitigation(member.EntityId, MemberStatus.From(status.Address), out var mitigation) && mitigation is not null)
                             activeStatus.TryAdd(mitigation, status.RemainingTime);
                     }
 

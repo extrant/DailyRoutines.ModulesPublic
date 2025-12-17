@@ -8,6 +8,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Fates;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -103,7 +104,7 @@ public partial class OccultCrescentHelper
 
             ImGui.NewLine();
 
-            if (GameState.TerritoryIntendedUse == 61 && 
+            if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent && 
                 ImGui.CollapsingHeader($"{GetLoc("OccultCrescentHelper-CEManager-CEHistory")} ({GetIslandID()})###CEHistory"))
             {
                 using (var table = ImRaii.Table("###CEHistoryTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
@@ -287,7 +288,9 @@ public partial class OccultCrescentHelper
 
         private void OnPostReceivedCommand(ExecuteCommandFlag command, uint param1, uint param2, uint param3, uint param4)
         {
-            if (command != ExecuteCommandFlag.FateLoad || GameState.TerritoryIntendedUse != 61) return;
+            if (command                        != ExecuteCommandFlag.FateLoad ||
+                GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
+                return;
 
             OnUpdate();
         }
@@ -295,7 +298,10 @@ public partial class OccultCrescentHelper
         // CE 开始
         private static void OnPostReceivedMessage(uint logMessageID)
         {
-            if (logMessageID != 11002 || GameState.TerritoryIntendedUse != 61 || !ModuleConfig.IsEnabledNotifyCEStarts) return;
+            if (logMessageID                   != 11002                               ||
+                GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent ||
+                !ModuleConfig.IsEnabledNotifyCEStarts)
+                return;
 
             CETaskHelper.Abort();
 
@@ -312,7 +318,7 @@ public partial class OccultCrescentHelper
         
         private static void OnCommandFate(string command, string args)
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
             args = args.Trim().ToLowerInvariant();
             if (args == "abort")
@@ -330,7 +336,7 @@ public partial class OccultCrescentHelper
         
         private static void OnCommandCE(string command, string args)
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
             args = args.Trim().ToLowerInvariant();
             if (args == "abort")

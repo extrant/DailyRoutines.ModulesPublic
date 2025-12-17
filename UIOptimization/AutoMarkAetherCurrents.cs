@@ -432,9 +432,9 @@ public unsafe class AutoMarkAetherCurrents : DailyModuleBase
     {
         public static Dictionary<uint, uint> EObjDataSheet { get; } =
             LuminaGetter.Get<EObj>()
-                        .Where(x => x.Data != 0)
-                        .DistinctBy(x => x.Data)
-                        .ToDictionary(x => x.Data, x => x.RowId);
+                        .Where(x => x.Data.RowId != 0)
+                        .DistinctBy(x => x.Data.RowId)
+                        .ToDictionary(x => x.Data.RowId, x => x.RowId);
 
         public static Dictionary<uint, Vector3> LevelSheet { get; } =
             LuminaGetter.Get<Level>()

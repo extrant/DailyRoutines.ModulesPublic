@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
+using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using OmenTools.Helpers;
@@ -83,7 +84,7 @@ public partial class OccultCrescentHelper
                 ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), GetLoc("OccultCrescentHelper-TreasureManager-AutoHuntTresures"));
                 ImGuiOm.HelpMarker(GetLoc("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Help"), 20f * GlobalFontScale);
 
-                using (ImRaii.Disabled(GameState.TerritoryIntendedUse != 61))
+                using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
                 using (ImRaii.PushIndent())
                 {
                     ImGui.Text($"{GetLoc("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {QueuedGatheringList.Count}");
@@ -199,7 +200,7 @@ public partial class OccultCrescentHelper
         
         private void OnCommandTreasure(string command, string args)
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
             args = args.Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(args)) return;
@@ -310,8 +311,8 @@ public partial class OccultCrescentHelper
         
         public static void OnPreSendPacket(ref bool isPrevented, int opcode, ref byte* packet, ref ushort priority)
         {
-            if (GameState.TerritoryIntendedUse != 61 ||
-                !TreasureTaskHelper.IsBusy           ||
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent ||
+                !TreasureTaskHelper.IsBusy                                            ||
                 opcode != GamePacketOpcodes.PositionUpdateInstanceOpcode)
                 return;
             
@@ -329,7 +330,7 @@ public partial class OccultCrescentHelper
         // 绘制连接线和地图
         private static void OnPosDraw()
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
             
             // 绘制地图
             if (TreasureTaskHelper.IsBusy)
@@ -416,9 +417,9 @@ public partial class OccultCrescentHelper
         // 自动开箱
         private static void HandleAutoOpenTreasures()
         {
-            if (GameState.TerritoryIntendedUse != 61       ||
-                !ModuleConfig.IsEnabledAutoOpenTreasure    ||
-                DService.Condition[ConditionFlag.InCombat] ||
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent ||
+                !ModuleConfig.IsEnabledAutoOpenTreasure                               ||
+                DService.Condition[ConditionFlag.InCombat]                            ||
                 Treasures is not { Count: > 0 } treasures)
                 return;
 
@@ -445,7 +446,7 @@ public partial class OccultCrescentHelper
         // 更新箱子数据
         private static void RefreshTreasuresAround()
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
             
             var newTreasures = new List<TreasureData>();
             

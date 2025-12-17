@@ -1,4 +1,4 @@
-﻿<Project Sdk="Dalamud.CN.NET.Sdk/13.1.0">
+﻿<Project Sdk="Dalamud.CN.NET.Sdk/14.0.0">
     
     <PropertyGroup>
         <Authors>AtmoOmen</Authors>
@@ -11,6 +11,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
+        <UseWPF>true</UseWPF>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -34,7 +35,6 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="System.CodeDom" Version="9.0.1" />
         <PackageReference Include="TimeAgo.Core" Version="1.1.0" />
     </ItemGroup>
 

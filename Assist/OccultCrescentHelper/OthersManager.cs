@@ -19,6 +19,7 @@ using KamiToolKit.Nodes;
 using Lumina.Excel.Sheets;
 using Action = Lumina.Excel.Sheets.Action;
 using ActionKind = FFXIVClientStructs.FFXIV.Client.UI.Agent.ActionKind;
+using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -288,7 +289,7 @@ public partial class OccultCrescentHelper
 
         private static void OnZoneChanged(ushort zone)
         {
-            if (GameState.TerritoryIntendedUse != 61)
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
             {
                 IsJustLogin = false;
 
@@ -356,7 +357,7 @@ public partial class OccultCrescentHelper
 
         private static void OnActionContents(AddonEvent type, AddonArgs args)
         {
-            if (GameState.TerritoryIntendedUse != 61) return;
+            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
             if (!Throttler.Throttle("OccultCrescentHelper-OthersManager-ActionDetail")) return;
 
             if (ActionContents == null) return;
@@ -809,7 +810,7 @@ public partial class OccultCrescentHelper
 
                     var textNode = new TextNode
                     {
-                        SeString      = new SeStringBuilder().AddUiGlow(32).Append($"{data.Unknown0}").AddUiGlowOff().Build().Encode(),
+                        SeString      = new SeStringBuilder().AddUiGlow(32).Append($"{data.Name}").AddUiGlowOff().Build().Encode(),
                         FontSize      = 12,
                         IsVisible     = true,
                         Size          = new(53f, 24),

@@ -227,7 +227,7 @@ public class PartyFinderFilter : DailyModuleBase
         if (!IsRaid || DService.ObjectTable.LocalPlayer is not { } localPlayer) return true;
 
         var job = localPlayer.ClassJob.Value;
-        if (job.Unknown11 == 0)
+        if (job.Role == 0)
             return true; // 生产职业 / 基础职业
 
         foreach (var present in listing.JobsPresent)
@@ -259,14 +259,14 @@ public class PartyFinderFilter : DailyModuleBase
         }
         else
         {
-            return job.Unknown11 switch
+            return job.Role switch
             {
-                0 => true,
-                1 => RoleCounter(1, ModuleConfig.HighEndFilterRoleCountData[0], job),
-                2 => RoleCounter(2, ModuleConfig.HighEndFilterRoleCountData[1], job),
-                6 => RoleCounter(6, ModuleConfig.HighEndFilterRoleCountData[2], job),
-                3 or 4 or 5 => RoleCounter(job.Unknown11, ModuleConfig.HighEndFilterRoleCountData[job.Unknown11], job),
-                _ => true,
+                0           => true,
+                1           => RoleCounter(1,        ModuleConfig.HighEndFilterRoleCountData[0],        job),
+                2           => RoleCounter(2,        ModuleConfig.HighEndFilterRoleCountData[1],        job),
+                6           => RoleCounter(6,        ModuleConfig.HighEndFilterRoleCountData[2],        job),
+                3 or 4 or 5 => RoleCounter(job.Role, ModuleConfig.HighEndFilterRoleCountData[job.Role], job),
+                _           => true,
             };
         }
 
@@ -288,7 +288,7 @@ public class PartyFinderFilter : DailyModuleBase
                 if (jobsPresent.ElementAt(i).Value.RowId != 0)
                 {
                     // 如果该位置已有玩家，检查职业类型
-                    if (jobsPresent.ElementAt(i).Value.Unknown11 == roleType)
+                    if (jobsPresent.ElementAt(i).Value.Role == roleType)
                         count++;
                 }
                 else if (!hasSlot) // 有空位后不再检查
@@ -297,7 +297,7 @@ public class PartyFinderFilter : DailyModuleBase
                     if (ManualMode)
                     {
                         // 手动模式：检查所有同类角色是否有空位
-                        foreach (var playerJob in LuminaGetter.Get<ClassJob>().Where(j => j.RowId != 0 && j.Unknown11 == roleType))
+                        foreach (var playerJob in LuminaGetter.Get<ClassJob>().Where(j => j.RowId != 0 && j.Role == roleType))
                         {
                             if (Enum.TryParse<JobFlags>(playerJob.NameEnglish.ExtractText().Replace(" ", string.Empty), out var flag) &&
                                 slots.ElementAt(i)[flag])

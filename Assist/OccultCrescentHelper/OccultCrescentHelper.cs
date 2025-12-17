@@ -3,6 +3,7 @@ using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace DailyRoutines.ModulesPublic;
@@ -61,7 +62,7 @@ public partial class OccultCrescentHelper : DailyModuleBase
     
     private static void OnUpdate(IFramework framework)
     {
-        if (GameState.TerritoryIntendedUse != 61) return;
+        if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
         
         foreach (var module in Modules)
             module.OnUpdate();
@@ -107,7 +108,7 @@ public partial class OccultCrescentHelper : DailyModuleBase
 
     protected override void OverlayUI()
     {
-        if (GameState.TerritoryIntendedUse != 61)
+        if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
         {
             Overlay.IsOpen = false;
             return;
