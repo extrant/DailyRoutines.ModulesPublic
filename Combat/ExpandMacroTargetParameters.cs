@@ -221,7 +221,6 @@ public unsafe class ExpandMacroTargetParameters : DailyModuleBase
                             .OrderByDescending(x => Vector3.DistanceSquared(localPlayer->Position, x.Position))
                             .FirstOrDefault();
         if (enemy == null) return nint.Zero;
-        Debug($"测试: {enemy.Name}");
         
         return enemy.Address;
     }
