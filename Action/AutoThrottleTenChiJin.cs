@@ -29,17 +29,17 @@ public unsafe class AutoThrottleTenChiJin : DailyModuleBase
         if (LocalPlayerState.ClassJob != 30) return;
         
         var data = (UseActionPacket*)packet;
-        if (ShinobiActionsStart.Contains(data->ID))
+        if (ShinobiActionsStart.Contains(data->ActionID))
         {
             UsedShinobiActions.Clear();
-            UsedShinobiActions.Add((data->ID % 2259 / 2) + 18805);
+            UsedShinobiActions.Add((data->ActionID % 2259 / 2) + 18805);
         }
-        else if (ShinobiActionsProcess.Contains(data->ID))
+        else if (ShinobiActionsProcess.Contains(data->ActionID))
         {
-            if (!UsedShinobiActions.Add(data->ID)) 
+            if (!UsedShinobiActions.Add(data->ActionID)) 
                 isPrevented = true;
         }
-        else if (NinJiTsuActions.Contains(data->ID))
+        else if (NinJiTsuActions.Contains(data->ActionID))
             UsedShinobiActions.Clear();
     }
 

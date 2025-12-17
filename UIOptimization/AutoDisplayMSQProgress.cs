@@ -98,16 +98,21 @@ public unsafe class AutoDisplayMSQProgress : DailyModuleBase
 
     private static ExVersion GetPlayerCurrentExpansion(List<Quest> msqQuests, UIState* uiState)
     {
-        var currentExpansion = LuminaGetter.GetRow<ExVersion>(0).GetValueOrDefault();
+        var currentExpansion = LuminaGetter.GetRowOrDefault<ExVersion>(0);
 
         foreach (var quest in msqQuests)
         {
-            if (uiState->IsUnlockLinkUnlockedOrQuestCompleted(
-                    quest.RowId,
-                    quest.TodoParams.Max(x => x.ToDoCompleteSeq)))
+            if (quest.TodoParams.Count == 0)
+                continue;
+
+            var maxSeq = quest.TodoParams.Max(x => x.ToDoCompleteSeq);
+            if (uiState->IsUnlockLinkUnlockedOrQuestCompleted(quest.RowId, maxSeq))
             {
-                if (quest.Expansion.Value.RowId > currentExpansion.RowId)
-                    currentExpansion = quest.Expansion.Value;
+                if (quest.Expansion.IsValid || quest.Expansion.ValueNullable != null) 
+                {
+                    if (quest.Expansion.Value.RowId > currentExpansion.RowId)
+                        currentExpansion = quest.Expansion.Value;
+                }
             }
         }
 
