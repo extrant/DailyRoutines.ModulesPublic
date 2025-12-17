@@ -27,7 +27,8 @@ public unsafe class AutoDisplayMSQProgress : DailyModuleBase
             OnAddon(AddonEvent.PostSetup, null);
     }
 
-    protected override void Uninit() => DService.AddonLifecycle.UnregisterListener(OnAddon);
+    protected override void Uninit() => 
+        DService.AddonLifecycle.UnregisterListener(OnAddon);
 
     private static void OnAddon(AddonEvent type, AddonArgs args)
     {

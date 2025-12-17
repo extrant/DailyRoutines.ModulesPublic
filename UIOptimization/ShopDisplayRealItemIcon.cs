@@ -28,12 +28,15 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
     protected override void Init()
     {
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "Shop", OnShop);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "Shop", OnShop);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Shop", OnShop);
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "InclusionShop", OnInclusionShop);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "InclusionShop", OnInclusionShop);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "InclusionShop", OnInclusionShop);
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnGrandCompanyExchange);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "GrandCompanyExchange", OnGrandCompanyExchange);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "GrandCompanyExchange", OnGrandCompanyExchange);
 
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,
@@ -42,11 +45,16 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh,
                                                  ["ShopExchangeCurrency", "ShopExchangeItem", "ShopExchangeCoin"],
                                                  OnShopExchange);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,
+                                                 ["ShopExchangeCurrency", "ShopExchangeItem", "ShopExchangeCoin"],
+                                                 OnShopExchange);
         
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "CollectablesShop", OnCollectablesShop);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "CollectablesShop", OnCollectablesShop);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "CollectablesShop", OnCollectablesShop);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "CollectablesShop", OnCollectablesShop);
         
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeShop", OnFreeShop);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "FreeShop", OnFreeShop);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "FreeShop", OnFreeShop);
     }
     
@@ -66,10 +74,7 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             
             addon->AtkValues[126 + i].SetUInt(itemRow.Icon);
         }
-        
-        addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
-
     
     private static void OnCollectablesShop(AddonEvent type, AddonArgs args)
     {
@@ -138,8 +143,6 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             
             addon->AtkValues[210 + i].SetUInt(itemRow.Icon);
         }
-        
-        addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
     
     private static void OnGrandCompanyExchange(AddonEvent type, AddonArgs args)
@@ -158,8 +161,6 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             
             addon->AtkValues[167 + i].SetUInt(itemRow.Icon);
         }
-        
-        addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
     
     private static void OnInclusionShop(AddonEvent type, AddonArgs args)
@@ -178,8 +179,6 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             
             addon->AtkValues[301 + (i * 18)].SetUInt(itemRow.Icon);
         }
-        
-        addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
 
     private static void OnShop(AddonEvent type, AddonArgs args)
@@ -214,8 +213,6 @@ public unsafe class ShopDisplayRealItemIcon : DailyModuleBase
             
             addon->AtkValues[197 + i].SetUInt(itemRow.Icon + (isItemHQ ? 100_0000U : 0U));
         }
-
-        addon->OnRefresh(addon->AtkValuesCount, addon->AtkValues);
     }
 
     protected override void Uninit()
