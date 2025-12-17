@@ -74,7 +74,7 @@ public partial class OccultCrescentHelper
             {
                 InternalName          = "DRMKDSupportJobChange",
                 Title                 = LuminaWrapper.GetAddonText(16658),
-                Size                  = new(500f, 380f),
+                Size                  = new(500f, 490f),
                 RememberClosePosition = true
             };
 
@@ -613,7 +613,7 @@ public partial class OccultCrescentHelper
 
             private void CreateJobContainer()
             {
-                const int   maxRowsPerPage = 3;
+                const int   maxRowsPerPage = 4;
                 const int   maxItemsPerRow = 5;
                 const float rowHeight      = 53f;
                 const float containerWidth = 500f;
@@ -622,7 +622,7 @@ public partial class OccultCrescentHelper
                 JobContainer = new VerticalListNode
                 {
                     Position  = new(0, 0),
-                    Size      = new(containerWidth, 368),
+                    Size      = new(containerWidth, 478),
                     IsVisible = true,
                 };
 
@@ -868,10 +868,10 @@ public partial class OccultCrescentHelper
                 BackgroundNode = new SimpleNineGridNode
                 {
                     TextureCoordinates = new(0),
-                    TextureSize        = new(500, 380),
+                    TextureSize        = new(500, 490),
                     TexturePath        = "ui/uld/MKDWallPaper_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(502, 373),
+                    Size               = new(502, 483),
                     Position           = new(-2),
                     Alpha              = 0.9f,
                 };
@@ -935,7 +935,7 @@ public partial class OccultCrescentHelper
                     TextureSize        = new(60, 70),
                     TexturePath        = "ui/uld/MKDWindow_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(515f, 387f),
+                    Size               = new(515f, 497f),
                     Position           = new(-8, -5),
                     Alpha              = 0.9f,
                     Offsets            = new(24),
