@@ -91,7 +91,7 @@ public unsafe class RealQueuePosition : DailyModuleBase
 
         // TODO: 检查是否可用
         var       position    = *(uint*)(agentData + 0x12C);
-        var       positionStr = DService.SeStringEvaluator.Evaluate(LuminaGetter.GetRowOrDefault<LogMessage>(10039).Text.ToMacroString(), [position]);
+        var       positionStr = DService.SeStringEvaluator.Evaluate(LuminaGetter.GetRowOrDefault<Addon>(10039).Text.ToMacroString(), [position]);
         using var builder     = new RentedSeStringBuilder();
         a3->SetValue(index, builder.Builder.Append(positionStr).GetViewAsSpan());
         
