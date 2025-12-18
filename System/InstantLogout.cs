@@ -16,7 +16,7 @@ public unsafe class InstantLogout : DailyModuleBase
         Category    = ModuleCategories.System,
     };
 
-    private static readonly CompSig                          SystemMenuExecuteSig = new("E8 ?? ?? ?? ?? 48 8B 07 48 8B CF 89 5F ?? FF 50 ?? 84 C0");
+    private static readonly CompSig                          SystemMenuExecuteSig = new("E8 ?? ?? ?? ?? 40 B5 01 41 B9 ?? ?? ?? ??");
     private delegate        nint                             SystemMenuExecuteDelegate(AgentHUD* agentHud, int a2, uint a3, int a4, nint a5);
     private static          Hook<SystemMenuExecuteDelegate>? SystemMenuExecuteHook;
 
