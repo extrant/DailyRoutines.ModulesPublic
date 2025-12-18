@@ -6,13 +6,15 @@ using DailyRoutines.Abstracts;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
-using Dalamud.Interface;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.FFXIV.Component.Shell;
+using InteropGenerator.Runtime;
 using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 using TinyPinyin;
 
 namespace DailyRoutines.ModulesPublic;
@@ -30,17 +32,23 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
 
     private static readonly CompSig GetFilteredUtf8StringSig =
         new("48 89 74 24 ?? 57 48 83 EC ?? 48 83 79 ?? ?? 48 8B FA 48 8B F1 0F 84 ?? ?? ?? ?? 48 89 5C 24");
-    private delegate void GetFilteredUtf8StringDelegate(nint vulgarInstance, Utf8String* str);
-    private static GetFilteredUtf8StringDelegate? GetFilteredUtf8String;
+    private delegate void                           GetFilteredUtf8StringDelegate(nint vulgarInstance, Utf8String* str);
+    private static   GetFilteredUtf8StringDelegate? GetFilteredUtf8String;
 
-    private static readonly CompSig Utf8StringCopySig = new("E8 ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 85 ED 74");
-    private delegate nint Utf8StringCopyDelegate(Utf8String* target, Utf8String* source);
-    private static Utf8StringCopyDelegate? Utf8StringCopy;
+    private static readonly CompSig VulgarInstanceOffsetBaseSig = new("48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
+    private static          nint    VulgarInstanceOffset;
+    
+    private static readonly CompSig PartyFinderOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B F9 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
+    private static          nint    PartyFinderOriginalMessageOffset;
+
+    private static readonly CompSig                 Utf8StringCopySig = new("E8 ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 85 ED 74");
+    private delegate        nint                    Utf8StringCopyDelegate(Utf8String* target, Utf8String* source);
+    private static          Utf8StringCopyDelegate? Utf8StringCopy;
 
     private static readonly CompSig LocalMessageDisplaySig = new("40 53 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
     private delegate        nint LocalMessageDisplayDelegate(nint a1, Utf8String* source);
     private static          Hook<LocalMessageDisplayDelegate>? LocalMessageDisplayHook;
-
+    
     private static readonly CompSig ProcessSendedChatSig =
         new("E8 ?? ?? ?? ?? FE 87 ?? ?? ?? ?? C7 87 ?? ?? ?? ?? ?? ?? ?? ??");
     private delegate void ProcessSendedChatDelegate(ShellCommandModule* commandModule, Utf8String* message, UIModule* module);
@@ -51,7 +59,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
     private delegate nint PartyFinderMessageDisplayDelegate(nint a1, Utf8String* source);
     private static Hook<PartyFinderMessageDisplayDelegate>? PartyFinderMessageDisplayHook;
 
-    private static readonly CompSig LookingForGroupConditionReceiveEventSig = new("48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 48 8B D9");
+    private static readonly CompSig LookingForGroupConditionReceiveEventSig = new("E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 45 8B C2 48 8B D6 48 8B CB E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 45 8B C2 48 8B D6 48 8B CB E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 48 8B CE");
     private delegate byte LookingForGroupConditionReceiveEventDelegate(nint a1, AtkValue* a2);
     private static Hook<LookingForGroupConditionReceiveEventDelegate>? LookingForGroupConditionReceiveEventHook;
 
@@ -60,6 +68,16 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
     protected override void Init()
     {
         ModuleConfig ??= LoadConfig<Config>() ?? new();
+        
+        // mov rax, [rcx + XXXX], 因为是四字节所以用 uint
+        if (VulgarInstanceOffset == nint.Zero)
+            VulgarInstanceOffset = VulgarInstanceOffsetBaseSig.GetStatic();
+        Debug($"[{nameof(AutoAntiCensorship)}] 屏蔽词系统偏移量: {VulgarInstanceOffset}");
+
+        // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
+        if (PartyFinderOriginalMessageOffset == nint.Zero)
+            PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
+        Debug($"[{nameof(AutoAntiCensorship)}] 招募信息原始字符串偏移量: {PartyFinderOriginalMessageOffset}");
         
         GetFilteredUtf8String ??= GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
         Utf8StringCopy        ??= Utf8StringCopySig.GetDelegate<Utf8StringCopyDelegate>();
@@ -321,16 +339,17 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             builder.Add(textPayload);
         }
         
-        message->SetString(builder.Build().Encode());
+        message->SetString(new ReadOnlySeStringSpan(builder.Build().Encode()));
         InvokeOriginal();
 
-        void InvokeOriginal() => ProcessSendedChatHook.Original(commandModule, message, module);
+        void InvokeOriginal() => 
+            ProcessSendedChatHook.Original(commandModule, message, module);
     }
 
     // 聊天信息显示
     private static nint LocalMessageDisplayDetour(nint a1, Utf8String* source)
     {
-        var seString = SeString.Parse(*(byte**)source);
+        var seString = SeString.Parse(source->AsSpan());
         var builder  = new SeStringBuilder();
         foreach (var payload in seString.Payloads)
         {
@@ -344,16 +363,15 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             var result = HighlightCensorship(textPayload.Text);
             builder.Append(result);
         }
-        
-        source->SetString(builder.Build().Encode());
-        
+
+        source->SetString(new ReadOnlySeStringSpan(builder.Build().Encode()));
         return Utf8StringCopy((Utf8String*)(a1 + 1096), source);
     }
 
     // 招募信息显示
     private static nint PartyFinderMessageDisplayDetour(nint a1, Utf8String* source)
     {
-        var seString = SeString.Parse(*(byte**)source);
+        var seString = SeString.Parse(source->AsSpan());
         var builder  = new SeStringBuilder();
         foreach (var payload in seString.Payloads)
         {
@@ -368,9 +386,8 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
             builder.Append(result);
         }
         
-        source->SetString(builder.Build().Encode());
-        
-        return Utf8StringCopy((Utf8String*)(a1 + 11408), source);
+        source->SetString(new ReadOnlySeStringSpan(builder.Build().Encode()));
+        return Utf8StringCopy((Utf8String*)(a1 + PartyFinderOriginalMessageOffset), source);
     }
     
     private static void BypassCensorshipByTextPayload(ref TextPayload payload)
@@ -524,7 +541,7 @@ public unsafe class AutoAntiCensorship : DailyModuleBase
     private static string GetFilteredString(string str)
     {
         var utf8String = Utf8String.FromString(str);
-        GetFilteredUtf8String(Marshal.ReadIntPtr((nint)Framework.Instance() + 11080), utf8String);
+        GetFilteredUtf8String(Marshal.ReadIntPtr((nint)Framework.Instance() + VulgarInstanceOffset), utf8String);
         var result = utf8String->ExtractText();
 
         utf8String->Dtor(true);
