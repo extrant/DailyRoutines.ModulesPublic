@@ -30,7 +30,6 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Use_Dalamud_Lumina_Excel>false</Use_Dalamud_Lumina_Excel>
         <Use_DalamudPackager>false</Use_DalamudPackager>
     </PropertyGroup>
 
@@ -61,10 +60,6 @@
         </Reference>
         <Reference Include="KamiToolKit">
             <HintPath>$(BaseOutputPath)\x64\$(Configuration)\KamiToolKit.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Lumina.Excel">
-            <HintPath>$(BaseOutputPath)\x64\$(Configuration)\Lumina.Excel.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>

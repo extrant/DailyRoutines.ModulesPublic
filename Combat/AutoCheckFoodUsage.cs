@@ -492,7 +492,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
         (DateTime.Now - LastFoodUsageTime).TotalSeconds >= FoodUsageCooldownSeconds;
     
     private static uint ToFoodRowID(uint id) => 
-        LuminaGetter.GetRow<ItemFood>(LuminaGetter.GetRowOrDefault<Item>(id).ItemAction.Value.Data[1].RowId)?.RowId ?? 0;
+        LuminaGetter.GetRow<ItemFood>(LuminaGetter.GetRowOrDefault<Item>(id).ItemAction.Value.Data[1])?.RowId ?? 0;
 
     private static unsafe List<FoodUsagePreset> GetValidPresets()
     {
