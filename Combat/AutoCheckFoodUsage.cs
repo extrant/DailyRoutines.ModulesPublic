@@ -164,7 +164,7 @@ public class AutoCheckFoodUsage : DailyModuleBase
             ImGui.Dummy(Vector2.One);
 
             ImGui.SetNextItemWidth(50f * GlobalFontScale);
-            ImGui.InputInt(GetLoc("AutoCheckFoodUsage-RefreshThreshold"), ref ModuleConfig.RefreshThreshold, 0, 0);
+            ImGui.InputInt(GetLoc("AutoCheckFoodUsage-RefreshThreshold"), ref ModuleConfig.RefreshThreshold);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 SaveConfig(ModuleConfig);
 
