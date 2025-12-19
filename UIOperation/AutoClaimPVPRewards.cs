@@ -6,7 +6,6 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace DailyRoutines.ModulesPublic;
 
-// TODO: 优化按钮外观
 public unsafe class AutoClaimPVPRewards : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
