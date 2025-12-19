@@ -421,8 +421,6 @@ public unsafe class QuickChatPanel : DailyModuleBase
                     var inputComponent = (AtkComponentTextInput*)inputNode->Component;
                     inputComponent->EvaluatedString.Clear();
                     inputComponent->RawString.Clear();
-                    inputComponent->UnkText01.Clear();
-                    inputComponent->UnkText02.Clear();
                     inputComponent->AvailableLines.Clear();
                     inputComponent->HighlightedAutoTranslateOptionColorPrefix.Clear();
                     inputComponent->HighlightedAutoTranslateOptionColorSuffix.Clear();
