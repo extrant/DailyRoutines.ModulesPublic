@@ -397,11 +397,11 @@ public unsafe class FCMemberManagePanel : DailyModuleBase
         OpenContextMenuByIndex(dataIndex);
         ContextTaskHelper.Enqueue(() =>
         {
-            if (InfosOm.ContextMenu == null || !IsAddonAndNodesReady(InfosOm.ContextMenu)) return false;
+            if (InfosOm.ContextMenuXIV == null || !IsAddonAndNodesReady(InfosOm.ContextMenuXIV)) return false;
             
             if (!ClickContextMenu(menuText))
             {
-                InfosOm.ContextMenu->Close(true);
+                InfosOm.ContextMenuXIV->Close(true);
                 NotificationError(
                     $"{Lang.Get("FCMemberManagePanel-ContextMenuItemNoFound")}: {menuText}");
             }
