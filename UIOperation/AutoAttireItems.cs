@@ -10,6 +10,7 @@ using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 据说会崩溃
 public unsafe class AutoAttireItems : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
