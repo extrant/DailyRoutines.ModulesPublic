@@ -440,11 +440,9 @@ public partial class OccultCrescentHelper
             }
             else if (data.Event.Type is CrescentEventType.CE)
             {
-                var random = new Random();
-
-                if (random.NextDouble() >= 0.6)
+                if (Random.Shared.NextDouble() >= 0.6)
                 {
-                    CETaskHelper.DelayNext(random.Next(500, 3000));
+                    CETaskHelper.DelayNext(Random.Shared.Next(500, 3000));
                     CETaskHelper.Enqueue(() =>
                     {
                         if (DService.Condition[ConditionFlag.Mounted]) return false;
@@ -453,7 +451,7 @@ public partial class OccultCrescentHelper
                         return true;
                     });
 
-                    CETaskHelper.DelayNext(random.Next(500, 3000));
+                    CETaskHelper.DelayNext(Random.Shared.Next(500, 3000));
                     CETaskHelper.Enqueue(() =>
                     {
                         if (DService.Condition[ConditionFlag.Mounted] || vnavmeshIPC.PathIsRunning()) return false;
