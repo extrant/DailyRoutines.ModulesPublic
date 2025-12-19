@@ -130,9 +130,8 @@ public class BetterFPSLimitation : DailyModuleBase
 
     private static unsafe void Update()
     {
-        // TODO: 需要检查偏移量
-        *(int*)((byte*)Device.Instance() + 0xA8) = ModuleConfig.IsEnabled ? 1 : 0;
-        Device.Instance()->FrameRateLimit        = ModuleConfig.Limitation;
+        *(int*)((nint)Device.Instance()   + 168) = ModuleConfig.IsEnabled ? 1 : 0;
+        *(short*)((nint)Device.Instance() + 174) = ModuleConfig.Limitation;
     }
     
     private static void HandleDtrEntry(bool isAdd)
