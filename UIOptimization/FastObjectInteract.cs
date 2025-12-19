@@ -649,30 +649,33 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
         
         private bool ShowContextMenu()
         {
-            var state = false;
-            using (var context = ImRaii.ContextPopupItem($"{GameObject}_{Name}"))
+            var       state   = false;
+            using var context = ImRaii.ContextPopupItem($"{GameObject}_{Name}");
+            if (!context) return state;
+            
+            if (ImGui.MenuItem(GetLoc("FastObjectInteract-AddToBlacklist")))
             {
-                if (context)
+                var cleanName = FastObjectInteractTitleRegex().Replace(Name, string.Empty).Trim();
+                if (ModuleConfig.BlacklistKeys.Add(cleanName))
                 {
-                    if (ImGui.MenuItem(GetLoc("FastObjectInteract-AddToBlacklist")))
-                    {
-                        var cleanName = FastObjectInteractTitleRegex().Replace(Name, string.Empty).Trim();
-                        if (ModuleConfig.BlacklistKeys.Add(cleanName))
-                        {
-                            state             = true;
-                            ForceObjectUpdate = true;
-                        }
-                    }
+                    state             = true;
+                    ForceObjectUpdate = true;
                 }
             }
 
             return state;
         }
         
-        public bool IsReachable() =>
-            EventFramework.Instance()->CheckInteractRange((GameObject*)Control.GetLocalPlayer(), (GameObject*)GameObject, InteractCheckType, false);
+        public bool IsReachable()
+        {
+            var localPlayer   = (GameObject*)Control.GetLocalPlayer();
+            var currentObject = (GameObject*)GameObject;
+            if (localPlayer == null || currentObject == null) return false;
+            
+            return EventFramework.Instance()->CheckInteractRange(localPlayer, currentObject, InteractCheckType, false);
+        }
 
-        
+
         public bool Equals(ObjectToSelect? other)
         {
             if (other is null) return false;
