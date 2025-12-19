@@ -378,7 +378,7 @@ public unsafe class OptimizedTargetInfo : DailyModuleBase
                     var componentNode = (AtkComponentNode*)nodeInfo.CastBarNode;
                     if (!componentNode->IsVisible() || !nodeInfo.ProgressBarNode->IsVisible()) continue;
                     
-                    if (DService.ObjectTable.SearchByID(nodeInfo.ObjectId.Id) is not IBattleChara { IsCasting: true } target) 
+                    if (DService.ObjectTable.SearchByID(nodeInfo.ObjectId.Id) is not IBattleChara { CurrentCastTime: > 0 } target) 
                         continue;
 
                     currentCount++;
