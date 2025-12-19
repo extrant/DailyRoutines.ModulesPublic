@@ -58,7 +58,7 @@ public unsafe class OptimizedInteraction : DailyModuleBase
     // 检查目标高低
     private static readonly CompSig CheckTargetPositionSig = new("40 53 57 41 56 48 83 EC ?? 48 8B 02");
     private delegate bool CheckTargetPositionDelegate(
-        EventFramework* framework, GameObject* source, GameObject* target, ushort interactType, bool sendError);
+        EventFramework* framework, GameObject* source, GameObject* target, ushort interactType, bool sendError, byte a6);
     private static Hook<CheckTargetPositionDelegate>? CheckTargetPositionHook;
 
     // 检查目标距离
@@ -147,7 +147,13 @@ public unsafe class OptimizedInteraction : DailyModuleBase
     private static bool IsPlayerOnJumpingDetour(nint a1) => false;
 
     private static bool CheckTargetPositionDetour(
-        EventFramework* framework, GameObject* source, GameObject* target, ushort interactType, bool sendError) => true;
+        EventFramework* framework,
+        GameObject*     source,
+        GameObject*     target,
+        ushort          interactType,
+        bool            sendError,
+        byte            a6)
+        => true;
 
     private static float CheckTargetDistanceDetour(GameObject* localPlayer, GameObject* target) => 0f;
     
