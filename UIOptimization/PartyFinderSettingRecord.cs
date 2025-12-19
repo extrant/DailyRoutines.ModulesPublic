@@ -11,6 +11,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 检查崩溃情况
 public unsafe class PartyFinderSettingRecord : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
