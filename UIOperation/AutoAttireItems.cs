@@ -10,7 +10,6 @@ using Lumina.Excel.Sheets;
 
 namespace DailyRoutines.ModulesPublic;
 
-// TODO: 据说会崩溃
 public unsafe class AutoAttireItems : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -141,13 +140,13 @@ public unsafe class AutoAttireItems : DailyModuleBase
     {
         if (!IsAddonAndNodesReady(MiragePrismPrismSetConvert) || TaskHelper.IsBusy) return;
         
-        var slotCount = MiragePrismPrismSetConvert->AtkValues[15].UInt;
+        var slotCount = MiragePrismPrismSetConvert->AtkValues[20].UInt;
         if (slotCount == 0) return;
 
         List<int> slotsToFill = [];
         for (var i = 0; i < slotCount; i++)
         {
-            var inventoryType = MiragePrismPrismSetConvert->AtkValues[20 + (i * 7)].UInt;
+            var inventoryType = MiragePrismPrismSetConvert->AtkValues[25 + (i * 7)].UInt;
             if (inventoryType != 9999) continue;
             slotsToFill.Add(i);
         }
