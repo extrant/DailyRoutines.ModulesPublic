@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Numerics;
 using DailyRoutines.Abstracts;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
@@ -9,6 +11,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
+using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -25,6 +28,13 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
+    // 其他地方也没法换线
+    private static readonly HashSet<TerritoryIntendedUse> ValidUses =
+    [
+        TerritoryIntendedUse.Overworld,
+        TerritoryIntendedUse.Town
+    ];
+
     private const string Command = "insc";
 
     private static Config        ModuleConfig = null!;
@@ -35,8 +45,7 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
         TaskHelper ??= new() { TimeLimitMS = 30_000 };
         ModuleConfig = LoadConfig<Config>() ?? new();
 
-        CommandManager.AddSubCommand(
-            Command, new(OnCommand) { HelpMessage = GetLoc("FastInstanceZoneChange-CommandHelp") });
+        CommandManager.AddSubCommand(Command, new(OnCommand) { HelpMessage = GetLoc("FastInstanceZoneChange-CommandHelp") });
 
         Overlay ??= new(this);
         Overlay.WindowName = GetLoc("FastInstanceZoneChangeTitle");
@@ -45,30 +54,6 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
             HandleDtrEntry(true);
 
         FrameworkManager.Reg(OnUpdate, throttleMS: 5_000);
-    }
-
-    private static void OnUpdate(IFramework framework)
-    {
-        if (!ModuleConfig.AddDtrEntry || Entry == null || BetweenAreas) return;
-        
-        Entry.Shown = GameState.TerritoryIntendedUse == 0 && InstancesManager.IsInstancedArea;
-    }
-
-    private static void OnTerritoryChanged(ushort zone = 0)
-    {
-        try
-        {
-            if (!ModuleConfig.AddDtrEntry || Entry == null) return;
-        
-            Entry.Text = !InstancesManager.IsInstancedArea
-                             ? string.Empty
-                             : GetLoc("AutoMarksFinder-RelayInstanceDisplay", InstancesManager.CurrentInstance.ToSeChar());
-            Entry.Shown = InstancesManager.IsInstancedArea;
-        }
-        catch
-        {
-            // ignored
-        }
     }
 
     protected override void ConfigUI()
@@ -113,14 +98,24 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
         if (DService.KeyState[VirtualKey.ESCAPE])
         {
             Overlay.IsOpen = false;
+            if (SystemMenu != null)
+                SystemMenu->Close(true);
             return;
         }
+
+        if (!ValidUses.Contains(GameState.TerritoryIntendedUse))
+        {
+            Overlay.IsOpen = false;
+            return;
+        }
+        
+        ImGui.SetWindowPos((ImGui.GetMainViewport().Size / 2) - new Vector2(0.5f));
         
         var count = InstancesManager.GetInstancesCount();
         for (uint i = 1; i <= count; i++)
         {
             if (i == InstancesManager.CurrentInstance) continue;
-            if (ImGui.Button($"{GetLoc("FastInstanceZoneChange-SwitchInstance", i.ToSeChar())}") |
+            if (ImGui.Button($"{GetLoc("FastInstanceZoneChange-SwitchInstance", i.ToSEChar())}") |
                 DService.KeyState[(VirtualKey)(48 + i)])
             {
                 if (TaskHelper.IsBusy || BetweenAreas || DService.Condition[ConditionFlag.Casting]) continue;
@@ -131,14 +126,38 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
         }
     }
 
+    private static void OnUpdate(IFramework framework)
+    {
+        if (!ModuleConfig.AddDtrEntry || Entry == null || BetweenAreas) return;
+        
+        Entry.Shown = InstancesManager.IsInstancedArea;
+    }
+
+    private static void OnTerritoryChanged(ushort zone = 0)
+    {
+        try
+        {
+            if (!ModuleConfig.AddDtrEntry || Entry == null) return;
+        
+            Entry.Text = !InstancesManager.IsInstancedArea
+                             ? string.Empty
+                             : GetLoc("AutoMarksFinder-RelayInstanceDisplay", InstancesManager.CurrentInstance.ToSEChar());
+            Entry.Shown = InstancesManager.IsInstancedArea;
+        }
+        catch
+        {
+            // ignored
+        }
+    }
+    
     private void HandleDtrEntry(bool isAdd)
     {
         if (isAdd && Entry == null)
         {
-            Entry ??= DService.DtrBar.Get("DailyRoutines-FastInstanceZoneChange");
-            Entry.OnClick += _ => Overlay.IsOpen ^= true;
-            Entry.Shown = false;
-            Entry.Tooltip = GetLoc("FastInstanceZoneChange-DtrEntryTooltip");
+            Entry         ??= DService.DtrBar.Get("DailyRoutines-FastInstanceZoneChange");
+            Entry.OnClick +=  _ => Overlay.IsOpen ^= true;
+            Entry.Shown   =   false;
+            Entry.Tooltip =   GetLoc("FastInstanceZoneChange-DtrEntryTooltip");
             
             DService.ClientState.TerritoryChanged += OnTerritoryChanged;
             OnTerritoryChanged();
