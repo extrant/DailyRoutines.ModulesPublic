@@ -162,7 +162,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             DrawStatusRow(status);
 
         // battle npc status
-        foreach (var status in MitigationManager.BattleNpcActiveStatus)
+        foreach (var status in MitigationManager.BattleNPCActiveStatus)
             DrawStatusRow(status);
 
         // local shield
@@ -387,7 +387,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
             }
 
             // battle npc
-            foreach (var (status, _) in MitigationManager.BattleNpcActiveStatus)
+            foreach (var (status, _) in MitigationManager.BattleNPCActiveStatus)
             {
                 if (!firstTipItem)
                     tipBuilder.Append("\n");
@@ -555,7 +555,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
     {
         // cache
         public static          Dictionary<uint, MitigationInfo> StatusDict           = [];
-        public static readonly Dictionary<uint, float[]>  PartyMitigationCache = [];
+        public static readonly Dictionary<uint, float[]>        PartyMitigationCache = [];
 
         // snapshot
         private static KeyValuePair<uint, float[]>[] PartyMitigationSnapshot = [];
@@ -602,7 +602,7 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         }
 
         // battle npc
-        public static readonly Dictionary<MitigationInfo, float> BattleNpcActiveStatus = [];
+        public static readonly Dictionary<MitigationInfo, float> BattleNPCActiveStatus = [];
 
         #region Structs
 
@@ -748,14 +748,14 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
                 foreach (var status in statusList)
                 {
                     if (StatusDict.TryGetValue(status.StatusId, out var mitigation))
-                        BattleNpcActiveStatus.TryAdd(mitigation, status.RemainingTime);
+                        BattleNPCActiveStatus.TryAdd(mitigation, status.RemainingTime);
                 }
             }
 
             var partyShieldCache = PartyShield;
             foreach (var memberActiveStatus in PartyActiveStatus)
             {
-                var activeStatus = memberActiveStatus.Value.Concat(BattleNpcActiveStatus).ToDictionary(kv => kv.Key, kv => kv.Value);
+                var activeStatus = memberActiveStatus.Value.Concat(BattleNPCActiveStatus).ToDictionary(kv => kv.Key, kv => kv.Value);
                 PartyMitigationCache.TryAdd(memberActiveStatus.Key, [
                     Reduction(activeStatus.Keys.Select(x => x.Info.Physical)),
                     Reduction(activeStatus.Keys.Select(x => x.Info.Magical)),
@@ -773,18 +773,18 @@ public class AutoDisplayMitigationInfo : DailyModuleBase
         {
             LocalActiveStatus.Clear();
             PartyActiveStatus.Clear();
-            BattleNpcActiveStatus.Clear();
+            BattleNPCActiveStatus.Clear();
 
             PartyMitigationCache.Clear();
             PartyMitigationSnapshot = [];
         }
 
         public static bool IsLocalEmpty() => 
-            LocalActiveStatus.Count == 0 && LocalShield == 0 && BattleNpcActiveStatus.Count == 0;
+            LocalActiveStatus.Count == 0 && LocalShield == 0 && BattleNPCActiveStatus.Count == 0;
 
         public static float[] FetchLocal()
         {
-            var activeStatus = LocalActiveStatus.Concat(BattleNpcActiveStatus).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var activeStatus = LocalActiveStatus.Concat(BattleNPCActiveStatus).ToDictionary(kv => kv.Key, kv => kv.Value);
             return
             [
                 Reduction(activeStatus.Keys.Select(x => x.Info.Physical)),
