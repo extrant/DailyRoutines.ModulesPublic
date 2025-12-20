@@ -210,6 +210,7 @@ public partial class OccultCrescentHelper
                                                 CrescentSupportJobType.Knight => 0,
                                                 CrescentSupportJobType.Bard   => 1,
                                                 CrescentSupportJobType.Monk   => 3,
+                                                CrescentSupportJobType.Dancer => 4,
                                                 _                             => 999
                                             })
                                             .ToList();
