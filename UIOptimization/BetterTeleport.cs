@@ -22,7 +22,6 @@ using Map = Lumina.Excel.Sheets.Map;
 
 namespace DailyRoutines.ModulesPublic;
 
-// TODO: 搜索的时候无法 PIN
 public unsafe class BetterTeleport : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -68,6 +67,7 @@ public unsafe class BetterTeleport : DailyModuleBase
     private static string                SearchWord   = string.Empty;
     private static List<AetheryteRecord> SearchResult = [];
     private static List<AetheryteRecord> Favorites    = [];
+    private static bool                  IsNeedToLoseFocusSearchBar;
 
     private static IEnumerable<AetheryteRecord> AllRecords =>
         Records.Values.SelectMany(x => x).Concat(HouseRecords);
@@ -142,8 +142,15 @@ public unsafe class BetterTeleport : DailyModuleBase
 
         var isSearchEmpty = string.IsNullOrWhiteSpace(SearchWord);
 
+
+        var searchBarID = "###Search";
+        if (IsNeedToLoseFocusSearchBar)
+        {
+            searchBarID                = "###Search_LoseFocus";
+            IsNeedToLoseFocusSearchBar = false;
+        }
         ImGui.SetNextItemWidth(isSearchEmpty ? -1f : -ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X);
-        if (ImGui.InputTextWithHint("###Search", GetLoc("PleaseSearch"), ref SearchWord, 128))
+        if (ImGui.InputTextWithHint(searchBarID, GetLoc("PleaseSearch"), ref SearchWord, 128))
         {
             SearchResult = !string.IsNullOrWhiteSpace(SearchWord)
                                ? Records.Values
@@ -167,142 +174,144 @@ public unsafe class BetterTeleport : DailyModuleBase
         }
 
         ImGui.Spacing();
-
+        
         if (SearchResult.Count > 0 || !isSearchEmpty)
         {
             using var child = ImRaii.Child("###SearchResultChild", new Vector2(0, -ImGui.GetFrameHeightWithSpacing()), false, ImGuiWindowFlags.NoBackground);
-            if (!child) return;
-
-            if (SearchResult.Count != 0)
+            if (child)
             {
-                foreach (var aetheryte in SearchResult.ToList())
-                    DrawAetheryte(aetheryte);
+                if (SearchResult.Count != 0)
+                {
+                    foreach (var aetheryte in SearchResult.ToList())
+                        DrawAetheryte(aetheryte);
+                }
             }
         }
         else
         {
             using var tabBar = ImRaii.TabBar("###AetherytesTabBar", ImGuiTabBarFlags.Reorderable | ImGuiTabBarFlags.NoTooltip);
-            if (!tabBar) return;
-
-            var isSettingOn = false;
-
-            if (Favorites.Count > 0)
+            if (tabBar)
             {
-                using var tabItem = ImRaii.TabItem($"{GetLoc("Favorite")}##TabItem");
-                if (tabItem)
+                var isSettingOn = false;
+
+                if (Favorites.Count > 0)
                 {
-                    var       childSize = new Vector2(0, -ImGui.GetFrameHeightWithSpacing());
-                    using var child     = ImRaii.Child("###FavoriteChild", childSize, false, ImGuiWindowFlags.NoBackground);
-                    if (child)
+                    using var tabItem = ImRaii.TabItem($"{GetLoc("Favorite")}##TabItem");
+                    if (tabItem)
                     {
-                        foreach (var aetheryte in Favorites.ToList())
+                        var       childSize = new Vector2(0, -ImGui.GetFrameHeightWithSpacing());
+                        using var child     = ImRaii.Child("###FavoriteChild", childSize, false, ImGuiWindowFlags.NoBackground);
+                        if (child)
+                        {
+                            foreach (var aetheryte in Favorites.ToList())
+                                DrawAetheryte(aetheryte);
+                        }
+                    }
+                }
+
+                var agentLobby = AgentLobby.Instance();
+                if (agentLobby != null)
+                {
+                    foreach (var (name, aetherytes) in Records.ToList())
+                    {
+                        using var tabItem = ImRaii.TabItem($"{name}##TabItem");
+                        if (!tabItem) continue;
+
+                        var       childSize = new Vector2(0, -ImGui.GetFrameHeightWithSpacing());
+                        using var child     = ImRaii.Child($"###{name}Child", childSize, false, ImGuiWindowFlags.NoBackground);
+                        if (!child) continue;
+
+                        var source      = name == LuminaWrapper.GetAddonText(832) ? HouseRecords.Concat(aetherytes) : aetherytes;
+                        var lastName    = string.Empty;
+                        var lastGroupID = -1;
+
+                        foreach (var aetheryte in source.ToList())
+                        {
+                            if (!aetheryte.IsUnlocked() && aetheryte.Group != 255) continue;
+                            if (aetheryte.Group                   == 254 &&
+                                agentLobby->LobbyData.HomeWorldId != agentLobby->LobbyData.CurrentWorldId)
+                                continue;
+
+                            var isNewGroup = false;
+                            if (aetheryte.Group == 0)
+                            {
+                                if (lastName != aetheryte.RegionName)
+                                {
+                                    isNewGroup = true;
+                                    lastName   = aetheryte.RegionName;
+                                }
+                            }
+                            else
+                            {
+                                if (lastGroupID != aetheryte.Group)
+                                {
+                                    isNewGroup  = true;
+                                    lastGroupID = aetheryte.Group;
+                                }
+                            }
+
+                            if (isNewGroup)
+                            {
+                                ImGui.Spacing();
+
+                                var headerName    = aetheryte.RegionName;
+                                var headerBgColor = ImGui.GetColorU32(ImGuiCol.Header);
+                                var cursor        = ImGui.GetCursorScreenPos();
+                                var width         = ImGui.GetContentRegionAvail().X;
+                                var height        = ImGui.GetTextLineHeightWithSpacing();
+
+                                ImGui.GetWindowDrawList().AddRectFilled(cursor, cursor + new Vector2(width, height), headerBgColor, 4f);
+
+                                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetStyle().ItemSpacing.X * 2));
+                                ImGui.AlignTextToFramePadding();
+                                ImGui.TextColored(ImGui.GetColorU32(ImGuiCol.Text).ToVector4(), headerName);
+
+                                ImGui.Spacing();
+                            }
+
                             DrawAetheryte(aetheryte);
+                        }
                     }
                 }
-            }
 
-            var agentLobby = AgentLobby.Instance();
-            if (agentLobby != null)
-            {
-                foreach (var (name, aetherytes) in Records.ToList())
+                using (var settingTab = ImRaii.TabItem(FontAwesomeIcon.Cog.ToIconString()))
                 {
-                    using var tabItem = ImRaii.TabItem($"{name}##TabItem");
-                    if (!tabItem) continue;
-
-                    var       childSize = new Vector2(0, -ImGui.GetFrameHeightWithSpacing());
-                    using var child     = ImRaii.Child($"###{name}Child", childSize, false, ImGuiWindowFlags.NoBackground);
-                    if (!child) continue;
-
-                    var source      = name == LuminaWrapper.GetAddonText(832) ? HouseRecords.Concat(aetherytes) : aetherytes;
-                    var lastName    = string.Empty;
-                    var lastGroupID = -1;
-
-                    foreach (var aetheryte in source.ToList())
+                    if (settingTab)
                     {
-                        if (!aetheryte.IsUnlocked() && aetheryte.Group != 255) continue;
-                        if (aetheryte.Group                   == 254 &&
-                            agentLobby->LobbyData.HomeWorldId != agentLobby->LobbyData.CurrentWorldId)
-                            continue;
+                        isSettingOn = true;
 
-                        var isNewGroup = false;
-                        if (aetheryte.Group == 0)
+                        ImGui.Text($"{LuminaWrapper.GetAddonText(8522)}");
+
+                        using (var combo = ImRaii.Combo("###TeleportUsageTypeCombo", TicketUsageTypes[TicketUsageType]))
                         {
-                            if (lastName != aetheryte.RegionName)
+                            if (combo)
                             {
-                                isNewGroup = true;
-                                lastName   = aetheryte.RegionName;
-                            }
-                        }
-                        else
-                        {
-                            if (lastGroupID != aetheryte.Group)
-                            {
-                                isNewGroup  = true;
-                                lastGroupID = aetheryte.Group;
+                                foreach (var kvp in TicketUsageTypes)
+                                {
+                                    if (ImGui.Selectable($"{kvp.Value}", kvp.Key == TicketUsageType))
+                                        TicketUsageType = kvp.Key;
+                                }
                             }
                         }
 
-                        if (isNewGroup)
-                        {
-                            ImGui.Spacing();
-                            
-                            var headerName    = aetheryte.RegionName;
-                            var headerBgColor = ImGui.GetColorU32(ImGuiCol.Header);
-                            var cursor        = ImGui.GetCursorScreenPos();
-                            var width         = ImGui.GetContentRegionAvail().X;
-                            var height        = ImGui.GetTextLineHeightWithSpacing();
+                        ImGui.Text($"{LuminaWrapper.GetAddonText(8528)}");
 
-                            ImGui.GetWindowDrawList().AddRectFilled(cursor, cursor + new Vector2(width, height), headerBgColor, 4f);
+                        var gilSetting = TicketUsageGilSetting;
+                        if (ImGui.InputUInt("###GilInput", ref gilSetting))
+                            TicketUsageGilSetting = gilSetting;
 
-                            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetStyle().ItemSpacing.X * 2));
-                            ImGui.AlignTextToFramePadding();
-                            ImGui.TextColored(ImGui.GetColorU32(ImGuiCol.Text).ToVector4(), headerName);
-
-                            ImGui.Spacing();
-                        }
-
-                        DrawAetheryte(aetheryte);
+                        if (ImGui.Checkbox(GetLoc("BetterTeleport-HideAethernetInParty"), ref ModuleConfig.HideAethernetInParty))
+                            SaveConfig(ModuleConfig);
                     }
+                    else
+                        ImGuiOm.TooltipHover(LuminaWrapper.GetAddonText(8516));
                 }
+
+                if (!isSettingOn)
+                    DrawBottomToolbar();
             }
-
-            using (var settingTab = ImRaii.TabItem(FontAwesomeIcon.Cog.ToIconString()))
-            {
-                if (settingTab)
-                {
-                    isSettingOn = true;
-
-                    ImGui.Text($"{LuminaWrapper.GetAddonText(8522)}");
-
-                    using (var combo = ImRaii.Combo("###TeleportUsageTypeCombo", TicketUsageTypes[TicketUsageType]))
-                    {
-                        if (combo)
-                        {
-                            foreach (var kvp in TicketUsageTypes)
-                            {
-                                if (ImGui.Selectable($"{kvp.Value}", kvp.Key == TicketUsageType))
-                                    TicketUsageType = kvp.Key;
-                            }
-                        }
-                    }
-
-                    ImGui.Text($"{LuminaWrapper.GetAddonText(8528)}");
-
-                    var gilSetting = TicketUsageGilSetting;
-                    if (ImGui.InputUInt("###GilInput", ref gilSetting))
-                        TicketUsageGilSetting = gilSetting;
-
-                    if (ImGui.Checkbox(GetLoc("BetterTeleport-HideAethernetInParty"), ref ModuleConfig.HideAethernetInParty))
-                        SaveConfig(ModuleConfig);
-                }
-                else
-                    ImGuiOm.TooltipHover(LuminaWrapper.GetAddonText(8516));
-            }
-
-            if (!isSettingOn)
-                DrawBottomToolbar();
         }
-
+        
         DrawHoveredTooltip();
     }
 
@@ -500,7 +509,10 @@ public unsafe class BetterTeleport : DailyModuleBase
 #endif
 
         if (!ImGui.IsPopupOpen("AetheryteContextPopup") && isHovered)
-            HoveredAetheryte = aetheryte;
+        {
+            HoveredAetheryte           = aetheryte;
+            IsNeedToLoseFocusSearchBar = true;
+        }
         
         ImGui.SetCursorScreenPos(startPos + new Vector2(0, itemHeight + 3));
     }
