@@ -3,6 +3,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using KamiToolKit.Nodes;
 using KamiToolKit.Classes;
 
@@ -126,6 +127,14 @@ public unsafe class AutoDesynthesizeItems : DailyModuleBase
         if (OccupiedInEvent) return false;
         if (!IsAddonAndNodesReady(SalvageItemSelector)) return false;
 
+        // 背包满了
+        if (IsInventoryFull(PlayerInventories, 3))
+        {
+            RaptureLogModule.Instance()->ShowLogMessage(3974);
+            TaskHelper.Abort();
+            return true;
+        }
+        
         var itemAmount = SalvageItemSelector->AtkValues[9].Int;
         if (itemAmount == 0)
         {
