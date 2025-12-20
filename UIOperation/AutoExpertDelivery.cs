@@ -438,9 +438,7 @@ public unsafe class AutoExpertDelivery : DailyModuleBase
             var position = new Vector2(GrandCompanySupplyList->RootNode->ScreenX - addon->GetScaledWidth(true),
                                        GrandCompanySupplyList->RootNode->ScreenY);
             
-            // TODO: 检查看看是否能用新的 API
-            SetPosition(addon,           position);
-            SetPosition(addon->RootNode, position);
+            SetWindowPosition(position);
         }
 
         protected override void OnFinalize(AtkUnitBase* addon) 

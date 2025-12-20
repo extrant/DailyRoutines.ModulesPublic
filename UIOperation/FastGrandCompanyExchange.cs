@@ -334,9 +334,7 @@ public class FastGrandCompanyExchange : DailyModuleBase
             var position = new Vector2(GrandCompanyExchange->RootNode->ScreenX - addon->GetScaledWidth(true), 
                                        GrandCompanyExchange->RootNode->ScreenY);
             
-            // TODO: 检查新 API
-            SetPosition(addon,           position);
-            SetPosition(addon->RootNode, position);
+            SetWindowPosition(position);
         }
 
         protected override void OnFinalize(AtkUnitBase* addon) 
