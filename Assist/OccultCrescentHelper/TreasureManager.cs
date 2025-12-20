@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using DailyRoutines.Infos;
 using DailyRoutines.Managers;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using OmenTools.Helpers;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic;
@@ -50,7 +48,7 @@ public partial class OccultCrescentHelper
         {
             TreasureTaskHelper ??= new() { TimeLimitMS = 180_000 };
             
-            WindowManager.Draw               += OnPosDraw;
+            WindowManager.Draw                    += OnPosDraw;
             DService.ClientState.TerritoryChanged += OnZoneChanged;
             
             GamePacketManager.RegPreSendPacket(OnPreSendPacket);
@@ -284,7 +282,7 @@ public partial class OccultCrescentHelper
                 if (!data.IsExact)
                 {
                     // 还没加载出来呢
-                    if (LocalPlayerState.DistanceTo3D(position) >= 50) return false;
+                    if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50) return false;
                 }
                 else
                 {
@@ -311,9 +309,9 @@ public partial class OccultCrescentHelper
         
         public static void OnPreSendPacket(ref bool isPrevented, int opcode, ref byte* packet, ref ushort priority)
         {
-            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent ||
-                !TreasureTaskHelper.IsBusy                                            ||
-                opcode != GamePacketOpcodes.PositionUpdateInstanceOpcode)
+            if (opcode                         != GamePacketOpcodes.PositionUpdateInstanceOpcode ||
+                GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent            ||
+                !TreasureTaskHelper.IsBusy)
                 return;
             
             isPrevented = true;
@@ -517,9 +515,10 @@ public partial class OccultCrescentHelper
         {
             if (DService.ObjectTable.LocalPlayer is not { } localPlayer) return;
             
-            PositionUpdateInstancePacket.Send(localPlayer.Rotation, obj.Position);
+            var moveType = (PositionUpdateInstancePacket.MoveType)(MovementManager.CurrentZoneMoveState * 0x10000);
+            new PositionUpdateInstancePacket(localPlayer.Rotation, obj.Position, moveType).Send();
             new TreasureOpenPacket(obj.EntityID).Send();
-            PositionUpdateInstancePacket.Send(localPlayer.Rotation, localPlayer.Position);
+            new PositionUpdateInstancePacket(localPlayer.Rotation, localPlayer.Position, moveType).Send();
         }
 
         public class TreasureData(SpecialObjectType objectType, uint entityID, string name, Vector3 position)
