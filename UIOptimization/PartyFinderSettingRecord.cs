@@ -1,3 +1,5 @@
+// TODO: 会导致游戏崩溃, 临时屏蔽
+/*
 using System.Collections.Generic;
 using System.Numerics;
 using DailyRoutines.Abstracts;
@@ -6,12 +8,10 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
-using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace DailyRoutines.ModulesPublic;
 
-// TODO: 检查崩溃情况
 public unsafe class PartyFinderSettingRecord : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -23,24 +23,24 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
     };
 
     private static Config? ModuleConfig;
-    private static bool EditInited;
+    private static bool    EditInited;
 
     protected override void Init()
     {
-        ModuleConfig = LoadConfig<Config>() ?? new();
-        Overlay ??= new Overlay(this);
-        Overlay.Flags |= ImGuiWindowFlags.NoMove;
-        TaskHelper ??= new();
+        ModuleConfig  =   LoadConfig<Config>() ?? new();
+        Overlay       ??= new Overlay(this);
+        Overlay.Flags |=  ImGuiWindowFlags.NoMove;
+        TaskHelper    ??= new();
 
         AgentReceiveEventHook =
             DService.Hook.HookFromSignature<AddonFireCallBackDelegate>(AddonFireCallBackSig.Get(), AddonFireCallBackDetour);
         AgentReceiveEventHook.Enable();
 
-        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LookingForGroupCondition", OnLookingForGroupConditionAddon);
+        DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "LookingForGroupCondition", OnLookingForGroupConditionAddon);
         DService.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupCondition", OnLookingForGroupConditionAddon);
     }
 
-    protected override void Uninit() => 
+    protected override void Uninit() =>
         DService.AddonLifecycle.UnregisterListener(OnLookingForGroupConditionAddon);
 
     protected override void OverlayUI()
@@ -56,7 +56,9 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
         if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, GetLoc("Add")))
         {
             var setting = ModuleConfig.Last.Copy();
-            setting.Name = LookingForGroupCondition->GetComponentByNodeId(11)->UldManager.SearchNodeById(2)->GetAsAtkComponentNode()->Component->GetTextNodeById(3)->GetAsAtkTextNode()->NodeText.ToString();
+            setting.Name =
+                LookingForGroupCondition->GetComponentByNodeId(11)->UldManager.SearchNodeById(2)->GetAsAtkComponentNode()->Component->GetTextNodeById(3)->
+                    GetAsAtkTextNode()->NodeText.ToString();
             ModuleConfig.Slot.Add(setting);
         }
 
@@ -70,7 +72,7 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
             using (ImRaii.Group())
             {
                 var title = config.Name;
-                if (string.IsNullOrEmpty(title)) 
+                if (string.IsNullOrEmpty(title))
                     title = GetLoc("None");
 
                 ImGui.AlignTextToFramePadding();
@@ -113,9 +115,9 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
             return;
 
         Callback(LookingForGroupCondition, true, 11, setting.ItemLevel.AvgIL, setting.ItemLevel.IsEnableAvgIL);
-        Callback(LookingForGroupCondition, true, 12, setting.Category, 0);
-        Callback(LookingForGroupCondition, true, 13, setting.Duty, 0);
-        Callback(LookingForGroupCondition, true, 15, setting.Description, 0);
+        Callback(LookingForGroupCondition, true, 12, setting.Category,        0);
+        Callback(LookingForGroupCondition, true, 13, setting.Duty,            0);
+        Callback(LookingForGroupCondition, true, 15, setting.Description,     0);
 
         TaskHelper.Enqueue(() => LookingForGroupCondition->Close(true));
         TaskHelper.Enqueue(() => Callback(LookingForGroup, true, 14));
@@ -125,8 +127,10 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
 
     // 偷的 Simple Tweaks 的 Debugger 的 Addon Callback
     private static readonly CompSig AddonFireCallBackSig = new("E8 ?? ?? ?? ?? 0F B6 E8 8B 44 24 20");
+
     private delegate void* AddonFireCallBackDelegate(
         AtkUnitBase* atkunitbase, int valuecount, AtkValue* atkvalues, byte updateVisibility);
+
     private static Hook<AddonFireCallBackDelegate>? AgentReceiveEventHook;
 
     private void* AddonFireCallBackDetour(
@@ -139,13 +143,13 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
         switch (eventCase)
         {
             case 11 when valueCount == 3:
-                var itemLevel = atkValues[1].UInt;
+                var itemLevel  = atkValues[1].UInt;
                 var isEnableIL = atkValues[2].Bool;
                 ModuleConfig.Last.ItemLevel = new(itemLevel, isEnableIL);
                 break;
             case 12:
                 ModuleConfig.Last.Category = atkValues[1].UInt;
-                ModuleConfig.Last.Duty = 0;
+                ModuleConfig.Last.Duty     = 0;
                 break;
             case 13:
                 ModuleConfig.Last.Duty = atkValues[1].UInt;
@@ -166,18 +170,17 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
     private class PartyFinderSetting
     {
         /// <summary>
-        /// 副本名，仅作为提示用
+        ///     副本名，仅作为提示用
         /// </summary>
         public string Name;
-        public uint Category;
-        public uint Duty;
-        public string Description = string.Empty;
-        public (uint AvgIL, bool IsEnableAvgIL) ItemLevel = new(0, false);
 
-        public PartyFinderSetting Copy()
-        {
-            return new() { Name = Name, Category = Category, Duty = Duty, Description = Description, ItemLevel = ItemLevel };
-        }
+        public uint                             Category;
+        public uint                             Duty;
+        public string                           Description = string.Empty;
+        public (uint AvgIL, bool IsEnableAvgIL) ItemLevel   = new(0, false);
+
+        public PartyFinderSetting Copy() => 
+            new() { Name = Name, Category = Category, Duty = Duty, Description = Description, ItemLevel = ItemLevel };
     }
 
     private class Config : ModuleConfiguration
@@ -189,4 +192,4 @@ public unsafe class PartyFinderSettingRecord : DailyModuleBase
 
     #endregion
 }
-
+*/
