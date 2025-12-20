@@ -41,7 +41,7 @@ public partial class OccultCrescentHelper : DailyModuleBase
         // lea     rcx, [rdi+XXXX], 因为是四字节所以用 uint
         if (IslandIDInstanceOffset == nint.Zero)
             IslandIDInstanceOffset = IslandIDInstanceOffsetSig.GetStatic();
-        Debug($"[{nameof(OccultCrescentHelper)}] 岛 ID 存储实例偏移量: {IslandIDInstanceOffsetSig}");
+        Debug($"[{nameof(OccultCrescentHelper)}] 岛 ID 存储实例偏移量: {IslandIDInstanceOffset}");
         
         Overlay       ??= new(this);
         Overlay.Flags &=  ~ImGuiWindowFlags.AlwaysAutoResize;
