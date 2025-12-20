@@ -22,6 +22,7 @@ using Map = Lumina.Excel.Sheets.Map;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 搜索的时候无法 PIN
 public unsafe class BetterTeleport : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -500,9 +501,7 @@ public unsafe class BetterTeleport : DailyModuleBase
 
         if (!ImGui.IsPopupOpen("AetheryteContextPopup") && isHovered)
             HoveredAetheryte = aetheryte;
-
-
-
+        
         ImGui.SetCursorScreenPos(startPos + new Vector2(0, itemHeight + 3));
     }
 
