@@ -6,7 +6,6 @@ using RecipeNote = FFXIVClientStructs.FFXIV.Client.Game.UI.RecipeNote;
 
 namespace DailyRoutines.ModulesPublic;
 
-// TODO: 检查崩溃问题
 public unsafe class QuickSynthesisMore : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
