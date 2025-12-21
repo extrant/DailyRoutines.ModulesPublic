@@ -148,6 +148,11 @@ public unsafe class AutoAttireItems : DailyModuleBase
         {
             var inventoryType = MiragePrismPrismSetConvert->AtkValues[25 + (i * 7)].UInt;
             if (inventoryType != 9999) continue;
+            
+            var unkParam0 = MiragePrismPrismSetConvert->AtkValues[26 + (i * 7)].UInt;
+            var unkParam1 = MiragePrismPrismSetConvert->AtkValues[27 + (i * 7)].UInt;
+            if (unkParam0 == unkParam1 && unkParam1 == 0) continue;
+            
             slotsToFill.Add(i);
         }
         if (slotsToFill.Count == 0) return;
