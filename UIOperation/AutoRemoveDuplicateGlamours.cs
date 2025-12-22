@@ -10,6 +10,7 @@ public class AutoRemoveDuplicateGlamours : DailyModuleBase
     {
         Title       = GetLoc("AutoRemoveDuplicateGlamoursTitle"),
         Description = GetLoc("AutoRemoveDuplicateGlamoursDescription"),
+        Category    = ModuleCategories.UIOperation,
         Author      = ["ECSS11"]
     };
 
