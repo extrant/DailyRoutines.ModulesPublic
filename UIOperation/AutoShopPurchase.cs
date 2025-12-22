@@ -567,7 +567,7 @@ public class AutoShopPurchase : DailyModuleBase
             Preset = preset;
             LoopCount = loopCount;
             DService.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, ["SelectYesno", "ShopExchangeItemDialog"], OnAddonYesno);
-            ExecuteCommandManager.Register(OnReceiveCommand);
+            ExecuteCommandManager.RegPost(OnReceiveCommand);
         }
 
         public static async Task<bool> TryExecuteAsync(ShopPurchasePreset preset, int loopCount)
@@ -674,7 +674,7 @@ public class AutoShopPurchase : DailyModuleBase
 
         public void Dispose()
         {
-            ExecuteCommandManager.Unregister(OnReceiveCommand);
+            ExecuteCommandManager.Unreg(OnReceiveCommand);
             DService.AddonLifecycle.UnregisterListener(OnAddonYesno);
 
             TaskHelper.Abort();

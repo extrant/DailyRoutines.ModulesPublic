@@ -34,7 +34,7 @@ public partial class OccultCrescentHelper
             CETaskHelper ??= new() { TimeLimitMS = 180_000 };
 
             DService.ClientState.TerritoryChanged += OnZoneChanged;
-            ExecuteCommandManager.Register(OnPostReceivedCommand);
+            ExecuteCommandManager.RegPost(OnPostReceivedCommand);
             LogMessageManager.Register(OnPostReceivedMessage);
             GameState.Logout += OnLogout;
 
@@ -60,7 +60,7 @@ public partial class OccultCrescentHelper
             CommandManager.RemoveSubCommand(CommandCE);
             
             GameState.Logout -= OnLogout;
-            ExecuteCommandManager.Unregister(OnPostReceivedCommand);
+            ExecuteCommandManager.Unreg(OnPostReceivedCommand);
             LogMessageManager.Unregister(OnPostReceivedMessage);
             DService.ClientState.TerritoryChanged -= OnZoneChanged;
 
