@@ -193,6 +193,7 @@ public partial class OccultCrescentHelper
             ExecuteBuffSequence();
         }
 
+        // TODO: 使用自由人的探求心技能
         private static void ExecuteBuffSequence()
         {
             if (!CrescentSupportJob.TryFindKnowledgeCrystal(out _))

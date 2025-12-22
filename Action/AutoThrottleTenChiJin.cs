@@ -5,6 +5,7 @@ using DailyRoutines.Managers;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 整合成一个忍术模块
 public unsafe class AutoThrottleTenChiJin : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()

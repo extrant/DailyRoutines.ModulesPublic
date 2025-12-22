@@ -13,6 +13,7 @@ using ActionKind = FFXIVClientStructs.FFXIV.Client.UI.Agent.ActionKind;
 
 namespace DailyRoutines.ModulesPublic;
 
+// TODO: 整合成一个忍术模块
 public unsafe class AutoTenChiJin : DailyModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -73,13 +74,12 @@ public unsafe class AutoTenChiJin : DailyModuleBase
     {
         ModuleConfig =   LoadConfig<Config>() ?? new();
         TaskHelper   ??= new() { TimeLimitMS = 2_000 };
-        
+
         Addon ??= new()
         {
-            InternalName          = "DRNinJutsuActionsPreview",
-            Title                 = LuminaWrapper.GetActionName(2260),
-            Size                  = new(430f, 110f),
-            RememberClosePosition = true
+            InternalName = "DRNinJutsuActionsPreview",
+            Title        = LuminaWrapper.GetActionName(2260),
+            Size         = new(430f, 110f),
         };
 
         UseActionManager.RegPreUseAction(OnPreUseAction);
