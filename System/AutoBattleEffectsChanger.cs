@@ -25,22 +25,18 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         Author = ["Siren"]
     };
 
-    // 缓存
-    private EffectSettings? lastAppliedSettings = null;
-    private Config ModuleConfig = null!;
+    private static EffectSettings? lastAppliedSettings = null;
+    private static Config ModuleConfig = null!;
 
     protected override void Init()
     {
-        // 加载配置，如果为空则创建默认值
         ModuleConfig = LoadConfig<Config>() ?? new Config();
-        DService.Framework.Update += OnUpdate;
+        FrameworkManager.Reg(OnUpdate, throttleMS:2_000);
     }
 
     protected override void Uninit()
     {
-        DService.Framework.Update -= OnUpdate;
-        SaveConfig(ModuleConfig);
-        base.Uninit();
+        FrameworkManager.Unreg(OnUpdate);
     }
 
     protected override void ConfigUI()
@@ -48,47 +44,47 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         ImGui.TextWrapped(GetLoc("AutoBattleEffectsChanger-ConfigIntro"));
         ImGui.Separator();
 
-        if (ImGui.BeginTabBar("AutoBattleEffectsChangerTabBar"))
+        using var tabbar = ImRaii.TabBar("AutoBattleEffectsChangerTabBar", ImGuiTabBarFlags.Reorderable);
+        if (!tabbar) return;
+
+        using (var Overworldtab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabOverworld")))
         {
-
-            if (ImGui.BeginTabItem(GetLoc("AutoBattleEffectsChanger-TabOverworld")))
-            {
+            if (Overworldtab) 
                 DrawOverworldSettings();
-                ImGui.EndTabItem();
-            }
+        }
 
-
-            if (ImGui.BeginTabItem(GetLoc("AutoBattleEffectsChanger-TabDuty")))
-            {
+        using (var Dutytab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabDuty")))
+        {
+            if (Dutytab) 
                 DrawDutySettings();
-                ImGui.EndTabItem();
-            }
-
-            ImGui.EndTabBar();
         }
     }
 
-    // 飞副本状态
     private void DrawOverworldSettings()
     {
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-OverworldHeader"));
 
         ImGui.Spacing();
 
-        // 阈值
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-Limit1Label"));
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(100);
+        ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
         if (ImGui.InputInt("##Limit1", ref ModuleConfig.AroundCountLimit1))
-            SaveConfig(ModuleConfig);
+        {
+            if (ImGui.IsItemDeactivatedAfterEdit())
+                SaveConfig(ModuleConfig);
+        }
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-Limit2Label"));
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(100);
+        ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
         if (ImGui.InputInt("##Limit2", ref ModuleConfig.AroundCountLimit2))
-            SaveConfig(ModuleConfig);
+        {
+            if (ImGui.IsItemDeactivatedAfterEdit())
+                SaveConfig(ModuleConfig);
+        }
 
         ImGui.Separator();
 
@@ -102,42 +98,37 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
             DrawEffectSettingRow("Tier3", ModuleConfig.OverworldHigh);
     }
 
-    // 绘制副本设置部分
     private void DrawDutySettings()
     {
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-DutyHeader"));
         ImGui.Spacing();
 
-        // 默认副本设置
         if (ImGui.CollapsingHeader(GetLoc("AutoBattleEffectsChanger-DutyDefaultHeader"), ImGuiTreeNodeFlags.DefaultOpen))
             DrawEffectSettingRow("DutyDefault", ModuleConfig.DefaultDutySettings);
 
         ImGui.Separator();
 
-        // 获取所有 ContentType 如果没Name就跳过
-        var contentTypes = DService.Data.GetExcelSheet<ContentType>();
+        var contentTypes = LuminaGetter.Get<ContentType>();
         if (contentTypes == null) return;
 
         foreach (var contentType in contentTypes)
         {
             var name = contentType.Name.ToString();
-            if (string.IsNullOrEmpty(name)) continue; // !!跳过没名字的
+            if (string.IsNullOrEmpty(name)) continue;
 
             var id = contentType.RowId;
 
-            if (!ModuleConfig.DutySpecificSettings.ContainsKey(id))
-                ModuleConfig.DutySpecificSettings[id] = new EffectSettings();
+            ModuleConfig.DutySpecificSettings.TryAdd(id, new EffectSettings());
 
             var settings = ModuleConfig.DutySpecificSettings[id];
 
             var icon = DService.Texture.GetFromGameIcon(new GameIconLookup(contentType.Icon));
             if (icon != null)
             {
-                ImGui.Image(icon.GetWrapOrEmpty().Handle, new Vector2(24, 24));
+                ImGui.Image(icon.GetWrapOrEmpty().Handle, new Vector2(24, 24) * ImGui.GetIO().FontGlobalScale);
                 ImGui.SameLine();
             }
 
-            // 使用 TreeNode 组织界面
             if (ImGui.TreeNode($"{name} (ID: {id})##Type{id}"))
             {
                 ImGui.Checkbox(GetLoc("AutoBattleEffectsChanger-EnableSpecific"), ref settings.Enabled);
@@ -155,81 +146,72 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
 
     private void DrawEffectSettingRow(string idPrefix, EffectSettings settings)
     {
-        ImGui.PushID(idPrefix);
+        using var id = ImRaii.PushId(idPrefix);
+        using var table = ImRaii.Table("EffectTable", 4, ImGuiTableFlags.BordersInnerV);
+        if (!table) return;
 
-        // 使用 Table 布局对齐
-        if (ImGui.BeginTable("EffectTable", 4, ImGuiTableFlags.BordersInnerV))
-        {
-            ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColSelf"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColParty"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColOther"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColEnemy"), ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableHeadersRow();
+        ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColSelf"), ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColParty"), ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColOther"), ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(GetLoc("AutoBattleEffectsChanger-ColEnemy"), ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableHeadersRow();
 
-            ImGui.TableNextRow();
+        ImGui.TableNextRow();
 
-            ImGui.TableNextColumn();
-            DrawCombo("##Self", ref settings.Self);
+        ImGui.TableNextColumn();
+        DrawCombo("##Self", ref settings.Self);
 
-            ImGui.TableNextColumn();
-            DrawCombo("##Party", ref settings.Party);
+        ImGui.TableNextColumn();
+        DrawCombo("##Party", ref settings.Party);
 
-            ImGui.TableNextColumn();
-            DrawCombo("##Other", ref settings.Other);
+        ImGui.TableNextColumn();
+        DrawCombo("##Other", ref settings.Other);
 
-            ImGui.TableNextColumn();
-            DrawCombo("##Enemy", ref settings.Enemy);
-
-            ImGui.EndTable();
-        }
-        ImGui.PopID();
+        ImGui.TableNextColumn();
+        DrawCombo("##Enemy", ref settings.Enemy);
     }
 
     private void DrawCombo(string label, ref uint value)
     {
-        // 0:显示所有, 1:简易显示, 2:不显示
-        string[] options = { GetLoc("AutoBattleEffectsChanger-OptionAll"), GetLoc("AutoBattleEffectsChanger-OptionLimited"), GetLoc("AutoBattleEffectsChanger-OptionNone") };
-        int current = (int)Math.Clamp(value, 0, 2);
+        string[] options = [GetLoc("AutoBattleEffectsChanger-OptionAll"), GetLoc("AutoBattleEffectsChanger-OptionLimited"), GetLoc("AutoBattleEffectsChanger-OptionNone")];
+        var current = (int)Math.Clamp(value, 0, 2);
 
         ImGui.SetNextItemWidth(-1);
-        if (ImGui.Combo(label, ref current, options, options.Length))
+        using var combo = ImRaii.Combo(label, options[current]);
+        if (combo)
         {
-            value = (uint)current;
-            SaveConfig(ModuleConfig);
+            for (var i = 0; i < options.Length; i++)
+            {
+                if (ImGui.Selectable(options[i], current == i))
+                {
+                    value = (uint)i;
+                    SaveConfig(ModuleConfig);
+                }
+            }
         }
     }
 
     protected void OnUpdate(IFramework framework)
     {
-        if (DService.PlayerState == null) return;
-
         EffectSettings? targetSettings = null;
 
-        //判断是否在副本中
-        if (DService.Condition[ConditionFlag.BoundByDuty])
+        var instance = GameMain.Instance();
+        if (instance != null && instance->CurrentContentFinderConditionId != 0)
         {
-            var instance = GameMain.Instance();
-            if (instance != null && instance->CurrentContentFinderConditionId != 0)
+            if (LuminaGetter.TryGetRow<ContentFinderCondition>(instance->CurrentContentFinderConditionId, out var content)
+                && content.ContentType.IsValid)
             {
-                // 获取当前的 ContentType
-                if (LuminaGetter.TryGetRow<ContentFinderCondition>(instance->CurrentContentFinderConditionId, out var content)
-                    && content.ContentType.IsValid)
-                {
-                    uint typeId = content.ContentType.Value.RowId;
+                var typeId = content.ContentType.Value.RowId;
 
-                    // 检查是否有针对此类型的单独配置
-                    if (ModuleConfig.DutySpecificSettings.TryGetValue(typeId, out var specificConfig) && specificConfig.Enabled)
-                        targetSettings = specificConfig;
-                }
+                if (ModuleConfig.DutySpecificSettings.TryGetValue(typeId, out var specificConfig) && specificConfig.Enabled)
+                    targetSettings = specificConfig;
             }
 
-            // 如果没有特定的副本配置，或者获取失败，使用默认副本配置
             targetSettings ??= ModuleConfig.DefaultDutySettings;
         }
-        //人数判断
         else
         {
-            int playerCount = PlayersManager.PlayersAroundCount;
+            var playerCount = PlayersManager.PlayersAroundCount;
 
             if (playerCount < ModuleConfig.AroundCountLimit1)
                 targetSettings = ModuleConfig.OverworldLow;
@@ -239,7 +221,6 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
                 targetSettings = ModuleConfig.OverworldHigh;
         }
 
-        //应用设置 (仅当设置发生变化时)
         ApplySettings(targetSettings);
     }
 
@@ -247,7 +228,6 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
     {
         if (settings == null) return;
 
-        // 缓存发力了
         if (lastAppliedSettings != null && settings.Equals(lastAppliedSettings))
             return;
 
@@ -258,23 +238,22 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
             DService.GameConfig.UiConfig.Set(UiConfigOption.BattleEffectOther.ToString(), (uint)settings.Other);
             DService.GameConfig.UiConfig.Set(UiConfigOption.BattleEffectPvPEnemyPc.ToString(), (uint)settings.Enemy);
 
-            // 更新缓存
             lastAppliedSettings = settings.Clone();
         }
         catch (Exception ex)
         {
-            DService.Log.Error(ex.ToString());
+            Error(ex.ToString());
         }
     }
 
 
     public class EffectSettings : IEquatable<EffectSettings>
     {
-        public bool Enabled = false; // 副本列表开关
-        public uint Self = 0; // 0: All
-        public uint Party = 1; // 1: Limited
-        public uint Other = 2; // 2: None
-        public uint Enemy = 0; // 0: All
+        public bool Enabled = false;
+        public uint Self = 0;
+        public uint Party = 1;
+        public uint Other = 2;
+        public uint Enemy = 0;
 
         public EffectSettings Clone()
         {
@@ -300,10 +279,8 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         public EffectSettings OverworldMid = new() { Self = 0, Party = 1, Other = 1, Enemy = 0 };
         public EffectSettings OverworldHigh = new() { Self = 0, Party = 1, Other = 2, Enemy = 0 };
 
-        // 默认副本配置
         public EffectSettings DefaultDutySettings = new() { Self = 0, Party = 0, Other = 1, Enemy = 0 };
 
-        // 特定副本类型的配置 (Key: ContentType RowId)
         public Dictionary<uint, EffectSettings> DutySpecificSettings = new();
     }
 }
