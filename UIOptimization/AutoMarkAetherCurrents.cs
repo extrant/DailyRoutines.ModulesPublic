@@ -557,7 +557,7 @@ public unsafe class AutoMarkAetherCurrents : DailyModuleBase
             if (ImGui.MenuItem($"    {GetLoc("AutoMarkAetherCurrents-SendLocation")}"))
             {
                 AgentMap.Instance()->SetFlagMapMarker(RealTerritory.RowId, RealTerritory.Map.RowId, Position);
-                ChatHelper.SendMessage("<flag>");
+                ChatManager.SendMessage("<flag>");
             }
 
             return;

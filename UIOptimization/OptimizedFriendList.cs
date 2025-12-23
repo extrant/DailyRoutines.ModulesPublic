@@ -916,7 +916,7 @@ public unsafe class OptimizedFriendList : DailyModuleBase
         }
 
         protected override void OnClicked(IMenuItemClickedArgs args) => 
-            ChatHelper.SendMessage($"/pdr worldtravel {LuminaWrapper.GetWorldName(TargetWorldID)}");
+            ChatManager.SendMessage($"/pdr worldtravel {LuminaWrapper.GetWorldName(TargetWorldID)}");
     }
     
     public class PlayerInfo

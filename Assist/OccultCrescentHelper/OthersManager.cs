@@ -304,7 +304,7 @@ public partial class OccultCrescentHelper
                         if (string.IsNullOrWhiteSpace(plugin)) continue;
                         if (!IsPluginEnabled(plugin)) continue;
 
-                        ChatHelper.SendMessage($"/xldisableplugin {plugin}");
+                        ChatManager.SendMessage($"/xldisableplugin {plugin}");
                     }
                 }
 
@@ -350,7 +350,7 @@ public partial class OccultCrescentHelper
                     if (string.IsNullOrWhiteSpace(plugin)) continue;
                     if (IsPluginEnabled(plugin)) continue;
 
-                    ChatHelper.SendMessage($"/xlenableplugin {plugin}");
+                    ChatManager.SendMessage($"/xlenableplugin {plugin}");
                 }
             }
         }
@@ -388,7 +388,7 @@ public partial class OccultCrescentHelper
                             IsVisible = true,
                             SeString  = new SeStringBuilder().AddIcon(BitmapFontIcon.ElementalLevel).Build().Encode(),
                             Tooltip   = GetLoc("OccultCrescentHelper-Command-PBuff-Help"),
-                            OnClick   = () => ChatHelper.SendMessage("/pdr pbuff")
+                            OnClick   = () => ChatManager.SendMessage("/pdr pbuff")
                         };
 
                         BuffButton.AddColor      = new(0, 0.1254902f, 0.5019608f);

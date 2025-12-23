@@ -258,7 +258,7 @@ public unsafe class RightClickToMoveMode : DailyModuleBase
         TargetWorldPos = finalWorldPos;
 
         if (AgentMap.Instance()->IsPlayerMoving)
-            ChatHelper.SendMessage("/automove off");
+            ChatManager.SendMessage("/automove off");
         
         switch (ModuleConfig.MoveMode)
         {

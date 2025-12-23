@@ -405,12 +405,12 @@ public class OptimizedRecipeNote : DailyModuleBase
                                     if (!IsConflictKeyPressed())
                                         AddonShopsPreview.OpenWithData(itemInfo);
                                     else
-                                        ChatHelper.SendMessage($"/pdr market {item.Name}");
+                                        ChatManager.SendMessage($"/pdr market {item.Name}");
                                 }
                                 else if (itemInfo != null)
                                     AddonShopsPreview.OpenWithData(itemInfo);
                                 else if (item.ItemSearchCategory.RowId > 0)
-                                    ChatHelper.SendMessage($"/pdr market {item.Name}");
+                                    ChatManager.SendMessage($"/pdr market {item.Name}");
                             }
                         };
                         
@@ -513,7 +513,7 @@ public class OptimizedRecipeNote : DailyModuleBase
     {
         if (DService.PI.InstalledPlugins.Any(x => x.InternalName == "Raphael.Dalamud"))
         {
-            ChatHelper.SendMessage("/xlenableplugin Raphael.Dalamud");
+            ChatManager.SendMessage("/xlenableplugin Raphael.Dalamud");
             return;
         }
         
@@ -876,7 +876,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         {
                             if (DService.Condition[ConditionFlag.ExecutingCraftingAction]) return true;
 
-                            ChatHelper.SendMessage($"/ac {LuminaWrapper.GetActionName(x)}");
+                            ChatManager.SendMessage($"/ac {LuminaWrapper.GetActionName(x)}");
                             return false;
                         });
                         taskHelper.Enqueue(() => Nodes[i].Alpha = 0.2f);
@@ -980,7 +980,7 @@ public class OptimizedRecipeNote : DailyModuleBase
 
                     if (Synthesis != null)
                         dragDropNode.Alpha = 0.2f;
-                    ChatHelper.SendMessage($"/ac {LuminaWrapper.GetActionName(actionID)}");
+                    ChatManager.SendMessage($"/ac {LuminaWrapper.GetActionName(actionID)}");
                 };
                 Nodes.Add(dragDropNode);
 
@@ -1099,7 +1099,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                     Size      = new(32),
                     Position  = itemInfoRow.Position + new Vector2(itemNameNode.GetTextDrawSize(itemNameNode.SeString).X + itemIconNode.Size.X + 15f, 2),
                     IsVisible = true,
-                    OnClick   = () => ChatHelper.SendMessage($"/pdr market {ShopInfo.GetItem().Name}")
+                    OnClick   = () => ChatManager.SendMessage($"/pdr market {ShopInfo.GetItem().Name}")
                 };
                 marketButtonNode.AttachNode(this);
             }
@@ -1175,7 +1175,7 @@ public class OptimizedRecipeNote : DailyModuleBase
                         {
                             var aetheryte = MovementManager.GetNearestAetheryte(pos, npcInfo.Location.TerritoryID);
                             if (aetheryte != null)
-                                ChatHelper.SendMessage($"/pdrtelepo {aetheryte.Name}");
+                                ChatManager.SendMessage($"/pdrtelepo {aetheryte.Name}");
                         }
                     }
                 };

@@ -383,7 +383,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
             if (i == InstancesManager.CurrentInstance) continue;
 
             if (ButtonCenterText($"InstanceChangeWidget_{i}", GetLoc("FastObjectInteract-InstanceAreaChange", i)))
-                ChatHelper.SendMessage($"/pdr insc {i}");
+                ChatManager.SendMessage($"/pdr insc {i}");
         }
     }
 
@@ -398,7 +398,7 @@ public unsafe partial class FastObjectInteract : DailyModuleBase
             if (worldPair.Key == lobbyData.CurrentWorldId) continue;
 
             if (ButtonCenterText($"WorldTravelWidget_{worldPair.Key}", $"{worldPair.Value}{(worldPair.Key == HomeWorld ? " (★)" : "")}"))
-                ChatHelper.SendMessage($"/pdr worldtravel {worldPair.Key}");
+                ChatManager.SendMessage($"/pdr worldtravel {worldPair.Key}");
         }
     }
     

@@ -119,7 +119,7 @@ public unsafe class FastInstanceZoneChange : DailyModuleBase
                 DService.KeyState[(VirtualKey)(48 + i)])
             {
                 if (TaskHelper.IsBusy || BetweenAreas || DService.Condition[ConditionFlag.Casting]) continue;
-                ChatHelper.SendMessage($"/pdr insc {i}");
+                ChatManager.SendMessage($"/pdr insc {i}");
                 if (ModuleConfig.CloseAfterUsage) 
                     Overlay.IsOpen = false;
             }

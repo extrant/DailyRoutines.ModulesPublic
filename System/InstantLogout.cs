@@ -109,7 +109,7 @@ public unsafe class InstantLogout : DailyModuleBase
         {
             if (DService.ClientState.IsLoggedIn) return false;
 
-            ChatHelper.SendMessage("/xlkill");
+            ChatManager.SendMessage("/xlkill");
             return true;
         });
     }

@@ -430,13 +430,13 @@ public partial class OccultCrescentHelper
                 {
                     if (DService.Condition[ConditionFlag.Mounted]) return false;
 
-                    ChatHelper.SendMessage("/tenemy");
+                    ChatManager.SendMessage("/tenemy");
                     return true;
                 });
                 CETaskHelper.DelayNext(100);
-                CETaskHelper.Enqueue(() => ChatHelper.SendMessage("/facetarget"));
+                CETaskHelper.Enqueue(() => ChatManager.SendMessage("/facetarget"));
                 CETaskHelper.DelayNext(100);
-                CETaskHelper.Enqueue(() => ChatHelper.SendMessage("/automove on"));
+                CETaskHelper.Enqueue(() => ChatManager.SendMessage("/automove on"));
             }
             else if (data.Event.Type is CrescentEventType.CE)
             {

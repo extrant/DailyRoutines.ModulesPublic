@@ -113,8 +113,8 @@ public partial class OccultCrescentHelper
                 if (actionType != ActionType.Action || actionID != 41592) return;
 
                 if (DService.Targets.Target == null)
-                    ChatHelper.SendMessage("/tenemy");
-                ChatHelper.SendMessage("/facetarget");
+                    ChatManager.SendMessage("/tenemy");
+                ChatManager.SendMessage("/facetarget");
             }
         }
         

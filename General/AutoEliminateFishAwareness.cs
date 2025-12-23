@@ -95,7 +95,7 @@ public class AutoEliminateFishAwareness : DailyModuleBase
             TaskHelper.Enqueue(() => !OccupiedInEvent,                                                           "等待不在钓鱼状态");
             TaskHelper.Enqueue(() => ExitDuty(753),                                                              "离开副本");
             TaskHelper.Enqueue(() => !BoundByDuty && IsScreenReady() && GameState.TerritoryType != 939,          "等待离开副本");
-            TaskHelper.Enqueue(() => ChatHelper.SendMessage("/pdrfe diadem"),                                    "发送进入指令");
+            TaskHelper.Enqueue(() => ChatManager.SendMessage("/pdrfe diadem"),                                    "发送进入指令");
             TaskHelper.Enqueue(() => GameState.TerritoryType == 939 && DService.ObjectTable.LocalPlayer != null, "等待进入");
             TaskHelper.Enqueue(() => MovementManager.TPSmart_InZone(currentPos),                                 $"传送到原始位置 {currentPos}");
             TaskHelper.DelayNext(500, "等待 500 毫秒");
@@ -123,7 +123,7 @@ public class AutoEliminateFishAwareness : DailyModuleBase
             if (string.IsNullOrWhiteSpace(ModuleConfig.ExtraCommands)) return;
             
             foreach (var command in ModuleConfig.ExtraCommands.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-                ChatHelper.SendMessage(command);
+                ChatManager.SendMessage(command);
         }, "执行文本指令");
     }
 

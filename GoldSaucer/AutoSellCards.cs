@@ -167,7 +167,7 @@ public unsafe class AutoSellCards : DailyModuleBase
         // 附近没有可用的幻卡兑换地点
         if (!IsEventIDNearby(721135))
         {
-            TaskHelper.Enqueue(() => ChatHelper.SendMessage("/pdrduty n 195"), "发送九宫幻卡对局室参加申请");
+            TaskHelper.Enqueue(() => ChatManager.SendMessage("/pdrduty n 195"), "发送九宫幻卡对局室参加申请");
             TaskHelper.Enqueue(() => GameState.TerritoryType == 579 && IsScreenReady(), "等待进入九宫幻卡对局室");
         }
 
@@ -178,7 +178,7 @@ public unsafe class AutoSellCards : DailyModuleBase
             if (!IsAddonAndNodesReady(TripleTriadCoinExchange)) return;
             Callback(TripleTriadCoinExchange, true, -1);
         }, "交换完毕, 关闭界面");
-        TaskHelper.Enqueue(() => ChatHelper.SendMessage("/pdr leaveduty"), "离开幻卡对局室");
+        TaskHelper.Enqueue(() => ChatManager.SendMessage("/pdr leaveduty"), "离开幻卡对局室");
     }
 
     private bool? StartHandOver()

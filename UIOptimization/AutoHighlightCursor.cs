@@ -70,7 +70,7 @@ public class AutoHighlightCursor : DailyModuleBase
             
             ImGui.SameLine();
             if (ImGui.Button($"{FontAwesomeIcon.Icons.ToIconString()}"))
-                ChatHelper.SendMessage("/xldata icon");
+                ChatManager.SendMessage("/xldata icon");
             ImGuiOm.TooltipHover($"{GetLoc("IconBrowser")}\n({GetLoc("AutoHighlightCursor-IconBrowser-Help")})");
         }
         

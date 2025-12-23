@@ -310,7 +310,7 @@ public class AutoRecordSubTimeLeft : DailyModuleBase
         switch (eventData.ClickType)
         {
             case MouseClickType.Left:
-                ChatHelper.SendMessage($"/pdr search {nameof(AutoRecordSubTimeLeft)}");
+                ChatManager.SendMessage($"/pdr search {nameof(AutoRecordSubTimeLeft)}");
                 break;
             case MouseClickType.Right:
                 Util.OpenLink("https://pay.sdo.com/item/GWPAY-100001900");

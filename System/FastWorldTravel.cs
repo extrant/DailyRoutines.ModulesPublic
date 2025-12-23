@@ -547,7 +547,7 @@ public class FastWorldTravel : DailyModuleBase
         if (!Throttler.Throttle("FastWorldTravel-LeaveNonCrossWorldParty")) 
             return false;
 
-        ChatHelper.SendMessage("/leave");
+        ChatManager.SendMessage("/leave");
         return DService.PartyList.Length < 2;
     }
 
@@ -828,7 +828,7 @@ public class FastWorldTravel : DailyModuleBase
                     OnClick = () =>
                     {
                         Addon.Close();
-                        ChatHelper.SendMessage($"/pdr worldtravel {worldName}");
+                        ChatManager.SendMessage($"/pdr worldtravel {worldName}");
                     },
                     IsEnabled = GameState.CurrentWorld != worldID && (CurrentWorlds.ContainsKey(worldID) || IsPluginValid)
                 };

@@ -142,7 +142,7 @@ public partial class OccultCrescentHelper
         {
             if (aetheryte == null) return;
 
-            ChatHelper.SendMessage("/automove off");
+            ChatManager.SendMessage("/automove off");
             if (DService.Condition[ConditionFlag.Mounted])
                 ExecuteCommandManager.ExecuteCommand(ExecuteCommandFlag.Dismount);
 

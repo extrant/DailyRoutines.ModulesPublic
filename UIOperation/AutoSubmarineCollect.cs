@@ -292,7 +292,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
         }
         
         if (ModuleConfig.AutoCollectCount > 0 && finishedCount >= Math.Min(maxCount, ModuleConfig.AutoCollectCount))
-            ChatHelper.SendMessage("/pdr submarine");
+            ChatManager.SendMessage("/pdr submarine");
     }
 
     // 发包获取情报
@@ -629,7 +629,7 @@ public unsafe class AutoSubmarineCollect : DailyModuleBase
     }
     
     private static void OnClickCollectSubmarinePayload(uint arg1, SeString arg2) => 
-        ChatHelper.SendMessage("/pdr submarine");
+        ChatManager.SendMessage("/pdr submarine");
     
     private static void OnUpdate(IFramework _) => 
         SendRefreshSubmarineInfo();

@@ -414,9 +414,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                 var text      = SeString.Parse(textNode->NodeText);
                 if (!string.IsNullOrWhiteSpace(text.ExtractText()))
                 {
-                    var utf8String = Utf8String.FromSequence(text.Encode());
-                    ChatHelper.SendMessageUnsafe(utf8String);
-                    utf8String->Dtor(true);
+                    ChatManager.SendMessage(text.Encode());
 
                     var inputComponent = (AtkComponentTextInput*)inputNode->Component;
                     inputComponent->EvaluatedString.Clear();
@@ -455,7 +453,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
         }
 
         if (ImGui.TabItemButton($"{FontAwesomeIcon.Cog.ToIconString()}###OpenQuickChatPanelSettings"))
-            ChatHelper.SendMessage($"/pdr search {GetLoc("QuickChatPanelTitle")}");
+            ChatManager.SendMessage($"/pdr search {GetLoc("QuickChatPanelTitle")}");
     }
 
     private void OnAddon(AddonEvent type, AddonArgs? args)
@@ -663,7 +661,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                         ImGui.SetClipboardText(message);
 
                     if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) 
-                        ChatHelper.SendMessage(message);
+                        ChatManager.SendMessage(message);
 
                     ImGuiOm.TooltipHover(GetLoc("QuickChatPanel-SendMessageHelp"));
 
@@ -795,7 +793,7 @@ public unsafe class QuickChatPanel : DailyModuleBase
                             UIGlobals.PlayChatSoundEffect(seNote.Key);
 
                         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                            ChatHelper.SendMessage($"<se.{seNote.Key}><se.{seNote.Key}>");
+                            ChatManager.SendMessage($"<se.{seNote.Key}><se.{seNote.Key}>");
 
                         ImGuiOm.TooltipHover(GetLoc("QuickChatPanel-SystemSoundHelp"));
                     }
