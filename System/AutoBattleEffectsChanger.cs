@@ -178,7 +178,7 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
     private void DrawCombo(string label, ref uint value)
     {
         var current = Math.Clamp(value, 0, (uint)EffectOptionKeys.Length - 1);
-        var previewText = GetLoc(EffectOptionKeys[current]); //外部文本
+        var previewText = GetLoc(EffectOptionKeys[current]);
 
         ImGui.SetNextItemWidth(-1);
 
@@ -187,7 +187,7 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         {
             for (var i = 0; i < EffectOptionKeys.Length; i++)
             {
-                var optionText = GetLoc(EffectOptionKeys[i]); //内部文本
+                var optionText = GetLoc(EffectOptionKeys[i]);
                 var isSelected = current == i;
 
                 if (ImGui.Selectable(optionText, isSelected))
