@@ -47,15 +47,15 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         using var tabbar = ImRaii.TabBar("AutoBattleEffectsChangerTabBar", ImGuiTabBarFlags.Reorderable);
         if (!tabbar) return;
 
-        using (var Overworldtab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabOverworld")))
+        using (var overWorldTab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabOverworld")))
         {
-            if (Overworldtab) 
+            if (overWorldTab) 
                 DrawOverworldSettings();
         }
 
-        using (var Dutytab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabDuty")))
+        using (var dutyTab = ImRaii.TabItem(GetLoc("AutoBattleEffectsChanger-TabDuty")))
         {
-            if (Dutytab) 
+            if (dutyTab) 
                 DrawDutySettings();
         }
     }
@@ -69,22 +69,18 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-Limit1Label"));
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-        if (ImGui.InputInt("##Limit1", ref ModuleConfig.AroundCountLimit1))
-        {
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                SaveConfig(ModuleConfig);
-        }
+        ImGui.SetNextItemWidth(100 * GlobalFontScale);
+        ImGui.InputInt("##Limit1", ref ModuleConfig.AroundCountLimit1);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            SaveConfig(ModuleConfig);
 
         ImGui.AlignTextToFramePadding();
         ImGui.Text(GetLoc("AutoBattleEffectsChanger-Limit2Label"));
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(100 * ImGui.GetIO().FontGlobalScale);
-        if (ImGui.InputInt("##Limit2", ref ModuleConfig.AroundCountLimit2))
-        {
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                SaveConfig(ModuleConfig);
-        }
+        ImGui.SetNextItemWidth(100 * GlobalFontScale);
+        ImGui.InputInt("##Limit2", ref ModuleConfig.AroundCountLimit2);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            SaveConfig(ModuleConfig);
 
         ImGui.Separator();
 
@@ -109,7 +105,6 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         ImGui.Separator();
 
         var contentTypes = LuminaGetter.Get<ContentType>();
-        if (contentTypes == null) return;
 
         foreach (var contentType in contentTypes)
         {
@@ -125,21 +120,23 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
             var icon = DService.Texture.GetFromGameIcon(new GameIconLookup(contentType.Icon));
             if (icon != null)
             {
-                ImGui.Image(icon.GetWrapOrEmpty().Handle, new Vector2(24, 24) * ImGui.GetIO().FontGlobalScale);
+                ImGui.Image(icon.GetWrapOrEmpty().Handle, new Vector2(24, 24) * GlobalFontScale);
                 ImGui.SameLine();
             }
 
-            if (ImGui.TreeNode($"{name} (ID: {id})##Type{id}"))
+            using (var node = ImRaii.TreeNode($"{name} (ID: {id})##Type{id}"))
             {
-                ImGui.Checkbox(GetLoc("AutoBattleEffectsChanger-EnableSpecific"), ref settings.Enabled);
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                    SaveConfig(ModuleConfig);
+                if (node)
+                {
+                    ImGui.Checkbox(GetLoc("AutoBattleEffectsChanger-EnableSpecific"), ref settings.Enabled);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                        SaveConfig(ModuleConfig);
 
-                if (settings.Enabled)
-                    DrawEffectSettingRow($"Duty_{id}", settings);
-                else
-                    ImGui.TextDisabled(GetLoc("AutoBattleEffectsChanger-UseDefaultNotice"));
-                ImGui.TreePop();
+                    if (settings.Enabled)
+                        DrawEffectSettingRow($"Duty_{id}", settings);
+                    else
+                        ImGui.TextDisabled(GetLoc("AutoBattleEffectsChanger-UseDefaultNotice"));
+                }
             }
         }
     }
@@ -177,15 +174,17 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         var current = (int)Math.Clamp(value, 0, 2);
 
         ImGui.SetNextItemWidth(-1);
-        using var combo = ImRaii.Combo(label, options[current]);
-        if (combo)
+        using (var combo = ImRaii.Combo($"##{label}", options[current]))
         {
-            for (var i = 0; i < options.Length; i++)
+            if (combo)
             {
-                if (ImGui.Selectable(options[i], current == i))
+                for (var i = 0; i < options.Length; i++)
                 {
-                    value = (uint)i;
-                    SaveConfig(ModuleConfig);
+                    if (ImGui.Selectable(options[i], current == i))
+                    {
+                        value = (uint)i;
+                        SaveConfig(ModuleConfig);
+                    }
                 }
             }
         }
@@ -194,12 +193,10 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
     protected void OnUpdate(IFramework framework)
     {
         EffectSettings? targetSettings = null;
-
-        var instance = GameMain.Instance();
-        if (instance != null && instance->CurrentContentFinderConditionId != 0)
+        var instance = GameState.ContentFinderConditionData;
+        if (instance.RowId != 0)
         {
-            if (LuminaGetter.TryGetRow<ContentFinderCondition>(instance->CurrentContentFinderConditionId, out var content)
-                && content.ContentType.IsValid)
+            if (LuminaGetter.TryGetRow<ContentFinderCondition>(instance.RowId, out var content))
             {
                 var typeId = content.ContentType.Value.RowId;
 
@@ -242,7 +239,7 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         }
         catch (Exception ex)
         {
-            Error(ex.ToString());
+            Error("设置特效水平发生异常：",ex);
         }
     }
 
