@@ -168,23 +168,32 @@ public unsafe class AutoBattleEffectsChanger : DailyModuleBase
         DrawCombo("##Enemy", ref settings.Enemy);
     }
 
+    private static readonly string[] EffectOptionKeys =
+    [
+        "AutoBattleEffectsChanger-OptionAll",
+        "AutoBattleEffectsChanger-OptionLimited",
+        "AutoBattleEffectsChanger-OptionNone"
+    ];
+
     private void DrawCombo(string label, ref uint value)
     {
-        string[] options = [GetLoc("AutoBattleEffectsChanger-OptionAll"), GetLoc("AutoBattleEffectsChanger-OptionLimited"), GetLoc("AutoBattleEffectsChanger-OptionNone")];
-        var current = (int)Math.Clamp(value, 0, 2);
+        var current = Math.Clamp(value, 0, (uint)EffectOptionKeys.Length - 1);
+        var previewText = GetLoc(EffectOptionKeys[current]); //外部文本
 
         ImGui.SetNextItemWidth(-1);
-        using (var combo = ImRaii.Combo($"##{label}", options[current]))
+
+        using var combo = ImRaii.Combo($"##{label}", previewText);
+        if (combo)
         {
-            if (combo)
+            for (var i = 0; i < EffectOptionKeys.Length; i++)
             {
-                for (var i = 0; i < options.Length; i++)
+                var optionText = GetLoc(EffectOptionKeys[i]); //内部文本
+                var isSelected = current == i;
+
+                if (ImGui.Selectable(optionText, isSelected))
                 {
-                    if (ImGui.Selectable(options[i], current == i))
-                    {
-                        value = (uint)i;
-                        SaveConfig(ModuleConfig);
-                    }
+                    value = (uint)i;
+                    SaveConfig(ModuleConfig);
                 }
             }
         }
