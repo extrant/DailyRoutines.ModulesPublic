@@ -256,48 +256,53 @@ public class AutoDisplayNetworkLatency : ModuleBase
     {
         try
         {
+            var cancellationToken = cancelSource.Token;
             var lastPing = -1L;
 
-            while (!cancelSource.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (monitor == null || entry == null) return;
+                var currentMonitor = monitor;
+                var currentEntry   = entry;
+                if (currentMonitor == null || currentEntry == null) return;
 
                 if (!GameState.IsLoggedIn)
                 {
-                    await Task.Delay(3000, cancelSource.Token);
+                    await Task.Delay(3000, cancellationToken);
                     continue;
                 }
 
-                await monitor.UpdateAsync(cancelSource.Token);
+                await currentMonitor.UpdateAsync(cancellationToken);
+                if (cancellationToken.IsCancellationRequested) return;
 
-                var currentPing = monitor.LastPing;
-                var address     = monitor.ServerAddress;
-                var port        = monitor.ServerPort;
+                var currentPing = currentMonitor.LastPing;
+                var address     = currentMonitor.ServerAddress;
+                var port        = currentMonitor.ServerPort;
 
                 await DService.Instance().Framework.RunOnTick
                 (() =>
                     {
-                        if (entry == null || cancelSource.IsCancellationRequested) return;
+                        if (cancellationToken.IsCancellationRequested || entry != currentEntry) return;
 
-                        entry.Shown = true;
+                        currentEntry.Shown = true;
 
                         if (lastPing != currentPing)
                         {
-                            entry.Text = string.Format(config.Format, currentPing);
+                            currentEntry.Text = string.Format(config.Format, currentPing);
                             lastPing   = currentPing;
                         }
 
                         var builder = new SeStringBuilder().AddIcon(BitmapFontIcon.Meteor)
                                                            .AddText($"{address}:{port}");
 
-                        if (monitor.AddressInfo is { } info)
+                        if (currentMonitor.AddressInfo is { } info)
                             builder.AddText($" ({info.CountryName} - {info.CityName})");
 
-                        entry.Tooltip = builder.Build();
-                    }
+                        currentEntry.Tooltip = builder.Build();
+                    },
+                    cancellationToken: cancellationToken
                 );
 
-                await Task.Delay(1_000, cancelSource.Token);
+                await Task.Delay(1_000, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancelSource.IsCancellationRequested)
