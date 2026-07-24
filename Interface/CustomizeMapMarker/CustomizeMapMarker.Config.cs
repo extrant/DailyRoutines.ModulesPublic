@@ -20,6 +20,9 @@ public partial class CustomizeMapMarker
         public string   Group           { get; set; } = Lang.Get("CustomizeMapMarker-DefaultGroup");
         public string   Description     { get; set; } = string.Empty;
         public uint     IconID          { get; set; } = DEFAULT_ICON_ID;
+        public float    Scale           { get; set; } = 1f;
+        public bool     AutoSetFlag     { get; set; }
+        public string   ExtraCommands   { get; set; } = string.Empty;
         public DateTime CreatedAt       { get; set; } = DateTime.UtcNow;
 
         public MarkerRecord Clone() => (MarkerRecord)MemberwiseClone();

@@ -26,7 +26,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         Category    = ModuleCategory.Interface
     };
 
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
+
     private Config config = null!;
+    
     private readonly Dictionary<Guid, MarkerRecord> markerIndex = [];
 
     private AddonController<AddonAreaMap>? areaMapController;
@@ -46,7 +49,7 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         {
             InternalName = "DRCustomizeMapMarkerDetails",
             Title        = Lang.Get("CustomizeMapMarker-DetailsTitle"),
-            Size         = new(420, 410)
+            Size         = new(420, 640)
         };
         markerListAddon = new(this)
         {
@@ -329,6 +332,9 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         destination.Group           = source.Group;
         destination.Description     = source.Description;
         destination.IconID          = source.IconID;
+        destination.Scale           = source.Scale;
+        destination.AutoSetFlag     = source.AutoSetFlag;
+        destination.ExtraCommands   = source.ExtraCommands;
         destination.CreatedAt       = source.CreatedAt;
     }
 
@@ -352,11 +358,24 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
                     UseRawPosition = true,
                     IconId         = marker.IconID,
                     Size           = new(32),
+                    MarkerScale    = marker.Scale,
                     TextTooltip    = $"{marker.Name} [{marker.Group}]\n{marker.Description}".Trim(),
-                    OnClick        = () => markerDetailsAddon?.OpenMarker(markerID)
+                    OnClick        = () => HandleMarkerClick(markerID),
+                    OnRightClick   = () => markerDetailsAddon?.OpenMarker(markerID)
                 }
             );
         }
+    }
+
+    private void HandleMarkerClick(Guid markerID)
+    {
+        if (FindMarker(markerID) is not { } marker) return;
+
+        if (marker.AutoSetFlag)
+            SetGameFlag(marker);
+
+        if (!string.IsNullOrWhiteSpace(marker.ExtraCommands))
+            ChatManager.Instance().ExecuteMacro(marker.ExtraCommands);
     }
 
     private void NormalizeConfig()
@@ -377,6 +396,11 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
 
             if (marker.IconID is 0 or > int.MaxValue)
                 marker.IconID = DEFAULT_ICON_ID;
+
+            if (!float.IsFinite(marker.Scale) || marker.Scale <= 0)
+                marker.Scale = 1f;
+
+            marker.ExtraCommands ??= string.Empty;
 
         }
     }

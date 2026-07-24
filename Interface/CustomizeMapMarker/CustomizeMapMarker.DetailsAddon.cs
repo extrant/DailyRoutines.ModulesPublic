@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using DailyRoutines.Common.Info;
 using DailyRoutines.Common.KamiToolKit.Nodes;
@@ -24,6 +25,9 @@ public unsafe partial class CustomizeMapMarker
         private TextInputNode?          groupInput;
         private TextMultiLineInputNode? descriptionInput;
         private NumericInputNode?       iconInput;
+        private TextInputNode?          scaleInput;
+        private CheckboxNode?           autoSetFlagInput;
+        private TextMultiLineInputNode? extraCommandsInput;
         private HoldButtonNode?         deleteButton;
 
         public void OpenMarker(Guid id)
@@ -52,11 +56,14 @@ public unsafe partial class CustomizeMapMarker
                 return;
             }
 
-            locationText.String     = FormatMarkerLocation(marker);
-            nameInput.String        = marker.Name;
-            groupInput.String       = marker.Group;
-            descriptionInput.String = marker.Description;
-            iconInput.Value         = (int)marker.IconID;
+            locationText.String        = FormatMarkerLocation(marker);
+            nameInput.String           = marker.Name;
+            groupInput.String          = marker.Group;
+            descriptionInput.String    = marker.Description;
+            iconInput.Value            = (int)marker.IconID;
+            scaleInput.String          = marker.Scale.ToString("0.###", CultureInfo.InvariantCulture);
+            autoSetFlagInput.IsChecked = marker.AutoSetFlag;
+            extraCommandsInput.String = marker.ExtraCommands;
         }
 
         protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
@@ -138,6 +145,36 @@ public unsafe partial class CustomizeMapMarker
             };
             containerNode.AddNode(iconInput);
 
+            var scaleLabel = CreateLabel(Lang.Get("Scale"));
+            containerNode.AddNode(scaleLabel);
+
+            scaleInput = new()
+            {
+                Size              = ContentSize with { Y = 30 },
+                MaxCharacters     = 12,
+                PlaceholderString = "1"
+            };
+            containerNode.AddNode(scaleInput);
+
+            autoSetFlagInput = new CheckboxNode
+            {
+                String = Lang.Get("CustomizeMapMarker-AutoSetFlag"),
+                Size   = ContentSize with { Y = 24 }
+            };
+            containerNode.AddNode(autoSetFlagInput);
+
+            var extraCommandsLabel = CreateLabel(Lang.Get("CustomizeMapMarker-ExtraCommands"));
+            containerNode.AddNode(extraCommandsLabel);
+
+            extraCommandsInput = new()
+            {
+                Size              = ContentSize with { Y = 110 },
+                MaxCharacters     = 1000,
+                MaxLines          = 15,
+                PlaceholderString = Lang.Get("CustomizeMapMarker-ExtraCommands-Placeholder")
+            };
+            containerNode.AddNode(extraCommandsInput);
+
             var actionRow = new HorizontalListNode
             {
                 Size        = ContentSize with { Y = 30 },
@@ -187,6 +224,9 @@ public unsafe partial class CustomizeMapMarker
             groupInput       = null;
             descriptionInput = null;
             iconInput        = null;
+            scaleInput         = null;
+            autoSetFlagInput   = null;
+            extraCommandsInput = null;
             deleteButton     = null;
         }
 
@@ -220,6 +260,21 @@ public unsafe partial class CustomizeMapMarker
                                group;
             marker.Description = descriptionInput?.String.ToString().Trim() ?? string.Empty;
             marker.IconID      = (uint)Math.Max(1, iconInput?.Value ?? (int)DEFAULT_ICON_ID);
+
+            var scaleText = scaleInput?.String.ToString().Trim();
+            marker.Scale = float.TryParse
+                               (
+                                   scaleText,
+                                   NumberStyles.Float,
+                                   CultureInfo.InvariantCulture,
+                                   out var scale
+                               ) &&
+                           float.IsFinite(scale) &&
+                           scale > 0
+                               ? scale
+                               : 1f;
+            marker.AutoSetFlag   = autoSetFlagInput?.IsChecked ?? false;
+            marker.ExtraCommands = extraCommandsInput?.String.ToString().Trim() ?? string.Empty;
 
             module.SaveAndRefresh();
             NotifyHelper.ToastQuest
