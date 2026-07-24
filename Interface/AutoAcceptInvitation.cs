@@ -169,12 +169,12 @@ public unsafe class AutoAcceptInvitation : ModuleBase
 
     private class Config : ModuleConfig
     {
-        public HashSet<string> Blacklist = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> Blacklist = [with(StringComparer.OrdinalIgnoreCase)];
 
         // true - 白名单, false - 黑名单
         public bool Mode = true;
 
-        public HashSet<string> Whitelist = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> Whitelist = [with(StringComparer.OrdinalIgnoreCase)];
     }
 
     #region 常量

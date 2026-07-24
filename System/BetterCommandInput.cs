@@ -95,7 +95,7 @@ public partial class BetterCommandInput : ModuleBase
             return;
 
         if (HandleSlashCommand(messageDecode, out var handledMessage))
-            message = new(handledMessage);
+            message = [with(handledMessage)];
     }
 
     private bool HandleSlashCommand

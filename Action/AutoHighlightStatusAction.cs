@@ -36,19 +36,19 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     private StatusSelectCombo statusCombo = null!;
     private ActionSelectCombo actionCombo = null!;
 
-    private readonly List<uint> actionsToHighlight = new(8);
+    private readonly List<uint> actionsToHighlight = [with(8)];
 
-    private readonly List<(uint ActionID, uint[] Chain)> comboChainsCache = new(16);
+    private readonly List<(uint ActionID, uint[] Chain)> comboChainsCache = [with(16)];
 
-    private readonly List<ActionCalcEntry> actionCalculationCache = new(16);
+    private readonly List<ActionCalcEntry> actionCalculationCache = [with(16)];
 
-    private readonly List<TrackedStatus> trackedStatuses = new(32);
+    private readonly List<TrackedStatus> trackedStatuses = [with(32)];
 
     private long lastUpdateTicks;
 
     // 临时缓冲区
-    private readonly List<int> resyncIndices = new(16);
-    private readonly List<int> removeIndices = new(16);
+    private readonly List<int> resyncIndices = [with(16)];
+    private readonly List<int> removeIndices = [with(16)];
 
     protected override void Init()
     {

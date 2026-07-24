@@ -46,7 +46,7 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
 
     private readonly (short X, short Y)   basePosition  = (41, 35);
     private readonly Dictionary<int, int> markedObjects = new(8); // markID → memberIndex
-    private readonly List<IconImageNode>  nodes         = new(8);
+    private readonly List<IconImageNode>  nodes         = [with(8)];
 
     protected override void Init()
     {

@@ -155,7 +155,7 @@ public class AutoAddChatPrefixSuffix : ModuleBase
                 return;
 
             if (AddPrefixAndSuffixIfNeeded(messageText, out var modifiedMessage, isTellCommand))
-                message = new(modifiedMessage);
+                message = [with(modifiedMessage)];
         }
     }
 
