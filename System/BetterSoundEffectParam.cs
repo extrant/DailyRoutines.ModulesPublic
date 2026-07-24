@@ -16,20 +16,24 @@ public class BetterSoundEffectParam : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private MemoryPatch channelCheckPatch = new
-    (
-        "0F 84 ?? ?? ?? ?? 48 63 4D",
-        [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
-    );
+    private MemoryPatch channelCheckPatch = null!;
 
-    private MemoryPatch counterCheckPatch = new
-    (
-        "0F 86 ?? ?? ?? ?? 83 C1",
-        [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
-    );
+    private MemoryPatch counterCheckPatch = null!;
 
     protected override void Init()
     {
+        channelCheckPatch = new
+        (
+            "0F 84 ?? ?? ?? ?? 48 63 4D",
+            [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
+        );
+
+        counterCheckPatch = new
+        (
+            "0F 86 ?? ?? ?? ?? 83 C1",
+            [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
+        );
+        
         channelCheckPatch.Enable();
         counterCheckPatch.Enable();
     }

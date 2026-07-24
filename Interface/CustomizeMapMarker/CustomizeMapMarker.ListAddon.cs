@@ -214,7 +214,7 @@ public unsafe partial class CustomizeMapMarker
                         );
                     }
 
-                    options[new(group.Key)] = entries;
+                    options[[with(group.Key)]] = entries;
                 }
 
                 markerTree.Options = options;

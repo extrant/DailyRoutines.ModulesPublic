@@ -45,9 +45,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
     private float  windowWidth;
     private bool   isOnWorldTraveling;
 
-    private readonly List<InteractableObject> currentObjects         = new(20);
+    private readonly List<InteractableObject> currentObjects         = [with(20)];
     private readonly List<AetheryteRecord>    currentAethernetShards = [];
-    private          bool                     forceObjectUpdate;
+
+    private bool forceObjectUpdate;
 
     protected override void Init()
     {

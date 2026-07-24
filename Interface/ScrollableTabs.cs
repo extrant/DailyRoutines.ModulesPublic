@@ -37,21 +37,21 @@ public unsafe class ScrollableTabs : ModuleBase
     private static AtkCollisionNode* IntersectingCollisionNode =>
         RaptureAtkModule.Instance()->AtkCollisionManager.IntersectingCollisionNode;
 
-    private delegate void AddonUpdateHandler
-    (
-        AtkUnitBase* unitBase
-    );
-
     private Config config = null!;
-    private int    wheelState;
+
+    private int wheelState;
 
     private readonly Dictionary<string, AddonUpdateHandler> uiHandlerMapping = [];
     private readonly Dictionary<string, string>             uiNameMapping    = [];
 
-    public ScrollableTabs()
+    protected override void Init()
     {
+        config = Config.Load(this) ?? new();
+        
         InitUINameMapping();
         InitUIHandlerMapping();
+
+        FrameworkManager.Instance().Reg(OnUpdate);
 
         return;
 
@@ -156,13 +156,6 @@ public unsafe class ScrollableTabs : ModuleBase
             uiHandlerMapping["CharacterClass"]  = HandleCharacterUI;
             uiHandlerMapping["CharacterRepute"] = HandleCharacterUI;
         }
-    }
-
-    protected override void Init()
-    {
-        config = Config.Load(this) ?? new();
-
-        FrameworkManager.Instance().Reg(OnUpdate);
     }
 
     protected override void Uninit() =>
@@ -707,6 +700,11 @@ public unsafe class ScrollableTabs : ModuleBase
         public bool Invert = true;
     }
 
+    private delegate void AddonUpdateHandler
+    (
+        AtkUnitBase* unitBase
+    );
+    
     #region 常量
 
     private const int NUM_ARMOURY_BOARD_TABS            = 12;

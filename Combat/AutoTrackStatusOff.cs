@@ -22,16 +22,21 @@ public class AutoTrackStatusOff : ModuleBase
 
     private Config config = null!;
 
-    private readonly StatusSelectCombo? statusSelectCombo = new
-        ("Status", LuminaGetter.Get<Status>().Where(x => x.CanStatusOff && !string.IsNullOrEmpty(x.Name.ToString())));
+    private StatusSelectCombo? statusSelectCombo = null!;
 
     private readonly Dictionary<uint, (float Duration, ulong SourceID, DateTime GainTime, uint TargetID)> records = [];
 
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
+
+        statusSelectCombo = new
+        (
+            "Status",
+            LuminaGetter.Get<Status>().Where(x => x.CanStatusOff && !string.IsNullOrEmpty(x.Name.ToString()))
+        );
         if (config.StatusToMonitor.Count > 0)
-            statusSelectCombo.SelectedIDs = config.StatusToMonitor.ToHashSet();
+            statusSelectCombo.SelectedIDs = [.. config.StatusToMonitor];
 
         CharacterStatusManager.Instance().RegGain(OnGainStatus);
         CharacterStatusManager.Instance().RegLose(OnLoseStatus);

@@ -33,8 +33,8 @@ public unsafe class FastSetWeatherTime : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private static readonly CompSig PlayWeatherSoundSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC ?? 45 33 F6 0F 29 74 24");
-
+    private static readonly CompSig PlayWeatherSoundSig = 
+        new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC ?? 45 33 F6 0F 29 74 24");
     private delegate void* PlayWeatherSoundDelegate
     (
         void* manager,
@@ -42,11 +42,10 @@ public unsafe class FastSetWeatherTime : ModuleBase
         void* a3,
         void* a4
     );
-
     private Hook<PlayWeatherSoundDelegate> PlayWeatherSoundHook;
 
-    private static readonly CompSig UpdateBgmSituationSig = new("48 89 5C 24 ?? 57 48 83 EC 20 B8 ?? ?? ?? ?? 49 8B F9 41 8B D8");
-
+    private static readonly CompSig UpdateBgmSituationSig = 
+        new("48 89 5C 24 ?? 57 48 83 EC 20 B8 ?? ?? ?? ?? 49 8B F9 41 8B D8");
     private delegate void* UpdateBgmSituationDelegate
     (
         void*  manager,
@@ -55,20 +54,12 @@ public unsafe class FastSetWeatherTime : ModuleBase
         void*  a4,
         void*  a5
     );
-
     private Hook<UpdateBgmSituationDelegate> UpdateBgmSituationHook;
 
-    // mov eax, 0
-    private readonly MemoryPatchWithPointer<uint> renderSunlightShadowPatch =
-        new("49 0F BE 40 ?? 84 C0", [0xB8, 0x00, 0x00, 0x00, 0x00], pointerOffset: 1);
-
-    // mov dl, 0, nop, nop
-    private readonly MemoryPatchWithPointer<byte> renderWeatherPatch =
-        new("48 89 5C 24 ?? 57 48 83 EC 30 80 B9 ?? ?? ?? ?? ?? 49 8B F8 0F 29 74 24 ?? 48 8B D9 0F 28 F1", [0xB2, 0x00, 0x90, 0x90], 0x55, 1);
-
-    // mov r9, 0
-    private readonly MemoryPatchWithPointer<uint> renderTimePatch =
-        new("48 89 5C 24 ?? 57 48 83 EC 30 4C 8B 15", [0x49, 0xC7, 0xC1, 0x00, 0x00, 0x00, 0x00], 0x19, 3);
+    
+    private MemoryPatchWithPointer<uint> renderSunlightShadowPatch = null!;
+    private MemoryPatchWithPointer<byte> renderWeatherPatch        = null!;
+    private MemoryPatchWithPointer<uint> renderTimePatch           = null!;
 
     private static uint RealTime
     {
@@ -102,6 +93,27 @@ public unsafe class FastSetWeatherTime : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
+        renderTimePatch = new
+        (
+            "48 89 5C 24 ?? 57 48 83 EC 30 4C 8B 15",
+            [0x49, 0xC7, 0xC1, 0x00, 0x00, 0x00, 0x00], // mov r9, 0
+            0x19,
+            3
+        );
+        renderSunlightShadowPatch = new
+        (
+            "49 0F BE 40 ?? 84 C0",
+            [0xB8, 0x00, 0x00, 0x00, 0x00], // mov eax, 0
+            pointerOffset: 1
+        );
+        renderWeatherPatch = new
+        (
+            "48 89 5C 24 ?? 57 48 83 EC 30 80 B9 ?? ?? ?? ?? ?? 49 8B F8 0F 29 74 24 ?? 48 8B D9 0F 28 F1",
+            [0xB2, 0x00, 0x90, 0x90], // mov dl, 0, nop, nop
+            0x55,
+            1
+        );
+        
         PlayWeatherSoundHook ??= PlayWeatherSoundSig.GetHook<PlayWeatherSoundDelegate>(PlayWeatherSoundDetour);
         PlayWeatherSoundHook.Enable();
 

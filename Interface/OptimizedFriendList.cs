@@ -47,9 +47,9 @@ public unsafe class OptimizedFriendList : ModuleBase
 
     private Config config = null!;
 
-    private readonly ModifyInfoMenuItem          modifyInfoItem;
-    private readonly TeleportFriendZoneMenuItem  teleportZoneItem  = new();
-    private readonly TeleportFriendWorldMenuItem teleportWorldItem = new();
+    private ModifyInfoMenuItem          modifyInfoItem    = null!;
+    private TeleportFriendZoneMenuItem  teleportZoneItem  = null!;
+    private TeleportFriendWorldMenuItem teleportWorldItem = null!;
 
     private TextInputNode?     searchInputNode;
     private TextureButtonNode? searchSettingButtonNode;
@@ -68,6 +68,10 @@ public unsafe class OptimizedFriendList : ModuleBase
     {
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new();
+
+        modifyInfoItem    = new(this, TaskHelper);
+        teleportZoneItem  = new();
+        teleportWorldItem = new();
 
         remarkEditAddon ??= new(this)
         {

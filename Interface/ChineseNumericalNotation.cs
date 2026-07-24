@@ -51,18 +51,7 @@ public unsafe class ChineseNumericalNotation : ModuleBase
     private Hook<AtkCounterNodeSetNumberDelegate>? AtkCounterNodeSetNumberHook;
 
     // 千分位转万分位
-    private readonly MemoryPatch AtkTextNodeSetNumberCommaPatch = new
-    (
-        "B8 ?? ?? ?? ?? F7 E1 D1 EA 8D 04 52 2B C8 83 F9 ?? 75 ?? 41 0F B6 D0 48 8D 8F",
-        [
-            // mov eax, 0AAAAAAABh
-            0x83, 0xE1, 0x03, // and ecx, 3
-            0x90, 0x90,       // nop, nop
-            // all nop
-            0x90, 0x90, 0x90, 0x90, 0x90,
-            0x90, 0x90, 0x90, 0x90
-        ]
-    );
+    private MemoryPatch AtkTextNodeSetNumberCommaPatch = null!;
 
     private Config config = null!;
 
@@ -70,6 +59,19 @@ public unsafe class ChineseNumericalNotation : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
+        AtkTextNodeSetNumberCommaPatch = new
+        (
+            "B8 ?? ?? ?? ?? F7 E1 D1 EA 8D 04 52 2B C8 83 F9 ?? 75 ?? 41 0F B6 D0 48 8D 8F",
+            [
+                // mov eax, 0AAAAAAABh
+                0x83, 0xE1, 0x03, // and ecx, 3
+                0x90, 0x90,       // nop, nop
+                // all nop
+                0x90, 0x90, 0x90, 0x90, 0x90,
+                0x90, 0x90, 0x90, 0x90
+            ]
+        );
+        
         AtkTextNodeSetNumberCommaPatch.Enable();
 
         AtkCounterNodeSetNumberHook ??= AtkCounterNodeSetNumberSig.GetHook<AtkCounterNodeSetNumberDelegate>(AtkCounterNodeSetNumberDetour);

@@ -14,9 +14,15 @@ public class DisableGroundActionAutoFace : ModuleBase
         Category    = ModuleCategory.Action
     };
 
-    private readonly MemoryPatch groundActionAutoFacePatch =
-        new("74 ?? 48 8D 8E ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 75 ?? 48 8B 55", [0xEB]);
+    private MemoryPatch groundActionAutoFacePatch = null!;
 
-    protected override void Init() =>
-        groundActionAutoFacePatch.Set(true);
+    protected override void Init()
+    {
+        groundActionAutoFacePatch = new
+        (
+            "74 ?? 48 8D 8E ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 75 ?? 48 8B 55",
+            [0xEB]
+        );
+        groundActionAutoFacePatch.Enable();
+    }
 }

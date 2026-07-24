@@ -25,12 +25,15 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
 
     private Config config = null!;
 
-    private readonly BoardState board      = new();
-    private readonly Solver     fauxSolver = new();
+    private BoardState board      = null!;
+    private Solver     fauxSolver = null!;
 
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
+
+        board      = new();
+        fauxSolver = new();
 
         Overlay ??= new(this);
 

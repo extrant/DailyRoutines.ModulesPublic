@@ -13,9 +13,13 @@ public class AutoHandleTeleportStuck : ModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title       = Lang.Get("AutoHandleTeleportStuckTitle"),
-        Description = Lang.Get("AutoHandleTeleportStuckDescription", LuminaWrapper.GetLogMessageText(1665)),
-        Category    = ModuleCategory.System
+        Title = Lang.Get("AutoHandleTeleportStuckTitle"),
+        Description = Lang.Get
+        (
+            "AutoHandleTeleportStuckDescription",
+            LuminaWrapper.GetLogMessageText(1665)
+        ),
+        Category = ModuleCategory.System
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
