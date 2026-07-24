@@ -837,7 +837,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
     private static readonly Vector2 CastBackgroundTextDefaultPosition = new(197, 2);
     private static readonly Vector2 HealthTextDefaultPosition         = new(-60, 8);
     private static readonly Vector2 EnemityTextDefaultPosition        = new(12, 21);
-    private static readonly Vector2 StatusComponentOffset             = new(11, -1);
+    private static readonly Vector2 StatusComponentOffset             = new(12, -1);
     
     private const float HEALTH_TEXT_MARKER_PADDING   = 1f;
     private const float CAST_TEXT_BACKGROUND_PADDING = 7f;
