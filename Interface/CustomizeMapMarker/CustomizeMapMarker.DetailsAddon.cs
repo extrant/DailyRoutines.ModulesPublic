@@ -71,28 +71,38 @@ public unsafe partial class CustomizeMapMarker
             locationText = new()
             {
                 Size      = ContentSize with { Y = 36 },
+                String    = "测试",
                 FontSize  = 18,
                 TextFlags = TextFlags.Edge | TextFlags.Ellipsis
             };
             AtkColors.Label.ApplyTo(ref locationText);
             containerNode.AddNode(locationText);
 
+            var nameLable = CreateLabel(Lang.Get("Name"));
+            containerNode.AddNode(nameLable);
+            
             nameInput = new()
             {
                 Size              = ContentSize with { Y = 30 },
                 MaxCharacters     = 80,
                 PlaceholderString = Lang.Get("CustomizeMapMarker-Untitled")
             };
-            AddField("Name", nameInput);
+            containerNode.AddNode(nameInput);
 
+            var groupLabel = CreateLabel(Lang.Get("CustomizeMapMarker-Group"));
+            containerNode.AddNode(groupLabel);
+            
             groupInput = new()
             {
                 Size              = ContentSize with { Y = 30 },
                 MaxCharacters     = 40,
                 PlaceholderString = Lang.Get("CustomizeMapMarker-DefaultGroup")
             };
-            AddField("CustomizeMapMarker-Group", groupInput);
+            containerNode.AddNode(groupInput);
 
+            var descriptionLabel = CreateLabel(Lang.Get("Note"));
+            containerNode.AddNode(descriptionLabel);
+            
             descriptionInput = new()
             {
                 Size              = ContentSize with { Y = 56 },
@@ -100,7 +110,7 @@ public unsafe partial class CustomizeMapMarker
                 MaxLines          = 3,
                 PlaceholderString = Lang.Get("Note")
             };
-            AddField("Note", descriptionInput);
+            containerNode.AddNode(descriptionInput);
 
             var iconLabelRow = new ResNode
             {
@@ -189,12 +199,6 @@ public unsafe partial class CustomizeMapMarker
             AlignmentType = AlignmentType.Left
         };
 
-        private void AddField(string label, NodeBase input)
-        {
-            containerNode!.AddNode(CreateLabel(Lang.Get(label)));
-            containerNode.AddNode(input);
-        }
-
         private void SetFlag()
         {
             if (module.FindMarker(markerID) is { } marker)
@@ -205,8 +209,15 @@ public unsafe partial class CustomizeMapMarker
         {
             if (module.FindMarker(markerID) is not { } marker) return;
 
-            marker.Name        = ReadText(nameInput, "CustomizeMapMarker-Untitled");
-            marker.Group       = ReadText(groupInput, "CustomizeMapMarker-DefaultGroup");
+            var name  = nameInput?.String.ToString().Trim();
+            var group = groupInput?.String.ToString().Trim();
+
+            marker.Name = string.IsNullOrWhiteSpace(name) ?
+                              Lang.Get("CustomizeMapMarker-Untitled") :
+                              name;
+            marker.Group = string.IsNullOrWhiteSpace(group) ?
+                               Lang.Get("CustomizeMapMarker-DefaultGroup") :
+                               group;
             marker.Description = descriptionInput?.String.ToString().Trim() ?? string.Empty;
             marker.IconID      = (uint)Math.Max(1, iconInput?.Value ?? (int)DEFAULT_ICON_ID);
 
@@ -219,12 +230,6 @@ public unsafe partial class CustomizeMapMarker
                     DisplayCheckmark = true
                 }
             );
-        }
-
-        private static string ReadText(TextInputNode? input, string fallbackKey)
-        {
-            var value = input?.String.ToString().Trim();
-            return string.IsNullOrWhiteSpace(value) ? Lang.Get(fallbackKey) : value;
         }
 
         private void DeleteMarker()

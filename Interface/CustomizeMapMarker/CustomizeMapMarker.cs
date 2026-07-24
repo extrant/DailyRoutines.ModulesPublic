@@ -201,11 +201,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
     }
 
     private static void SetGameFlag(MarkerRecord marker) =>
-        AgentMap.Instance()->SetFlagMapMarker
+        AgentMap.Instance()->SetMapFlagAndOpen
         (
-            marker.TerritoryID,
             marker.MapID,
-            new(marker.TexturePosition.X, 0, marker.TexturePosition.Y)
+            marker.TexturePosition.ToVector3(0)
         );
 
     private void SaveAndRefresh()
