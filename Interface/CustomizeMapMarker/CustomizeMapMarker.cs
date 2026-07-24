@@ -23,7 +23,11 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
     {
         Title       = Lang.Get("CustomizeMapMarkerTitle"),
         Description = Lang.Get("CustomizeMapMarkerDescription"),
-        Category    = ModuleCategory.Interface
+        Category    = ModuleCategory.Interface,
+        PreviewImageURL =
+        [
+            "https://gh.atmoomen.top/raw.githubusercontent.com/Dalamud-DailyRoutines/DailyRoutines/main/Resources/Modules/CustomizeMapMarker/preview-1.png"
+        ]
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
