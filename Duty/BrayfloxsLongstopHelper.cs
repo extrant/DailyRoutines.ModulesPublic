@@ -40,7 +40,10 @@ public unsafe class BrayfloxsLongstopHelper : ModuleBase
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private static void OnZoneChanged(uint zone)
+    private static void OnZoneChanged
+    (
+        uint zone
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -49,7 +52,10 @@ public unsafe class BrayfloxsLongstopHelper : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 100);
     }
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var director = EventFramework.Instance()->GetContentDirector();
         if (director == null) return;
@@ -65,7 +71,10 @@ public unsafe class BrayfloxsLongstopHelper : ModuleBase
 
         return;
 
-        static bool FindNPC(BattleChara* chara) =>
+        static bool FindNPC
+        (
+            BattleChara* chara
+        ) =>
             chara               != null                &&
             chara->ObjectKind   == ObjectKind.EventNpc &&
             chara->BaseId       == 1004346             &&

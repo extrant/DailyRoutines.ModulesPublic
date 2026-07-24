@@ -20,7 +20,7 @@ public unsafe class RealPositionInNaviMap : ModuleBase
         Description = Lang.Get("RealPositionInNaviMapDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     private Config config = null!;
 
     private TextButtonNode? positionButton;
@@ -35,11 +35,11 @@ public unsafe class RealPositionInNaviMap : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_NaviMap", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_NaviMap", OnAddon);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         positionButton?.Dispose();
         positionButton = null;
 
@@ -62,14 +62,18 @@ public unsafe class RealPositionInNaviMap : ModuleBase
         if (ImGui.IsItemDeactivatedAfterEdit())
             config.Save(this);
     }
-    
-    private void OnAddon(AddonEvent type, AddonArgs args)
+
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
             case AddonEvent.PreFinalize:
                 positionButton = null;
-                
+
                 lastX = lastY = 0;
                 break;
 

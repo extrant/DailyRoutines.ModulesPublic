@@ -1,7 +1,6 @@
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
 using OmenTools.Interop.Game.Lumina;
@@ -33,7 +32,10 @@ public class AutoStellarSprint : ModuleBase
         CharacterStatusManager.Instance().Unreg(OnLoseStatus);
     }
 
-    private static void OnZoneChange(uint u)
+    private static void OnZoneChange
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
         CharacterStatusManager.Instance().Unreg(OnLoseStatus);
@@ -44,7 +46,14 @@ public class AutoStellarSprint : ModuleBase
         CharacterStatusManager.Instance().RegLose(OnLoseStatus);
     }
 
-    private static void OnLoseStatus(IBattleChara player, ushort id, ushort param, ushort stackCount, ulong sourceID)
+    private static void OnLoseStatus
+    (
+        IBattleChara player,
+        ushort       id,
+        ushort       param,
+        ushort       stackCount,
+        ulong        sourceID
+    )
     {
         if (player.EntityID != LocalPlayerState.EntityID) return;
 
@@ -60,7 +69,10 @@ public class AutoStellarSprint : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 2_000);
     }
 
-    private static void OnUpdate(IFramework _)
+    private static void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition.IsOccupiedInEvent) return;
 
@@ -84,7 +96,7 @@ public class AutoStellarSprint : ModuleBase
 
         UseActionManager.Instance().UseAction(ActionType.Action, STELLAR_SPRINT);
     }
-    
+
     #region 常量
 
     private const uint STELLAR_SPRINT = 43357;

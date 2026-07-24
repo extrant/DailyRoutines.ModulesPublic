@@ -21,21 +21,30 @@ public unsafe class ScrollableTabs : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["Cyf5119"]
     };
-    
+
     private bool IsNext =>
-        wheelState == (!config.Invert ? 1 : -1);
+        wheelState ==
+        (!config.Invert ?
+             1 :
+             -1);
 
     private bool IsPrev =>
-        wheelState == (!config.Invert ? -1 : 1);
-    
+        wheelState ==
+        (!config.Invert ?
+             -1 :
+             1);
+
     private static AtkCollisionNode* IntersectingCollisionNode =>
         RaptureAtkModule.Instance()->AtkCollisionManager.IntersectingCollisionNode;
-    
-    private delegate void AddonUpdateHandler(AtkUnitBase* unitBase);
+
+    private delegate void AddonUpdateHandler
+    (
+        AtkUnitBase* unitBase
+    );
 
     private Config config = null!;
     private int    wheelState;
-    
+
     private readonly Dictionary<string, AddonUpdateHandler> uiHandlerMapping = [];
     private readonly Dictionary<string, string>             uiNameMapping    = [];
 
@@ -45,7 +54,7 @@ public unsafe class ScrollableTabs : ModuleBase
         InitUIHandlerMapping();
 
         return;
-        
+
         void InitUINameMapping()
         {
             var directUseNames = new[]
@@ -155,7 +164,7 @@ public unsafe class ScrollableTabs : ModuleBase
 
         FrameworkManager.Instance().Reg(OnUpdate);
     }
-    
+
     protected override void Uninit() =>
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -164,8 +173,11 @@ public unsafe class ScrollableTabs : ModuleBase
         if (ImGui.Checkbox(Lang.Get("ScrollableTabs-Invert"), ref config.Invert))
             config.Save(this);
     }
-    
-    private void OnUpdate(IFramework _)
+
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (!DService.Instance().ClientState.IsLoggedIn)
             return;
@@ -217,10 +229,15 @@ public unsafe class ScrollableTabs : ModuleBase
         wheelState = 0;
     }
 
-    private void HandleCharacterUI(AtkUnitBase* unitBase)
+    private void HandleCharacterUI
+    (
+        AtkUnitBase* unitBase
+    )
     {
-        var name           = unitBase->NameString;
-        var addonCharacter = name == "Character" ? (AddonCharacter*)unitBase : AddonHelper.GetByName<AddonCharacter>("Character");
+        var name = unitBase->NameString;
+        var addonCharacter = name == "Character" ?
+                                 (AddonCharacter*)unitBase :
+                                 AddonHelper.GetByName<AddonCharacter>("Character");
 
         if (addonCharacter == null                             ||
             !addonCharacter->AddonControl.IsChildSetupComplete ||
@@ -244,10 +261,17 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private int GetTabIndex(int currentTabIndex, int numTabs) => 
+    private int GetTabIndex
+    (
+        int currentTabIndex,
+        int numTabs
+    ) =>
         Math.Clamp(currentTabIndex + wheelState, 0, numTabs - 1);
 
-    private void UpdateArmouryBoard(AddonArmouryBoard* addon)
+    private void UpdateArmouryBoard
+    (
+        AddonArmouryBoard* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_ARMOURY_BOARD_TABS);
 
@@ -257,7 +281,10 @@ public unsafe class ScrollableTabs : ModuleBase
             addon->PreviousTab(0);
     }
 
-    private void UpdateInventory(AddonInventory* addon)
+    private void UpdateInventory
+    (
+        AddonInventory* addon
+    )
     {
         if (addon->TabIndex == NUM_INVENTORY_TABS - 1 && wheelState > 0)
             addon->AtkUnitBase.Callback(22, *(int*)((nint)addon + 0x228), 0);
@@ -272,7 +299,10 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateInventoryEvent(AddonInventoryEvent* addon)
+    private void UpdateInventoryEvent
+    (
+        AddonInventoryEvent* addon
+    )
     {
         if (addon->TabIndex == 0 && wheelState < 0)
             addon->AtkUnitBase.Callback(22, *(int*)((nint)addon + 0x228), 2);
@@ -295,7 +325,10 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateInventoryLarge(AddonInventoryLarge* addon)
+    private void UpdateInventoryLarge
+    (
+        AddonInventoryLarge* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_INVENTORY_LARGE_TABS);
 
@@ -305,7 +338,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex);
     }
 
-    private void UpdateInventoryExpansion(AddonInventoryExpansion* addon)
+    private void UpdateInventoryExpansion
+    (
+        AddonInventoryExpansion* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_INVENTORY_EXPANSION_TABS);
 
@@ -315,7 +351,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex, false);
     }
 
-    private void UpdateInventoryRetainer(AddonInventoryRetainer* addon)
+    private void UpdateInventoryRetainer
+    (
+        AddonInventoryRetainer* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_INVENTORY_RETAINER_TABS);
 
@@ -325,7 +364,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex);
     }
 
-    private void UpdateInventoryRetainerLarge(AddonInventoryRetainerLarge* addon)
+    private void UpdateInventoryRetainerLarge
+    (
+        AddonInventoryRetainerLarge* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_INVENTORY_RETAINER_LARGE_TABS);
 
@@ -335,7 +377,11 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex);
     }
 
-    private void UpdateTabController(AtkUnitBase* addon, TabController* tabController)
+    private void UpdateTabController
+    (
+        AtkUnitBase*   addon,
+        TabController* tabController
+    )
     {
         var tabIndex = GetTabIndex(tabController->TabIndex, tabController->TabCount);
 
@@ -346,7 +392,10 @@ public unsafe class ScrollableTabs : ModuleBase
         tabController->CallbackFunction(tabIndex, addon);
     }
 
-    private void UpdateAOZNotebook(AddonAOZNotebook* addon)
+    private void UpdateAOZNotebook
+    (
+        AddonAOZNotebook* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, addon->TabCount);
 
@@ -356,7 +405,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex, true);
     }
 
-    private void UpdateAetherCurrent(AddonAetherCurrent* addon)
+    private void UpdateAetherCurrent
+    (
+        AddonAetherCurrent* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, addon->TabCount);
         if (addon->TabIndex == tabIndex) return;
@@ -367,7 +419,10 @@ public unsafe class ScrollableTabs : ModuleBase
             addon->Tabs[i].Value->IsSelected = i == tabIndex;
     }
 
-    private void UpdateFateProgress(AddonFateProgress* addon)
+    private void UpdateFateProgress
+    (
+        AddonFateProgress* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, addon->TabCount);
         if (!addon->IsLoaded || addon->TabIndex == tabIndex)
@@ -377,13 +432,16 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex, &atkEvent);
     }
 
-    private void UpdateFieldNotes(AddonMYCWarResultNotebook* addon)
+    private void UpdateFieldNotes
+    (
+        AddonMYCWarResultNotebook* addon
+    )
     {
         if (IntersectingCollisionNode == addon->DescriptionCollisionNode)
             return;
 
         var atkEvent   = new AtkEvent();
-        var eventParam = Math.Clamp(addon->CurrentNoteIndex % 10 + wheelState, -1, addon->MaxNoteIndex - 1);
+        var eventParam = Math.Clamp((addon->CurrentNoteIndex % 10) + wheelState, -1, addon->MaxNoteIndex - 1);
 
         if (eventParam == -1)
         {
@@ -406,7 +464,10 @@ public unsafe class ScrollableTabs : ModuleBase
             addon->AtkUnitBase.ReceiveEvent(AtkEventType.ButtonClick, eventParam, &atkEvent);
     }
 
-    private void UpdateMountMinion(AddonMinionMountBase* addon)
+    private void UpdateMountMinion
+    (
+        AddonMinionMountBase* addon
+    )
     {
         switch (addon->CurrentView)
         {
@@ -422,7 +483,10 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateMJIMinionNoteBook(AddonMJIMinionNoteBook* addon)
+    private void UpdateMJIMinionNoteBook
+    (
+        AddonMJIMinionNoteBook* addon
+    )
     {
         var agent = AgentMJIMinionNoteBook.Instance();
 
@@ -458,7 +522,10 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateInventoryBuddy(AddonInventoryBuddy* addon)
+    private void UpdateInventoryBuddy
+    (
+        AddonInventoryBuddy* addon
+    )
     {
         if (!PlayerState.Instance()->HasPremiumSaddlebag)
             return;
@@ -471,7 +538,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab((byte)tabIndex);
     }
 
-    private void UpdateCurrency(AddonCurrency* addon)
+    private void UpdateCurrency
+    (
+        AddonCurrency* addon
+    )
     {
         var atkStage    = AtkStage.Instance();
         var numberArray = atkStage->GetNumberArrayData(NumberArrayType.Currency);
@@ -509,7 +579,10 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->AtkUnitBase.OnRequestedUpdate(atkStage->GetNumberArrayData(), atkStage->GetStringArrayData());
     }
 
-    private void UpdateBuddy(AddonBuddy* addon)
+    private void UpdateBuddy
+    (
+        AddonBuddy* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, NUM_BUDDY_TABS);
 
@@ -526,7 +599,10 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateMiragePrismPrismBox(AddonMiragePrismPrismBox* addon)
+    private void UpdateMiragePrismPrismBox
+    (
+        AddonMiragePrismPrismBox* addon
+    )
     {
         if (addon->JobDropdown                                   == null ||
             addon->JobDropdown->List                             == null ||
@@ -540,13 +616,17 @@ public unsafe class ScrollableTabs : ModuleBase
             addon->OrderDropdown->List->AtkComponentBase.OwnerNode->AtkResNode.IsVisible())
             return;
 
-        var prevButton = !config.Invert ? addon->PrevButton : addon->NextButton;
-        var nextButton = !config.Invert ? addon->NextButton : addon->PrevButton;
+        var prevButton = !config.Invert ?
+                             addon->PrevButton :
+                             addon->NextButton;
+        var nextButton = !config.Invert ?
+                             addon->NextButton :
+                             addon->PrevButton;
 
-        if (prevButton == null || IsPrev && !prevButton->IsEnabled)
+        if (prevButton == null || (IsPrev && !prevButton->IsEnabled))
             return;
 
-        if (nextButton == null || IsNext && !nextButton->IsEnabled)
+        if (nextButton == null || (IsNext && !nextButton->IsEnabled))
             return;
 
         if (MiragePrismPrismBoxFilter->IsAddonAndNodesReady())
@@ -557,7 +637,10 @@ public unsafe class ScrollableTabs : ModuleBase
         agent->UpdateItems(false, false);
     }
 
-    private void UpdateCharacter(AddonCharacter* addon)
+    private void UpdateCharacter
+    (
+        AddonCharacter* addon
+    )
     {
         var tabIndex = GetTabIndex(addon->TabIndex, addon->TabCount);
 
@@ -574,7 +657,11 @@ public unsafe class ScrollableTabs : ModuleBase
         }
     }
 
-    private void UpdateCharacterClass(AddonCharacter* addonCharacter, AddonCharacterClass* addon)
+    private void UpdateCharacterClass
+    (
+        AddonCharacter*      addonCharacter,
+        AddonCharacterClass* addon
+    )
     {
         // prev or next embedded addon
         if (addon->TabIndex + wheelState < 0 || addon->TabIndex + wheelState > 1)
@@ -591,7 +678,11 @@ public unsafe class ScrollableTabs : ModuleBase
         addon->SetTab(tabIndex);
     }
 
-    private void UpdateCharacterRepute(AddonCharacter* addonCharacter, AddonCharacterRepute* addon)
+    private void UpdateCharacterRepute
+    (
+        AddonCharacter*       addonCharacter,
+        AddonCharacterRepute* addon
+    )
     {
         // prev embedded addon
         if (addon->SelectedExpansion + wheelState < 0)
@@ -610,12 +701,12 @@ public unsafe class ScrollableTabs : ModuleBase
         data.ListItemData.SelectedIndex = tabIndex; // technically the index of an id array, but it's literally the same value
         addon->AtkUnitBase.ReceiveEvent((AtkEventType)37, 0, &atkEvent, &data);
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool Invert = true;
     }
-    
+
     #region 常量
 
     private const int NUM_ARMOURY_BOARD_TABS            = 12;

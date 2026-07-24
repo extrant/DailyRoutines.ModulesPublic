@@ -22,7 +22,7 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     private readonly BoardState board      = new();
@@ -73,7 +73,11 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         ConfigUI();
     }
 
-    private void OnWeeklyPuzzleEvent(AddonEvent type, AddonArgs? args)
+    private void OnWeeklyPuzzleEvent
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -90,7 +94,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         }
     }
 
-    private void OnUpdate(IFramework framework)
+    private void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var addon = (AddonWeeklyPuzzle*)WeeklyPuzzle;
         if (addon == null || !WeeklyPuzzle->IsAddonAndNodesReady()) return;
@@ -106,7 +113,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         UpdateAddonColors(addon, solution, bestScore);
     }
 
-    private static BoardState.Tile[] ParseTileInformation(AddonWeeklyPuzzle* addon)
+    private static BoardState.Tile[] ParseTileInformation
+    (
+        AddonWeeklyPuzzle* addon
+    )
     {
         var result    = new BoardState.Tile[BoardState.WIDTH * BoardState.HEIGHT];
         var tileIndex = 0;
@@ -123,9 +133,9 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             {
                 WeeklyPuzzleTexture.Hidden  => BoardState.Tile.Hidden,
                 WeeklyPuzzleTexture.Blocked => BoardState.Tile.Blocked,
-                WeeklyPuzzleTexture.Blank => !tileIconImage->IsVisible()
-                                                 ? BoardState.Tile.Empty
-                                                 : (WeeklyPuzzlePrizeTexture)tileIconImage->PartId switch
+                WeeklyPuzzleTexture.Blank => !tileIconImage->IsVisible() ?
+                                                 BoardState.Tile.Empty :
+                                                 (WeeklyPuzzlePrizeTexture)tileIconImage->PartId switch
                                                  {
                                                      WeeklyPuzzlePrizeTexture.BoxTL     => BoardState.Tile.BoxTL,
                                                      WeeklyPuzzlePrizeTexture.BoxTR     => BoardState.Tile.BoxTR,
@@ -159,7 +169,12 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         return result;
     }
 
-    private static void UpdateAddonColors(AddonWeeklyPuzzle* addon, int[] solution, int bestScore)
+    private static void UpdateAddonColors
+    (
+        AddonWeeklyPuzzle* addon,
+        int[]              solution,
+        int                bestScore
+    )
     {
         var tileIndex = 0;
 
@@ -174,7 +189,9 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
                 Solver.CONFIRMED_SWORD     => (31, 174, 186),
                 Solver.CONFIRMED_BOX_CHEST => (255, 105, 180),
                 Solver.POTENTIAL_FOX       => (255, 215, 0),
-                _                          => soln == bestScore ? (32, 143, 46) : (0, 0, 0)
+                _ => soln == bestScore ?
+                         (32, 143, 46) :
+                         (0, 0, 0)
             };
             tileBackgroundImage->AtkResNode.AddRed   = (short)r;
             tileBackgroundImage->AtkResNode.AddGreen = (short)g;
@@ -182,13 +199,24 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         }
     }
 
-    private static AtkComponentButton* GetTileButton(AddonWeeklyPuzzle* addon, int x, int y) => 
+    private static AtkComponentButton* GetTileButton
+    (
+        AddonWeeklyPuzzle* addon,
+        int                x,
+        int                y
+    ) =>
         addon->GameBoard[y][x].Button;
 
-    private static AtkImageNode* GetBackgroundImageNode(AtkComponentButton* button) => 
+    private static AtkImageNode* GetBackgroundImageNode
+    (
+        AtkComponentButton* button
+    ) =>
         (AtkImageNode*)button->AtkComponentBase.UldManager.NodeList[3];
 
-    private static AtkImageNode* GetIconImageNode(AtkComponentButton* button) => 
+    private static AtkImageNode* GetIconImageNode
+    (
+        AtkComponentButton* button
+    ) =>
         (AtkImageNode*)button->AtkComponentBase.UldManager.NodeList[6];
 
     private enum WeeklyPuzzleTexture
@@ -233,7 +261,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
     {
         public ulong Raw = raw;
 
-        public static BitMask Build(params int[] bits)
+        public static BitMask Build
+        (
+            params int[] bits
+        )
         {
             var res = new BitMask();
             foreach (var bit in bits)
@@ -241,7 +272,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             return res;
         }
 
-        public bool this[int index]
+        public bool this
+        [
+            int index
+        ]
         {
             get => (Raw & MaskForBit(index)) != 0;
             set
@@ -259,11 +293,20 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
 
         public bool None() => Raw == 0;
 
-        public void Set(int index) => Raw |= MaskForBit(index);
+        public void Set
+        (
+            int index
+        ) => Raw |= MaskForBit(index);
 
-        public void Clear(int index) => Raw &= ~MaskForBit(index);
+        public void Clear
+        (
+            int index
+        ) => Raw &= ~MaskForBit(index);
 
-        public void Toggle(int index) => Raw ^= MaskForBit(index);
+        public void Toggle
+        (
+            int index
+        ) => Raw ^= MaskForBit(index);
 
         public int NumSetBits() => BitOperations.PopCount(Raw);
 
@@ -271,13 +314,28 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
 
         public int HighestSetBit() => 63 - BitOperations.LeadingZeroCount(Raw);
 
-        public static BitMask operator ~(BitMask a) => new(~a.Raw);
+        public static BitMask operator ~
+        (
+            BitMask a
+        ) => new(~a.Raw);
 
-        public static BitMask operator &(BitMask a, BitMask b) => new(a.Raw & b.Raw);
+        public static BitMask operator &
+        (
+            BitMask a,
+            BitMask b
+        ) => new(a.Raw & b.Raw);
 
-        public static BitMask operator |(BitMask a, BitMask b) => new(a.Raw | b.Raw);
+        public static BitMask operator |
+        (
+            BitMask a,
+            BitMask b
+        ) => new(a.Raw | b.Raw);
 
-        public static BitMask operator ^(BitMask a, BitMask b) => new(a.Raw ^ b.Raw);
+        public static BitMask operator ^
+        (
+            BitMask a,
+            BitMask b
+        ) => new(a.Raw ^ b.Raw);
 
         public IEnumerable<int> SetBits()
         {
@@ -291,7 +349,12 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             }
         }
 
-        private readonly ulong MaskForBit(int index) => (uint)index < 64 ? 1ul << index : 0;
+        private readonly ulong MaskForBit
+        (
+            int index
+        ) => (uint)index < 64 ?
+                 1ul << index :
+                 0;
     }
 
     private class BoardState
@@ -336,7 +399,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
 
         public Tile[] Tiles = new Tile[WIDTH * HEIGHT];
 
-        public bool Update(Tile[] tiles)
+        public bool Update
+        (
+            Tile[] tiles
+        )
         {
             var data = AnalyzeBoard(tiles);
 
@@ -355,7 +421,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             return false;
         }
 
-        private static (BitMask blockers, int swordsTL, bool swordsHoriz, int boxChestTL)? AnalyzeBoard(Tile[] tiles)
+        private static (BitMask blockers, int swordsTL, bool swordsHoriz, int boxChestTL)? AnalyzeBoard
+        (
+            Tile[] tiles
+        )
         {
             BitMask blockers    = new();
             var     swordsTL    = -1;
@@ -372,7 +441,7 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
                 {
                     var tl    = i - TLOffsetSwords(t);
                     var horiz = (t & Tile.RotatedEither) != 0;
-                    if (tl > i || swordsTL != -1 && (swordsTL != tl || swordsHoriz != horiz))
+                    if (tl > i || (swordsTL != -1 && (swordsTL != tl || swordsHoriz != horiz)))
                         return null;
                     swordsTL    = tl;
                     swordsHoriz = horiz;
@@ -380,7 +449,7 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
                 else if ((t & Tile.BoxChest) != 0)
                 {
                     var tl = i - TLOffsetBoxChest(t);
-                    if (tl > i || boxChestTL != -1 && boxChestTL != tl)
+                    if (tl > i || (boxChestTL != -1 && boxChestTL != tl))
                         return null;
                     boxChestTL = tl;
                 }
@@ -389,14 +458,17 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             return (blockers, swordsTL, swordsHoriz, boxChestTL);
         }
 
-        private static int TLOffsetSwords(Tile t) => t switch
+        private static int TLOffsetSwords
+        (
+            Tile t
+        ) => t switch
         {
             Tile.SwordsTL => 0,
             Tile.SwordsTR => 1,
             Tile.SwordsML => WIDTH,
             Tile.SwordsMR => WIDTH + 1,
             Tile.SwordsBL => WIDTH * 2,
-            Tile.SwordsBR => WIDTH * 2 + 1,
+            Tile.SwordsBR => (WIDTH * 2) + 1,
 
             Tile.SwordsTL | Tile.RotatedL => WIDTH,
             Tile.SwordsTR | Tile.RotatedL => 0,
@@ -415,7 +487,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             _ => -1
         };
 
-        private static int TLOffsetBoxChest(Tile t) => t switch
+        private static int TLOffsetBoxChest
+        (
+            Tile t
+        ) => t switch
         {
             Tile.BoxTL or Tile.ChestTL => 0,
             Tile.BoxTR or Tile.ChestTR => 1,
@@ -435,7 +510,7 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             _ => -1
         };
     }
-    
+
     private class Solver
     {
         public const int CONFIRMED_SWORD     = -2;
@@ -445,7 +520,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
         public readonly Patterns PatternDB = new();
         public          bool     FindSwordsFirst;
 
-        public int[] Solve(BoardState board)
+        public int[] Solve
+        (
+            BoardState board
+        )
         {
             var result = new int[BoardState.WIDTH * BoardState.HEIGHT];
             var sheet  = MatchingSheet(board);
@@ -463,8 +541,10 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
                     potentialFoxes.Add(c.Foxes.Raw);
                 }
 
-                var swordsScore = potentialSwords.Count == 1 ? CONFIRMED_SWORD : 10;
-                var boxScore    = potentialBoxes.Count  == 1 ? CONFIRMED_BOX_CHEST : FindSwordsFirst && potentialSwords.Count > 1 ? 0 : 10;
+                var swordsScore = potentialSwords.Count == 1 ?
+                                      CONFIRMED_SWORD :
+                                      10;
+                var boxScore = potentialBoxes.Count == 1 ? CONFIRMED_BOX_CHEST : FindSwordsFirst && potentialSwords.Count > 1 ? 0 : 10;
                 foreach (var (tl, h) in potentialSwords)
                 foreach (var i in SwordIndices(tl, h))
                     result[i] += swordsScore;
@@ -490,25 +570,52 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             return result;
         }
 
-        public bool MatchesSheet(BoardState board, Patterns.Sheet sheet) => sheet.Blockers.Raw == board.Blockers.Raw;
+        public bool MatchesSheet
+        (
+            BoardState     board,
+            Patterns.Sheet sheet
+        ) => sheet.Blockers.Raw == board.Blockers.Raw;
 
-        public bool MatchesRow(BoardState board, Patterns.Row row) =>
-            board.SwordsTL != -1
-                ? board.SwordsTL == row.SwordsTL && board.SwordsHorizontal == row.SwordsHorizontal
-                : AllHidden(SwordIndices(row.SwordsTL, row.SwordsHorizontal), board);
+        public bool MatchesRow
+        (
+            BoardState   board,
+            Patterns.Row row
+        ) =>
+            board.SwordsTL != -1 ?
+                board.SwordsTL == row.SwordsTL && board.SwordsHorizontal == row.SwordsHorizontal :
+                AllHidden(SwordIndices(row.SwordsTL, row.SwordsHorizontal), board);
 
-        public bool MatchesCell(BoardState board, Patterns.Cell cell) =>
-            board.BoxChestTL       != -1
-                ? board.BoxChestTL == cell.ChestTL
-                : AllHidden(BoxChestIndices(cell.ChestTL), board);
+        public bool MatchesCell
+        (
+            BoardState    board,
+            Patterns.Cell cell
+        ) =>
+            board.BoxChestTL     != -1 ?
+                board.BoxChestTL == cell.ChestTL :
+                AllHidden(BoxChestIndices(cell.ChestTL), board);
 
-        public Patterns.Sheet? MatchingSheet(BoardState board) => PatternDB.KnownPatterns.Find(s => MatchesSheet(board, s));
+        public Patterns.Sheet? MatchingSheet
+        (
+            BoardState board
+        ) => PatternDB.KnownPatterns.Find(s => MatchesSheet(board, s));
 
-        public IEnumerable<Patterns.Row> MatchingRows(BoardState board, Patterns.Sheet sheet) => sheet.Rows.Where(r => MatchesRow(board, r));
+        public IEnumerable<Patterns.Row> MatchingRows
+        (
+            BoardState     board,
+            Patterns.Sheet sheet
+        ) => sheet.Rows.Where(r => MatchesRow(board, r));
 
-        public IEnumerable<Patterns.Cell> MatchingCells(BoardState board, Patterns.Row row) => row.Cells.Where(c => MatchesCell(board, c));
+        public IEnumerable<Patterns.Cell> MatchingCells
+        (
+            BoardState   board,
+            Patterns.Row row
+        ) => row.Cells.Where(c => MatchesCell(board, c));
 
-        public IEnumerable<(Patterns.Row row, Patterns.Cell cell)> MatchingCells(BoardState board, Patterns.Sheet sheet)
+        public IEnumerable<(Patterns.Row row, Patterns.Cell cell)> MatchingCells
+        (
+            BoardState     board,
+            Patterns.Sheet sheet
+        )
         {
             foreach (var r in MatchingRows(board, sheet))
             {
@@ -517,19 +624,37 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             }
         }
 
-        public static IEnumerable<int> RectIndices(int tl, int w, int h)
+        public static IEnumerable<int> RectIndices
+        (
+            int tl,
+            int w,
+            int h
+        )
         {
             int sx = tl % BoardState.WIDTH, sy = tl / BoardState.WIDTH;
             for (var y = 0; y < h; ++y)
             for (var x = 0; x < w; ++x)
-                yield return (sy + y) * BoardState.WIDTH + sx + x;
+                yield return ((sy + y) * BoardState.WIDTH) + sx + x;
         }
 
-        public static IEnumerable<int> SwordIndices(int tl, bool horiz) => horiz ? RectIndices(tl, 3, 2) : RectIndices(tl, 2, 3);
+        public static IEnumerable<int> SwordIndices
+        (
+            int  tl,
+            bool horiz
+        ) => horiz ?
+                 RectIndices(tl, 3, 2) :
+                 RectIndices(tl, 2, 3);
 
-        public static IEnumerable<int> BoxChestIndices(int tl) => RectIndices(tl, 2, 2);
+        public static IEnumerable<int> BoxChestIndices
+        (
+            int tl
+        ) => RectIndices(tl, 2, 2);
 
-        private bool AllHidden(IEnumerable<int> indices, BoardState board) => indices.All(i => board.Tiles[i] == BoardState.Tile.Hidden);
+        private bool AllHidden
+        (
+            IEnumerable<int> indices,
+            BoardState       board
+        ) => indices.All(i => board.Tiles[i] == BoardState.Tile.Hidden);
     }
 
     private class Patterns
@@ -816,27 +941,45 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
             }
         }
 
-        private static int RotateCellIndexLeft(int cell)
+        private static int RotateCellIndexLeft
+        (
+            int cell
+        )
         {
             var x  = cell % BoardState.WIDTH;
             var y  = cell / BoardState.WIDTH;
             var yr = x;
             var xr = BoardState.WIDTH - 1 - y;
-            return yr * BoardState.WIDTH + xr;
+            return (yr * BoardState.WIDTH) + xr;
         }
 
-        private static BitMask RotateCellMaskLeft(BitMask cells) => BitMask.Build(cells.SetBits().Select(RotateCellIndexLeft).ToArray());
-
-        private static Cell RotateCellLeft(Cell cell) => new(RotateCellIndexLeft(cell.ChestTL) - 1, RotateCellMaskLeft(cell.Foxes));
-
-        private static Row RotateRowLeft(Row row) => new
+        private static BitMask RotateCellMaskLeft
         (
-            RotateCellIndexLeft(row.SwordsTL) - (row.SwordsHorizontal ? 1 : 2),
+            BitMask cells
+        ) => BitMask.Build(cells.SetBits().Select(RotateCellIndexLeft).ToArray());
+
+        private static Cell RotateCellLeft
+        (
+            Cell cell
+        ) => new(RotateCellIndexLeft(cell.ChestTL) - 1, RotateCellMaskLeft(cell.Foxes));
+
+        private static Row RotateRowLeft
+        (
+            Row row
+        ) => new
+        (
+            RotateCellIndexLeft(row.SwordsTL) -
+            (row.SwordsHorizontal ?
+                 1 :
+                 2),
             !row.SwordsHorizontal,
             row.Cells.Select(RotateCellLeft).ToArray()
         );
 
-        private static Sheet RotateSheetLeft(Sheet sheet) => new(RotateCellMaskLeft(sheet.Blockers), sheet.Rows.Select(RotateRowLeft).ToArray());
+        private static Sheet RotateSheetLeft
+        (
+            Sheet sheet
+        ) => new(RotateCellMaskLeft(sheet.Blockers), sheet.Rows.Select(RotateRowLeft).ToArray());
 
         public class Cell
         (

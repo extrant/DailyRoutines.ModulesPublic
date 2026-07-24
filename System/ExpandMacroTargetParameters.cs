@@ -21,9 +21,15 @@ namespace DailyRoutines.ModulesPublic;
 
 public unsafe class ExpandMacroTargetParameters : ModuleBase
 {
-    private delegate float? BattleCharaMetric(BattleChara* chara);
+    private delegate float? BattleCharaMetric
+    (
+        BattleChara* chara
+    );
 
-    private delegate bool BattleCharaPredicate(BattleChara* chara);
+    private delegate bool BattleCharaPredicate
+    (
+        BattleChara* chara
+    );
 
     public override ModuleInfo Info { get; } = new()
     {
@@ -221,13 +227,22 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
     private static nint DispellableMemberHandler() =>
         FindFirstPartyMember(false, true, HasDispellableStatus);
 
-    private static nint MeAndMemberStatusHandler(uint id) =>
+    private static nint MeAndMemberStatusHandler
+    (
+        uint id
+    ) =>
         FindFirstPartyMember(true, false, obj => HasStatus(obj, id));
 
-    private static nint MemberStatusHandler(uint id) =>
+    private static nint MemberStatusHandler
+    (
+        uint id
+    ) =>
         FindFirstPartyMember(false, true, obj => HasStatus(obj, id));
 
-    private static nint EnemyStatusHandler(uint id)
+    private static nint EnemyStatusHandler
+    (
+        uint id
+    )
     {
         var manager = CharacterManager.Instance();
 
@@ -284,7 +299,12 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
         );
     }
 
-    private static nint FindBestPartyMember(bool includeSelf, bool requireMultiple, BattleCharaMetric metric)
+    private static nint FindBestPartyMember
+    (
+        bool              includeSelf,
+        bool              requireMultiple,
+        BattleCharaMetric metric
+    )
     {
         var agent = AgentHUD.Instance();
         if (agent == null) return nint.Zero;
@@ -314,7 +334,12 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
         return (nint)result;
     }
 
-    private static nint FindFirstPartyMember(bool includeSelf, bool requireMultiple, BattleCharaPredicate predicate)
+    private static nint FindFirstPartyMember
+    (
+        bool                 includeSelf,
+        bool                 requireMultiple,
+        BattleCharaPredicate predicate
+    )
     {
         var agent = AgentHUD.Instance();
         if (agent == null) return nint.Zero;
@@ -335,7 +360,10 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
         return nint.Zero;
     }
 
-    private static nint FindBestEnemy(BattleCharaMetric metric)
+    private static nint FindBestEnemy
+    (
+        BattleCharaMetric metric
+    )
     {
         var manager = CharacterManager.Instance();
 
@@ -362,7 +390,11 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
         return (nint)result;
     }
 
-    private static bool HasStatus(BattleChara* obj, uint id)
+    private static bool HasStatus
+    (
+        BattleChara* obj,
+        uint         id
+    )
     {
         var statuses = obj->GetStatusManager()->Status;
 
@@ -375,7 +407,10 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
         return false;
     }
 
-    private static bool HasDispellableStatus(BattleChara* obj)
+    private static bool HasDispellableStatus
+    (
+        BattleChara* obj
+    )
     {
         var statuses = obj->GetStatusManager()->Status;
 
@@ -389,7 +424,10 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
     }
 
     // 真龙波和魔弹射手
-    private static bool CanUseActionOnEnemy(GameObject* target) =>
+    private static bool CanUseActionOnEnemy
+    (
+        GameObject* target
+    ) =>
         target->GetIsTargetable()  &&
         target->IsReadyToDraw()    &&
         target->NextDistance <= 45 &&

@@ -28,7 +28,7 @@ public unsafe class OptimizedCharacterClass : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private readonly List<AtkEventWrapper> events = [];
 
     protected override void Init()
@@ -53,7 +53,12 @@ public unsafe class OptimizedCharacterClass : ModuleBase
         ClearEvents();
     }
 
-    private void AddCollisionEvent(AtkUnitBase* addon, AtkComponentNode* componentNode, uint classJobID)
+    private void AddCollisionEvent
+    (
+        AtkUnitBase*      addon,
+        AtkComponentNode* componentNode,
+        uint              classJobID
+    )
     {
         if (!LuminaGetter.TryGetRow(classJobID, out ClassJob classJob)) return;
 
@@ -111,7 +116,11 @@ public unsafe class OptimizedCharacterClass : ModuleBase
         events.Add(clickEvent, cursorOverEvent, cursorOutEvent);
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -143,7 +152,11 @@ public unsafe class OptimizedCharacterClass : ModuleBase
         }
     }
 
-    private void OnAddonPVP(AddonEvent type, AddonArgs args)
+    private void OnAddonPVP
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -182,7 +195,7 @@ public unsafe class OptimizedCharacterClass : ModuleBase
 
         events.Clear();
     }
-    
+
     #region 常量
 
     private static readonly FrozenDictionary<uint, uint> ClassJobComponentMap = new Dictionary<uint, uint>

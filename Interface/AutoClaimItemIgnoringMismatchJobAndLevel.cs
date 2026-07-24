@@ -16,7 +16,7 @@ public unsafe class AutoClaimItemIgnoringMismatchJobAndLevel : ModuleBase
         Description = Lang.Get("AutoClaimItemIgnoringMismatchJobAndLevelDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init()
@@ -25,11 +25,15 @@ public unsafe class AutoClaimItemIgnoringMismatchJobAndLevel : ModuleBase
         if (SelectYesno->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
-    protected override void Uninit() => 
+
+    protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
-    private static void OnAddon(AddonEvent type, AddonArgs? args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         if (!SelectYesno->IsAddonAndNodesReady()) return;
 

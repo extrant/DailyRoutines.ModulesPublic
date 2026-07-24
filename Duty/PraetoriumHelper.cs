@@ -39,16 +39,22 @@ public unsafe class PraetoriumHelper : ModuleBase
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private static void OnZoneChanged(uint u)
+    private static void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
-        
+
         if (GameState.TerritoryType != 1044) return;
 
         FrameworkManager.Instance().Reg(OnUpdate, 1000);
     }
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (!DService.Instance().Condition[ConditionFlag.Mounted] ||
             ActionManager.Instance()->GetActionStatus(ActionType.Action, 1128) != 0)
@@ -89,7 +95,11 @@ public unsafe class PraetoriumHelper : ModuleBase
         return preObjects;
     }
 
-    private static int GetTargetAoECount(IGameObject target, IEnumerable<IGameObject> allTarget)
+    private static int GetTargetAoECount
+    (
+        IGameObject              target,
+        IEnumerable<IGameObject> allTarget
+    )
     {
         var count = 0;
 

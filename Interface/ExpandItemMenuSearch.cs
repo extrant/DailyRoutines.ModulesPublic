@@ -49,7 +49,7 @@ public class ExpandItemMenuSearch : ModuleBase
                            .ToArray()!;
         }
     }
-    
+
     private Config config = null!;
 
     private readonly UpperContainerItem menu;
@@ -63,7 +63,7 @@ public class ExpandItemMenuSearch : ModuleBase
 
         DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
 
@@ -72,7 +72,7 @@ public class ExpandItemMenuSearch : ModuleBase
         foreach (var searchMenuItem in SearchMenuItems)
         {
             var value = config.SearchMenuEnabledStates
-                                    .GetValueOrDefault(searchMenuItem.ConfigKey, searchMenuItem.DefaultEnabled);
+                              .GetValueOrDefault(searchMenuItem.ConfigKey, searchMenuItem.DefaultEnabled);
             if (!ImGui.Checkbox(Lang.Get(searchMenuItem.LocKey), ref value)) continue;
 
             config.SearchMenuEnabledStates[searchMenuItem.ConfigKey] = value;
@@ -87,15 +87,22 @@ public class ExpandItemMenuSearch : ModuleBase
         );
     }
 
-    private void RenderCheckbox(string label, ref bool value)
+    private void RenderCheckbox
+    (
+        string   label,
+        ref bool value
+    )
     {
         if (ImGui.Checkbox(label, ref value))
             config.Save(this);
     }
-    
+
     #region 右键菜单处理
 
-    private void OnMenuOpened(IMenuOpenedArgs args)
+    private void OnMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         // 检查是否有有效的物品ID
         if (!ContextMenuItemManager.Instance().IsValidItem) return;
@@ -104,7 +111,10 @@ public class ExpandItemMenuSearch : ModuleBase
         AddContextMenuItemsByConfig(args);
     }
 
-    private void AddContextMenuItemsByConfig(IMenuOpenedArgs args)
+    private void AddContextMenuItemsByConfig
+    (
+        IMenuOpenedArgs args
+    )
     {
         var shouldProcess = SearchMenuItems.Any
         (searchMenuItem => config.SearchMenuEnabledStates
@@ -127,7 +137,10 @@ public class ExpandItemMenuSearch : ModuleBase
     {
         protected readonly ExpandItemMenuSearch module;
 
-        protected SearchMenuItemBase(ExpandItemMenuSearch module)
+        protected SearchMenuItemBase
+        (
+            ExpandItemMenuSearch module
+        )
         {
             this.module = module;
             Name        = Lang.Get(LocKey);
@@ -142,7 +155,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public virtual  int    Order          => 0;
     }
 
-    private class UpperContainerItem(ExpandItemMenuSearch module) : MenuItemBase
+    private class UpperContainerItem
+    (
+        ExpandItemMenuSearch module
+    ) : MenuItemBase
     {
         public override string Name       { get; protected set; } = Lang.Get("ExpandItemMenuSearch-SearchTitle");
         public override string Identifier { get; protected set; } = nameof(ExpandItemMenuSearch);
@@ -150,7 +166,10 @@ public class ExpandItemMenuSearch : ModuleBase
         protected override bool WithDRPrefix { get; set; } = true;
         protected override bool IsSubmenu    { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             args.OpenSubmenu(Name, ProcessMenuItems());
 
         private List<MenuItem> ProcessMenuItems()
@@ -162,7 +181,7 @@ public class ExpandItemMenuSearch : ModuleBase
                 if (!module.config.SearchMenuEnabledStates
                            .GetValueOrDefault(searchMenuItem.ConfigKey, searchMenuItem.DefaultEnabled))
                     continue;
-                
+
                 list.Add(searchMenuItem.Get());
             }
 
@@ -183,7 +202,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsCN || GameState.IsTC;
         public override int    Order          => 100;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemID = 0U;
 
@@ -211,7 +233,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsCN || GameState.IsTC;
         public override int    Order          => 10;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -240,7 +265,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 20;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -269,7 +297,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsCN || GameState.IsTC;
         public override int    Order          => 30;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemID = 0U;
 
@@ -298,7 +329,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 40;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemID = 0U;
 
@@ -327,7 +361,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 110;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -356,7 +393,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 120;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -384,7 +424,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 130;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -428,7 +471,10 @@ public class ExpandItemMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsTC;
         public override int    Order          => 130;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             Item? itemToSearch = null;
 

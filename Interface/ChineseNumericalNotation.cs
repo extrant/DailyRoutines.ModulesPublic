@@ -27,14 +27,29 @@ public unsafe class ChineseNumericalNotation : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { CNDefaultEnabled = true, TCDefaultEnabled = true };
 
-    private static readonly CompSig                     FormatNumberSig = new("E8 ?? ?? ?? ?? 44 3B F7");
-    private delegate        Utf8String*                 FormatNumberDelegate(Utf8String* outNumberString, int number, int baseNumber, int mode, void* seperator);
-    private                 Hook<FormatNumberDelegate>? FormatNumberHook;
+    private static readonly CompSig FormatNumberSig = new("E8 ?? ?? ?? ?? 44 3B F7");
 
-    private static readonly CompSig                                AtkCounterNodeSetNumberSig = new("40 53 48 83 EC ?? 48 8B C2 48 8B D9 48 85 C0");
-    private delegate        void                                   AtkCounterNodeSetNumberDelegate(AtkCounterNode* node, CStringPointer number);
-    private                 Hook<AtkCounterNodeSetNumberDelegate>? AtkCounterNodeSetNumberHook;
-    
+    private delegate Utf8String* FormatNumberDelegate
+    (
+        Utf8String* outNumberString,
+        int         number,
+        int         baseNumber,
+        int         mode,
+        void*       seperator
+    );
+
+    private Hook<FormatNumberDelegate>? FormatNumberHook;
+
+    private static readonly CompSig AtkCounterNodeSetNumberSig = new("40 53 48 83 EC ?? 48 8B C2 48 8B D9 48 85 C0");
+
+    private delegate void AtkCounterNodeSetNumberDelegate
+    (
+        AtkCounterNode* node,
+        CStringPointer  number
+    );
+
+    private Hook<AtkCounterNodeSetNumberDelegate>? AtkCounterNodeSetNumberHook;
+
     // 千分位转万分位
     private readonly MemoryPatch AtkTextNodeSetNumberCommaPatch = new
     (
@@ -151,7 +166,14 @@ public unsafe class ChineseNumericalNotation : ModuleBase
         }
     }
 
-    private Utf8String* FormatNumberDetour(Utf8String* outNumberString, int number, int baseNumber, int mode, void* seperator)
+    private Utf8String* FormatNumberDetour
+    (
+        Utf8String* outNumberString,
+        int         number,
+        int         baseNumber,
+        int         mode,
+        void*       seperator
+    )
     {
         var ret = FormatNumberHook.Original(outNumberString, number, baseNumber, mode, seperator);
 
@@ -162,12 +184,16 @@ public unsafe class ChineseNumericalNotation : ModuleBase
                 // 千分位分隔
                 case 1:
                 {
-                    var minusColor = config.ColoringUnit ? config.ColorMinus : (ushort?)null;
-                    var unitColor  = config.ColoringUnit ? config.ColorUnit : (ushort?)null;
+                    var minusColor = config.ColoringUnit ?
+                                         config.ColorMinus :
+                                         (ushort?)null;
+                    var unitColor = config.ColoringUnit ?
+                                        config.ColorUnit :
+                                        (ushort?)null;
 
-                    var formatted = !config.NoChineseUnit
-                                        ? number.ToChineseSeString(minusColor, unitColor)
-                                        : number.ToMyriadString();
+                    var formatted = !config.NoChineseUnit ?
+                                        number.ToChineseSeString(minusColor, unitColor) :
+                                        number.ToMyriadString();
 
                     outNumberString->SetString(formatted.ToDalamudString().EncodeWithNullTerminator());
                     return outNumberString;
@@ -188,9 +214,13 @@ public unsafe class ChineseNumericalNotation : ModuleBase
         return ret;
     }
 
-    private void AtkCounterNodeSetNumberDetour(AtkCounterNode* node, CStringPointer number)
+    private void AtkCounterNodeSetNumberDetour
+    (
+        AtkCounterNode* node,
+        CStringPointer  number
+    )
     {
-        if (!config.NoChineseUnit           &&
+        if (!config.NoChineseUnit                 &&
             number.HasValue                       &&
             number.ExtractText() is var textValue &&
             textValue.IsAnyChinese())

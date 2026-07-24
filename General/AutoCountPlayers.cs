@@ -312,7 +312,10 @@ public unsafe class AutoCountPlayers : ModuleBase
         }
     }
 
-    private static void OnZoneChanged(uint u)
+    private static void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -323,7 +326,10 @@ public unsafe class AutoCountPlayers : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 30_000);
     }
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (!ContentMemberListValidZones.Contains(GameState.TerritoryIntendedUse) ||
             AgentModule.Instance()->GetAgentByInternalId(AgentId.ContentMemberList)->IsAgentActive())
@@ -337,7 +343,10 @@ public unsafe class AutoCountPlayers : ModuleBase
         AgentId.ContentMemberList.SendEvent(0, 1);
     }
 
-    private void OnReceivePlayers(IReadOnlyList<IPlayerCharacter> characters)
+    private void OnReceivePlayers
+    (
+        IReadOnlyList<IPlayerCharacter> characters
+    )
     {
         if (entry == null) return;
 
@@ -355,7 +364,9 @@ public unsafe class AutoCountPlayers : ModuleBase
         }
 
         entry.Text = $"{Lang.Get("AutoCountPlayers-PlayersAroundCount")}: {PlayersManager.Instance().PlayersAroundCount}" +
-                     (PlayersManager.Instance().PlayersTargetingMe.Count == 0 ? string.Empty : $" ({PlayersManager.Instance().PlayersTargetingMe.Count})");
+                     (PlayersManager.Instance().PlayersTargetingMe.Count == 0 ?
+                          string.Empty :
+                          $" ({PlayersManager.Instance().PlayersTargetingMe.Count})");
 
         // 特殊场景探索
         if (ContentMemberListValidZones.Contains(GameState.TerritoryIntendedUse))
@@ -414,7 +425,10 @@ public unsafe class AutoCountPlayers : ModuleBase
         entry.Tooltip = message;
     }
 
-    private void OnPlayersTargetingMeUpdate(IReadOnlyList<PlayerTargetingInfo> targetingPlayersInfo)
+    private void OnPlayersTargetingMeUpdate
+    (
+        IReadOnlyList<PlayerTargetingInfo> targetingPlayersInfo
+    )
     {
         var currentIDs     = targetingPlayersInfo.Select(x => x.Player.EntityID).ToHashSet();
         var endedTargeting = lastTargetingData.Where(x => !currentIDs.Contains(x.Key)).ToList();
@@ -499,15 +513,27 @@ public unsafe class AutoCountPlayers : ModuleBase
         }
     }
 
-    private void InfoProxy24EndRequestDetour(InfoProxyContentMember* proxy)
+    private void InfoProxy24EndRequestDetour
+    (
+        InfoProxyContentMember* proxy
+    )
     {
         InfoProxyContentMemberEndRequestHook.Original(proxy);
         OnReceivePlayers(PlayersManager.Instance().PlayersAround);
     }
 
-    private void DrawLine(Vector2 startPos, Vector2 endPos, ICharacter chara, uint lineColor = 0, string? extraInfo = null)
+    private void DrawLine
+    (
+        Vector2    startPos,
+        Vector2    endPos,
+        ICharacter chara,
+        uint       lineColor = 0,
+        string?    extraInfo = null
+    )
     {
-        lineColor = lineColor == 0 ? LineColorBlue : lineColor;
+        lineColor = lineColor == 0 ?
+                        LineColorBlue :
+                        lineColor;
 
         var drawList = ImGui.GetForegroundDrawList();
 

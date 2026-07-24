@@ -101,11 +101,15 @@ public unsafe class AutoLucidDreaming : ModuleBase
             !manager->IsActionOffCooldown(ActionType.Action, LUCID_DREAMING_ID))
             return;
 
-        var recastGroupTypeOne  = manager->GetRecastGroup((int)ActionType.Action, actionID);
-        var recastDetailTypeOne = recastGroupTypeOne == -1 ? null : manager->GetRecastGroupDetail(recastGroupTypeOne);
+        var recastGroupTypeOne = manager->GetRecastGroup((int)ActionType.Action, actionID);
+        var recastDetailTypeOne = recastGroupTypeOne == -1 ?
+                                      null :
+                                      manager->GetRecastGroupDetail(recastGroupTypeOne);
 
-        var recastGroupTypeTwo  = manager->GetAdditionalRecastGroup(ActionType.Action, actionID);
-        var recastDetailTypeTwo = recastGroupTypeTwo == -1 ? null : manager->GetRecastGroupDetail(recastGroupTypeTwo);
+        var recastGroupTypeTwo = manager->GetAdditionalRecastGroup(ActionType.Action, actionID);
+        var recastDetailTypeTwo = recastGroupTypeTwo == -1 ?
+                                      null :
+                                      manager->GetRecastGroupDetail(recastGroupTypeTwo);
 
         // 复唱判断（类型1）
         if (recastDetailTypeOne != null)
@@ -231,6 +235,7 @@ public unsafe class AutoLucidDreaming : ModuleBase
                           .PopColorType();
 
                     if (config.SendChat)
+                    {
                         NotifyHelper.Instance().Chat
                         (
                             Lang.GetSe
@@ -240,6 +245,7 @@ public unsafe class AutoLucidDreaming : ModuleBase
                                 LocalPlayerState.Object?.CurrentMp ?? 0
                             )
                         );
+                    }
 
                     rented.Builder.Clear();
                     rented.Builder
@@ -248,6 +254,7 @@ public unsafe class AutoLucidDreaming : ModuleBase
                           .PopEdgeColorType();
 
                     if (config.SendNotification)
+                    {
                         NotifyHelper.ToastQuest
                         (
                             Lang.GetSe
@@ -261,6 +268,7 @@ public unsafe class AutoLucidDreaming : ModuleBase
                                 IconId = LuminaWrapper.GetActionIconID(LUCID_DREAMING_ID)
                             }
                         );
+                    }
                 }
 
                 return true;

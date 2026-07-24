@@ -57,11 +57,14 @@ public unsafe class AutoStoreToCabinet : ModuleBase
                        !UIState.Instance()->Cabinet.IsItemInCabinet(index);
             },
             out var items
-        )
-            ? items.Select(x => CabinetItems[x.GetBaseItemId()]).ToList()
-            : [];
+        ) ?
+            items.Select(x => CabinetItems[x.GetBaseItemId()]).ToList() :
+            [];
 
-    private sealed class AutoStoreToCabinetAddon(AutoStoreToCabinet module) : AttachedAddon("Cabinet")
+    private sealed class AutoStoreToCabinetAddon
+    (
+        AutoStoreToCabinet module
+    ) : AttachedAddon("Cabinet")
     {
         private TextButtonNode? startButton;
         private TextButtonNode? stopButton;
@@ -72,10 +75,17 @@ public unsafe class AutoStoreToCabinet : ModuleBase
         protected override bool CanOpenAddon =>
             CabinetAddon != null && CabinetAddon->IsAddonAndNodesReady();
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) =>
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) =>
             false;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (WindowNode is WindowNode windowNode)
                 windowNode.CloseButtonNode.IsVisible = false;
@@ -100,10 +110,11 @@ public unsafe class AutoStoreToCabinet : ModuleBase
                 IsEnabled = true,
                 Size      = new(ContentSize.X - 4f, 32f),
                 String    = Lang.Get("Start"),
-                OnClick   = () =>
+                OnClick = () =>
                 {
-                    var list = GetItemsToStoreToCabinet();
+                    var list    = GetItemsToStoreToCabinet();
                     var cabinet = UIState.Instance()->Cabinet;
+
                     foreach (var item in list)
                     {
                         module.TaskHelper.Enqueue(() => cabinet.State != Cabinet.CabinetState.Requested);
@@ -132,10 +143,18 @@ public unsafe class AutoStoreToCabinet : ModuleBase
             layout.Height   = layout.Height;
         }
 
-        protected override void OnAttachedAddonUpdate(AtkUnitBase* addon, AtkUnitBase* hostAddon) =>
+        protected override void OnAttachedAddonUpdate
+        (
+            AtkUnitBase* addon,
+            AtkUnitBase* hostAddon
+        ) =>
             RefreshState();
 
-        protected override void OnHostAddon(AddonEvent type, AddonArgs? args)
+        protected override void OnHostAddon
+        (
+            AddonEvent type,
+            AddonArgs? args
+        )
         {
             if (type == AddonEvent.PreFinalize)
                 module.TaskHelper.Abort();

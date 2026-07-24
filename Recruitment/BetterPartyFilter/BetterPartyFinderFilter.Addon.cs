@@ -22,7 +22,11 @@ public partial class BetterPartyFinderFilter
     private bool                          isNeedToOpenAddon;
     private BetterPartyFinderFilterAddon? addon;
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -57,7 +61,7 @@ public partial class BetterPartyFinderFilter
                 break;
 
             case AddonEvent.PreFinalize:
-                buttonNode = null;
+                buttonNode        = null;
                 isNeedToOpenAddon = false;
                 break;
         }
@@ -84,7 +88,10 @@ public partial class BetterPartyFinderFilter
         private static readonly FieldInfo RadioButtonsField =
             typeof(TabBarNode).GetField("radioButtons", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        private static void ClearTabBarSelection(TabBarNode bar)
+        private static void ClearTabBarSelection
+        (
+            TabBarNode bar
+        )
         {
             if (RadioButtonsField.GetValue(bar) is List<TabBarRadioButtonNode> buttons)
             {
@@ -129,10 +136,16 @@ public partial class BetterPartyFinderFilter
 
         protected override bool CanOpenAddon => module.isNeedToOpenAddon;
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) =>
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) =>
             module.isNeedToOpenAddon;
 
-        protected override void OnDraw(AtkUnitBase* addon)
+        protected override void OnDraw
+        (
+            AtkUnitBase* addon
+        )
         {
             if (!HostAddon->IsAddonAndNodesReady()) return;
 
@@ -157,7 +170,11 @@ public partial class BetterPartyFinderFilter
             }
         }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             currentPageIndex = 0;
             currentActiveTab = 0;
@@ -209,7 +226,10 @@ public partial class BetterPartyFinderFilter
 
             return;
 
-            void UpdateTabButtons(TabBarNode tab)
+            void UpdateTabButtons
+            (
+                TabBarNode tab
+            )
             {
                 if (RadioButtonsField.GetValue(tab) is not List<TabBarRadioButtonNode> buttons)
                     return;
@@ -827,7 +847,12 @@ public partial class BetterPartyFinderFilter
             descriptionPanel.AttachNode(this);
         }
 
-        private static HorizontalListNode CreateRoleCountNumericInput(uint addonTextID, int initialVal, Action<int> onValueUpdate)
+        private static HorizontalListNode CreateRoleCountNumericInput
+        (
+            uint        addonTextID,
+            int         initialVal,
+            Action<int> onValueUpdate
+        )
         {
             var row = new HorizontalListNode
             {
@@ -914,7 +939,10 @@ public partial class BetterPartyFinderFilter
             return row;
         }
 
-        private void RecalculatePanel(LayoutListNode panel)
+        private void RecalculatePanel
+        (
+            LayoutListNode panel
+        )
         {
             if (panel is not { IsVisible: true }) return;
 
@@ -926,7 +954,10 @@ public partial class BetterPartyFinderFilter
             tabBar2.Position = ContentStartPosition + new Vector2(0f, 28f);
         }
 
-        private void SwitchTab(int tabIndex)
+        private void SwitchTab
+        (
+            int tabIndex
+        )
         {
             currentActiveTab = tabIndex;
 
@@ -963,7 +994,10 @@ public partial class BetterPartyFinderFilter
             }
         }
 
-        private void OnActionTabClicked(int actionIndex)
+        private void OnActionTabClicked
+        (
+            int actionIndex
+        )
         {
             switch (actionIndex)
             {
@@ -1064,7 +1098,11 @@ public partial class BetterPartyFinderFilter
             RecalculatePanel(descriptionPanel);
         }
 
-        protected override void OnAttachedAddonUpdate(AtkUnitBase* addon, AtkUnitBase* hostAddon)
+        protected override void OnAttachedAddonUpdate
+        (
+            AtkUnitBase* addon,
+            AtkUnitBase* hostAddon
+        )
         {
             if (tabBar1 != null)
             {

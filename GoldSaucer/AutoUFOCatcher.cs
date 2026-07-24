@@ -62,7 +62,11 @@ public class AutoUFOCatcher : ModuleBase
         }
     }
 
-    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddonSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
 
@@ -109,7 +113,10 @@ public class AutoUFOCatcher : ModuleBase
     private static void SendRoundEnd() =>
         new EventCompletePackt(EVENT_ID, 14).Send();
 
-    private static unsafe void UpdateSelectStringInfo(string info)
+    private static unsafe void UpdateSelectStringInfo
+    (
+        string info
+    )
     {
         if (!SelectString->IsAddonAndNodesReady() ||
             !UFOCatcher->IsAddonAndNodesReady())

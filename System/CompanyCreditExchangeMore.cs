@@ -22,11 +22,18 @@ public unsafe class CompanyCreditExchangeMore : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig AddonFreeCompanyCreditShopRefreshSig = new("41 56 41 57 48 83 EC ?? 0F B6 81 ?? ?? ?? ?? 4D 8B F8");
+
     [return: MarshalAs(UnmanagedType.U1)]
-    private delegate bool AddonFreeCompanyCreditShopRefreshDelegate(AtkUnitBase* addon, uint atkValueCount, AtkValue* atkValues);
-    private          Hook<AddonFreeCompanyCreditShopRefreshDelegate> AddonFreeCompanyCreditShopRefreshHook;
+    private delegate bool AddonFreeCompanyCreditShopRefreshDelegate
+    (
+        AtkUnitBase* addon,
+        uint         atkValueCount,
+        AtkValue*    atkValues
+    );
+
+    private Hook<AddonFreeCompanyCreditShopRefreshDelegate> AddonFreeCompanyCreditShopRefreshHook;
 
     private Config config = null!;
 
@@ -39,17 +46,22 @@ public unsafe class CompanyCreditExchangeMore : ModuleBase
 
         GamePacketManager.Instance().RegPreSendPacket(OnPreSendPacket);
     }
-    
+
     protected override void Uninit() =>
         GamePacketManager.Instance().Unreg(OnPreSendPacket);
-    
+
     protected override void ConfigUI()
     {
         if (ImGui.Checkbox(Lang.Get("CompanyCreditExchangeMore-OnlyActiveInWorkshop"), ref config.OnlyActiveInWorkshop))
             config.Save(this);
     }
 
-    private bool AddonRefreshDetour(AtkUnitBase* addon, uint atkValueCount, AtkValue* atkValues)
+    private bool AddonRefreshDetour
+    (
+        AtkUnitBase* addon,
+        uint         atkValueCount,
+        AtkValue*    atkValues
+    )
     {
         if (addon == null) return false;
 
@@ -66,8 +78,14 @@ public unsafe class CompanyCreditExchangeMore : ModuleBase
 
         return orig;
     }
-    
-    private void OnPreSendPacket(ref bool isPrevented, int opcode, ref nint packet, ref bool isPrioritize)
+
+    private void OnPreSendPacket
+    (
+        ref bool isPrevented,
+        int      opcode,
+        ref nint packet,
+        ref bool isPrioritize
+    )
     {
         if (opcode != UpstreamOpcode.HandOverItemOpcode) return;
         if (config.OnlyActiveInWorkshop && HousingManager.Instance()->WorkshopTerritory == null) return;
@@ -78,7 +96,7 @@ public unsafe class CompanyCreditExchangeMore : ModuleBase
 
         data->Param0 = 255;
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool OnlyActiveInWorkshop = true;

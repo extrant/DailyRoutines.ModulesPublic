@@ -23,14 +23,18 @@ public class AutoQuestComplete : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,  "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSatisfactionSupplyResultSetup);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonJournalResultSetup);
     }
 
-    private static unsafe void OnAddonJournalResultSetup(AddonEvent type, AddonArgs args)
+    private static unsafe void OnAddonJournalResultSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = JournalResult;
         if (addon == null) return;
@@ -46,7 +50,11 @@ public class AutoQuestComplete : ModuleBase
         addon->Callback(0, itemID);
     }
 
-    private static unsafe void OnAddonSatisfactionSupplyResultSetup(AddonEvent type, AddonArgs args)
+    private static unsafe void OnAddonSatisfactionSupplyResultSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = SatisfactionSupplyResult;
         if (addon == null) return;

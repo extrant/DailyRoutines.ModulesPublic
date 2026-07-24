@@ -48,10 +48,16 @@ public partial class UnifiedGlamourManager
         favoriteItemIDs.UnionWith(config.Favorites.Select(static x => x.ItemID));
     }
 
-    private bool IsFavorite(uint itemID) =>
+    private bool IsFavorite
+    (
+        uint itemID
+    ) =>
         favoriteItemIDs.Contains(itemID);
 
-    private void ToggleFavorite(UnifiedItem item)
+    private void ToggleFavorite
+    (
+        UnifiedItem item
+    )
     {
         if (config.Favorites.RemoveAll(x => x.ItemID == item.ItemID) == 0)
         {

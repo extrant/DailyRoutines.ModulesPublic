@@ -23,7 +23,7 @@ public unsafe class AutoRedirectActionTarget : ModuleBase
         Description = Lang.Get("AutoRedirectActionTargetDescription"),
         Category    = ModuleCategory.Action
     };
-    
+
     private Config config = null!;
 
     protected override void Init()
@@ -67,7 +67,9 @@ public unsafe class AutoRedirectActionTarget : ModuleBase
                 return;
         }
 
-        var gameObject = targetID == 0xE0000000 ? null : CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)targetID);
+        var gameObject = targetID == 0xE0000000 ?
+                             null :
+                             CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)targetID);
 
         if (gameObject == null || !ActionManager.CanUseActionOnTarget(actionID, (GameObject*)gameObject))
         {
@@ -82,7 +84,11 @@ public unsafe class AutoRedirectActionTarget : ModuleBase
         }
     }
 
-    private static BattleChara* GetAvailableTarget(uint actionID, bool isTargetEnemy)
+    private static BattleChara* GetAvailableTarget
+    (
+        uint actionID,
+        bool isTargetEnemy
+    )
     {
         var localPosition = LocalPlayerState.Object.Position;
         var actionRange   = MathF.Pow(ActionManager.GetActionRange(actionID), 2);

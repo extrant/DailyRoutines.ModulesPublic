@@ -40,7 +40,9 @@ public unsafe partial class BetterTeleport
 
         if (string.IsNullOrEmpty(activeTabName))
         {
-            activeTabName        = favorites.Count > 0 ? "Favorite" : AetheryteRecordManager.Instance().Records.Keys.FirstOrDefault() ?? "Setting";
+            activeTabName = favorites.Count > 0 ?
+                                "Favorite" :
+                                AetheryteRecordManager.Instance().Records.Keys.FirstOrDefault() ?? "Setting";
             tabToSelect          = activeTabName;
             shouldFocusSearchBar = true;
             selectedIndex        = 0;
@@ -145,7 +147,12 @@ public unsafe partial class BetterTeleport
                 ChatManager.Instance().SendCommand("/automove on");
         }
 
-        ImGui.SetNextItemWidth(isSearchEmpty ? -1f : -ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SetNextItemWidth
+        (
+            isSearchEmpty ?
+                -1f :
+                -ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X
+        );
 
         if (ImGui.InputTextWithHint(searchBarID, Lang.Get("PleaseSearch"), ref fullSearchWord, 128))
         {
@@ -215,7 +222,13 @@ public unsafe partial class BetterTeleport
             if (ImGui.IsKeyPressed(ImGuiKey.Enter) && !isWindowAppearing)
             {
                 if (hasUsedArrowKeys || isSearchBarFocused)
-                    HandleTeleport(currentSelectableRecords[selectedIndex], isSearchEmpty ? null : fullSearchWord);
+                    HandleTeleport
+                    (
+                        currentSelectableRecords[selectedIndex],
+                        isSearchEmpty ?
+                            null :
+                            fullSearchWord
+                    );
             }
         }
 
@@ -289,7 +302,7 @@ public unsafe partial class BetterTeleport
                     foreach (var (name, aetherytes) in AetheryteRecordManager.Instance().Records)
                     {
                         var tabFlags = ImGuiTabItemFlags.None;
-                        if (tabToSelect == name) 
+                        if (tabToSelect == name)
                             tabFlags |= ImGuiTabItemFlags.SetSelected;
 
                         using var tabItem = ImRaii.TabItem($"{name}##TabItemFull", tabFlags);
@@ -419,13 +432,15 @@ public unsafe partial class BetterTeleport
             module.recordMatcher?.Dispose();
             module.recordMatcher = module.CreateRecordMatcher();
 
-            module.fullSearchWord         = string.Empty;
-            module.fullSearchResult       = [];
-            module.selectedIndex          = 0;
-            module.hasUsedArrowKeys       = true;
-            module.hoveredAetheryte       = null;
-            module.pinnedAetheryte        = null;
-            module.activeTabName          = module.favorites.Count > 0 ? "Favorite" : AetheryteRecordManager.Instance().Records.Keys.FirstOrDefault() ?? "Setting";
+            module.fullSearchWord   = string.Empty;
+            module.fullSearchResult = [];
+            module.selectedIndex    = 0;
+            module.hasUsedArrowKeys = true;
+            module.hoveredAetheryte = null;
+            module.pinnedAetheryte  = null;
+            module.activeTabName = module.favorites.Count > 0 ?
+                                       "Favorite" :
+                                       AetheryteRecordManager.Instance().Records.Keys.FirstOrDefault() ?? "Setting";
             module.tabToSelect            = module.activeTabName;
             module.shouldFocusSearchBar   = module.config.FocusSearchOnOpen;
             module.shouldScrollToSelected = false;

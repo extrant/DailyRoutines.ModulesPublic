@@ -28,13 +28,13 @@ public class FastGrandCompanyExchange : ModuleBase
         Description = Lang.Get("FastGrandCompanyExchangeDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     private bool IsExchanging => TaskHelper?.IsBusy ?? false;
 
     private Config config = null!;
 
     private DRFastGCExchange? addon;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -68,7 +68,11 @@ public class FastGrandCompanyExchange : ModuleBase
         ImGui.TextWrapped($"/pdr {COMMAND} {Lang.Get("FastGrandCompanyExchange-CommandHelp")}");
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
         if (string.IsNullOrWhiteSpace(args)) return;
@@ -82,18 +86,28 @@ public class FastGrandCompanyExchange : ModuleBase
             return;
         }
 
-        var itemCount = splited.Length == 2 && int.TryParse(splited[1], out var itemCountParsed) && itemCountParsed >= -1 ? itemCountParsed : -1;
+        var itemCount = splited.Length == 2 && int.TryParse(splited[1], out var itemCountParsed) && itemCountParsed >= -1 ?
+                            itemCountParsed :
+                            -1;
         EnqueueByName(splited[0], itemCount);
     }
 
-    private bool EnqueueByName(string itemName, int itemCount = -1)
+    private bool EnqueueByName
+    (
+        string itemName,
+        int    itemCount = -1
+    )
     {
         TaskHelper.DelayNext(500);
         TaskHelper.Enqueue(() => EnqueueByNameInternal(itemName, itemCount));
         return true;
     }
-    
-    private unsafe bool EnqueueByNameInternal(string itemName, int itemCount = -1)
+
+    private unsafe bool EnqueueByNameInternal
+    (
+        string itemName,
+        int    itemCount = -1
+    )
     {
         if (!GrandCompanyExchange->IsAddonAndNodesReady()) return false;
 
@@ -114,8 +128,8 @@ public class FastGrandCompanyExchange : ModuleBase
         var result = LuminaGetter.GetSub<GCScripShopItem>()
                                  .SelectMany(x => x)
                                  .Where(x => LuminaGetter.GetRowOrDefault<GCScripShopCategory>(x.RowId).GrandCompany.RowId == grandCompany)
-                                 .Where(x => x.CostGCSeals > 0)
-                                 .Where(x => gcRank >= x.RequiredGrandCompanyRank.RowId)
+                                 .Where(x => x.CostGCSeals                                                                 > 0)
+                                 .Where(x => gcRank                                                                        >= x.RequiredGrandCompanyRank.RowId)
                                  .Where
                                  (x => (x.Item.ValueNullable?.Name.ToString() ?? string.Empty)
                                       .Contains(itemName, StringComparison.OrdinalIgnoreCase)
@@ -128,7 +142,13 @@ public class FastGrandCompanyExchange : ModuleBase
         if (singleCost == 0) return true;
 
         var availableExchangeCount = (int)(seals / singleCost);
-        var exchangeCount          = Math.Min(itemCount == -1 ? availableExchangeCount : itemCount, availableExchangeCount);
+        var exchangeCount = Math.Min
+        (
+            itemCount == -1 ?
+                availableExchangeCount :
+                itemCount,
+            availableExchangeCount
+        );
 
         if (exchangeCount == 0)
         {
@@ -227,7 +247,11 @@ public class FastGrandCompanyExchange : ModuleBase
         FastGrandCompanyExchange instance
     ) : AttachedAddon("GrandCompanyExchange")
     {
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             var layoutNode = new VerticalListNode
             {
@@ -316,7 +340,10 @@ public class FastGrandCompanyExchange : ModuleBase
             layoutNode.AttachNode(this);
         }
 
-        private void UpdateExchangeItem(ReadOnlySeString x)
+        private void UpdateExchangeItem
+        (
+            ReadOnlySeString x
+        )
         {
             instance.config.ExchangeItemName = x.ToString();
 
@@ -352,14 +379,18 @@ public class FastGrandCompanyExchange : ModuleBase
         public int    ExchangeItemCount = -1;
         public string ExchangeItemName  = string.Empty;
     }
-    
+
     #region IPC
 
     [IPCProvider("DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy")]
     private bool IsCurrentlyBusy => IsExchanging;
-    
+
     [IPCProvider("DailyRoutines.Modules.FastGrandCompanyExchange.EnqueueByName")]
-    private bool EnqueueByNameIPC(string itemName, int itemCount) => EnqueueByName(itemName, itemCount);
+    private bool EnqueueByNameIPC
+    (
+        string itemName,
+        int    itemCount
+    ) => EnqueueByName(itemName, itemCount);
 
     #endregion
 

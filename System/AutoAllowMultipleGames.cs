@@ -66,7 +66,11 @@ public unsafe class AutoAllowMultipleGames : ModuleBase
         return ret;
     }
 
-    private static string ObjectNameOrTypeName(ulong handle, bool typeName)
+    private static string ObjectNameOrTypeName
+    (
+        ulong handle,
+        bool  typeName
+    )
     {
         const uint bufferSize = 1024;
         var        buffer     = new byte[bufferSize];
@@ -74,7 +78,16 @@ public unsafe class AutoAllowMultipleGames : ModuleBase
         fixed (byte* pBuf = &buffer[0])
         {
             uint retSize = 0;
-            var  status  = NtQueryObject(handle, typeName ? 2 : 1, pBuf, bufferSize, &retSize);
+            var status = NtQueryObject
+            (
+                handle,
+                typeName ?
+                    2 :
+                    1,
+                pBuf,
+                bufferSize,
+                &retSize
+            );
 
             if (status >= 0)
             {
@@ -110,7 +123,7 @@ public unsafe class AutoAllowMultipleGames : ModuleBase
         public ushort MaximumLength;
         public byte*  Buffer;
     }
-    
+
     #region 外部
 
     [DllImport("ntdll.dll")]
@@ -126,12 +139,22 @@ public unsafe class AutoAllowMultipleGames : ModuleBase
 
     [DllImport("ntdll.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    private static extern int NtQueryObject(ulong Handle, int ObjectInformationClass, void* ObjectInformation, uint ObjectInformationLength, uint* ReturnLength);
+    private static extern int NtQueryObject
+    (
+        ulong Handle,
+        int   ObjectInformationClass,
+        void* ObjectInformation,
+        uint  ObjectInformationLength,
+        uint* ReturnLength
+    );
 
     [DllImport("kernel32.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool CloseHandle(ulong Handle);
+    private static extern bool CloseHandle
+    (
+        ulong Handle
+    );
 
     #endregion
 }

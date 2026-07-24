@@ -61,7 +61,7 @@ public unsafe class AutoDiscard : ModuleBase
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreSetup, "SelectYesno", OnAddon);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
@@ -97,7 +97,7 @@ public unsafe class AutoDiscard : ModuleBase
             }
         }
 
-        var       tableSize = new Vector2(ImGui.GetContentRegionAvail().X - 8f * GlobalUIScale, 0);
+        var       tableSize = new Vector2(ImGui.GetContentRegionAvail().X - (8f * GlobalUIScale), 0);
         using var table     = ImRaii.Table("DiscardGroupTable", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg, tableSize);
         if (!table) return;
 
@@ -146,7 +146,7 @@ public unsafe class AutoDiscard : ModuleBase
             OperationColumn(i);
         }
     }
-    
+
     #region Table
 
     private void DrawAddNewGroupButton()
@@ -185,7 +185,10 @@ public unsafe class AutoDiscard : ModuleBase
             ImGui.CloseCurrentPopup();
     }
 
-    private void UniqueNameColumn(int index)
+    private void UniqueNameColumn
+    (
+        int index
+    )
     {
         if (index < 0 || index > moduleConfig.DiscardGroups.Count) return;
 
@@ -225,7 +228,10 @@ public unsafe class AutoDiscard : ModuleBase
             ImGui.CloseCurrentPopup();
     }
 
-    private void ItemsColumn(int index)
+    private void ItemsColumn
+    (
+        int index
+    )
     {
         if (index < 0 || index > moduleConfig.DiscardGroups.Count) return;
 
@@ -366,9 +372,9 @@ public unsafe class AutoDiscard : ModuleBase
                     using (var combo = ImRaii.Combo
                            (
                                "###AddItemsByCategoryCombo",
-                               LuminaGetter.TryGetRow<ItemUICategory>(addItemsByCategoryInput, out var uiCategory)
-                                   ? uiCategory.Name.ToString()
-                                   : string.Empty,
+                               LuminaGetter.TryGetRow<ItemUICategory>(addItemsByCategoryInput, out var uiCategory) ?
+                                   uiCategory.Name.ToString() :
+                                   string.Empty,
                                ImGuiComboFlags.HeightLarge
                            ))
                     {
@@ -442,7 +448,7 @@ public unsafe class AutoDiscard : ModuleBase
                     {
                         using (ImRaii.PushColor(ImGuiCol.Button, new Vector4(0)))
                         {
-                            ImGui.SetCursorPosY(ImGui.GetContentRegionAvail().Y / 2 - 24f);
+                            ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y / 2) - 24f);
                             ImGuiOm.ButtonIcon("DecoExchangeIcon", FontAwesomeIcon.ExchangeAlt);
                         }
                     }
@@ -488,7 +494,10 @@ public unsafe class AutoDiscard : ModuleBase
         }
     }
 
-    private void BehaviourColumn(int index)
+    private void BehaviourColumn
+    (
+        int index
+    )
     {
         if (index < 0 || index > moduleConfig.DiscardGroups.Count) return;
 
@@ -507,7 +516,10 @@ public unsafe class AutoDiscard : ModuleBase
         }
     }
 
-    private void OperationColumn(int index)
+    private void OperationColumn
+    (
+        int index
+    )
     {
         if (index < 0 || index > moduleConfig.DiscardGroups.Count) return;
 
@@ -559,16 +571,27 @@ public unsafe class AutoDiscard : ModuleBase
 
     #endregion
 
-    private void OnCommand(string command, string arguments) =>
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) =>
         EnqueueDiscardGroup(arguments.Trim());
-    
-    private void OnAddon(AddonEvent type, AddonArgs args)
+
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!TaskHelper.IsBusy) return;
         AddonSelectYesnoEvent.ClickYes();
     }
 
-    public void EnqueueDiscardGroup(int index)
+    public void EnqueueDiscardGroup
+    (
+        int index
+    )
     {
         if (index < 0 || index >= moduleConfig.DiscardGroups.Count) return;
         var group = moduleConfig.DiscardGroups[index];
@@ -576,7 +599,10 @@ public unsafe class AutoDiscard : ModuleBase
             group.Enqueue(TaskHelper);
     }
 
-    public void EnqueueDiscardGroup(string uniqueName)
+    public void EnqueueDiscardGroup
+    (
+        string uniqueName
+    )
     {
         var group = moduleConfig.DiscardGroups.FirstOrDefault(x => x.UniqueName == uniqueName && x.Items.Count > 0);
         if (group == null) return;
@@ -584,7 +610,10 @@ public unsafe class AutoDiscard : ModuleBase
         group.Enqueue(TaskHelper);
     }
 
-    private string GenerateUniqueName(string baseName)
+    private string GenerateUniqueName
+    (
+        string baseName
+    )
     {
         var existingNames = moduleConfig.DiscardGroups.Select(x => x.UniqueName).ToHashSet();
 
@@ -618,7 +647,7 @@ public unsafe class AutoDiscard : ModuleBase
             counter++;
         }
     }
-    
+
     private enum DiscardBehaviour
     {
         Discard,
@@ -629,13 +658,19 @@ public unsafe class AutoDiscard : ModuleBase
     {
         public DiscardItemsGroup() { }
 
-        public DiscardItemsGroup(string name) => UniqueName = name;
+        public DiscardItemsGroup
+        (
+            string name
+        ) => UniqueName = name;
 
         public string           UniqueName { get; set; } = null!;
         public HashSet<uint>    Items      { get; set; } = [];
         public DiscardBehaviour Behaviour  { get; set; } = DiscardBehaviour.Discard;
 
-        public bool Equals(DiscardItemsGroup? other)
+        public bool Equals
+        (
+            DiscardItemsGroup? other
+        )
         {
             if (other is null || GetType() != other.GetType())
                 return false;
@@ -643,7 +678,10 @@ public unsafe class AutoDiscard : ModuleBase
             return UniqueName == other.UniqueName;
         }
 
-        public void Enqueue(TaskHelper? taskHelper)
+        public void Enqueue
+        (
+            TaskHelper? taskHelper
+        )
         {
             if (taskHelper == null) return;
 
@@ -692,7 +730,10 @@ public unsafe class AutoDiscard : ModuleBase
             }
         }
 
-        private bool ClickDiscardContextMenu(TaskHelper? taskHelper)
+        private bool ClickDiscardContextMenu
+        (
+            TaskHelper? taskHelper
+        )
         {
             if (!ContextMenuAddon->IsAddonAndNodesReady()) return false;
 
@@ -723,17 +764,28 @@ public unsafe class AutoDiscard : ModuleBase
             return true;
         }
 
-        public override bool Equals(object? obj) => Equals(obj as DiscardItemsGroup);
+        public override bool Equals
+        (
+            object? obj
+        ) => Equals(obj as DiscardItemsGroup);
 
         public override int GetHashCode() => HashCode.Combine(UniqueName);
 
-        public static bool operator ==(DiscardItemsGroup? lhs, DiscardItemsGroup? rhs)
+        public static bool operator ==
+        (
+            DiscardItemsGroup? lhs,
+            DiscardItemsGroup? rhs
+        )
         {
             if (lhs is null) return rhs is null;
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(DiscardItemsGroup lhs, DiscardItemsGroup rhs) => !(lhs == rhs);
+        public static bool operator !=
+        (
+            DiscardItemsGroup lhs,
+            DiscardItemsGroup rhs
+        ) => !(lhs == rhs);
     }
 
     private class Config : ModuleConfig
@@ -742,13 +794,16 @@ public unsafe class AutoDiscard : ModuleBase
     }
 
     #region IPC
-    
+
     [IPCProvider("DailyRoutines.Modules.AutoDiscard.IsBusy")]
     private bool IsBusy() =>
         TaskHelper.IsBusy;
 
     [IPCProvider("DailyRoutines.Modules.AutoDiscard.EnqueueByItems")]
-    private void EnqueueByItems(HashSet<uint> itemIDs)
+    private void EnqueueByItems
+    (
+        HashSet<uint> itemIDs
+    )
     {
         if (itemIDs.Count == 0) return;
 

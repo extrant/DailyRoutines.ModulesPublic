@@ -22,7 +22,7 @@ public unsafe partial class UnifiedGlamourManager
 
         using (ImRaii.PushIndent())
             ImGui.TextUnformatted($"/pdr {COMMAND} → {Lang.Get("UnifiedGlamourManager-CommandHelp")}");
-        
+
         // 打开下载用于石之家导出的脚本页面 (国服only)
         if (GameState.IsCN)
         {
@@ -36,8 +36,8 @@ public unsafe partial class UnifiedGlamourManager
                 (
                     "使用石之家导入功能前, 请先安装浏览器脚本。\n"                                  +
                     "安装脚本前, 请先在浏览器中安装 Tampermonkey 或 Violentmonkey 等用户脚本管理器。\n" +
-                    "安装完成后, 打开脚本页面, 点击 Install this script 安装导入脚本。\n"            +
-                    "安装导入脚本后, 打开石之家幻化详情页, 页面右下角会出现复制按钮。\n"                       +
+                    "安装完成后, 打开脚本页面, 点击 Install this script 安装导入脚本。\n"           +
+                    "安装导入脚本后, 打开石之家幻化详情页, 页面右下角会出现复制按钮。\n"                      +
                     "点击复制, 回到本模块中使用导入功能。"
                 );
 
@@ -109,14 +109,21 @@ public unsafe partial class UnifiedGlamourManager
         }
     }
 
-    private static void DrawSectionTitle(string text)
+    private static void DrawSectionTitle
+    (
+        string text
+    )
     {
         ImGui.TextColored(TitleColor, text);
         ImGui.Separator();
         ImGui.Spacing();
     }
 
-    private static void DrawItemIcon(uint iconID, float size)
+    private static void DrawItemIcon
+    (
+        uint  iconID,
+        float size
+    )
     {
         if (iconID == 0)
         {
@@ -150,7 +157,9 @@ public unsafe partial class UnifiedGlamourManager
             ImGui.ColorConvertFloat4ToU32(GetCardBorderColor(selected, favorite)),
             rounding,
             0,
-            selected ? 2f * ImGuiHelpers.GlobalScale : 1f * ImGuiHelpers.GlobalScale
+            selected ?
+                2f * ImGuiHelpers.GlobalScale :
+                1f * ImGuiHelpers.GlobalScale
         );
     }
 
@@ -373,7 +382,12 @@ public unsafe partial class UnifiedGlamourManager
             ImGui.GetWindowDrawList().AddText
             (
                 pos + new Vector2((tabSize.X - ImGui.CalcTextSize(label).X) * 0.5f, (tabSize.Y - ImGui.CalcTextSize(label).Y) * 0.5f),
-                ImGui.GetColorU32(active ? ButtonActiveColor : ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]),
+                ImGui.GetColorU32
+                (
+                    active ?
+                        ButtonActiveColor :
+                        ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]
+                ),
                 label
             );
 
@@ -396,12 +410,16 @@ public unsafe partial class UnifiedGlamourManager
         ImGui.Spacing();
 
         var showFavoriteFooter = sourceFilter == SourceFilter.Favorite;
-        var footerHeight       = showFavoriteFooter ? ImGui.GetFrameHeightWithSpacing() + ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y : 0f;
+        var footerHeight = showFavoriteFooter ?
+                               ImGui.GetFrameHeightWithSpacing() + ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y :
+                               0f;
 
         using (ImRaii.Child
                (
                    "##UnifiedItemList",
-                   showFavoriteFooter ? new Vector2(0f, -footerHeight) : Vector2.Zero,
+                   showFavoriteFooter ?
+                       new Vector2(0f, -footerHeight) :
+                       Vector2.Zero,
                    false
                ))
         {
@@ -429,7 +447,10 @@ public unsafe partial class UnifiedGlamourManager
         }
     }
 
-    private void DrawItemCardsVirtualized(IReadOnlyList<UnifiedItem> filtered)
+    private void DrawItemCardsVirtualized
+    (
+        IReadOnlyList<UnifiedItem> filtered
+    )
     {
         if (filtered.Count == 0) return;
 
@@ -456,7 +477,10 @@ public unsafe partial class UnifiedGlamourManager
             ImGui.SetCursorPosY(startCursorPos.Y + totalHeight);
     }
 
-    private void DrawItemCard(UnifiedItem item)
+    private void DrawItemCard
+    (
+        UnifiedItem item
+    )
     {
         var favorite  = IsFavorite(item.ItemID);
         var selected  = selectedItem == item;
@@ -494,18 +518,40 @@ public unsafe partial class UnifiedGlamourManager
         ImGui.Dummy(new(0f, ImGui.GetStyle().ItemSpacing.Y));
     }
 
-    private void DrawFavoriteButton(UnifiedItem item, bool favorite, float iconSize)
+    private void DrawFavoriteButton
+    (
+        UnifiedItem item,
+        bool        favorite,
+        float       iconSize
+    )
     {
         using var colors = ImRaii.PushColor(ImGuiCol.Button, NormalCardColor)
                                  .Push(ImGuiCol.ButtonHovered, FrameBGColor)
                                  .Push(ImGuiCol.ButtonActive,  ButtonAccentColor)
-                                 .Push(ImGuiCol.Text,          favorite ? GoldColor : StarOffColor);
+                                 .Push
+                                 (
+                                     ImGuiCol.Text,
+                                     favorite ?
+                                         GoldColor :
+                                         StarOffColor
+                                 );
 
-        if (ImGui.Button(favorite ? FAVORITE_ICON_ON : FAVORITE_ICON_OFF, new Vector2(ImGui.GetFrameHeight(), iconSize)))
+        if (ImGui.Button
+            (
+                favorite ?
+                    FAVORITE_ICON_ON :
+                    FAVORITE_ICON_OFF,
+                new Vector2(ImGui.GetFrameHeight(), iconSize)
+            ))
             ToggleFavorite(item);
     }
 
-    private static void DrawItemCardInfo(UnifiedItem item, bool selected, bool favorite)
+    private static void DrawItemCardInfo
+    (
+        UnifiedItem item,
+        bool        selected,
+        bool        favorite
+    )
     {
         using var group = ImRaii.Group();
 
@@ -518,7 +564,10 @@ public unsafe partial class UnifiedGlamourManager
         DrawItemStains(item, true);
     }
 
-    private void DrawItemGrid(IReadOnlyList<UnifiedItem> filtered)
+    private void DrawItemGrid
+    (
+        IReadOnlyList<UnifiedItem> filtered
+    )
     {
         if (filtered.Count == 0) return;
 
@@ -559,7 +608,15 @@ public unsafe partial class UnifiedGlamourManager
         ImGui.SetCursorScreenPos(start + new Vector2(0f, totalHeight));
     }
 
-    private void DrawGridCell(UnifiedItem item, int index, Vector2 pos, float cellSize, float iconSize, ImDrawListPtr drawList)
+    private void DrawGridCell
+    (
+        UnifiedItem   item,
+        int           index,
+        Vector2       pos,
+        float         cellSize,
+        float         iconSize,
+        ImDrawListPtr drawList
+    )
     {
         using var id = ImRaii.PushId($"Grid_{item.ItemID}_{item.PrismBoxIndex}_{item.IsSetPart}_{item.ParentSetItemID}_{index}");
 
@@ -639,7 +696,10 @@ public unsafe partial class UnifiedGlamourManager
             selectedItem = null;
     }
 
-    private static void DrawSelectedItemHeader(UnifiedItem item)
+    private static void DrawSelectedItemHeader
+    (
+        UnifiedItem item
+    )
     {
         DrawItemIcon(item.IconID, ImGui.GetFrameHeight());
         ImGui.SameLine();
@@ -691,7 +751,10 @@ public unsafe partial class UnifiedGlamourManager
             ImGui.CloseCurrentPopup();
     }
 
-    private static void DrawGridTooltip(UnifiedItem item)
+    private static void DrawGridTooltip
+    (
+        UnifiedItem item
+    )
     {
         using var tooltip = ImRaii.Tooltip();
 
@@ -715,8 +778,12 @@ public unsafe partial class UnifiedGlamourManager
         ImGui.SameLine();
         ImGui.TextColored
         (
-            (mirageLoaded ? KnownColor.LimeGreen : KnownColor.Red).ToVector4(),
-            mirageLoaded ? Lang.Get("Connected") : Lang.Get("Disconnected")
+            (mirageLoaded ?
+                 KnownColor.LimeGreen :
+                 KnownColor.Red).ToVector4(),
+            mirageLoaded ?
+                Lang.Get("Connected") :
+                Lang.Get("Disconnected")
         );
 
         ImGui.SameLine();
@@ -725,8 +792,12 @@ public unsafe partial class UnifiedGlamourManager
         ImGui.SameLine();
         ImGui.TextColored
         (
-            (cabinetLoaded ? KnownColor.LimeGreen : KnownColor.Red).ToVector4(),
-            cabinetLoaded ? Lang.Get("Connected") : Lang.Get("Disconnected")
+            (cabinetLoaded ?
+                 KnownColor.LimeGreen :
+                 KnownColor.Red).ToVector4(),
+            cabinetLoaded ?
+                Lang.Get("Connected") :
+                Lang.Get("Disconnected")
         );
     }
 
@@ -872,11 +943,9 @@ public unsafe partial class UnifiedGlamourManager
                 }
 
                 var drawList = ImGui.GetWindowDrawList();
-                var color = selected
-                                ? ImGui.GetColorU32(ImGuiCol.HeaderActive)
-                                : hovered
-                                    ? ImGui.GetColorU32(ImGuiCol.HeaderHovered)
-                                    : ImGui.GetColorU32(ImGuiCol.FrameBg);
+                var color = selected  ? ImGui.GetColorU32(ImGuiCol.HeaderActive)
+                            : hovered ? ImGui.GetColorU32(ImGuiCol.HeaderHovered)
+                                        : ImGui.GetColorU32(ImGuiCol.FrameBg);
 
                 drawList.AddRectFilled(pos, pos + size, color, ImGui.GetStyle().FrameRounding);
                 drawList.AddRect(pos, pos       + size, ImGui.GetColorU32(ImGuiCol.Border), ImGui.GetStyle().FrameRounding);
@@ -888,7 +957,9 @@ public unsafe partial class UnifiedGlamourManager
                 (
                     textPos,
                     ImGui.GetColorU32(ImGuiCol.Text),
-                    string.IsNullOrWhiteSpace(preset.Title) ? Lang.Get("UnifiedGlamourManager-Preset-UntitledPreset") : preset.Title
+                    string.IsNullOrWhiteSpace(preset.Title) ?
+                        Lang.Get("UnifiedGlamourManager-Preset-UntitledPreset") :
+                        preset.Title
                 );
 
                 // 种族/性别/保存时间
@@ -1146,25 +1217,39 @@ public unsafe partial class UnifiedGlamourManager
 
     #region 工具
 
-    private static Vector4 GetCardBackgroundColor(bool selected, bool favorite, bool hovered)
+    private static Vector4 GetCardBackgroundColor
+    (
+        bool selected,
+        bool favorite,
+        bool hovered
+    )
     {
         if (favorite)
-            return hovered ? FavoriteCardHoverColor : FavoriteCardColor;
+            return hovered ?
+                       FavoriteCardHoverColor :
+                       FavoriteCardColor;
 
         if (selected)
             return SelectedColor;
 
-        return hovered ? NormalCardHoverColor : NormalCardColor;
+        return hovered ?
+                   NormalCardHoverColor :
+                   NormalCardColor;
     }
 
-    private static Vector4 GetCardBorderColor(bool selected, bool favorite) =>
-        selected
-            ? SelectedBorderColor
-            : favorite
-                ? GoldColor
-                : MutedBorderColor;
+    private static Vector4 GetCardBorderColor
+    (
+        bool selected,
+        bool favorite
+    ) =>
+        selected   ? SelectedBorderColor
+        : favorite ? GoldColor
+                     : MutedBorderColor;
 
-    private static string GetSourceFilterLabel(SourceFilter filter) =>
+    private static string GetSourceFilterLabel
+    (
+        SourceFilter filter
+    ) =>
         filter switch
         {
             SourceFilter.Favorite => Lang.Get("Favorite"),
@@ -1173,7 +1258,10 @@ public unsafe partial class UnifiedGlamourManager
             _                     => Lang.Get("All")
         };
 
-    private void HandleItemClick(UnifiedItem item)
+    private void HandleItemClick
+    (
+        UnifiedItem item
+    )
     {
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
@@ -1191,14 +1279,22 @@ public unsafe partial class UnifiedGlamourManager
         (ImGui.GetTextLineHeightWithSpacing() * 2f)   + (ImGui.GetStyle().WindowPadding.Y * 2f)
     );
 
-    private static void DrawStainLabel(uint labelAddonID, Stain stain)
+    private static void DrawStainLabel
+    (
+        uint  labelAddonID,
+        Stain stain
+    )
     {
         ImGui.TextDisabled($"{LuminaWrapper.GetAddonText(labelAddonID)}: {stain.Name.ExtractText()}");
         ImGui.SameLine();
         ImGui.TextColored(stain.Color.ReverseToVector4().WithAlpha(1f), "■");
     }
 
-    private static void DrawItemStains(UnifiedItem item, bool horizontal = false)
+    private static void DrawItemStains
+    (
+        UnifiedItem item,
+        bool        horizontal = false
+    )
     {
         if (item.Stain0 is { } s0)
         {

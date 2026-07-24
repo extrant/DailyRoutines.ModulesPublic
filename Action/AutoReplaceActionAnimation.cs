@@ -26,13 +26,16 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
 
     private Config config = null!;
 
-    private readonly ActionSelectCombo inputCombo  = new("Input");
-    private readonly ActionSelectCombo outputCombo = new("Output");
+    private ActionSelectCombo inputCombo  = null!;
+    private ActionSelectCombo outputCombo = null!;
 
     private EffectType effectTypeInput = EffectType.All;
 
     protected override void Init()
     {
+        inputCombo  = new("Input");
+        outputCombo = new("Output");
+
         config = Config.Load(this) ?? new();
 
         UseActionManager.Instance().RegPreCharacterStartCast(OnCharacterStartCast);
@@ -97,9 +100,9 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
 
                 config.ActionConfigs[inputCombo.SelectedItem.RowId] = actionConfig;
                 config.ActionConfigs = config.ActionConfigs
-                                                         .OrderBy(x => LuminaGetter.GetRow<Action>(x.Key)?.ClassJobCategory.ValueNullable?.RowId ?? uint.MaxValue)
-                                                         .ThenBy(x => x.Key)
-                                                         .ToDictionary(x => x.Key, x => x.Value);
+                                             .OrderBy(x => LuminaGetter.GetRow<Action>(x.Key)?.ClassJobCategory.ValueNullable?.RowId ?? uint.MaxValue)
+                                             .ThenBy(x => x.Key)
+                                             .ToDictionary(x => x.Key, x => x.Value);
                 config.Save(this);
             }
         }
@@ -113,7 +116,7 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
             "###Table",
             10,
             ImGuiTableFlags.None,
-            new(ImGui.GetContentRegionAvail().X - 4 * ImGui.GetStyle().ItemSpacing.X, 0)
+            new(ImGui.GetContentRegionAvail().X - (4 * ImGui.GetStyle().ItemSpacing.X), 0)
         );
         if (!table) return;
 
@@ -148,15 +151,15 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
             if (ImGui.Checkbox("##Enabled", ref isEnabled))
             {
                 actionConfig.IsEnabled = isEnabled;
-                this.config.Save(this);
+                config.Save(this);
             }
 
             ImGui.SameLine();
 
             if (ImGui.Button(FontAwesomeIcon.TrashAlt.ToIconString()))
             {
-                this.config.ActionConfigs.Remove(input);
-                this.config.Save(this);
+                config.ActionConfigs.Remove(input);
+                config.Save(this);
                 continue;
             }
 
@@ -224,7 +227,7 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
                         if (ImGui.Selectable(GetEffectTypeName(target), isSelected))
                         {
                             actionConfig.EffectType = target;
-                            this.config.Save(this);
+                            config.Save(this);
                         }
                     }
                 }
@@ -233,16 +236,17 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
 
         return;
 
-        static string GetEffectTypeName(EffectType target)
-        {
-            return target switch
+        static string GetEffectTypeName
+        (
+            EffectType target
+        ) =>
+            target switch
             {
                 EffectType.All    => Lang.Get("All"),
                 EffectType.Self   => Lang.Get("AutoReplaceActionAnimation-EffectType-Self"),
                 EffectType.Others => Lang.Get("AutoReplaceActionAnimation-EffectType-Others"),
                 _                 => string.Empty
             };
-        }
     }
 
     private void OnCharacterStartCast
@@ -261,8 +265,8 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
 
         var isSelf = player.Address == (nint)localPlayer;
 
-        if (type != ActionType.Action                                              ||
-            !this.config.ActionConfigs.TryGetValue(actionID, out var actionConfig) ||
+        if (type != ActionType.Action                                         ||
+            !config.ActionConfigs.TryGetValue(actionID, out var actionConfig) ||
             !actionConfig.IsEnabled)
             return;
 
@@ -298,9 +302,9 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
 
         var isSelf = player.Address == (nint)localPlayer;
 
-        if (type != ActionType.Action                                              ||
-            !this.config.ActionConfigs.TryGetValue(actionID, out var actionConfig) ||
-            !actionConfig.IsEnabled                                                ||
+        if (type != ActionType.Action                                         ||
+            !config.ActionConfigs.TryGetValue(actionID, out var actionConfig) ||
+            !actionConfig.IsEnabled                                           ||
             !LuminaGetter.TryGetRow<Action>(actionConfig.ReplacementActionID, out _))
             return;
 
@@ -332,7 +336,7 @@ public unsafe class AutoReplaceActionAnimation : ModuleBase
         public uint       ReplacementActionID { get; set; }
         public EffectType EffectType          { get; set; } = EffectType.All;
     }
-    
+
     private enum EffectType
     {
         All,   // 所有目标

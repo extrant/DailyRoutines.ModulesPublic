@@ -20,8 +20,16 @@ public class BetterNameSort : ModuleBase
     public override ModulePermission Permission { get; } = new() { CNOnly = true, TCOnly = true, TCDefaultEnabled = true, CNDefaultEnabled = true };
 
     private static readonly CompSig CompareStringByCodePointSig = new("48 89 5C 24 ?? 55 56 57 48 83 EC ?? 33 C0 48 8D 35");
-    private delegate        int     CompareStringByCodePointDelegate(CStringPointer strA, CStringPointer strB, bool useAsciiCaseMap, bool foldKana);
-    private                 Hook<CompareStringByCodePointDelegate> CompareStringByCodePointHook;
+
+    private delegate int CompareStringByCodePointDelegate
+    (
+        CStringPointer strA,
+        CStringPointer strB,
+        bool           useAsciiCaseMap,
+        bool           foldKana
+    );
+
+    private Hook<CompareStringByCodePointDelegate> CompareStringByCodePointHook;
 
     protected override void Init()
     {
@@ -30,7 +38,13 @@ public class BetterNameSort : ModuleBase
     }
 
     /// <remarks>-1 - strA 的码点小于 strB; 0 - 两个字符串完全相同; 1 - strA 大于 strB</remarks>
-    private int CompareStringByCodePointDetour(CStringPointer strA, CStringPointer strB, bool useAsciiCaseMap, bool foldKana)
+    private int CompareStringByCodePointDetour
+    (
+        CStringPointer strA,
+        CStringPointer strB,
+        bool           useAsciiCaseMap,
+        bool           foldKana
+    )
     {
         var orig = CompareStringByCodePointHook.Original(strA, strB, useAsciiCaseMap, foldKana);
         if (orig == 0)
@@ -45,6 +59,8 @@ public class BetterNameSort : ModuleBase
         var pinyinB = PinyinHelper.GetPinyin(strContentB, string.Empty);
 
         var cmp = string.CompareOrdinal(pinyinA, pinyinB);
-        return cmp != 0 ? MathF.Sign(cmp) : orig;
+        return cmp != 0 ?
+                   MathF.Sign(cmp) :
+                   orig;
     }
 }

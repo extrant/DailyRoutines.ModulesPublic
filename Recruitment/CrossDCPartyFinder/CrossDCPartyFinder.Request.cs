@@ -13,7 +13,10 @@ namespace DailyRoutines.ModulesPublic.CrossDCPartyFinder;
 
 public partial class CrossDCPartyFinder
 {
-    private void SendRequest(PartyFinderRequest req)
+    private void SendRequest
+    (
+        PartyFinderRequest req
+    )
     {
         cancelSource?.Cancel();
         cancelSource?.Dispose();
@@ -50,7 +53,9 @@ public partial class CrossDCPartyFinder
                 var testResult = await testReq.Request().ConfigureAwait(false);
 
                 // 没有数据就不继续请求了
-                var totalPage = testResult.Overview.Total == 0 ? 0 : (testResult.Overview.Total + 99) / 100;
+                var totalPage = testResult.Overview.Total == 0 ?
+                                    0 :
+                                    (testResult.Overview.Total + 99) / 100;
                 if (totalPage == 0) return;
 
                 var tasks = new List<Task>();
@@ -102,7 +107,10 @@ public partial class CrossDCPartyFinder
             }
         );
 
-        async Task Gather(uint page)
+        async Task Gather
+        (
+            uint page
+        )
         {
             var clonedRequest = req.Clone();
             clonedRequest.Page = page;
@@ -111,12 +119,19 @@ public partial class CrossDCPartyFinder
             bag.AddRange(result.Listings);
         }
 
-        unsafe List<PartyFinderList.PartyFinderListing> FilterAndSort(IEnumerable<PartyFinderList.PartyFinderListing> source) =>
+        unsafe List<PartyFinderList.PartyFinderListing> FilterAndSort
+        (
+            IEnumerable<PartyFinderList.PartyFinderListing> source
+        ) =>
             source.Where
                   (x => string.IsNullOrWhiteSpace(currentSeach) ||
                         x.GetSearchString().Contains(currentSeach, StringComparison.OrdinalIgnoreCase)
                   )
-                  .OrderByDescending(x => FlagStatusModule.Instance()->UIFlags[4] == 3 ? x.TimeLeft : 1 / x.TimeLeft)
+                  .OrderByDescending
+                  (x => FlagStatusModule.Instance()->UIFlags[4] == 3 ?
+                            x.TimeLeft :
+                            1 / x.TimeLeft
+                  )
                   .ToList();
     }
 
@@ -160,7 +175,10 @@ public partial class CrossDCPartyFinder
         public uint          DutyID      { get; set; }
         public List<uint>    JobIds      { get; set; } = [];
 
-        public bool Equals(PartyFinderRequest? other)
+        public bool Equals
+        (
+            PartyFinderRequest? other
+        )
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -219,7 +237,10 @@ public partial class CrossDCPartyFinder
             return $"{BASE_URL}{builder}";
         }
 
-        public static unsafe DutyCategory? ParseCategory(AgentLookingForGroup* agent) =>
+        public static unsafe DutyCategory? ParseCategory
+        (
+            AgentLookingForGroup* agent
+        ) =>
             agent->CategoryTab switch
             {
                 1  => DutyCategory.Roulette,
@@ -241,7 +262,10 @@ public partial class CrossDCPartyFinder
                 _  => null
             };
 
-        public static string ParseCategoryIDToLoc(DutyCategory categoryID) =>
+        public static string ParseCategoryIDToLoc
+        (
+            DutyCategory categoryID
+        ) =>
             categoryID switch
             {
                 DutyCategory.Roulette        => LuminaWrapper.GetAddonText(8605),
@@ -263,7 +287,10 @@ public partial class CrossDCPartyFinder
                 _                            => string.Empty
             };
 
-        public static uint ParseCategoryIDToIconID(DutyCategory categoryID) =>
+        public static uint ParseCategoryIDToIconID
+        (
+            DutyCategory categoryID
+        ) =>
             categoryID switch
             {
                 DutyCategory.Roulette        => 61807,
@@ -292,14 +319,17 @@ public partial class CrossDCPartyFinder
                 Category    = Category,
                 World       = World,
                 DataCenter  = DataCenter,
-                Jobs        = [..Jobs],
+                Jobs        = [.. Jobs],
                 HomeWorldID = HomeWorldID,
                 Region      = Region,
                 DutyID      = DutyID,
-                JobIds      = [..JobIds]
+                JobIds      = [.. JobIds]
             };
 
-        public override bool Equals(object? obj) =>
+        public override bool Equals
+        (
+            object? obj
+        ) =>
             obj != null && Equals(obj as PartyFinderRequest);
 
         public override int GetHashCode() =>
@@ -315,10 +345,18 @@ public partial class CrossDCPartyFinder
                 JobIds.Aggregate(0, HashCode.Combine)
             );
 
-        public static bool operator ==(PartyFinderRequest? left, PartyFinderRequest? right) =>
+        public static bool operator ==
+        (
+            PartyFinderRequest? left,
+            PartyFinderRequest? right
+        ) =>
             Equals(left, right);
 
-        public static bool operator !=(PartyFinderRequest? left, PartyFinderRequest? right) =>
+        public static bool operator !=
+        (
+            PartyFinderRequest? left,
+            PartyFinderRequest? right
+        ) =>
             !Equals(left, right);
     }
 
@@ -399,7 +437,10 @@ public partial class CrossDCPartyFinder
             public string CategoryName =>
                 PartyFinderRequest.ParseCategoryIDToLoc(CategoryID);
 
-            public bool Equals(PartyFinderListing? other)
+            public bool Equals
+            (
+                PartyFinderListing? other
+            )
             {
                 if (other is null) return false;
                 if (ReferenceEquals(this, other)) return true;

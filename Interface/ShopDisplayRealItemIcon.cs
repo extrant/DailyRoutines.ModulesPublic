@@ -23,7 +23,7 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private List<(uint ID, uint IconID, string Name)> collectablesShopItemDatas = [];
 
     protected override void Init()
@@ -67,7 +67,7 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "FreeShop", OnFreeShop);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "FreeShop", OnFreeShop);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnShop);
@@ -78,7 +78,11 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnFreeShop);
     }
 
-    private static void OnFreeShop(AddonEvent type, AddonArgs args)
+    private static void OnFreeShop
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -96,7 +100,11 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         }
     }
 
-    private void OnCollectablesShop(AddonEvent type, AddonArgs args)
+    private void OnCollectablesShop
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (type == AddonEvent.PostDraw &&
             !Throttler.Shared.Throttle("ShopDisplayRealItemIcon-OnCollectablesShop", 100)) return;
@@ -113,7 +121,7 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
 
             for (var i = 0; i < itemCount; i++)
             {
-                var itemID = addon->AtkValues[34 + 11 * i].UInt % 50_0000;
+                var itemID = addon->AtkValues[34 + (11 * i)].UInt % 50_0000;
                 if (itemID == 0) continue;
                 if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
 
@@ -147,7 +155,11 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         }
     }
 
-    private static void OnShopExchange(AddonEvent type, AddonArgs args)
+    private static void OnShopExchange
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -164,7 +176,11 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         }
     }
 
-    private static void OnGrandCompanyExchange(AddonEvent type, AddonArgs args)
+    private static void OnGrandCompanyExchange
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -182,7 +198,11 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
         }
     }
 
-    private static void OnInclusionShop(AddonEvent type, AddonArgs args)
+    private static void OnInclusionShop
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -192,15 +212,19 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
 
         for (var i = 0; i < itemCount; i++)
         {
-            var itemID = addon->AtkValues[300 + i * 18].UInt;
+            var itemID = addon->AtkValues[300 + (i * 18)].UInt;
             if (itemID == 0) continue;
             if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
 
-            addon->AtkValues[301 + i * 18].SetUInt(itemRow.Icon);
+            addon->AtkValues[301 + (i * 18)].SetUInt(itemRow.Icon);
         }
     }
 
-    private static void OnShop(AddonEvent type, AddonArgs args)
+    private static void OnShop
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -231,7 +255,13 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
             if (itemID == 0) continue;
             if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow)) continue;
 
-            addon->AtkValues[197 + i].SetUInt(itemRow.Icon + (isItemHQ ? 100_0000U : 0U));
+            addon->AtkValues[197 + i].SetUInt
+            (
+                itemRow.Icon +
+                (isItemHQ ?
+                     100_0000U :
+                     0U)
+            );
         }
     }
 }

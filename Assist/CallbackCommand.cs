@@ -36,28 +36,35 @@ public unsafe class CallbackCommand : ModuleBase
             ImGui.TextUnformatted($"/pdr {COMMAND} {Lang.Get("CallbackCommand-CommandHelp")}");
 
             ImGui.NewLine();
-            
+
             ImGui.TextWrapped(Lang.Get("CallbackCommand-CommandHelp-Detailed", COMMAND));
         }
     }
 
-    private static void OnCommand(string command, string arguments)
+    private static void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         arguments = arguments.Trim();
+
         if (string.IsNullOrEmpty(arguments))
         {
             NotifyCommandError();
             return;
         }
-        
+
         var splited = arguments.Split(' ', 2);
+
         if (splited.Length != 2)
         {
             NotifyCommandError();
             return;
         }
-        
+
         var addonName = splited[0];
+
         if (!AddonHelper.TryGetByName(addonName, out var addon))
         {
             NotifyHelper.Instance().ChatError(Lang.Get("CallbackCommand-Notification-AddonNotReady", addonName));
@@ -65,6 +72,7 @@ public unsafe class CallbackCommand : ModuleBase
         }
 
         var callbackArguments = splited[1].Split(' ');
+
         try
         {
             using var atkValues = AtkValueArray.FromString(callbackArguments);

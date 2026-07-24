@@ -24,16 +24,17 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
     private Hook<RaptureTextModule.Delegates.FormatTimeSpan> FormatTimeSpanHook;
 
     // 把状态更新间隔始终改为实时更新
-    private MemoryPatch updateIntervalPatch = new("85 D2 74 ?? 83 FA ?? 73 ?? 41 3B D0", [0xB0, 0x01, 0xC3, 0x90]);
+    private MemoryPatch updateIntervalPatch = null!;
 
     private Config config = null!;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
-        
+        updateIntervalPatch = new("85 D2 74 ?? 83 FA ?? 73 ?? 41 3B D0", [0xB0, 0x01, 0xC3, 0x90]);
+        config              = Config.Load(this) ?? new();
+
         updateIntervalPatch.Enable();
-        
+
         FormatTimeSpanHook = DService.Instance().Hook.HookFromMemberFunction<RaptureTextModule.Delegates.FormatTimeSpan>
         (
             typeof(RaptureTextModule.MemberFunctionPointers),
@@ -61,7 +62,12 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
         }
     }
 
-    private CStringPointer FormatTimeSpanDetour(RaptureTextModule* thisPtr, uint seconds, bool alternativeMinutesGlyph)
+    private CStringPointer FormatTimeSpanDetour
+    (
+        RaptureTextModule* thisPtr,
+        uint               seconds,
+        bool               alternativeMinutesGlyph
+    )
     {
         var formatted = string.Empty;
 
@@ -70,10 +76,10 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
             case Mode.FullSecond:
                 formatted = seconds.ToString();
                 break;
-            
+
             case Mode.FullMinute:
                 var (minute0, second0) = Math.DivRem(seconds, 60);
-                
+
                 if (minute0 == 0)
                     goto case Mode.FullSecond;
 
@@ -91,9 +97,9 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
 
         if (string.IsNullOrEmpty(formatted))
             return FormatTimeSpanHook.Original(thisPtr, seconds, alternativeMinutesGlyph);
-        
+
         using var utf8String = new Utf8String(formatted);
-        
+
         var returnUtf8String = thisPtr->UnkStrings0[0];
         returnUtf8String.Clear();
         returnUtf8String.Copy(&utf8String);
@@ -104,7 +110,7 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
     {
         public Mode Mode = Mode.FullSecond;
     }
-    
+
     private enum Mode
     {
         FullSecond,

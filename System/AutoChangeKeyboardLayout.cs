@@ -20,9 +20,10 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["JiaXX"]
     };
-    
+
     private static readonly CompSig SetTextInputTargetSig =
         new("4C 8B DC 55 53 57 41 54 41 57 49 8D AB ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 48 8B 9D ?? ?? ?? ??");
+
     private delegate void SetTextInputTargetDelegate
     (
         AtkComponentTextInput* component,
@@ -31,6 +32,7 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
         AtkEvent*              atkEvent,
         AtkEventData*          atkEventData
     );
+
     private Hook<SetTextInputTargetDelegate>? SetTextInputTargetHook;
 
     private Config config = null!;
@@ -145,7 +147,10 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
         }
     }
 
-    private void CheckSlashAndSwitchLayout(AtkComponentTextInput* textInputEventInterface)
+    private void CheckSlashAndSwitchLayout
+    (
+        AtkComponentTextInput* textInputEventInterface
+    )
     {
         if (textInputEventInterface == null) return;
 
@@ -168,16 +173,31 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
         public static nint CurrentLayout => GetKeyboardLayout(0);
 
         [DllImport("user32.dll")]
-        private static extern void ActivateKeyboardLayout(nint hkl, uint Flags);
+        private static extern void ActivateKeyboardLayout
+        (
+            nint hkl,
+            uint Flags
+        );
 
         [DllImport("user32.dll")]
-        private static extern nint GetKeyboardLayout(uint idThread);
+        private static extern nint GetKeyboardLayout
+        (
+            uint idThread
+        );
 
         [DllImport("user32.dll")]
-        private static extern int GetKeyboardLayoutList(int nBuff, nint[] lpList);
+        private static extern int GetKeyboardLayoutList
+        (
+            int    nBuff,
+            nint[] lpList
+        );
 
         [DllImport("user32.dll")]
-        private static extern nint LoadKeyboardLayout(string pwszKLID, uint Flags);
+        private static extern nint LoadKeyboardLayout
+        (
+            string pwszKLID,
+            uint   Flags
+        );
 
         public static Dictionary<ushort, KeyboardLayoutInfo> GetAllKeyboardLayouts()
         {
@@ -205,7 +225,10 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
             return allLayouts;
         }
 
-        private static string GetLayoutDisplayName(ushort langID)
+        private static string GetLayoutDisplayName
+        (
+            ushort langID
+        )
         {
             try
             {
@@ -218,7 +241,10 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
             }
         }
 
-        public static void SwitchToLayout(nint layoutHandle)
+        public static void SwitchToLayout
+        (
+            nint layoutHandle
+        )
         {
             try
             {
@@ -232,7 +258,10 @@ public unsafe class AutoChangeKeyboardLayout : ModuleBase
             }
         }
 
-        public static nint FindKeyboardLayout(ushort langID)
+        public static nint FindKeyboardLayout
+        (
+            ushort langID
+        )
         {
             var layoutCount = GetKeyboardLayoutList(0, null);
             if (layoutCount == 0) return nint.Zero;

@@ -23,7 +23,7 @@ public unsafe class AutoRestoreFurniture : ModuleBase
         Description = Lang.Get("AutoRestoreFurnitureDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     private AutoRestoreFurnitureAddon? addon;
 
     protected override void Init()
@@ -45,11 +45,16 @@ public unsafe class AutoRestoreFurniture : ModuleBase
     {
         addon?.Dispose();
         addon = null;
-        
+
         LogMessageManager.Instance().Unreg(OnLogMessage);
     }
-    
-    private void OnLogMessage(ref bool isPrevented, ref uint logMessageID, ref LogMessageQueueItem item)
+
+    private void OnLogMessage
+    (
+        ref bool                isPrevented,
+        ref uint                logMessageID,
+        ref LogMessageQueueItem item
+    )
     {
         if (logMessageID != 3338 || !TaskHelper.IsBusy)
             return;
@@ -57,7 +62,12 @@ public unsafe class AutoRestoreFurniture : ModuleBase
         isPrevented = true;
     }
 
-    private bool EnqueueRestore(uint startInventory, uint endInventory, bool toStoreRoom)
+    private bool EnqueueRestore
+    (
+        uint startInventory,
+        uint endInventory,
+        bool toStoreRoom
+    )
     {
         var inventoryManager = InventoryManager.Instance();
 
@@ -102,26 +112,33 @@ public unsafe class AutoRestoreFurniture : ModuleBase
         protected override bool CanOpenAddon =>
             HousingGoods != null && HousingGoods->IsAddonAndNodesReady();
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) =>
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) =>
             false;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (WindowNode is WindowNode windowNode)
                 windowNode.CloseButtonNode.IsVisible = false;
-            
+
             FlagHelper.UpdateFlag(ref addon->Flags1A1, 0x4,  true);
             FlagHelper.UpdateFlag(ref addon->Flags1A0, 0x80, true);
             FlagHelper.UpdateFlag(ref addon->Flags1A1, 0x40, true);
             FlagHelper.UpdateFlag(ref addon->Flags1A3, 0x1,  true);
-            
+
             var layout = new VerticalListNode
             {
                 IsVisible   = true,
                 Position    = ContentStartPosition,
                 ItemSpacing = 4f,
                 Size        = ContentSize,
-                FitContents = true,
+                FitContents = true
             };
 
             stopButton = new()
@@ -156,26 +173,39 @@ public unsafe class AutoRestoreFurniture : ModuleBase
             layout.AddNode(placedToStoreRoomButton);
             layout.AddNode(placedToInventoryButton);
             layout.AddNode(storedToInventoryButton);
-            
+
             layout.AttachNode(this);
 
             layout.RecalculateLayout();
-            
+
             SetWindowSize(Size.X, ContentStartPosition.Y + layout.Height + 16f);
             layout.Position = ContentStartPosition;
             layout.Height   = layout.Height;
         }
 
-        protected override void OnAttachedAddonUpdate(AtkUnitBase* addon, AtkUnitBase* hostAddon) =>
+        protected override void OnAttachedAddonUpdate
+        (
+            AtkUnitBase* addon,
+            AtkUnitBase* hostAddon
+        ) =>
             RefreshState();
 
-        protected override void OnHostAddon(AddonEvent type, AddonArgs? args)
+        protected override void OnHostAddon
+        (
+            AddonEvent type,
+            AddonArgs? args
+        )
         {
             if (type == AddonEvent.PreFinalize)
                 module.TaskHelper.Abort();
         }
 
-        private TextButtonNode CreateActionButton(string label, bool toStoreRoom, bool isStoredItem)
+        private TextButtonNode CreateActionButton
+        (
+            string label,
+            bool   toStoreRoom,
+            bool   isStoredItem
+        )
         {
             var button = new TextButtonNode
             {
@@ -188,16 +218,16 @@ public unsafe class AutoRestoreFurniture : ModuleBase
             button.OnClick = () =>
             {
                 var isOutdoor = HousingManager.Instance()->OutdoorTerritory != null;
-                var startInventory = isStoredItem
-                                         ? isOutdoor ? 27000U : 27001U
-                                         : isOutdoor
-                                             ? 25001U
-                                             : 25003U;
-                var endInventory = isStoredItem
-                                       ? isOutdoor ? 27000U : 27008U
-                                       : isOutdoor
-                                           ? 25001U
-                                           : 25010U;
+                var startInventory = isStoredItem ? isOutdoor ?
+                                                        27000U :
+                                                        27001U
+                                     : isOutdoor ? 25001U
+                                                   : 25003U;
+                var endInventory = isStoredItem ? isOutdoor ?
+                                                      27000U :
+                                                      27008U
+                                   : isOutdoor ? 25001U
+                                                 : 25010U;
 
                 module.EnqueueRestore(startInventory, endInventory, toStoreRoom);
             };

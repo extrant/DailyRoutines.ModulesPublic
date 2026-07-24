@@ -19,7 +19,7 @@ public class AutoVeryEasyQuestBattle : ModuleBase
 
     protected override void Init() =>
         ExecuteCommandManager.Instance().RegPre(OnPreUseCommand);
-    
+
     protected override void Uninit() =>
         ExecuteCommandManager.Instance().Unreg(OnPreUseCommand);
 

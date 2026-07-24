@@ -40,7 +40,10 @@ public unsafe class FastCustomDeliveriesInfo : ModuleBase
         contextMenu = null;
     }
 
-    private void ShowContextMenu(CustomDeliveryInfo? selectedInfo)
+    private void ShowContextMenu
+    (
+        CustomDeliveryInfo? selectedInfo
+    )
     {
         if (selectedInfo == null) return;
 
@@ -101,7 +104,11 @@ public unsafe class FastCustomDeliveriesInfo : ModuleBase
         contextMenu.Open();
     }
 
-    private void OnAgent(AgentEvent type, AgentArgs args)
+    private void OnAgent
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         var formatted = args as AgentReceiveEventArgs;
         if (formatted.ValueCount < 2) return;

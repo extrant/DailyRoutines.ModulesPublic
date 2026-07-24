@@ -19,7 +19,7 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private uint lastKillCount;
     private uint preview = 1;
 
@@ -40,7 +40,7 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
             }
         }
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
@@ -65,7 +65,11 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (PvPFrontlineGauge == null) return;
         if (!Throttler.Shared.Throttle("AutoShowFrontlineKillCount-OnUpdate", 100)) return;
@@ -87,11 +91,17 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
             lastKillCount = killCount;
         }
     }
-    
-    private void OnZoneChanged(uint u) =>
+
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         lastKillCount = 0;
-    
-    private static void DisplayKillCount(uint killCount)
+
+    private static void DisplayKillCount
+    (
+        uint killCount
+    )
     {
         if (AddonHelper.TryGetByName("_Streak", out var addon))
         {
@@ -99,6 +109,12 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
             addon->Close(true);
         }
 
-        UIModule.Instance()->ShowStreak((int)killCount, killCount <= 2 ? 1 : 2);
+        UIModule.Instance()->ShowStreak
+        (
+            (int)killCount,
+            killCount <= 2 ?
+                1 :
+                2
+        );
     }
 }

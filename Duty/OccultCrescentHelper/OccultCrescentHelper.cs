@@ -32,7 +32,7 @@ public partial class OccultCrescentHelper : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     private readonly AetheryteManager  aetheryteModule;
@@ -54,7 +54,7 @@ public partial class OccultCrescentHelper : ModuleBase
         supportJobModule = new(this);
         othersModule     = new(this);
     }
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -85,14 +85,20 @@ public partial class OccultCrescentHelper : ModuleBase
             module.Uninit();
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
         FrameworkManager.Instance().Reg(OnUpdate, 1_000);
     }
 
-    private void OnUpdate(IFramework framework)
+    private void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
         {
@@ -155,7 +161,13 @@ public partial class OccultCrescentHelper : ModuleBase
 
     protected override void OverlayPostDraw() => FontManager.Instance().UIFont80.Pop();
 
-    private static void TP(Vector3 pos, TaskHelper taskHelper, int weight = 0, bool abortBefore = true)
+    private static void TP
+    (
+        Vector3    pos,
+        TaskHelper taskHelper,
+        int        weight      = 0,
+        bool       abortBefore = true
+    )
     {
         if (abortBefore)
             taskHelper.Abort();
@@ -223,7 +235,7 @@ public partial class OccultCrescentHelper : ModuleBase
         // 辅助狂战士
         public bool IsEnabledBerserkerRageAutoFace = true;
         public bool IsEnabledBerserkerRageReplace  = true;
-        
+
         // 突出标注
         public bool IsEnabledHighlightCarrot      = true;
         public bool IsEnabledHighlightSurveyPoint = true;
@@ -254,7 +266,7 @@ public partial class OccultCrescentHelper : ModuleBase
 
         // 优先移动到 CE / FATE
         public bool IsEnabledMoveToEvent = true;
-        
+
         // 到 CE / FATE 时自动下坐骑
         public bool IsEnabledDismount = true;
 

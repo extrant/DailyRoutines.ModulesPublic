@@ -27,7 +27,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private readonly ContentFinderDataManager manager = new();
-    
+
     protected override void Init()
     {
         Overlay       ??= new(this);
@@ -38,7 +38,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
         if (ContentsFinder != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
@@ -70,8 +70,11 @@ public unsafe class FastContentsFinderRegister : ModuleBase
 
         foreach (var item in cachedData.Items)
         {
-            var startPosition = cachedData.CurrentTab == 0 ? item.Position + new Vector2(20, 0) : item.Position;
+            var startPosition = cachedData.CurrentTab == 0 ?
+                                    item.Position + new Vector2(20, 0) :
+                                    item.Position;
             ImGui.SetNextWindowPos(startPosition - itemSpacing);
+
             if (ImGui.Begin($"FastContentsFinderRouletteOverlay-{item.NodeID}", WINDOW_FLAGS))
             {
                 if (cachedData.InDutyQueue)
@@ -95,6 +98,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                             if (DService.Instance().Texture.TryGetFromGameIcon(new(60081), out var joinTexture))
                             {
                                 ImGui.SetCursorScreenPos(startPosition);
+
                                 if (ImGui.ImageButton(joinTexture.GetWrapOrEmpty().Handle, new(item.Height)))
                                 {
                                     ChatManager.Instance().SendMessage($"/pdrduty {(cachedData.CurrentTab == 0 ? "r" : "n")} {item.CleanName}");
@@ -168,10 +172,10 @@ public unsafe class FastContentsFinderRegister : ModuleBase
 
                 if (levelNode->IsVisible())
                     levelNode->ToggleVisibility(false);
-                
+
                 var syncNode = listItemComponent->Component->UldManager.SearchNodeById(14);
                 if (syncNode == null) return;
-                
+
                 syncNode->SetPositionFloat(322, 1);
             }
         }
@@ -180,8 +184,12 @@ public unsafe class FastContentsFinderRegister : ModuleBase
             // ignored
         }
     }
-    
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         Overlay.IsOpen = type switch
         {
@@ -273,25 +281,29 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                     if (listItemComponent               == null                  ||
                         listItemComponent->Y            >= 300                   ||
                         listItemComponent->ScreenY      < listComponent->ScreenY ||
-                        listItemComponent->ScreenY + 20 > otherPFNode->ScreenY) 
+                        listItemComponent->ScreenY + 20 > otherPFNode->ScreenY)
                         continue;
 
                     var nameNode = (AtkTextNode*)listItemComponent->Component->UldManager.SearchNodeById(6);
                     if (nameNode == null) continue;
 
-                    var name = nameNode->NodeText.StringPtr.HasValue ? nameNode->NodeText.ToString() : string.Empty;
+                    var name = nameNode->NodeText.StringPtr.HasValue ?
+                                   nameNode->NodeText.ToString() :
+                                   string.Empty;
                     if (string.IsNullOrWhiteSpace(name)) continue;
 
                     var lockNode = (AtkImageNode*)listItemComponent->Component->UldManager.SearchNodeById(3);
                     if (lockNode == null) continue;
-                    
+
                     var lockNode2 = (AtkImageNode*)listItemComponent->Component->UldManager.SearchNodeById(4);
                     if (lockNode2 == null) continue;
 
                     var levelNode = (AtkTextNode*)listItemComponent->Component->UldManager.SearchNodeById(19);
                     if (levelNode == null) continue;
 
-                    var level = levelNode->NodeText.StringPtr.HasValue ? levelNode->NodeText.ToString() : string.Empty;
+                    var level = levelNode->NodeText.StringPtr.HasValue ?
+                                    levelNode->NodeText.ToString() :
+                                    string.Empty;
                     if (string.IsNullOrWhiteSpace(level)) continue;
 
                     var syncNode = listItemComponent->Component->UldManager.SearchNodeById(14);
@@ -326,7 +338,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
         public void ClearCache() =>
             cachedData = null;
     }
-    
+
     #region 常量
 
     private const ImGuiWindowFlags WINDOW_FLAGS =

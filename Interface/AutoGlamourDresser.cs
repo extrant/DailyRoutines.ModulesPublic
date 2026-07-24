@@ -103,7 +103,11 @@ public unsafe class AutoGlamourDresser : ModuleBase
         }
     }
 
-    private void OnMiragePrismPrismBox(AddonEvent type, AddonArgs? args)
+    private void OnMiragePrismPrismBox
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         if (!config.AutoSwitchJobCategory) return;
 
@@ -113,13 +117,19 @@ public unsafe class AutoGlamourDresser : ModuleBase
         addon->Param = (int)LocalPlayerState.ClassJob;
     }
 
-    private void StartRestoreOperation(Func<List<PrismBoxItemInfo>, List<uint>> filter)
+    private void StartRestoreOperation
+    (
+        Func<List<PrismBoxItemInfo>, List<uint>> filter
+    )
     {
         TaskHelper.Abort();
         QueueRestoreOperation(filter);
     }
 
-    private void QueueRestoreOperation(Func<List<PrismBoxItemInfo>, List<uint>> filter)
+    private void QueueRestoreOperation
+    (
+        Func<List<PrismBoxItemInfo>, List<uint>> filter
+    )
     {
         if (!TryGetLoadedMirageManager(out _)) return;
 
@@ -130,7 +140,10 @@ public unsafe class AutoGlamourDresser : ModuleBase
         TaskHelper.Enqueue(() => QueueRestoreOperation(filter));
     }
 
-    private static List<uint> FilterDuplicateItems(List<PrismBoxItemInfo> items)
+    private static List<uint> FilterDuplicateItems
+    (
+        List<PrismBoxItemInfo> items
+    )
     {
         List<uint>    itemIndexesToRestore = [];
         HashSet<uint> uniqueItemIDs        = [];
@@ -144,7 +157,10 @@ public unsafe class AutoGlamourDresser : ModuleBase
         return itemIndexesToRestore;
     }
 
-    private static List<uint> FilterDuplicateModelItems(List<PrismBoxItemInfo> items)
+    private static List<uint> FilterDuplicateModelItems
+    (
+        List<PrismBoxItemInfo> items
+    )
     {
         List<uint>      itemIndexesToRestore = [];
         HashSet<uint>   uniqueItemIDs        = [];
@@ -162,7 +178,10 @@ public unsafe class AutoGlamourDresser : ModuleBase
         return itemIndexesToRestore;
     }
 
-    private List<uint> FilterArmoireItems(List<PrismBoxItemInfo> items)
+    private List<uint> FilterArmoireItems
+    (
+        List<PrismBoxItemInfo> items
+    )
     {
         Dictionary<uint, PrismBoxItemInfo> itemsByID    = [];
         Dictionary<uint, PrismBoxItemInfo> itemsByIndex = [];
@@ -249,19 +268,31 @@ public unsafe class AutoGlamourDresser : ModuleBase
         return validItemSets;
     }
 
-    private void OnReceiveLogMessage(uint logMessageID, LogMessageQueueItem values)
+    private void OnReceiveLogMessage
+    (
+        uint                logMessageID,
+        LogMessageQueueItem values
+    )
     {
         if (logMessageID != 4280) return;
         TaskHelper.Abort();
     }
 
-    private void OnAddonMiragePrismPrismSetConvert(AddonEvent type, AddonArgs? args)
+    private void OnAddonMiragePrismPrismSetConvert
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         if (MiragePrismPrismSetConvert == null) return;
         FillMiragePrismBoxSet();
     }
 
-    private static void OnAddonMiragePrismPrismSetConvertC(AddonEvent type, AddonArgs? args)
+    private static void OnAddonMiragePrismPrismSetConvertC
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         if (MiragePrismPrismSetConvertC == null) return;
         MiragePrismPrismSetConvertC->Callback(0);
@@ -312,7 +343,10 @@ public unsafe class AutoGlamourDresser : ModuleBase
         TaskHelper.Enqueue(() => AgentId.MiragePrismPrismSetConvert.SendEvent(1, 14));
     }
 
-    private static bool TryGetLoadedMirageManager(out MirageManager* instance)
+    private static bool TryGetLoadedMirageManager
+    (
+        out MirageManager* instance
+    )
     {
         instance = MirageManager.Instance();
         return instance != null && instance->PrismBoxRequested && instance->PrismBoxLoaded;
@@ -359,7 +393,11 @@ public unsafe class AutoGlamourDresser : ModuleBase
         return items;
     }
 
-    private void EnqueueRestoreItems(IEnumerable<uint> itemIndexes, bool abortWhenInventoryFull = false)
+    private void EnqueueRestoreItems
+    (
+        IEnumerable<uint> itemIndexes,
+        bool              abortWhenInventoryFull = false
+    )
     {
         if (!TryGetLoadedMirageManager(out var instance)) return;
 
@@ -414,7 +452,10 @@ public unsafe class AutoGlamourDresser : ModuleBase
         List<(uint ID, string Name)> SetItems
     )
     {
-        public static MirageItemSet? Parse(MirageStoreSetItem row)
+        public static MirageItemSet? Parse
+        (
+            MirageStoreSetItem row
+        )
         {
             if (!LuminaGetter.TryGetRow<Item>(row.RowId, out var setItemRow)) return null;
 

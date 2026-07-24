@@ -39,7 +39,10 @@ public unsafe partial class AutoRetainerWork
             taskHelper = null;
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-EntrustDups-Title"),
@@ -113,7 +116,11 @@ public unsafe partial class AutoRetainerWork
             );
         }
 
-        private void OnEntrustDupsAddons(AddonEvent type, AddonArgs args)
+        private void OnEntrustDupsAddons
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
             if (!taskHelper.IsBusy) return;
 
@@ -151,8 +158,8 @@ public unsafe partial class AutoRetainerWork
 
         private static readonly string[] ItemEntrustWithdrawTexts =
         [
-            "道具管理", 
-            "Entrust or withdraw items", 
+            "道具管理",
+            "Entrust or withdraw items",
             "アイテムの受け渡し",
             "아이템 주고받기",
             "Gegenstände übergeben oder entnehmen",

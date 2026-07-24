@@ -6,7 +6,6 @@ using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Game.DutyState;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
-using OmenTools.Info.Game.Data;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
 using Control = FFXIVClientStructs.FFXIV.Client.Game.Control.Control;
@@ -78,7 +77,11 @@ public class AutoChakraFormShift : ModuleBase
     }
 
     // 脱战
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
 
@@ -88,14 +91,20 @@ public class AutoChakraFormShift : ModuleBase
     }
 
     // 重新挑战
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 进入副本
-    private void OnZoneChanged(uint zone)
+    private void OnZoneChanged
+    (
+        uint zone
+    )
     {
         if (LuminaGetter.GetRow<TerritoryType>(zone) is not { ContentFinderCondition.RowId: > 0 }) return;
 
@@ -114,6 +123,6 @@ public class AutoChakraFormShift : ModuleBase
 
     private const uint STEELED_MEDITATION = 36940;
     private const uint FORM_SHIFT         = 4262;
-    
+
     #endregion
 }

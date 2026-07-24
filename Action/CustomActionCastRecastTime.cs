@@ -7,7 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Arrays;
 using Lumina.Excel.Sheets;
-using OmenTools.Dalamud;
 using OmenTools.ImGuiOm.Widgets.Combos;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -26,27 +25,40 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private Hook<ActionManager.Delegates.GetAdjustedCastTime>? GetAdjustedCastTimeHook;
 
     private Hook<ActionManager.Delegates.GetAdjustedRecastTime>? GetAdjustedRecastTimeHook;
-    
-    private static readonly CompSig                            CastInfoUpdateTotalSig = new("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 0F 29 74 24 ?? 0F B6 49");
-    private delegate        uint                               CastInfoUpdateTotalDelegate(CastInfo* data, uint spellActionID, float process, float processTotal);
-    private                 Hook<CastInfoUpdateTotalDelegate>? CastInfoUpdateTotalHook;
+
+    private static readonly CompSig CastInfoUpdateTotalSig = new("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 0F 29 74 24 ?? 0F B6 49");
+
+    private delegate uint CastInfoUpdateTotalDelegate
+    (
+        CastInfo* data,
+        uint      spellActionID,
+        float     process,
+        float     processTotal
+    );
+
+    private Hook<CastInfoUpdateTotalDelegate>? CastInfoUpdateTotalHook;
 
     private Config config = null!;
 
-    private readonly ActionSelectCombo castActionCombo = new("CastActionSelect");
-    private readonly JobSelectCombo    castJobCombo    = new("CastJobSelect");
+    private ActionSelectCombo castActionCombo = null!;
+    private JobSelectCombo    castJobCombo    = null!;
 
-    private readonly ActionSelectCombo recastActionCombo = new("RecastActionSelect");
-    private readonly JobSelectCombo    recastJobCombo    = new("RecastJobSelect");
+    private ActionSelectCombo recastActionCombo = null!;
+    private JobSelectCombo    recastJobCombo    = null!;
 
     protected override void Init()
     {
+        castActionCombo   = new("CastActionSelect");
+        castJobCombo      = new("CastJobSelect");
+        recastActionCombo = new("RecastActionSelect");
+        recastJobCombo    = new("RecastJobSelect");
+
         config = Config.Load(this) ?? new();
-        
+
         GetAdjustedCastTimeHook ??=
             DService.Instance().Hook.HookFromMemberFunction
             (
@@ -55,7 +67,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
                 (ActionManager.Delegates.GetAdjustedCastTime)GetAdjustedCastTimeDetour
             );
         GetAdjustedCastTimeHook.Enable();
-            
+
         GetAdjustedRecastTimeHook ??=
             DService.Instance().Hook.HookFromMemberFunction
             (
@@ -64,7 +76,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
                 (ActionManager.Delegates.GetAdjustedRecastTime)GetAdjustedRecastTimeDetour
             );
         GetAdjustedRecastTimeHook.Enable();
-        
+
         CastInfoUpdateTotalHook ??= CastInfoUpdateTotalSig.GetHook<CastInfoUpdateTotalDelegate>(CastInfoUpdateTotalDetour);
         CastInfoUpdateTotalHook.Enable();
     }
@@ -298,7 +310,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
             }
         }
     }
-    
+
     private int GetAdjustedRecastTimeDetour
     (
         ActionType actionType,
@@ -361,7 +373,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
 
                 if (recastTime <= processTotal * 1000)
                 {
-                    processTotal                                 = MathF.Max(processTotal - config.LongCastTimeReduction / 1000f, 0);
+                    processTotal                                 = MathF.Max(processTotal - (config.LongCastTimeReduction / 1000f), 0);
                     CastBarNumberArray.Instance()->TotalCastTime = (int)processTotal;
                 }
             }

@@ -41,39 +41,41 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private MemoryPatch enemyListIsCastInProgressPatch = new
-    (
-        "0F 84 ?? ?? ?? ?? 49 8B 04 24 49 8B CC FF 90 ?? ?? ?? ?? 48 85 C0",
-        [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
-    );
+    private MemoryPatch enemyListIsCastInProgressPatch = null!;
+    private MemoryPatch enemyListClearSpellIDPatch     = null!;
+    private MemoryPatch enemyListDisplayCastPatch      = null!;
 
-    private MemoryPatch enemyListClearSpellIDPatch = new
-    (
-        "83 7E ?? ?? 0F 84 ?? ?? ?? ?? 8B B4 24",
-        [0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
-    );
-    
-    private MemoryPatch enemyListDisplayCastPatch = new
-    (
-        "74 ?? 49 8B 04 24 49 8B CC FF 90 ?? ?? ?? ?? 48 85 C0",
-        [0x90, 0x90]
-    );
-    
     private Config config = null!;
 
     private readonly List<EnemyListNode> nodes = [];
     private          OverlayController?  controller;
 
     private bool isUpdating;
-    
+
     protected override void Init()
     {
+        enemyListIsCastInProgressPatch = new
+        (
+            "0F 84 ?? ?? ?? ?? 49 8B 04 24 49 8B CC FF 90 ?? ?? ?? ?? 48 85 C0",
+            [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
+        );
+        enemyListClearSpellIDPatch = new
+        (
+            "83 7E ?? ?? 0F 84 ?? ?? ?? ?? 8B B4 24",
+            [0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90]
+        );
+        enemyListDisplayCastPatch = new
+        (
+            "74 ?? 49 8B 04 24 49 8B CC FF 90 ?? ?? ?? ?? 48 85 C0",
+            [0x90, 0x90]
+        );
+
         config = Config.Load(this) ?? new();
 
         enemyListIsCastInProgressPatch.Enable();
         enemyListClearSpellIDPatch.Enable();
         enemyListDisplayCastPatch.Enable();
-        
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,           "_EnemyList", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,        "_EnemyList", OnAddon);
@@ -117,14 +119,14 @@ public unsafe class OptimizedEnemyList : ModuleBase
             ImGui.ColorEdit4(Lang.Get("TextColor"), ref config.TextColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
-            
+
             ImGui.ColorEdit4(Lang.Get("EdgeColor"), ref config.TextEdgeColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
         }
-        
+
         ImGui.NewLine();
-        
+
         using (ImRaii.Heading1(LuminaWrapper.GetAddonText(11274)))
         using (ImRaii.ItemWidth(200f * GlobalUIScale))
         using (ImRaii.PushId("HealthText"))
@@ -140,14 +142,14 @@ public unsafe class OptimizedEnemyList : ModuleBase
             ImGui.ColorEdit4(Lang.Get("TextColor"), ref config.HealthTextColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
-            
+
             ImGui.ColorEdit4(Lang.Get("EdgeColor"), ref config.HealthTextEdgeColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
         }
-        
+
         ImGui.NewLine();
-        
+
         using (ImRaii.Heading1(LuminaWrapper.GetAddonText(721)))
         using (ImRaii.ItemWidth(200f * GlobalUIScale))
         using (ImRaii.PushId("EnemityText"))
@@ -163,14 +165,14 @@ public unsafe class OptimizedEnemyList : ModuleBase
             ImGui.ColorEdit4(Lang.Get("TextColor"), ref config.EnemityTextColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
-            
+
             ImGui.ColorEdit4(Lang.Get("EdgeColor"), ref config.EnemityTextEdgeColor);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
         }
-        
+
         ImGui.NewLine();
-        
+
         using (ImRaii.Heading1(Lang.Get("Status")))
         using (ImRaii.ItemWidth(200f * GlobalUIScale))
         using (ImRaii.PushId("Status"))
@@ -178,12 +180,12 @@ public unsafe class OptimizedEnemyList : ModuleBase
             ImGui.InputFloat2(Lang.Get("Offset"), ref config.StatusOffset, format: "%.1f");
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
-            
+
             ImGui.InputFloat(Lang.Get("Scale"), ref config.StatusScale, format: "%.1f");
             if (ImGui.IsItemDeactivatedAfterEdit())
                 config.Save(this);
         }
-        
+
         ImGui.NewLine();
 
         if (ImGui.Checkbox(Lang.Get("OptimizedEnemyList-AlwaysUnlock"), ref config.AlwaysUnlock))
@@ -193,7 +195,11 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
     #region 事件
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -207,6 +213,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
                 if (isUpdating)
                     break;
+
                 try
                 {
                     UpdateNodes();
@@ -215,14 +222,16 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 {
                     isUpdating = false;
                 }
+
                 break;
-            
+
             case AddonEvent.PostDraw:
                 if (!Throttler.Shared.Throttle("OptimizedEnemyList.UpdateEnemyList", 100))
                     return;
-                
+
                 if (isUpdating)
                     break;
+
                 try
                 {
                     UpdateNodes();
@@ -231,6 +240,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 {
                     isUpdating = false;
                 }
+
                 break;
 
             case AddonEvent.PreFinalize:
@@ -260,7 +270,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
         for (var i = 0; i < MathF.Min(enemyListArray->EnemyCount, nodes.Count); i++)
         {
             var info = enemyListArray->Enemies[i];
-            
+
             nodes[i].Deconstruct
             (
                 out var componentNodeID,
@@ -275,13 +285,15 @@ public unsafe class OptimizedEnemyList : ModuleBase
             );
 
             var entityID = (uint)info.EntityId;
+
             if (entityID is 0 or 0xE0000000)
             {
                 HideNodes();
                 continue;
             }
-            
+
             var gameObj = CharacterManager.Instance()->LookupBattleCharaByEntityId(entityID);
+
             if (gameObj == null)
             {
                 HideNodes();
@@ -289,8 +301,9 @@ public unsafe class OptimizedEnemyList : ModuleBase
             }
 
             #region 原生节点隐藏
-            
+
             var componentNode = EnemyList->GetComponentNodeById(componentNodeID);
+
             if (componentNode == null)
             {
                 HideNodes();
@@ -298,6 +311,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
             }
 
             var nativeCastNode = componentNode->Component->UldManager.SearchNodeById(4)->GetAsAtkTextNode();
+
             if (nativeCastNode == null)
             {
                 HideNodes();
@@ -305,6 +319,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
             }
 
             var nativeTargetNameNode = componentNode->Component->UldManager.SearchNodeById(6)->GetAsAtkTextNode();
+
             if (nativeTargetNameNode == null)
             {
                 HideNodes();
@@ -313,6 +328,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
             var nativeCastBarNode         = componentNode->Component->UldManager.SearchNodeById(7);
             var nativeCastBarProgressNode = componentNode->Component->UldManager.SearchNodeById(8);
+
             if (nativeCastBarNode == null || nativeCastBarProgressNode == null)
             {
                 HideNodes();
@@ -320,26 +336,29 @@ public unsafe class OptimizedEnemyList : ModuleBase
             }
 
             var nativeCastBackgroundNode = componentNode->Component->UldManager.SearchNodeById(5);
+
             if (nativeCastBackgroundNode == null)
             {
                 HideNodes();
                 continue;
             }
-            
+
             var lockImageNode = componentNode->Component->UldManager.SearchNodeById(14);
             if (lockImageNode == null) continue;
-            
+
             nativeCastBarNode->SetAlpha(0);
             nativeCastBarProgressNode->SetAlpha(0);
             nativeCastNode->SetAlpha(0);
             nativeCastBackgroundNode->SetAlpha(0);
 
             #endregion
-            
+
             #region 状态更新
 
             statusNodes.Scale = (componentNode->GetScale() - new Vector2(0.1f)) * config.StatusScale;
-            statusNodes.Alpha = info.ActiveInList ? 1f : 0.5f;
+            statusNodes.Alpha = info.ActiveInList ?
+                                    1f :
+                                    0.5f;
 
             var nodeState = componentNode->GetNodeState();
             statusNodes.Position = nodeState.TopRight -
@@ -348,6 +367,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
                                    config.StatusOffset;
 
             var counter = 0;
+
             foreach (var status in gameObj->StatusManager.Status)
             {
                 if (counter == 5) break;
@@ -367,7 +387,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 for (var d = counter; d < 5; d++)
                     statusNodes[d].IsVisible = false;
             }
-            
+
             statusNodes.ShouldBeVisible = counter > 0;
 
             #endregion
@@ -397,7 +417,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 healthMarkerNode.TextColor        = config.HealthTextColor;
                 healthMarkerNode.TextOutlineColor = config.HealthTextEdgeColor;
                 healthMarkerNode.FontSize         = (byte)Math.Max(0, config.HealthTextSize - 2);
-                
+
                 healthNode.String = $"{healthPercentage:F1}";
 
                 var healthTextWidth     = healthNode.GetTextDrawSize(false).X;
@@ -417,11 +437,11 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 healthBackgroundNode.Width  = healthTextWidth  + HEALTH_TEXT_MARKER_PADDING + healthMarkerWidth + 11f;
                 healthBackgroundNode.Height = healthTextHeight + 4f;
             }
-            
+
             #endregion
 
             #region 咏唱
-            
+
             castNode.TextColor        = config.TextColor;
             castNode.TextOutlineColor = config.TextEdgeColor;
             castNode.FontSize         = config.TextSize;
@@ -429,6 +449,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
             // 当前不在咏唱
             var leftCastTime = MathF.Max(gameObj->CastInfo.TotalCastTime - gameObj->CastInfo.CurrentCastTime, 0f);
+
             if (leftCastTime <= 0 && gameObj->CastInfo.ActionId == 0)
             {
                 castNode.IsVisible           = false;
@@ -440,10 +461,10 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 castNode.IsVisible           = true;
                 castBackgroundNode.IsVisible = true;
                 castBarNode.IsVisible        = true;
-                
+
                 // 避免溢出所以手动进度控制
                 castBarNode.ProgressNode.Width = 105 * (gameObj->CastInfo.CurrentCastTime / gameObj->CastInfo.TotalCastTime);
-                
+
                 // 可打断边缘发红光
                 if (gameObj->CastInfo.Interruptible)
                     castBarNode.AddColor = KnownColor.Red.ToVector4().ToVector3();
@@ -457,7 +478,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
                     leftCastTime
                 );
                 castNode.String = castText;
-                
+
                 // 因为等于 0 的时候算出来的宽度有很不太好看的的变化
                 if (leftCastTime != 0)
                 {
@@ -474,12 +495,13 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
             var haterCounter = 0;
             var enemity      = -1;
+
             foreach (var hater in UIState.Instance()->Hater.Haters)
             {
                 haterCounter++;
-                if (haterCounter > UIState.Instance()->Hater.HaterCount) break;
+                if (haterCounter   > UIState.Instance()->Hater.HaterCount) break;
                 if (hater.EntityId != gameObj->EntityId) continue;
-            
+
                 enemity = hater.Enmity;
                 break;
             }
@@ -519,10 +541,11 @@ public unsafe class OptimizedEnemyList : ModuleBase
     {
         if (EnemyList == null) return;
         if (!TryFindButtonNodes(out var buttonNodesPtr)) return;
-        
+
         controller ??= new();
 
         var counter = -1;
+
         foreach (var nodePtr in buttonNodesPtr)
         {
             var node = (AtkComponentNode*)nodePtr;
@@ -535,16 +558,16 @@ public unsafe class OptimizedEnemyList : ModuleBase
             var castNode = new TextNode
             {
                 TextFlags     = TextFlags.AutoAdjustNodeSize | TextFlags.Edge,
-                AlignmentType = AlignmentType.TopRight,
+                AlignmentType = AlignmentType.TopRight
             };
-            
+
             var castBarNode = new ProgressBarEnemyCastNode
             {
                 IsVisible = true,
                 Position  = new(90, 13.7f),
                 Size      = new(120, 20)
             };
-            
+
             var castBackgroundNode = new SimpleNineGridNode
             {
                 TexturePath        = "ui/uld/EnemyList_hr1.tex",
@@ -552,25 +575,25 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 TextureSize        = new(24, 20),
                 Size               = new(124, 24),
                 Offsets            = new(8),
-                Alpha              = 1f,
+                Alpha              = 1f
             };
 
             castBarNode.ProgressNode.Height   -= 12f;
             castBarNode.ProgressNode.Position += new Vector2(7.7f, 6.5f);
             castBarNode.ProgressNode.AddColor =  new(1);
-            
+
             var healthNode = new TextNode
             {
                 FontType      = FontType.Miedinger,
                 TextFlags     = TextFlags.Edge,
-                AlignmentType = AlignmentType.TopLeft,
+                AlignmentType = AlignmentType.TopLeft
             };
 
             var healthMarkerNode = new TextNode
             {
                 String        = "%",
                 TextFlags     = TextFlags.Edge,
-                AlignmentType = AlignmentType.TopLeft,
+                AlignmentType = AlignmentType.TopLeft
             };
 
             var healthBackgroundNode = new SimpleNineGridNode
@@ -581,15 +604,15 @@ public unsafe class OptimizedEnemyList : ModuleBase
                 Size               = new(60, 24),
                 Position           = new(-64, 6),
                 Offsets            = new(8),
-                Alpha              = 0.6f,
+                Alpha              = 0.6f
             };
-            
+
             var enemityNode = new TextNode
             {
                 Position      = EnemityTextDefaultPosition,
                 FontSize      = 8,
                 TextFlags     = TextFlags.AutoAdjustNodeSize | TextFlags.Edge,
-                AlignmentType = AlignmentType.Center,
+                AlignmentType = AlignmentType.Center
             };
             AtkColors.Value.ApplyTo(ref enemityNode);
 
@@ -621,8 +644,13 @@ public unsafe class OptimizedEnemyList : ModuleBase
             );
         }
     }
-    
-    private static string GetCastInfoText(ActionType type, uint actionID, float remainingTime)
+
+    private static string GetCastInfoText
+    (
+        ActionType type,
+        uint       actionID,
+        float      remainingTime
+    )
     {
         var actionName = string.Empty;
 
@@ -636,12 +664,17 @@ public unsafe class OptimizedEnemyList : ModuleBase
         if (string.IsNullOrEmpty(actionName))
             actionName = $"{LuminaWrapper.GetAddonText(16482)}";
 
-        var timeText = remainingTime != 0 ? remainingTime.ToString("F1") : "\ue07f\ue07b";
+        var timeText = remainingTime != 0 ?
+                           remainingTime.ToString("F1") :
+                           "\ue07f\ue07b";
 
         return $"{actionName}: {timeText}";
     }
 
-    private static bool TryFindButtonNodes(out List<nint> nodes)
+    private static bool TryFindButtonNodes
+    (
+        out List<nint> nodes
+    )
     {
         nodes = [];
         if (EnemyList == null) return false;
@@ -664,29 +697,29 @@ public unsafe class OptimizedEnemyList : ModuleBase
     private class Config : ModuleConfig
     {
         public bool DisplayStatus = true;
-        
+
         // 咏唱
         public byte    TextSize      = 10;
         public Vector4 TextColor     = Vector4.One;
         public Vector4 TextEdgeColor = new(0, 0.372549f, 1, 1);
         public Vector2 TextOffset    = Vector2.Zero;
-        
+
         // 体力值
         public byte    HealthTextSize      = 16;
         public Vector4 HealthTextColor     = Vector4.One;
         public Vector4 HealthTextEdgeColor = new(0, 0.372549f, 1, 1);
         public Vector2 HealthTextOffset    = Vector2.Zero;
-        
+
         // 仇恨值
         public byte    EnemityTextSize      = 8;
         public Vector4 EnemityTextColor     = AtkColors.Value.GetTextColor();
         public Vector4 EnemityTextEdgeColor = AtkColors.Value.GetEdgeColor();
         public Vector2 EnemityTextOffset    = Vector2.Zero;
-        
+
         // 状态
         public float   StatusScale  = 1f;
         public Vector2 StatusOffset = Vector2.Zero;
-        
+
         public bool AlwaysUnlock = true;
     }
 
@@ -700,7 +733,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
         NineGridNode             healthBackgroundNode,
         ProgressBarEnemyCastNode castBarNode,
         IconTextNodesRow         statusNodes,
-        TextNode enemityNode
+        TextNode                 enemityNode
     )
     {
         public uint                      ComponentNodeID      { get; set; } = componentNodeID;
@@ -740,7 +773,12 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
     private class IconTextNodesRow : OverlayNode, IEnumerable<IconTextNode>
     {
-        public IconTextNodesRow(int count, uint nodeID, int index)
+        public IconTextNodesRow
+        (
+            int  count,
+            uint nodeID,
+            int  index
+        )
         {
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(count, 0);
             ArgumentOutOfRangeException.ThrowIfLessThan(index, 0);
@@ -776,7 +814,10 @@ public unsafe class OptimizedEnemyList : ModuleBase
 
         public List<IconTextNode> Nodes { get; init; } = [];
 
-        public IconTextNode this[int index] => Nodes[index];
+        public IconTextNode this
+        [
+            int index
+        ] => Nodes[index];
 
         public IEnumerator<IconTextNode> GetEnumerator() => Nodes.GetEnumerator();
 
@@ -820,7 +861,10 @@ public unsafe class OptimizedEnemyList : ModuleBase
             TextNode.AttachNode(this);
         }
 
-        public void Update(Status status)
+        public void Update
+        (
+            Status status
+        )
         {
             if (!LuminaGetter.TryGetRow(status.StatusId, out Lumina.Excel.Sheets.Status row)) return;
 
@@ -838,7 +882,7 @@ public unsafe class OptimizedEnemyList : ModuleBase
     private static readonly Vector2 HealthTextDefaultPosition         = new(-60, 8);
     private static readonly Vector2 EnemityTextDefaultPosition        = new(12, 21);
     private static readonly Vector2 StatusComponentOffset             = new(12, -1);
-    
+
     private const float HEALTH_TEXT_MARKER_PADDING   = 1f;
     private const float CAST_TEXT_BACKGROUND_PADDING = 7f;
 

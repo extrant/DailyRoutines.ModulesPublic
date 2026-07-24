@@ -20,6 +20,7 @@ public unsafe class AutoHideExpBar : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly CompSig UpdateExpSig = new("48 8B C4 4C 89 48 20 4C 89 40 18 53");
+
     private delegate void UpdateExpDelegate
     (
         AgentHUD*        agent,
@@ -27,6 +28,7 @@ public unsafe class AutoHideExpBar : ModuleBase
         StringArrayData* expStringArray,
         StringArrayData* characterStringArray
     );
+
     private Hook<UpdateExpDelegate>? UpdateExpHook;
 
     protected override void Init()

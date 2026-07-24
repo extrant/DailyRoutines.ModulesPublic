@@ -18,7 +18,7 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         Description = Lang.Get("AutoNotifyChaoticRaidBonusDescription"),
         Category    = ModuleCategory.Duty
     };
-    
+
     private Config config = null!;
 
     private readonly CancellationTokenSource cancelSource = new();
@@ -97,7 +97,10 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         }
     }
 
-    private async Task CheckLoop(CancellationToken ct)
+    private async Task CheckLoop
+    (
+        CancellationToken ct
+    )
     {
         await Task.Delay(5000, ct);
 
@@ -168,7 +171,10 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         return tcs.Task;
     }
 
-    private async Task RunCheckAsync(StateSnapshot state)
+    private async Task RunCheckAsync
+    (
+        StateSnapshot state
+    )
     {
         var results = await Task.WhenAll(AllDataCenters.Select(dcName => CheckDC(dcName, state)));
 
@@ -179,10 +185,14 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         }
     }
 
-    private async Task<(string DC, long Time)?> CheckDC(string dcName, StateSnapshot state)
+    private async Task<(string DC, long Time)?> CheckDC
+    (
+        string        dcName,
+        StateSnapshot state
+    )
     {
         if (!config.DataCenters.TryGetValue(dcName, out var isEnabled) ||
-            !isEnabled && state.CurrentDC != dcName)
+            (!isEnabled && state.CurrentDC != dcName))
             return null;
 
         var lastTime = config.DataCentersNotifyTime.GetValueOrDefault(dcName, 0);
@@ -218,8 +228,10 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         return null;
     }
 
-    private void Notify(string dcName)
-    {
+    private void Notify
+    (
+        string dcName
+    ) =>
         DService.Instance().Framework.RunOnTick
         (() =>
             {
@@ -233,7 +245,6 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
                     NotifyHelper.Speak(text);
             }
         );
-    }
 
     private class Config : ModuleConfig
     {
@@ -268,7 +279,7 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
         bool   IsBonusActive,
         long   ServerTime
     );
-    
+
     #region 常量
 
     private const string BASE_URL = "https://api.ff14.xin/status?data_center={0}";

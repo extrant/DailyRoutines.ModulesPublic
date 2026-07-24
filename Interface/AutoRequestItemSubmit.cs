@@ -43,7 +43,11 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
             config.Save(this);
     }
 
-    private void OnAddonRequest(AddonEvent type, AddonArgs args)
+    private void OnAddonRequest
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -59,7 +63,11 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
         }
     }
 
-    private void OnAddonSelectYesno(AddonEvent type, AddonArgs args)
+    private void OnAddonSelectYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!config.IsSubmitHQItem) return;
 
@@ -125,7 +133,7 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
     {
         public bool IsSubmitHQItem = true;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<string> HQItemTexts =

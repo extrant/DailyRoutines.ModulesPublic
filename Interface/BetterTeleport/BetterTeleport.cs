@@ -6,10 +6,8 @@ using DailyRoutines.Common.Runtime.Hosts;
 using DailyRoutines.Extensions;
 using DailyRoutines.Manager;
 using DailyRoutines.Verification;
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility.Numerics;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -101,12 +99,16 @@ public unsafe partial class BetterTeleport : ModuleBase
     {
         if (config.Favorites.Count == 0) return;
         favorites = AetheryteRecordManager.Instance().AllRecords
-                          .Where(x => config.Favorites.Contains(x.ToString()))
-                          .OrderBy(x => x.RowID)
-                          .ToList();
+                                          .Where(x => config.Favorites.Contains(x.ToString()))
+                                          .OrderBy(x => x.RowID)
+                                          .ToList();
     }
 
-    private void HandleTeleport(AetheryteRecord aetheryte, string? searchText = null)
+    private void HandleTeleport
+    (
+        AetheryteRecord aetheryte,
+        string?         searchText = null
+    )
     {
         if (GameState.ContentFinderCondition != 0) return;
 
@@ -119,22 +121,24 @@ public unsafe partial class BetterTeleport : ModuleBase
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return;
 
-        var hasRedirect  = config.Positions.TryGetValue(aetheryte.ToString(), out var redirected);
-        var aetherytePos = hasRedirect ? redirected : aetheryte.Position;
+        var hasRedirect = config.Positions.TryGetValue(aetheryte.ToString(), out var redirected);
+        var aetherytePos = hasRedirect ?
+                               redirected :
+                               aetheryte.Position;
 
         var isSameZone = aetheryte.ZoneID == GameState.TerritoryType;
-        var distance2D = !isSameZone
-                             ? 999
-                             : Vector2.DistanceSquared(localPlayer->Position.ToVector2(), aetherytePos.ToVector2());
+        var distance2D = !isSameZone ?
+                             999 :
+                             Vector2.DistanceSquared(localPlayer->Position.ToVector2(), aetherytePos.ToVector2());
         if (distance2D <= 900) return;
 
         if (aetherytePos.Y == 0)
             aetherytePos = aetherytePos.WithY(500);
-        
+
         searchWord       = string.Empty;
         pinnedAetheryte  = null;
         hoveredAetheryte = null;
-        
+
         Overlay.IsOpen    = false;
         fullWindow.IsOpen = false;
 
@@ -149,8 +153,9 @@ public unsafe partial class BetterTeleport : ModuleBase
                 IconId = 111
             }
         );
-        
+
         TaskHelper.Enqueue(aetheryte.TeleportTo);
+
         if (hasRedirect)
         {
             TaskHelper.Enqueue(() => GameState.TerritoryType == aetheryte.ZoneID && !UIModule.IsScreenReady());
@@ -167,7 +172,10 @@ public unsafe partial class BetterTeleport : ModuleBase
         }
     }
 
-    private void AddToRecentTeleports(AetheryteRecord aetheryte)
+    private void AddToRecentTeleports
+    (
+        AetheryteRecord aetheryte
+    )
     {
         var key = aetheryte.ToString();
         config.RecentTeleports.RemoveAll(x => x.Key == key);
@@ -178,7 +186,10 @@ public unsafe partial class BetterTeleport : ModuleBase
         RefreshDefaultOverlayItems();
     }
 
-    private static IEnumerable<string> GetSearchSelectionTerms(string? searchText)
+    private static IEnumerable<string> GetSearchSelectionTerms
+    (
+        string? searchText
+    )
     {
         var normalized = NormalizeSearchSelectionTerm(searchText);
         if (string.IsNullOrEmpty(normalized)) yield break;
@@ -195,7 +206,11 @@ public unsafe partial class BetterTeleport : ModuleBase
         }
     }
 
-    private void RememberSearchSelection(AetheryteRecord aetheryte, IEnumerable<string> searchTerms)
+    private void RememberSearchSelection
+    (
+        AetheryteRecord     aetheryte,
+        IEnumerable<string> searchTerms
+    )
     {
         var terms = searchTerms.Distinct(StringComparer.Ordinal).ToList();
         if (terms.Count == 0) return;
@@ -244,14 +259,22 @@ public unsafe partial class BetterTeleport : ModuleBase
         if (config.SearchSelections.Count <= MAX_SEARCH_SELECTION_TERMS) return;
 
         foreach (var key in config.SearchSelections
-                                  .OrderByDescending(x => x.Value.Count == 0 ? 0 : x.Value.Max(r => r.LastUsedUnixSeconds))
+                                  .OrderByDescending
+                                  (x => x.Value.Count == 0 ?
+                                            0 :
+                                            x.Value.Max(r => r.LastUsedUnixSeconds)
+                                  )
                                   .Skip(MAX_SEARCH_SELECTION_TERMS)
                                   .Select(x => x.Key)
                                   .ToList())
             config.SearchSelections.Remove(key);
     }
 
-    private List<AetheryteRecord> SortSearchMatches(string searchText, List<AetheryteRecord> matches)
+    private List<AetheryteRecord> SortSearchMatches
+    (
+        string                searchText,
+        List<AetheryteRecord> matches
+    )
     {
         var normalized = NormalizeSearchSelectionTerm(searchText);
         if (string.IsNullOrEmpty(normalized) || config.SearchSelections.Count == 0)
@@ -264,7 +287,11 @@ public unsafe partial class BetterTeleport : ModuleBase
                       .ToList();
     }
 
-    private double GetSearchSelectionScore(string normalizedSearchText, AetheryteRecord record)
+    private double GetSearchSelectionScore
+    (
+        string          normalizedSearchText,
+        AetheryteRecord record
+    )
     {
         double score = 0;
 
@@ -284,7 +311,11 @@ public unsafe partial class BetterTeleport : ModuleBase
         return score;
     }
 
-    private static double GetSearchTermRelationWeight(string searchText, string storedTerm)
+    private static double GetSearchTermRelationWeight
+    (
+        string searchText,
+        string storedTerm
+    )
     {
         if (searchText == storedTerm) return 1;
         if (searchText.Length < 2 || storedTerm.Length < 2) return 0;
@@ -296,7 +327,10 @@ public unsafe partial class BetterTeleport : ModuleBase
         return 0;
     }
 
-    private static string NormalizeSearchSelectionTerm(string? searchText) =>
+    private static string NormalizeSearchSelectionTerm
+    (
+        string? searchText
+    ) =>
         string.Join
         (
             ' ',
@@ -306,7 +340,11 @@ public unsafe partial class BetterTeleport : ModuleBase
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         );
 
-    private static int CompareSearchSelectionRecords(SearchSelectionRecord a, SearchSelectionRecord b)
+    private static int CompareSearchSelectionRecords
+    (
+        SearchSelectionRecord a,
+        SearchSelectionRecord b
+    )
     {
         var byCount = b.Count.CompareTo(a.Count);
         if (byCount != 0) return byCount;
@@ -326,7 +364,7 @@ public unsafe partial class BetterTeleport : ModuleBase
         var allRecords = AetheryteRecordManager.Instance().AllRecords.ToList();
         if (allRecords.Count == 0) return;
 
-        var jsonObj = JObject.Parse(File.ReadAllText(ConfigFilePath));
+        var jsonObj  = JObject.Parse(File.ReadAllText(ConfigFilePath));
         var migrated = false;
 
         // 迁移 Remarks (v1: 纯数字 RowID / v2: RowID_SubIndex → v3: AetheryteRecord.ToString())
@@ -343,7 +381,7 @@ public unsafe partial class BetterTeleport : ModuleBase
                 {
                     var value = remarks[oldKey]!;
                     remarks.Remove(oldKey);
-                    var newKey = MigrateOldKeyToToString(oldKey, allRecords);
+                    var newKey                          = MigrateOldKeyToToString(oldKey, allRecords);
                     if (newKey != null) remarks[newKey] = value;
                 }
 
@@ -355,9 +393,9 @@ public unsafe partial class BetterTeleport : ModuleBase
         if (jsonObj["Positions"] is JObject positions)
         {
             var oldKeys = positions.Properties()
-                                  .Where(p => !p.Name.StartsWith("AetheryteRecord.", StringComparison.Ordinal))
-                                  .Select(p => p.Name)
-                                  .ToList();
+                                   .Where(p => !p.Name.StartsWith("AetheryteRecord.", StringComparison.Ordinal))
+                                   .Select(p => p.Name)
+                                   .ToList();
 
             if (oldKeys.Count > 0)
             {
@@ -365,7 +403,7 @@ public unsafe partial class BetterTeleport : ModuleBase
                 {
                     var value = positions[oldKey]!;
                     positions.Remove(oldKey);
-                    var newKey = MigrateOldKeyToToString(oldKey, allRecords);
+                    var newKey                            = MigrateOldKeyToToString(oldKey, allRecords);
                     if (newKey != null) positions[newKey] = value;
                 }
 
@@ -376,19 +414,21 @@ public unsafe partial class BetterTeleport : ModuleBase
         // 迁移 Favorites (v1/v2: HashSet<uint> → v3: HashSet<string>)
         if (jsonObj["Favorites"] is JArray favorites)
         {
-            var hasOld = favorites.Any(x => x.Type == JTokenType.Integer ||
-                                            (x.Type == JTokenType.String &&
-                                             !x.Value<string>()!.StartsWith("AetheryteRecord.", StringComparison.Ordinal)));
+            var hasOld = favorites.Any
+            (x => x.Type == JTokenType.Integer ||
+                  (x.Type == JTokenType.String &&
+                   !x.Value<string>()!.StartsWith("AetheryteRecord.", StringComparison.Ordinal))
+            );
+
             if (hasOld)
             {
                 var newFavorites = new JArray();
+
                 foreach (var item in favorites)
                 {
-                    uint? rowID = item.Type == JTokenType.Integer
-                                      ? item.Value<uint>()
-                                      : item.Type == JTokenType.String && uint.TryParse(item.Value<string>(), out var parsed)
-                                          ? parsed
-                                          : null;
+                    uint? rowID = item.Type == JTokenType.Integer                                                         ? item.Value<uint>()
+                                  : item.Type == JTokenType.String && uint.TryParse(item.Value<string>(), out var parsed) ? parsed
+                                                                                                                            : null;
 
                     if (rowID.HasValue)
                     {
@@ -396,13 +436,11 @@ public unsafe partial class BetterTeleport : ModuleBase
                         if (record != null) newFavorites.Add(record.ToString());
                     }
                     else if (item.Type == JTokenType.String)
-                    {
                         newFavorites.Add(item.Value<string>()!);
-                    }
                 }
 
                 jsonObj["Favorites"] = newFavorites;
-                migrated = true;
+                migrated             = true;
             }
         }
 
@@ -411,6 +449,7 @@ public unsafe partial class BetterTeleport : ModuleBase
             recentTeleports.Any(x => x["AetheryteID"] != null))
         {
             var newList = new JArray();
+
             foreach (var item in recentTeleports)
             {
                 var aetheryteID = item["AetheryteID"]?.Value<uint>();
@@ -423,7 +462,7 @@ public unsafe partial class BetterTeleport : ModuleBase
             }
 
             jsonObj["RecentTeleports"] = newList;
-            migrated = true;
+            migrated                   = true;
         }
 
         // 迁移 SearchSelections (v1/v2: AetheryteID+SubIndex → v3: Key)
@@ -434,6 +473,7 @@ public unsafe partial class BetterTeleport : ModuleBase
             {
                 if (prop.Value is not JArray arr) continue;
                 var newArr = new JArray();
+
                 foreach (var item in arr)
                 {
                     var aetheryteID = item["AetheryteID"]?.Value<uint>();
@@ -443,12 +483,15 @@ public unsafe partial class BetterTeleport : ModuleBase
                     var record = allRecords.FirstOrDefault(x => x.RowID == aetheryteID.Value && x.SubIndex == subIndex);
                     if (record == null) continue;
 
-                    newArr.Add(new JObject
-                    {
-                        ["Key"]                 = record.ToString(),
-                        ["Count"]               = item["Count"]?.Value<int>() ?? 1,
-                        ["LastUsedUnixSeconds"] = item["LastUsedUnixSeconds"]?.Value<long>() ?? 0
-                    });
+                    newArr.Add
+                    (
+                        new JObject
+                        {
+                            ["Key"]                 = record.ToString(),
+                            ["Count"]               = item["Count"]?.Value<int>()                ?? 1,
+                            ["LastUsedUnixSeconds"] = item["LastUsedUnixSeconds"]?.Value<long>() ?? 0
+                        }
+                    );
                 }
 
                 prop.Value = newArr;
@@ -462,7 +505,11 @@ public unsafe partial class BetterTeleport : ModuleBase
         File.WriteAllText(ConfigFilePath, jsonObj.ToString(Formatting.Indented));
     }
 
-    private static string? MigrateOldKeyToToString(string oldKey, List<AetheryteRecord> allRecords)
+    private static string? MigrateOldKeyToToString
+    (
+        string                oldKey,
+        List<AetheryteRecord> allRecords
+    )
     {
         uint rowID;
         byte subIndex;
@@ -470,7 +517,7 @@ public unsafe partial class BetterTeleport : ModuleBase
         if (oldKey.Contains('_'))
         {
             var parts = oldKey.Split('_');
-            if (parts.Length != 2 ||
+            if (parts.Length != 2                   ||
                 !uint.TryParse(parts[0], out rowID) ||
                 !byte.TryParse(parts[1], out subIndex))
                 return null;
@@ -508,7 +555,7 @@ public unsafe partial class BetterTeleport : ModuleBase
         public bool     FocusSearchOnOpen    = true;
         public bool     CloseOnLoseFocus     = true;
         public bool     HideAethernetInParty = true;
-        
+
         public HashSet<string>                                 Favorites        = [];
         public Dictionary<string, Vector3>                     Positions        = [];
         public Dictionary<string, string>                      Remarks          = [];

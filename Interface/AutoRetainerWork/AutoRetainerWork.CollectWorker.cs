@@ -38,7 +38,10 @@ public unsafe partial class AutoRetainerWork
             taskHelper = null;
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-Collect-Title"),
@@ -70,7 +73,11 @@ public unsafe partial class AutoRetainerWork
                 CreateOverlayButtonRow(EnqueueRetainersCollect, () => taskHelper?.Abort(), width)
             );
 
-        private void OnRetainerList(AddonEvent type, AddonArgs args)
+        private void OnRetainerList
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
             if (Module.IsAnyOtherWorkerBusy(typeof(CollectWorker))) return;
 
@@ -125,8 +132,7 @@ public unsafe partial class AutoRetainerWork
                             {
                                 if (taskHelper.AbortByConflictKey(Module)) return true;
                                 DService.Instance().Framework.RunOnTick
-                                (
-                                    () =>
+                                (() =>
                                     {
                                         if (!Module.config.AutoPriceAdjustAfterCollect) return;
 
@@ -140,6 +146,7 @@ public unsafe partial class AutoRetainerWork
                         );
                     }
                 }
+
                 return;
             }
 
@@ -214,7 +221,7 @@ public unsafe partial class AutoRetainerWork
 
             taskHelper.Enqueue(EnqueueRetainersCollect, "重新检查是否有其他雇员需要收取");
         }
-        
+
         private static readonly string[] VentureCompleteTexts =
         [
             "结束",

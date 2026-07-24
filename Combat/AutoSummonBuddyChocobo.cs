@@ -29,8 +29,8 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new();
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new();
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
@@ -87,7 +87,10 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         Cleanup();
 
@@ -98,7 +101,11 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
         LogMessageManager.Instance().RegPost(OnLogMessage);
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.Mounted) return;
 
@@ -114,7 +121,11 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
     }
 
     // 给那种原地挂机但一定要陆行鸟在场的人准备的
-    private void OnLogMessage(uint logMessageID, LogMessageQueueItem item)
+    private void OnLogMessage
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (logMessageID != 1328) return;
 
@@ -127,7 +138,10 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
         OnPlayerMoving(false);
     }
 
-    private void OnPlayerMoving(bool state)
+    private void OnPlayerMoving
+    (
+        bool state
+    )
     {
         if (!IsZoneValid())
         {
@@ -215,7 +229,7 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
         public bool          SendTTS;
         public ChocoboStance Stance = ChocoboStance.FreeStance;
     }
-    
+
     #region 常量
 
     private const uint GYSAHL_GREENS_ITEM_ID = 4868;

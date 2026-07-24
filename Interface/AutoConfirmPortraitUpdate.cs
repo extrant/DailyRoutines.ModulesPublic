@@ -16,7 +16,7 @@ public class AutoConfirmPortraitUpdate : ModuleBase
         Description = Lang.Get("AutoConfirmPortraitUpdateDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     private Config config = null!;
 
     protected override unsafe void Init()
@@ -27,8 +27,8 @@ public class AutoConfirmPortraitUpdate : ModuleBase
         if (BannerPreview != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
-    protected override void Uninit() => 
+
+    protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
@@ -40,7 +40,11 @@ public class AutoConfirmPortraitUpdate : ModuleBase
             config.Save(this);
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         BannerPreview->Callback(0);
 

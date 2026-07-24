@@ -30,7 +30,10 @@ public unsafe partial class AutoShowItemNPCShopInfo
 
         private static Task? OpenAddonTask;
 
-        private AddonNPCShopsSource(ItemSourceInfo sourceInfo) =>
+        private AddonNPCShopsSource
+        (
+            ItemSourceInfo sourceInfo
+        ) =>
             SourceInfo = sourceInfo;
 
         public static AddonNPCShopsSource? Addon { get; set; }
@@ -56,7 +59,10 @@ public unsafe partial class AutoShowItemNPCShopInfo
             Addon = null;
         }
 
-        public static void OpenWithData(ItemSourceInfo sourceInfo)
+        public static void OpenWithData
+        (
+            ItemSourceInfo sourceInfo
+        )
         {
             if (sourceInfo is not { NPCInfos.Count: > 0 }) return;
             if (OpenAddonTask != null) return;
@@ -76,11 +82,20 @@ public unsafe partial class AutoShowItemNPCShopInfo
                     };
                     Addon.Open();
                 },
-                TimeSpan.FromMilliseconds(isAddonExisted ? 500 : 0)
+                TimeSpan.FromMilliseconds
+                (
+                    isAddonExisted ?
+                        500 :
+                        0
+                )
             ).ContinueWith(_ => OpenAddonTask = null);
         }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             var item = LuminaGetter.GetRowOrDefault<Item>(SourceInfo.ItemID);
 
@@ -101,8 +116,10 @@ public unsafe partial class AutoShowItemNPCShopInfo
             currentPage = 0;
 
             var hasPagination = totalPages > 1;
-            var headerHeight  = hasPagination ? 72f : 42f;
-            
+            var headerHeight = hasPagination ?
+                                   72f :
+                                   42f;
+
             var headerNode = new VerticalListNode
             {
                 Size        = new(ContentSize.X - 16, headerHeight),
@@ -217,8 +234,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
 
             ShowPage(0);
         }
-        
-        protected override void OnUpdate(AtkUnitBase* addon)
+
+        protected override void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (DService.Instance().KeyState[VirtualKey.ESCAPE])
             {
@@ -227,7 +247,10 @@ public unsafe partial class AutoShowItemNPCShopInfo
             }
         }
 
-        private void ShowPage(int page)
+        private void ShowPage
+        (
+            int page
+        )
         {
             if (sectionSlots == null || contentNode == null || scrollingAreaNode == null) return;
             currentPage = Math.Clamp(page, 0, totalPages - 1);
@@ -256,7 +279,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
             pageIndicator.String = $"{currentPage + 1} / {totalPages}";
         }
 
-        private void UpdateSectionContent(SectionSlot slot, CostGroup group)
+        private void UpdateSectionContent
+        (
+            SectionSlot slot,
+            CostGroup   group
+        )
         {
             for (var i = 0; i < MAX_COSTS; i++)
                 if (i < group.CostInfos.Count)
@@ -266,9 +293,9 @@ public unsafe partial class AutoShowItemNPCShopInfo
                     slot.CostTooltipOverlays[i].ItemTooltip = costInfo.ItemID;
                     slot.CostIcons[i].IconId                = LuminaWrapper.GetItemIconID(costInfo.ItemID);
                     slot.CostNames[i].String                = costInfo.GetItemName();
-                    slot.CostQuantities[i].String = costInfo.Collectablity != null
-                                                        ? $"\ue03d ({costInfo.Collectablity.Value}~)"
-                                                        : $"x{costInfo.Cost.ToChineseString()}";
+                    slot.CostQuantities[i].String = costInfo.Collectablity != null ?
+                                                        $"\ue03d ({costInfo.Collectablity.Value}~)" :
+                                                        $"x{costInfo.Cost.ToChineseString()}";
                 }
                 else
                     slot.CostRows[i].IsVisible = false;
@@ -278,7 +305,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
             ShowNPCPage(slot);
         }
 
-        private void ShowNPCPage(SectionSlot slot, bool recalculateOuter = false)
+        private void ShowNPCPage
+        (
+            SectionSlot slot,
+            bool        recalculateOuter = false
+        )
         {
             var totalNpcs = slot.SortedNPCInfos.Count;
             var npcPages  = Math.Max(1, (int)Math.Ceiling(totalNpcs / (double)NPCS_PER_PAGE));
@@ -320,7 +351,10 @@ public unsafe partial class AutoShowItemNPCShopInfo
             }
         }
 
-        private SectionSlot CreateSectionSlot(VerticalListNode parent)
+        private SectionSlot CreateSectionSlot
+        (
+            VerticalListNode parent
+        )
         {
             var slot           = new SectionSlot();
             var containerWidth = parent.Width - 4;
@@ -450,7 +484,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
             return slot;
         }
 
-        private static NPCRowSlot CreateNPCRowSlot(VerticalListNode parent, float contentWidth)
+        private static NPCRowSlot CreateNPCRowSlot
+        (
+            VerticalListNode parent,
+            float            contentWidth
+        )
         {
             var slot = new NPCRowSlot
             {
@@ -492,7 +530,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
             return slot;
         }
 
-        private static void UpdateNPCRow(NPCRowSlot row, ShopNPCInfos npcInfo)
+        private static void UpdateNPCRow
+        (
+            NPCRowSlot   row,
+            ShopNPCInfos npcInfo
+        )
         {
             row.NPCNameNode.String = npcInfo.Name;
 
@@ -503,20 +545,32 @@ public unsafe partial class AutoShowItemNPCShopInfo
             row.LocationButton.OnClick   = () => TeleportToLocation(npcInfo.Location);
         }
 
-        private static float CalculateSectionHeight(int visibleCostCount, int visibleNPCCount, bool hasNPCPagination)
+        private static float CalculateSectionHeight
+        (
+            int  visibleCostCount,
+            int  visibleNPCCount,
+            bool hasNPCPagination
+        )
         {
-            var paginationHeight = hasNPCPagination ? 32f : 0f;
+            var paginationHeight = hasNPCPagination ?
+                                       32f :
+                                       0f;
 
             return VERTICAL_PADDING                                      +
                    (visibleCostCount                  * COST_ROW_HEIGHT) +
                    (Math.Max(0, visibleCostCount - 1) * ROW_SPACING)     +
-                   (visibleCostCount > 0 ? ROW_SPACING : 0f)             +
-                   (visibleNPCCount                  * NPC_ROW_HEIGHT)   +
-                   (Math.Max(0, visibleNPCCount - 1) * ROW_SPACING)      +
+                   (visibleCostCount > 0 ?
+                        ROW_SPACING :
+                        0f)                                            +
+                   (visibleNPCCount                  * NPC_ROW_HEIGHT) +
+                   (Math.Max(0, visibleNPCCount - 1) * ROW_SPACING)    +
                    paginationHeight;
         }
 
-        private static string GetCostKey(List<ShopItemCostInfo> costInfos) =>
+        private static string GetCostKey
+        (
+            List<ShopItemCostInfo> costInfos
+        ) =>
             string.Join("|", costInfos.Select(c => $"{c.ItemID}:{c.Cost}:{c.Collectablity}"));
 
         private class CostGroup

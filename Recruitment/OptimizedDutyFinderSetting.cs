@@ -25,10 +25,14 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private delegate void SetContentsFinderSettingsInitDelegate(byte* data, UIModule* module);
-    private readonly SetContentsFinderSettingsInitDelegate SetContentsFinderSettingsInit =
-        new CompSig("E8 ?? ?? ?? ?? 49 8B 06 45 33 FF 49 8B CE 45 89 7E 20 FF 50 28 B0 01").GetDelegate<SetContentsFinderSettingsInitDelegate>();
+
+    private delegate void SetContentsFinderSettingsInitDelegate
+    (
+        byte*     data,
+        UIModule* module
+    );
+
+    private SetContentsFinderSettingsInitDelegate SetContentsFinderSettingsInit = null!;
 
     private HorizontalListNode? layoutNode;
 
@@ -36,6 +40,9 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
 
     protected override void Init()
     {
+        SetContentsFinderSettingsInit = new CompSig("E8 ?? ?? ?? ?? 49 8B 06 45 33 FF 49 8B CE 45 89 7E 20 FF 50 28 B0 01")
+            .GetDelegate<SetContentsFinderSettingsInitDelegate>();
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    ["ContentsFinder", "RaidFinder"], OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, ["ContentsFinder", "RaidFinder"], OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, ["ContentsFinder", "RaidFinder"], OnAddon);
@@ -44,19 +51,24 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         foreach (var (buttonNode, imageNode) in nodes.Values)
         {
             buttonNode?.Dispose();
             imageNode?.Dispose();
         }
+
         nodes.Clear();
 
         layoutNode?.Dispose();
         layoutNode = null;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -183,9 +195,19 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
 
                         if (settingDetail.Setting is DutyFinderSetting.LevelSync &&
                             GetCurrentSettingValue(DutyFinderSetting.UnrestrictedParty) == 0)
-                            imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.25f);
+                            imageNode.Color = buttonNode.Color.WithW
+                            (
+                                value != 0 ?
+                                    1 :
+                                    0.25f
+                            );
                         else
-                            imageNode.Color = buttonNode.Color.WithW(value != 0 ? 1 : 0.5f);
+                            imageNode.Color = buttonNode.Color.WithW
+                            (
+                                value != 0 ?
+                                    1 :
+                                    0.5f
+                            );
                     }
 
                     buttonNode.TextTooltip = LuminaWrapper.GetAddonText(settingDetail.GetTooltip());
@@ -195,36 +217,54 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
         }
     }
 
-    private static byte GetCurrentSettingValue(DutyFinderSetting dutyFinderSetting)
+    private static byte GetCurrentSettingValue
+    (
+        DutyFinderSetting dutyFinderSetting
+    )
     {
         var option = ContentsFinderOption.Get();
         return dutyFinderSetting switch
         {
-            DutyFinderSetting.Ja => IsLangConfigReady()
-                                        ? (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeJA")
-                                        : (byte)0,
-            DutyFinderSetting.En => IsLangConfigReady()
-                                        ? (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeEN")
-                                        : (byte)0,
-            DutyFinderSetting.De => IsLangConfigReady()
-                                        ? (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeDE")
-                                        : (byte)0,
-            DutyFinderSetting.Fr => IsLangConfigReady()
-                                        ? (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeFR")
-                                        : (byte)0,
-            DutyFinderSetting.JoinPartyInProgress     => (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderSupplyEnable"),
-            DutyFinderSetting.LootRule                => (byte)option.LootRules,
-            DutyFinderSetting.UnrestrictedParty       => option.UnrestrictedParty ? (byte)1 : (byte)0,
-            DutyFinderSetting.LevelSync               => option.LevelSync ? (byte)1 : (byte)0,
-            DutyFinderSetting.MinimumIl               => option.MinimalIL ? (byte)1 : (byte)0,
-            DutyFinderSetting.SilenceEcho             => option.SilenceEcho ? (byte)1 : (byte)0,
-            DutyFinderSetting.ExplorerMode            => option.ExplorerMode ? (byte)1 : (byte)0,
-            DutyFinderSetting.LimitedLevelingRoulette => option.IsLimitedLevelingRoulette ? (byte)1 : (byte)0,
-            _                                         => 0
+            DutyFinderSetting.Ja => IsLangConfigReady() ?
+                                        (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeJA") :
+                                        (byte)0,
+            DutyFinderSetting.En => IsLangConfigReady() ?
+                                        (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeEN") :
+                                        (byte)0,
+            DutyFinderSetting.De => IsLangConfigReady() ?
+                                        (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeDE") :
+                                        (byte)0,
+            DutyFinderSetting.Fr => IsLangConfigReady() ?
+                                        (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderUseLangTypeFR") :
+                                        (byte)0,
+            DutyFinderSetting.JoinPartyInProgress => (byte)DService.Instance().GameConfig.UiConfig.GetUInt("ContentsFinderSupplyEnable"),
+            DutyFinderSetting.LootRule            => (byte)option.LootRules,
+            DutyFinderSetting.UnrestrictedParty => option.UnrestrictedParty ?
+                                                       (byte)1 :
+                                                       (byte)0,
+            DutyFinderSetting.LevelSync => option.LevelSync ?
+                                               (byte)1 :
+                                               (byte)0,
+            DutyFinderSetting.MinimumIl => option.MinimalIL ?
+                                               (byte)1 :
+                                               (byte)0,
+            DutyFinderSetting.SilenceEcho => option.SilenceEcho ?
+                                                 (byte)1 :
+                                                 (byte)0,
+            DutyFinderSetting.ExplorerMode => option.ExplorerMode ?
+                                                  (byte)1 :
+                                                  (byte)0,
+            DutyFinderSetting.LimitedLevelingRoulette => option.IsLimitedLevelingRoulette ?
+                                                             (byte)1 :
+                                                             (byte)0,
+            _ => 0
         };
     }
 
-    private void ToggleSetting(DutyFinderSetting setting)
+    private void ToggleSetting
+    (
+        DutyFinderSetting setting
+    )
     {
         if (IsLangConfigReady() && setting is DutyFinderSetting.Ja or DutyFinderSetting.En or DutyFinderSetting.De or DutyFinderSetting.Fr)
         {
@@ -242,7 +282,9 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
         if (setting == DutyFinderSetting.LootRule)
             newValue = (byte)((array[(int)setting] + 1) % 3);
         else
-            newValue = (byte)(array[(int)setting] == 0 ? 1 : 0);
+            newValue = (byte)(array[(int)setting] == 0 ?
+                                  1 :
+                                  0);
 
         array[(int)setting] = newValue;
 
@@ -267,9 +309,8 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
     }
 
     private static List<DutyFinderSettingDisplay> GetLanguageButtons() =>
-        !IsLangConfigReady()
-            ? []
-            :
+        !IsLangConfigReady() ?
+            [] :
             [
                 new DutyFinderSettingDisplay(DutyFinderSetting.Ja, 0, 10),
                 new DutyFinderSettingDisplay(DutyFinderSetting.En, 0, 11),
@@ -294,7 +335,7 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
 
         return false;
     }
-    
+
     private enum DutyFinderSetting
     {
         Ja                      = 0,
@@ -316,7 +357,12 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
         DutyFinderSetting Setting
     )
     {
-        public DutyFinderSettingDisplay(DutyFinderSetting setting, uint icon, uint tooltip) : this(setting)
+        public DutyFinderSettingDisplay
+        (
+            DutyFinderSetting setting,
+            uint              icon,
+            uint              tooltip
+        ) : this(setting)
         {
             GetIcon    = () => icon;
             GetTooltip = () => tooltip;
@@ -325,7 +371,7 @@ public unsafe class OptimizedDutyFinderSetting : ModuleBase
         public Func<uint>? GetIcon    { get; init; }
         public Func<uint>? GetTooltip { get; init; }
     }
-    
+
     private static readonly DutyFinderSettingDisplay[] DutyFinderSettingIcons =
     [
         new(DutyFinderSetting.JoinPartyInProgress, 60644, 2519),

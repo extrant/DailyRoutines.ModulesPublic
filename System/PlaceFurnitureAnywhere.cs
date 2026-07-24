@@ -21,8 +21,9 @@ public unsafe class PlaceFurnitureAnywhere : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private static readonly CompSig                      RaycastFilterSig = new("48 8B C4 48 89 58 ?? 48 89 70 ?? 57 48 81 EC ?? ?? ?? ?? 33 DB 48 8B F2");
+
+    private static readonly CompSig RaycastFilterSig = new("48 8B C4 48 89 58 ?? 48 89 70 ?? 57 48 81 EC ?? ?? ?? ?? 33 DB 48 8B F2");
+
     [return: MarshalAs(UnmanagedType.U1)]
     private delegate bool RaycastFilterDelegate
     (
@@ -34,8 +35,9 @@ public unsafe class PlaceFurnitureAnywhere : ModuleBase
         int                layerMask,
         int*               flags
     );
-    private                 Hook<RaycastFilterDelegate>? RaycastFilterHook;
-    
+
+    private Hook<RaycastFilterDelegate>? RaycastFilterHook;
+
     private MemoryPatch? patch0;
     private MemoryPatch? patch1;
     private MemoryPatch? patch2;

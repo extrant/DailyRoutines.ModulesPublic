@@ -8,10 +8,13 @@ namespace DailyRoutines.ModulesPublic.Interface.AutoShowItemNPCShopInfo;
 
 public partial class AutoShowItemNPCShopInfo
 {
-    private readonly SourceContextMenu      sourceContextMenu      = new();
-    private readonly DestinationContextMenu destinationContextMenu = new();
+    private SourceContextMenu      sourceContextMenu      = null!;
+    private DestinationContextMenu destinationContextMenu = null!;
 
-    private void OnMenuOpen(IMenuOpenedArgs args)
+    private void OnMenuOpen
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (sourceContextMenu.IsDisplay(args))
             args.AddMenuItem(sourceContextMenu.Get());
@@ -28,10 +31,16 @@ public partial class AutoShowItemNPCShopInfo
 
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             OpenShopInfoByItemID(ContextMenuItemManager.Instance().CurrentItemID);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) =>
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        ) =>
             ItemSourceInfo.Query(ContextMenuItemManager.Instance().CurrentItemID).State == ItemSourceQueryState.Ready;
     }
 
@@ -43,10 +52,16 @@ public partial class AutoShowItemNPCShopInfo
 
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             OpenExchangeInfoByItemID(ContextMenuItemManager.Instance().CurrentItemID);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) =>
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        ) =>
             ItemSourceInfo.QueryExchangeItems(ContextMenuItemManager.Instance().CurrentItemID).State == ItemSourceQueryState.Ready;
     }
 }

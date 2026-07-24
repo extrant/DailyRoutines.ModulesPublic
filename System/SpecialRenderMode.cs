@@ -18,15 +18,24 @@ public unsafe class SpecialRenderMode : ModuleBase
         Description = Lang.Get("SpecialRenderModeDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private delegate void ToggleFadeDelegate(EnvironmentManager* manager, int a2, float fadeDuration, Vector4* fadeColor);
-    private readonly ToggleFadeDelegate ToggleFade =
-        new CompSig("E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8F ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 4C 24").GetDelegate<ToggleFadeDelegate>();
+
+    private delegate void ToggleFadeDelegate
+    (
+        EnvironmentManager* manager,
+        int                 a2,
+        float               fadeDuration,
+        Vector4*            fadeColor
+    );
+
+    private ToggleFadeDelegate ToggleFade = null!;
 
     private Config config = null!;
 
-    protected override void Init() => 
-        config = Config.Load(this) ?? new();
+    protected override void Init()
+    {
+        ToggleFade = new CompSig("E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 8F ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 4C 24").GetDelegate<ToggleFadeDelegate>();
+        config     = Config.Load(this) ?? new();
+    }
 
     protected override void Uninit() =>
         config?.Save(this);
@@ -174,7 +183,7 @@ public unsafe class SpecialRenderMode : ModuleBase
                 UIModule.Instance()->ToggleUi(UiFlags.Nameplates, true);
         }
     }
-    
+
     private class Config : ModuleConfig
     {
         public Vector4 BackgroundColor = KnownColor.LightSkyBlue.ToVector4();

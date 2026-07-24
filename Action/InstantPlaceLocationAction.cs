@@ -22,7 +22,7 @@ public unsafe class InstantPlaceLocationAction : ModuleBase
 
     protected override void Init() =>
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
-    
+
     protected override void Uninit() =>
         UseActionManager.Instance().Unreg(OnPreUseAction);
 
@@ -57,7 +57,12 @@ public unsafe class InstantPlaceLocationAction : ModuleBase
         isPrevented = true;
     }
 
-    public static Vector3 AdjustTargetPosition(Vector3 origin, Vector3 target, float maxDistance)
+    public static Vector3 AdjustTargetPosition
+    (
+        Vector3 origin,
+        Vector3 target,
+        float   maxDistance
+    )
     {
         var originXZ = origin.ToVector2();
         var targetXZ = target.ToVector2();
@@ -66,7 +71,7 @@ public unsafe class InstantPlaceLocationAction : ModuleBase
         if (distance > maxDistance * maxDistance)
         {
             var direction = Vector2.Normalize(targetXZ - originXZ);
-            targetXZ = originXZ + direction * maxDistance;
+            targetXZ = originXZ + (direction * maxDistance);
             return new Vector3(targetXZ.X, target.Y, targetXZ.Y);
         }
 
@@ -78,12 +83,12 @@ public unsafe class InstantPlaceLocationAction : ModuleBase
     // 黑魔纹, 魔纹步, 回退, 回退 (PVP), 螺旋气流, 螺旋气流 (PVP), 星空构想, 胖胖之墙, 逆行 (PVP)
     private static readonly FrozenSet<uint> InvalidActions =
     [
-        3573, 
-        7419, 
+        3573,
+        7419,
         24403,
-        29551, 
+        29551,
         25837,
-        29669, 
+        29669,
         34675,
         39215,
         41507

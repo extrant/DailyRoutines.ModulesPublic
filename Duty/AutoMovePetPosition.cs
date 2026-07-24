@@ -25,10 +25,10 @@ public class AutoMovePetPosition : ModuleBase
         Category    = ModuleCategory.Duty,
         Author      = ["Wotou"]
     };
-    
+
     private Config config = null!;
-    
-    private readonly ContentSelectCombo contentSelectCombo = new("Content");
+
+    private ContentSelectCombo contentSelectCombo = null!;
 
     private DateTime battleStartTime = DateTime.MinValue;
 
@@ -37,8 +37,9 @@ public class AutoMovePetPosition : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 30_000 };
+        contentSelectCombo =   new("Content");
+        config             =   Config.Load(this) ?? new();
+        TaskHelper         ??= new() { TimeoutMS = 30_000 };
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
@@ -311,7 +312,10 @@ public class AutoMovePetPosition : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         ResetBattleTimer();
 
@@ -319,7 +323,10 @@ public class AutoMovePetPosition : ModuleBase
         TaskHelper.Enqueue(SchedulePetMovements);
     }
 
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         ResetBattleTimer();
 
@@ -327,7 +334,11 @@ public class AutoMovePetPosition : ModuleBase
         TaskHelper.Enqueue(SchedulePetMovements);
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (value && flag == ConditionFlag.InCombat)
         {
@@ -384,7 +395,10 @@ public class AutoMovePetPosition : ModuleBase
         TaskHelper.Enqueue(SchedulePetMovements);
     }
 
-    private unsafe void MovePetToLocation(Vector2 position)
+    private unsafe void MovePetToLocation
+    (
+        Vector2 position
+    )
     {
         if (!CheckIsEightPlayerDuty()) return;
         if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return;
@@ -433,7 +447,10 @@ public class AutoMovePetPosition : ModuleBase
         public Vector2 Position { get; set; }
         public string  GUID     { get; set; } = guid;
 
-        public bool Equals(PositionSchedule? other)
+        public bool Equals
+        (
+            PositionSchedule? other
+        )
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -453,7 +470,10 @@ public class AutoMovePetPosition : ModuleBase
         public override string ToString() =>
             GUID;
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
         {
             if (obj is not PositionSchedule other) return false;
             return Equals(other);
@@ -462,16 +482,24 @@ public class AutoMovePetPosition : ModuleBase
         public override int GetHashCode() =>
             GUID.GetHashCode();
 
-        public static bool operator ==(PositionSchedule? left, PositionSchedule? right) =>
+        public static bool operator ==
+        (
+            PositionSchedule? left,
+            PositionSchedule? right
+        ) =>
             Equals(left, right);
 
-        public static bool operator !=(PositionSchedule? left, PositionSchedule? right) =>
+        public static bool operator !=
+        (
+            PositionSchedule? left,
+            PositionSchedule? right
+        ) =>
             !Equals(left, right);
     }
-    
+
     #region 常量
-    
+
     private static readonly FrozenSet<uint> ValidJobs = [26, 27, 28];
-    
+
     #endregion
 }

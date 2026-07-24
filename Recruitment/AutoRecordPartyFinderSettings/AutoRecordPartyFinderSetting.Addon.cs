@@ -33,18 +33,21 @@ public unsafe partial class AutoRecordPartyFinderSetting
         private          TextNode            pageLabel   = null!;
 
         public int CurrentPageIndex;
-        
+
         private ContextMenu? contextMenu;
 
         public override void Dispose()
         {
             contextMenu?.Dispose();
             contextMenu = null;
-            
+
             base.Dispose();
         }
 
-        public void ShowContextMenu(PartyFinderSetting setting)
+        public void ShowContextMenu
+        (
+            PartyFinderSetting setting
+        )
         {
             contextMenu?.Dispose();
             contextMenu = new();
@@ -70,7 +73,7 @@ public unsafe partial class AutoRecordPartyFinderSetting
                     }
                 }
             );
-            
+
             contextMenu.Open();
         }
 
@@ -83,10 +86,17 @@ public unsafe partial class AutoRecordPartyFinderSetting
         protected override bool CanOpenAddon =>
             LookingForGroupCondition != null && LookingForGroupCondition->IsAddonAndNodesReady();
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) =>
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) =>
             false;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (WindowNode is WindowNode windowNode)
                 windowNode.CloseButtonNode.IsVisible = false;
@@ -267,7 +277,11 @@ public unsafe partial class AutoRecordPartyFinderSetting
             }
         }
 
-        protected override void OnHostAddon(AddonEvent type, AddonArgs? args)
+        protected override void OnHostAddon
+        (
+            AddonEvent type,
+            AddonArgs? args
+        )
         {
             if (type == AddonEvent.PostSetup)
             {
@@ -287,7 +301,11 @@ public unsafe partial class AutoRecordPartyFinderSetting
         private readonly TextButtonNode titleButton;
         private readonly TextButtonNode deleteButton;
 
-        public PresetRowNode(AutoRecordPartyFinderSetting module, AutoRecordPartyFinderSettingAddon addon)
+        public PresetRowNode
+        (
+            AutoRecordPartyFinderSetting      module,
+            AutoRecordPartyFinderSettingAddon addon
+        )
         {
             IsVisible   = true;
             Size        = new(addon.ContentSize.X - 8f, 28f);
@@ -335,12 +353,17 @@ public unsafe partial class AutoRecordPartyFinderSetting
             );
         }
 
-        public void Update(PartyFinderSetting setting)
+        public void Update
+        (
+            PartyFinderSetting setting
+        )
         {
             Setting = setting;
 
             var description = new ReadOnlySeString(setting.DescriptionBytes ?? []);
-            var title       = string.IsNullOrEmpty(setting.DisplayName) ? $"[{Lang.Get("None")}]" : setting.DisplayName;
+            var title = string.IsNullOrEmpty(setting.DisplayName) ?
+                            $"[{Lang.Get("None")}]" :
+                            setting.DisplayName;
 
             titleButton.String = description;
 

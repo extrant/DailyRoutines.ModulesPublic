@@ -6,7 +6,6 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Game.DutyState;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.OmenService;
 
@@ -49,7 +48,11 @@ public class AutoDrawMotifs : ModuleBase
             config.Save(this);
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
 
@@ -61,18 +64,27 @@ public class AutoDrawMotifs : ModuleBase
     }
 
     // 重新挑战
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 完成副本
-    private void OnDutyCompleted(IDutyStateEventArgs args) =>
+    private void OnDutyCompleted
+    (
+        IDutyStateEventArgs args
+    ) =>
         TaskHelper.Abort();
 
     // 进入副本
-    private void OnZoneChanged(uint zone)
+    private void OnZoneChanged
+    (
+        uint zone
+    )
     {
         TaskHelper.Abort();
 

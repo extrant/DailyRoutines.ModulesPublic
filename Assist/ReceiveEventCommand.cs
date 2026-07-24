@@ -41,7 +41,11 @@ public unsafe class ReceiveEventCommand : ModuleBase
         }
     }
 
-    private static void OnCommand(string command, string arguments)
+    private static void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         arguments = arguments.Trim();
 
@@ -52,6 +56,7 @@ public unsafe class ReceiveEventCommand : ModuleBase
         }
 
         var splited = arguments.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+
         if (splited.Length < 2)
         {
             NotifyCommandError();
@@ -59,6 +64,7 @@ public unsafe class ReceiveEventCommand : ModuleBase
         }
 
         var agentName = splited[0];
+
         if (!Enum.TryParse<AgentId>(agentName, true, out var agentID) || !Enum.IsDefined(agentID))
         {
             NotifyHelper.Instance().ChatError(Lang.Get("ReceiveEventCommand-Notification-AgentNotReady", agentName));
@@ -72,16 +78,19 @@ public unsafe class ReceiveEventCommand : ModuleBase
         }
 
         var agent = AgentModule.Instance()->GetAgentByInternalId(agentID);
+
         if (agent == null)
         {
             NotifyHelper.Instance().ChatError(Lang.Get("ReceiveEventCommand-Notification-AgentNotReady", agentID));
             return;
         }
 
-        var eventArgumentsText = splited.Length > 2 ? splited[2] : string.Empty;
-        var eventArguments = string.IsNullOrWhiteSpace(eventArgumentsText)
-                                 ? []
-                                 : eventArgumentsText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var eventArgumentsText = splited.Length > 2 ?
+                                     splited[2] :
+                                     string.Empty;
+        var eventArguments = string.IsNullOrWhiteSpace(eventArgumentsText) ?
+                                 [] :
+                                 eventArgumentsText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         try
         {
@@ -96,9 +105,7 @@ public unsafe class ReceiveEventCommand : ModuleBase
 
         return;
 
-        void NotifyCommandError()
-        {
+        void NotifyCommandError() =>
             NotifyHelper.Instance().ChatError(Lang.Get("Commands-InvalidArgs", $"/pdr {COMMAND}", arguments));
-        }
     }
 }

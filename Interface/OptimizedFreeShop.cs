@@ -75,7 +75,11 @@ public unsafe class OptimizedFreeShop : ModuleBase
         clickYesnoHelper = null;
     }
 
-    private void OnAgent(AgentEvent type, AgentArgs args)
+    private void OnAgent
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         if (!config.IsEnabled)
             return;
@@ -90,7 +94,11 @@ public unsafe class OptimizedFreeShop : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (type == AddonEvent.PreFinalize)
             clickYesnoHelper?.Abort();
@@ -106,7 +114,10 @@ public unsafe class OptimizedFreeShop : ModuleBase
         }
     }
 
-    internal void BatchClaim(List<(int Index, uint ID)> itemData)
+    internal void BatchClaim
+    (
+        List<(int Index, uint ID)> itemData
+    )
     {
         TaskHelper.Abort();
 
@@ -143,7 +154,10 @@ public unsafe class OptimizedFreeShop : ModuleBase
         protected override AttachedAddonPosition AttachPosition =>
             AttachedAddonPosition.LeftTop;
 
-        protected override void OnDraw(AtkUnitBase* addon)
+        protected override void OnDraw
+        (
+            AtkUnitBase* addon
+        )
         {
             if (!HostAddon->IsAddonAndNodesReady()) return;
 
@@ -175,7 +189,11 @@ public unsafe class OptimizedFreeShop : ModuleBase
             UpdateSelectedJob(classJob.RowId);
         }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             jobButtons.Clear();
             selectedClassJob = 0;
@@ -259,7 +277,7 @@ public unsafe class OptimizedFreeShop : ModuleBase
                 lineCount++;
             }
 
-            SetWindowSize(Size.X, 128f + Math.Max(lineCount - 1, 0) * 40f);
+            SetWindowSize(Size.X, 128f + (Math.Max(lineCount - 1, 0) * 40f));
 
             verticalLayout.AttachNode(this);
         }
@@ -281,7 +299,10 @@ public unsafe class OptimizedFreeShop : ModuleBase
             return itemIDs;
         }
 
-        private void UpdateSelectedJob(uint classJobID)
+        private void UpdateSelectedJob
+        (
+            uint classJobID
+        )
         {
             if (classJobID == 0)
             {
@@ -307,7 +328,10 @@ public unsafe class OptimizedFreeShop : ModuleBase
                 PlayHighlight(currentButton, true);
         }
 
-        private static void AddHighlightTimeline(IconButtonNode button)
+        private static void AddHighlightTimeline
+        (
+            IconButtonNode button
+        )
         {
             button.AddTimeline
             (
@@ -372,9 +396,15 @@ public unsafe class OptimizedFreeShop : ModuleBase
             );
         }
 
-        private static void PlayHighlight(IconButtonNode button, bool isSelected)
+        private static void PlayHighlight
+        (
+            IconButtonNode button,
+            bool           isSelected
+        )
         {
-            var labelID = isSelected ? 101 : 102;
+            var labelID = isSelected ?
+                              101 :
+                              102;
 
             button.Timeline?.PlayAnimation(labelID);
         }

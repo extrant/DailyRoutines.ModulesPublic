@@ -28,8 +28,8 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 15_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 15_000 };
 
         DService.Instance().Condition.ConditionChange    += OnConditionChanged;
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
@@ -38,7 +38,7 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
 
         EnqueueCheck();
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
@@ -52,20 +52,34 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
         if (ImGui.Checkbox(Lang.Get("SendNotification"), ref config.SendNotification))
             config.Save(this);
     }
-    
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (value || !ValidConditions.Contains(flag)) return;
         EnqueueCheck();
     }
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         EnqueueCheck();
 
-    private void OnLevelChanged(uint classJobID, uint level) =>
+    private void OnLevelChanged
+    (
+        uint classJobID,
+        uint level
+    ) =>
         EnqueueCheck();
 
-    private void OnClassJobChanged(uint classJobID) =>
+    private void OnClassJobChanged
+    (
+        uint classJobID
+    ) =>
         EnqueueCheck();
 
     private void EnqueueCheck()
@@ -88,7 +102,12 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
                 if (!isGatherer && !isCrafter) return true;
 
                 var statusManager = localPlayer.ToStruct()->StatusManager;
-                var statusIndex   = statusManager.GetStatusIndex(isGatherer ? 46U : 45U);
+                var statusIndex = statusManager.GetStatusIndex
+                (
+                    isGatherer ?
+                        46U :
+                        45U
+                );
                 if (statusIndex != -1) return true;
 
                 var itemID = 0U;
@@ -106,7 +125,11 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
         );
     }
 
-    private static bool TryGetFirstValidItem(IEnumerable<uint> items, out uint itemID)
+    private static bool TryGetFirstValidItem
+    (
+        IEnumerable<uint> items,
+        out uint          itemID
+    )
     {
         itemID = 0;
 
@@ -129,7 +152,7 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
     {
         public bool SendNotification = true;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<ConditionFlag> ValidConditions =
@@ -141,6 +164,6 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
 
     private static readonly FrozenSet<uint> GathererManuals = [26553, 12668, 4635, 4633];
     private static readonly FrozenSet<uint> CrafterManuals  = [26554, 12667, 4634, 4632];
-    
+
     #endregion
 }

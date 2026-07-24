@@ -18,7 +18,7 @@ public class AutoManageInterruptAction : ModuleBase
 
     protected override void Init() =>
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
-    
+
     protected override void Uninit() =>
         UseActionManager.Instance().Unreg(OnPreUseAction);
 

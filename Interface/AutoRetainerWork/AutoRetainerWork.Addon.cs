@@ -19,7 +19,11 @@ public unsafe partial class AutoRetainerWork
         protected override Vector2 PositionOffset =>
             new(0f, 6f);
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (WindowNode is WindowNode windowNode)
                 windowNode.CloseButtonNode.IsVisible = false;
@@ -59,7 +63,10 @@ public unsafe partial class AutoRetainerWork
             treeListNode.RefreshLayout();
         }
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) => false;
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) => false;
 
         protected override bool CanOpenAddon => !module.IsAnyWorkerBusy();
     }

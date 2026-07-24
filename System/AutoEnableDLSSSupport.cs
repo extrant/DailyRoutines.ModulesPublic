@@ -18,32 +18,35 @@ public class AutoEnableDLSSSupport : ModuleBase
 
     protected override void Init()
     {
-        
+
         var processPath = Environment.ProcessPath;
+
         if (string.IsNullOrWhiteSpace(processPath))
         {
             NotifyErrorGameDirectory();
             return;
         }
-        
+
         var gameDirectory = Directory.GetParent(processPath).FullName;
+
         if (string.IsNullOrWhiteSpace(processPath))
         {
             NotifyErrorGameDirectory();
             return;
         }
-        
+
         var installDirectory = Directory.GetParent(gameDirectory).FullName;
+
         if (string.IsNullOrWhiteSpace(installDirectory))
         {
             NotifyErrorGameDirectory();
             return;
         }
-        
+
         var bootDirectory = Path.Combine(installDirectory, "boot");
         Directory.CreateDirectory(bootDirectory);
-        
-        var ffxivbootPath           = Path.Combine(bootDirectory, "ffxivboot.exe");
+
+        var ffxivbootPath      = Path.Combine(bootDirectory, "ffxivboot.exe");
         var ffxivupdater64Path = Path.Combine(bootDirectory, "ffxivupdater64.exe");
 
         if (Path.Exists(ffxivbootPath) && File.Exists(ffxivupdater64Path))
@@ -51,13 +54,13 @@ public class AutoEnableDLSSSupport : ModuleBase
             NotifyFinished();
             return;
         }
-        
+
         if (!Path.Exists(ffxivbootPath))
             File.WriteAllBytes(ffxivbootPath, []);
-        
+
         if (!Path.Exists(ffxivupdater64Path))
             File.WriteAllBytes(ffxivupdater64Path, []);
-        
+
         NotifyFinished();
     }
 
@@ -67,7 +70,7 @@ public class AutoEnableDLSSSupport : ModuleBase
         NotifyHelper.Instance().ChatError(error);
         NotifyHelper.Instance().NotificationError(error);
     }
-    
+
     private static void NotifyFinished()
     {
         var error = Lang.Get("AutoEnableDLSSSupport-Notification-Finished");

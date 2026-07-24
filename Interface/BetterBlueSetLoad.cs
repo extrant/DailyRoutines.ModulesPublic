@@ -22,7 +22,7 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Hook<AgentReceiveEventDelegate>? AgentAozNotebookReceiveEventHook;
 
     protected override void Init()
@@ -66,13 +66,15 @@ public unsafe class BetterBlueSetLoad : ModuleBase
         using var returnValue = new AtkValueArray(false);
         return returnValue;
 
-        AtkValue* InvokeOriginal()
-        {
-            return AgentAozNotebookReceiveEventHook.Original(agent, returnvalues, values, valueCount, eventKind);
-        }
+        AtkValue* InvokeOriginal() =>
+            AgentAozNotebookReceiveEventHook.Original(agent, returnvalues, values, valueCount, eventKind);
     }
 
-    private static void OnCommand(string command, string args)
+    private static void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
         if (string.IsNullOrEmpty(args)) return;
@@ -92,7 +94,10 @@ public unsafe class BetterBlueSetLoad : ModuleBase
         }
     }
 
-    private static void ApplyByIndex(uint index)
+    private static void ApplyByIndex
+    (
+        uint index
+    )
     {
         if (index > 4) return;
 
@@ -103,11 +108,16 @@ public unsafe class BetterBlueSetLoad : ModuleBase
         NotifyHelper.Instance().NotificationSuccess
         (
             Lang.Get("BetterBlueSetLoad-Notification", index + 1) +
-            (string.IsNullOrWhiteSpace(setName) ? string.Empty : $": {setName}")
+            (string.IsNullOrWhiteSpace(setName) ?
+                 string.Empty :
+                 $": {setName}")
         );
     }
 
-    private static void CompareAndApply(int index)
+    private static void CompareAndApply
+    (
+        int index
+    )
     {
         if (index > 4) return;
 

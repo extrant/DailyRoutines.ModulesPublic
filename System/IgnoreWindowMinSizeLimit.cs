@@ -16,7 +16,7 @@ public unsafe class IgnoreWindowMinSizeLimit : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private int originalMinWidth  = 1024;
     private int originalMinHeight = 720;
 

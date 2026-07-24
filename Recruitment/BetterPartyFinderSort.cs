@@ -19,19 +19,30 @@ public unsafe class BetterPartyFinderSort : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private readonly byte* PartyFinderSortType = new CompSig("75 53 0F B6 05 ?? ?? ?? ??").GetStatic<byte>();
-    
-    private static readonly CompSig                           PartyFinderSortCmpSig = new("40 53 48 83 EC 20 0F B6 82 ?? ?? ?? ?? 48 8B DA 38 81 ?? ?? ?? ??");
-    private delegate        byte                              PartyFinderSortCmpDelegate(nint a1, nint a2);
-    private                 Hook<PartyFinderSortCmpDelegate>? PartyFinderSortCmpHook;
+    private byte* PartyFinderSortType = null;
+
+    private static readonly CompSig PartyFinderSortCmpSig = new("40 53 48 83 EC 20 0F B6 82 ?? ?? ?? ?? 48 8B DA 38 81 ?? ?? ?? ??");
+
+    private delegate byte PartyFinderSortCmpDelegate
+    (
+        nint a1,
+        nint a2
+    );
+
+    private Hook<PartyFinderSortCmpDelegate>? PartyFinderSortCmpHook;
 
     protected override void Init()
     {
+        PartyFinderSortType    =   new CompSig("75 53 0F B6 05 ?? ?? ?? ??").GetStatic<byte>();
         PartyFinderSortCmpHook ??= PartyFinderSortCmpSig.GetHook<PartyFinderSortCmpDelegate>(PartyFinderSortCmpDetour);
         PartyFinderSortCmpHook.Enable();
     }
 
-    private byte PartyFinderSortCmpDetour(nint a1, nint a2)
+    private byte PartyFinderSortCmpDetour
+    (
+        nint a1,
+        nint a2
+    )
     {
         try
         {
@@ -39,16 +50,24 @@ public unsafe class BetterPartyFinderSort : ModuleBase
             var a2Struct = Marshal.PtrToStructure<PartyFinderListing>(a2);
 
             if (a1Struct.Unknown408 != a2Struct.Unknown408)
-                return (byte)(a1Struct.Unknown408 < a2Struct.Unknown408 ? 1 : 0);
+                return (byte)(a1Struct.Unknown408 < a2Struct.Unknown408 ?
+                                  1 :
+                                  0);
 
             if (a1Struct.Unknown409 != a2Struct.Unknown409)
-                return (byte)(a1Struct.Unknown409 < a2Struct.Unknown409 ? 1 : 0);
+                return (byte)(a1Struct.Unknown409 < a2Struct.Unknown409 ?
+                                  1 :
+                                  0);
 
             if (a1Struct.IsDutyUnlocked != a2Struct.IsDutyUnlocked)
-                return (byte)(a1Struct.IsDutyUnlocked < a2Struct.IsDutyUnlocked ? 1 : 0);
+                return (byte)(a1Struct.IsDutyUnlocked < a2Struct.IsDutyUnlocked ?
+                                  1 :
+                                  0);
 
             if (a1Struct.IsBlacklisted != a2Struct.IsBlacklisted)
-                return (byte)(a1Struct.IsBlacklisted < a2Struct.IsBlacklisted ? 1 : 0);
+                return (byte)(a1Struct.IsBlacklisted < a2Struct.IsBlacklisted ?
+                                  1 :
+                                  0);
 
             return GetSortStrategy().Compare(a1Struct, a2Struct);
         }
@@ -67,22 +86,38 @@ public unsafe class BetterPartyFinderSort : ModuleBase
             1 => new TimeLeftDescendingStrategy(),
             _ => new TimeLeftAscendingStrategy()
         };
-    
+
     private interface ISortStrategy
     {
-        byte Compare(PartyFinderListing a1, PartyFinderListing a2);
+        byte Compare
+        (
+            PartyFinderListing a1,
+            PartyFinderListing a2
+        );
     }
 
     private class TimeLeftAscendingStrategy : ISortStrategy
     {
-        public byte Compare(PartyFinderListing a1, PartyFinderListing a2) =>
-            a1.TimeLeftSeconds < a2.TimeLeftSeconds ? (byte)1 : (byte)0;
+        public byte Compare
+        (
+            PartyFinderListing a1,
+            PartyFinderListing a2
+        ) =>
+            a1.TimeLeftSeconds < a2.TimeLeftSeconds ?
+                (byte)1 :
+                (byte)0;
     }
 
     private class TimeLeftDescendingStrategy : ISortStrategy
     {
-        public byte Compare(PartyFinderListing a1, PartyFinderListing a2) =>
-            a1.TimeLeftSeconds > a2.TimeLeftSeconds ? (byte)1 : (byte)0;
+        public byte Compare
+        (
+            PartyFinderListing a1,
+            PartyFinderListing a2
+        ) =>
+            a1.TimeLeftSeconds > a2.TimeLeftSeconds ?
+                (byte)1 :
+                (byte)0;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 416)]

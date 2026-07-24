@@ -2,7 +2,6 @@ using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using OmenTools.Info.Game;
 using OmenTools.Interop.Game.Lumina;
@@ -23,7 +22,7 @@ public class AutoMessageScheduler : ModuleBase
 
     private Config?       config;
     private EditingState? editingData;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -113,7 +112,15 @@ public class AutoMessageScheduler : ModuleBase
             ImGui.TextUnformatted($"{sched.Remaining}/{sched.Repeat}");
 
             ImGui.TableNextColumn();
-            ImGui.TextColored(sched.IsActive ? KnownColor.GreenYellow.ToVector4() : KnownColor.Pink.ToVector4(), sched.IsActive ? "O" : "X");
+            ImGui.TextColored
+            (
+                sched.IsActive ?
+                    KnownColor.GreenYellow.ToVector4() :
+                    KnownColor.Pink.ToVector4(),
+                sched.IsActive ?
+                    "O" :
+                    "X"
+            );
 
             ImGui.TableNextColumn();
             ImGui.TextUnformatted
@@ -132,8 +139,12 @@ public class AutoMessageScheduler : ModuleBase
             if (ImGuiOm.ButtonIcon
                 (
                     "Toggle",
-                    sched.IsActive ? FontAwesomeIcon.Stop : FontAwesomeIcon.Play,
-                    sched.IsActive ? Lang.Get("Stop") : Lang.Get("Start")
+                    sched.IsActive ?
+                        FontAwesomeIcon.Stop :
+                        FontAwesomeIcon.Play,
+                    sched.IsActive ?
+                        Lang.Get("Stop") :
+                        Lang.Get("Start")
                 ))
             {
                 sched.IsActive  = !sched.IsActive;
@@ -266,17 +277,20 @@ public class AutoMessageScheduler : ModuleBase
 
         return;
 
-        long CalculateStartTime(ScheduledMessage sched)
+        long CalculateStartTime
+        (
+            ScheduledMessage sched
+        )
         {
             var now = GetNow(sched.Mode);
             var todayStart = sched.Mode switch
             {
                 TimeMode.LocalTime                         => new DateTimeOffset(StandardTimeManager.Instance().Today).ToUnixTimeSeconds(),
-                TimeMode.ServerTime or TimeMode.EorzeaTime => now - now % 86400,
+                TimeMode.ServerTime or TimeMode.EorzeaTime => now - (now % 86400),
                 _                                          => throw new ArgumentOutOfRangeException()
             };
 
-            var targetTime = todayStart + sched.StartHour * 3600 + sched.StartMinute * 60;
+            var targetTime = todayStart + (sched.StartHour * 3600) + (sched.StartMinute * 60);
             if (targetTime <= now)
                 targetTime += 86400;
 
@@ -284,7 +298,10 @@ public class AutoMessageScheduler : ModuleBase
         }
     }
 
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         foreach (var sched in config.Presets)
         {
@@ -303,7 +320,10 @@ public class AutoMessageScheduler : ModuleBase
         }
     }
 
-    private void EneuqueMessagesSending(ScheduledMessage sched)
+    private void EneuqueMessagesSending
+    (
+        ScheduledMessage sched
+    )
     {
         foreach (var line in sched.MessageText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -312,7 +332,10 @@ public class AutoMessageScheduler : ModuleBase
         }
     }
 
-    private static long GetNow(TimeMode mode) => mode switch
+    private static long GetNow
+    (
+        TimeMode mode
+    ) => mode switch
     {
         TimeMode.LocalTime  => new DateTimeOffset(StandardTimeManager.Instance().Now).ToUnixTimeSeconds(),
         TimeMode.ServerTime => Framework.GetServerTime(),
@@ -354,7 +377,7 @@ public class AutoMessageScheduler : ModuleBase
         public int              StartHour   = scheduledMessage.StartHour;
         public int              StartMinute = scheduledMessage.StartMinute;
     }
-    
+
     private enum TimeMode
     {
         LocalTime,

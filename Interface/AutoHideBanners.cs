@@ -25,11 +25,19 @@ public unsafe class AutoHideBanners : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     // TODO: bannerID 从 uint 变成了 int, 需要测试
-    private static readonly CompSig                 SetImageSig = new("48 89 5C 24 ?? 57 48 83 EC 30 48 8B D9 89 91");
-    private delegate        void                    SetImageDelegate(AddonImage* addon, int bannerID, IconSubFolder folder, int soundEffectID);
-    private                 Hook<SetImageDelegate>? SetImageHook;
+    private static readonly CompSig SetImageSig = new("48 89 5C 24 ?? 57 48 83 EC 30 48 8B D9 89 91");
+
+    private delegate void SetImageDelegate
+    (
+        AddonImage*   addon,
+        int           bannerID,
+        IconSubFolder folder,
+        int           soundEffectID
+    );
+
+    private Hook<SetImageDelegate>? SetImageHook;
 
     private Config config = null!;
 
@@ -38,6 +46,7 @@ public unsafe class AutoHideBanners : ModuleBase
         config = Config.Load(this) ?? new();
 
         var isAnyAdded = false;
+
         foreach (var bannerID in BannersData)
         {
             if (!config.HiddenBanners.TryAdd(bannerID, DefaultEnabledBanners.Contains(bannerID))) continue;
@@ -49,7 +58,7 @@ public unsafe class AutoHideBanners : ModuleBase
 
         SetImageHook = SetImageSig.GetHook<SetImageDelegate>(SetImageDetour);
         SetImageHook.Enable();
-        
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "_WKSMissionChain", OnAddon);
     }
 
@@ -58,7 +67,7 @@ public unsafe class AutoHideBanners : ModuleBase
 
     protected override void ConfigUI()
     {
-        var tableSize = new Vector2(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetStyle().ItemSpacing.X, 400f * GlobalUIScale);
+        var tableSize = new Vector2(ImGui.GetContentRegionAvail().X - (2 * ImGui.GetStyle().ItemSpacing.X), 400f * GlobalUIScale);
 
         using var table = ImRaii.Table("BannerList", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY, tableSize);
         if (!table) return;
@@ -93,7 +102,11 @@ public unsafe class AutoHideBanners : ModuleBase
         }
     }
 
-    private void RenderBannerButton(uint bannerID, Vector2 tableSize)
+    private void RenderBannerButton
+    (
+        uint    bannerID,
+        Vector2 tableSize
+    )
     {
         if (!ImageHelper.Instance().TryGetGameLangIcon(bannerID, out var texture)) return;
 
@@ -117,7 +130,11 @@ public unsafe class AutoHideBanners : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;
@@ -126,16 +143,25 @@ public unsafe class AutoHideBanners : ModuleBase
         addon->Hide(true, true, 1);
     }
 
-    private void SetImageDetour(AddonImage* addonImage, int bannerID, IconSubFolder folder, int soundEffectID)
+    private void SetImageDetour
+    (
+        AddonImage*   addonImage,
+        int           bannerID,
+        IconSubFolder folder,
+        int           soundEffectID
+    )
     {
         if (IsWKSMissionChainBannerSelected((uint)bannerID) ||
             config.HiddenBanners.GetValueOrDefault((uint)bannerID))
             return;
-        
+
         SetImageHook.Original(addonImage, bannerID, folder, soundEffectID);
     }
 
-    private bool ShouldHideWKSMissionChain(AtkUnitBase* addon)
+    private bool ShouldHideWKSMissionChain
+    (
+        AtkUnitBase* addon
+    )
     {
         var imageNode = addon->UldManager.SearchSimpleNodeByType<AtkImageNode>(NodeType.Image);
         if (imageNode == null) return false;
@@ -146,15 +172,18 @@ public unsafe class AutoHideBanners : ModuleBase
         return IsWKSMissionChainBannerSelected(iconID);
     }
 
-    private bool IsWKSMissionChainBannerSelected(uint iconID) =>
+    private bool IsWKSMissionChainBannerSelected
+    (
+        uint iconID
+    ) =>
         WKSMissionChainBannerIDs.Contains(iconID) && config.HiddenBanners.GetValueOrDefault(iconID);
-    
+
     private class Config : ModuleConfig
     {
         // true - 隐藏; false - 维持
         public Dictionary<uint, bool> HiddenBanners = [];
     }
-    
+
     #region 常量
 
     private static readonly List<uint> BannersData =
@@ -164,7 +193,7 @@ public unsafe class AutoHideBanners : ModuleBase
         121562, 121563, 128370, 128371, 128372, 128373, 128525, 128526,
         128527, 128528, 128529, 128530, 128531, 128532
     ];
-    
+
     private static readonly FrozenSet<uint> WKSMissionChainBannerIDs = [128527, 128528, 128529, 128530, 128531, 128532];
 
     private static readonly FrozenSet<uint> DefaultEnabledBanners = [120031, 120032, 120055, 120095, 120096, 120141, 120142];

@@ -20,13 +20,19 @@ public unsafe class AutoMovePetCenter : ModuleBase
         Author          = ["逆光"],
         ModulesConflict = ["AutoMovePetPosition"]
     };
-    
+
     private static readonly CompSig ProcessPacketSpawnNPCSig =
         new
         (
             "48 89 5C 24 08 57 48 81 EC 30 04 00 00 48 8B DA 8B F9 E8 ?? ?? ?? ?? 3C 01 75 21 E8 ?? ?? ?? ?? 3C 01 75 18 80 BB 82 00 00 00 02 75 0F 8B 05 ?? ?? ?? ?? 39 43 54 0F 85 ?? ?? ?? ?? 0F B6 53 7E 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B6 53 7E 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 44 24 28 C7 44 24 20 02 00 00 00"
         );
-    private delegate void ProcessPacketSpawnNPCDelegate(uint targetID, byte* packetData);
+
+    private delegate void ProcessPacketSpawnNPCDelegate
+    (
+        uint  targetID,
+        byte* packetData
+    );
+
     private Hook<ProcessPacketSpawnNPCDelegate>? ProcessPacketSpawnNPCHook;
 
     protected override void Init()
@@ -40,10 +46,17 @@ public unsafe class AutoMovePetCenter : ModuleBase
     protected override void Uninit() =>
         DService.Instance().DutyState.DutyStarted -= OnDutyStarted;
 
-    private static void OnDutyStarted(IDutyStateEventArgs args) =>
+    private static void OnDutyStarted
+    (
+        IDutyStateEventArgs args
+    ) =>
         MovePetToMapCenter(LocalPlayerState.EntityID);
 
-    private void ProcessPacketSpawnNPCDetour(uint targetID, byte* packetData)
+    private void ProcessPacketSpawnNPCDetour
+    (
+        uint  targetID,
+        byte* packetData
+    )
     {
         ProcessPacketSpawnNPCHook.Original(targetID, packetData);
 
@@ -53,7 +66,10 @@ public unsafe class AutoMovePetCenter : ModuleBase
         MovePetToMapCenter(*entityIDPtr);
     }
 
-    private static void MovePetToMapCenter(uint npcEntityID)
+    private static void MovePetToMapCenter
+    (
+        uint npcEntityID
+    )
     {
         if (GameState.ContentFinderCondition == 0                                  ||
             GameState.Map                    == 0                                  ||

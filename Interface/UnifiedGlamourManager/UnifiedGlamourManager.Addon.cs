@@ -10,7 +10,11 @@ public unsafe partial class UnifiedGlamourManager
     private TextButtonNode? inspectSaveButtonNode;
     private TextButtonNode? plateSaveButtonNode;
 
-    private void OnPlateEditorAddon(AddonEvent type, AddonArgs args)
+    private void OnPlateEditorAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -55,7 +59,11 @@ public unsafe partial class UnifiedGlamourManager
         }
     }
 
-    private void OnInspectAddon(AddonEvent type, AddonArgs? args)
+    private void OnInspectAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {

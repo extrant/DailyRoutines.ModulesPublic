@@ -20,7 +20,7 @@ public class AutoPetFollow : ModuleBase
         Description = Lang.Get("AutoPetFollowDescription"),
         Category    = ModuleCategory.Combat
     };
-    
+
     private Config config = null!;
 
     protected override void Init()
@@ -29,7 +29,7 @@ public class AutoPetFollow : ModuleBase
 
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().Condition.ConditionChange -= OnConditionChanged;
 
@@ -39,7 +39,11 @@ public class AutoPetFollow : ModuleBase
             config.Save(this);
     }
 
-    private unsafe void OnConditionChanged(ConditionFlag flag, bool value)
+    private unsafe void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat                       ||
             value                                                ||
@@ -59,15 +63,15 @@ public class AutoPetFollow : ModuleBase
         if (config.SendNotification && Throttler.Shared.Throttle("AutoPetFollow-SendNotification", 10_000))
             NotifyHelper.Instance().NotificationInfo(Lang.Get("AutoPetFollow-Notification"));
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool SendNotification = true;
     }
-    
+
     #region 常量
-    
+
     private static readonly FrozenSet<uint> ValidClassJobs = [26, 27, 28];
-    
+
     #endregion
 }

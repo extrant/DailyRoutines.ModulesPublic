@@ -24,10 +24,18 @@ public unsafe class AutoReadOutTalk : ModuleBase
     };
 
     private Config config = null!;
-    
-    private delegate void ShowBattleTalkDelegate(UIModule* module, CStringPointer name, CStringPointer text, float duration, byte style);
+
+    private delegate void ShowBattleTalkDelegate
+    (
+        UIModule*      module,
+        CStringPointer name,
+        CStringPointer text,
+        float          duration,
+        byte           style
+    );
+
     private Hook<ShowBattleTalkDelegate>? ShowBattleTalkHook;
-    
+
     private delegate void ShowBattleTalkImageDelegate
     (
         UIModule*      module,
@@ -39,6 +47,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
         int            sound,
         uint           entityID
     );
+
     private Hook<ShowBattleTalkImageDelegate>? ShowBattleTalkImageHook;
 
     protected override void Init()
@@ -75,12 +84,23 @@ public unsafe class AutoReadOutTalk : ModuleBase
         }
     }
 
-    private void ShowBattleTalkDetour(UIModule* module, CStringPointer name, CStringPointer text, float duration, byte style)
+    private void ShowBattleTalkDetour
+    (
+        UIModule*      module,
+        CStringPointer name,
+        CStringPointer text,
+        float          duration,
+        byte           style
+    )
     {
         ShowBattleTalkHook.Original(module, name, text, duration, style);
 
-        var speaker = name.HasValue ? name.ExtractText() : string.Empty;
-        var line    = text.HasValue ? text.ExtractText() : string.Empty;
+        var speaker = name.HasValue ?
+                          name.ExtractText() :
+                          string.Empty;
+        var line = text.HasValue ?
+                       text.ExtractText() :
+                       string.Empty;
 
         if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(speaker) || duration < 3) return;
 
@@ -104,8 +124,12 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
         if (sound > -1) return;
 
-        var speaker = name.HasValue ? name.ExtractText() : string.Empty;
-        var line    = text.HasValue ? text.ExtractText() : string.Empty;
+        var speaker = name.HasValue ?
+                          name.ExtractText() :
+                          string.Empty;
+        var line = text.HasValue ?
+                       text.ExtractText() :
+                       string.Empty;
 
         if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(speaker) || duration < 3) return;
 
@@ -113,7 +137,11 @@ public unsafe class AutoReadOutTalk : ModuleBase
         NotifyHelper.Speak(string.Format(config.Format, speaker, line));
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -122,7 +150,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
                 string? speaker = null;
 
                 if (Talk == null) return;
-                
+
                 // 没有实际文本
                 if (Talk->AtkValues[0].Type != AtkValueType.ManagedString || !Talk->AtkValues[0].String.HasValue) return;
 

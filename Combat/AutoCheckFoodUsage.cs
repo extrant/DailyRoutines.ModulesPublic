@@ -10,7 +10,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
 using OmenTools.ImGuiOm.Widgets.Combos;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -28,38 +27,46 @@ public class AutoCheckFoodUsage : ModuleBase
         Description = Lang.Get("AutoCheckFoodUsageDescription"),
         Category    = ModuleCategory.Combat
     };
-    
-    private static readonly CompSig                      CountdownInitSig = new("48 89 5C 24 10 57 48 83 EC 40 48 8B DA 48 8B F9 48 8B 49 08");
-    public delegate         nint                         CountdownInitDelegate(nint a1, nint a2);
-    private                 Hook<CountdownInitDelegate>? CountdownInitHook;
+
+    private CompSig countdownInitSig = null!;
+
+    public delegate nint CountdownInitDelegate
+    (
+        nint a1,
+        nint a2
+    );
+
+    private Hook<CountdownInitDelegate>? CountdownInitHook;
 
     private Config config = null!;
 
-    private readonly JobSelectCombo jobSelectCombo = new("Job");
+    private JobSelectCombo jobSelectCombo = null!;
 
     private uint   selectedItem;
     private string selectItemSearch     = string.Empty;
     private bool   selectItemIsHQ       = true;
     private string zoneSearchInput      = string.Empty;
     private string conditionSearchInput = string.Empty;
-    
+
     private readonly DateTime lastFoodUsageTime = DateTime.MinValue;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        countdownInitSig = new("48 89 5C 24 10 57 48 83 EC 40 48 8B DA 48 8B F9 48 8B 49 08");
+        jobSelectCombo   = new("Job");
+        config           = Config.Load(this) ?? new();
         foreach (var checkPoint in Enum.GetValues<FoodCheckpoint>())
             config.EnabledCheckpoints.TryAdd(checkPoint, false);
 
         TaskHelper ??= new TaskHelper { TimeoutMS = 60_000 };
 
-        CountdownInitHook ??= CountdownInitSig.GetHook<CountdownInitDelegate>(CountdownInitDetour);
+        CountdownInitHook ??= countdownInitSig.GetHook<CountdownInitDelegate>(CountdownInitDetour);
         CountdownInitHook.Enable();
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         DService.Instance().Condition.ConditionChange    += OnConditionChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
@@ -260,7 +267,9 @@ public class AutoCheckFoodUsage : ModuleBase
                                         x.RowId == selectedItem,
                                         ImGuiSelectableFlags.DontClosePopups
                                     ))
-                                    selectedItem = selectedItem == x.RowId ? 0 : x.RowId;
+                                    selectedItem = selectedItem == x.RowId ?
+                                                       0 :
+                                                       x.RowId;
                             }
                         ],
                         [x => x.Name.ToString(), x => x.RowId.ToString()],
@@ -310,7 +319,7 @@ public class AutoCheckFoodUsage : ModuleBase
                 preset.Enabled = isEnabled;
                 config.Save(this);
             }
-            
+
             ImGui.TableNextColumn();
             ImGui.Selectable
             (
@@ -450,9 +459,16 @@ public class AutoCheckFoodUsage : ModuleBase
         return true;
     }
 
-    private bool TakeFood(FoodUsagePreset preset) => TakeFood(preset.ItemID, preset.IsHQ);
+    private bool TakeFood
+    (
+        FoodUsagePreset preset
+    ) => TakeFood(preset.ItemID, preset.IsHQ);
 
-    private bool TakeFood(uint itemID, bool isHQ)
+    private bool TakeFood
+    (
+        uint itemID,
+        bool isHQ
+    )
     {
         if (!Throttler.Shared.Throttle("AutoCheckFoodUsage-TakeFood", 1000)) return false;
         if (!IsValidState()) return false;
@@ -461,7 +477,11 @@ public class AutoCheckFoodUsage : ModuleBase
         return true;
     }
 
-    private bool TakeFoodInternal(uint itemID, bool isHQ)
+    private bool TakeFoodInternal
+    (
+        uint itemID,
+        bool isHQ
+    )
     {
         TaskHelper.Abort();
         if (TryGetWellFedParam(out var itemFoodId, out var remainingTime) &&
@@ -469,14 +489,27 @@ public class AutoCheckFoodUsage : ModuleBase
             remainingTime.TotalMinutes >= 25)
             return true;
 
-        UseActionManager.Instance().UseActionLocation(ActionType.Item, isHQ ? itemID + 100_0000 : itemID, 0xE0000000, default, 0xFFFF);
+        UseActionManager.Instance().UseActionLocation
+        (
+            ActionType.Item,
+            isHQ ?
+                itemID + 100_0000 :
+                itemID,
+            0xE0000000,
+            default,
+            0xFFFF
+        );
 
         TaskHelper.DelayNext(3_000);
         TaskHelper.Enqueue(() => CheckFoodState(itemID, isHQ));
         return true;
     }
 
-    private bool CheckFoodState(uint itemID, bool isHQ)
+    private bool CheckFoodState
+    (
+        uint itemID,
+        bool isHQ
+    )
     {
         TaskHelper.Abort();
 
@@ -493,7 +526,11 @@ public class AutoCheckFoodUsage : ModuleBase
         return false;
     }
 
-    private static unsafe bool TryGetWellFedParam(out uint itemFoodRowID, out TimeSpan remainingTime)
+    private static unsafe bool TryGetWellFedParam
+    (
+        out uint     itemFoodRowID,
+        out TimeSpan remainingTime
+    )
     {
         itemFoodRowID = 0;
         remainingTime = TimeSpan.Zero;
@@ -510,7 +547,11 @@ public class AutoCheckFoodUsage : ModuleBase
         return true;
     }
 
-    private nint CountdownInitDetour(nint a1, nint a2)
+    private nint CountdownInitDetour
+    (
+        nint a1,
+        nint a2
+    )
     {
         var original = CountdownInitHook.Original(a1, a2);
 
@@ -523,7 +564,10 @@ public class AutoCheckFoodUsage : ModuleBase
         return original;
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         if (!config.EnabledCheckpoints[FoodCheckpoint.区域切换时] || GameMain.IsInPvPArea()) return;
 
@@ -531,18 +575,22 @@ public class AutoCheckFoodUsage : ModuleBase
         TaskHelper.Enqueue(EnqueueFoodRefresh);
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (!config.EnabledCheckpoints[FoodCheckpoint.条件变更时] ||
-            GameMain.IsInPvPArea()                                 ||
-            (!value || !config.ConditionStart.Contains(flag)) &&
-            (value  || !config.ConditionEnd.Contains(flag)))
+            GameMain.IsInPvPArea()                           ||
+            ((!value || !config.ConditionStart.Contains(flag)) &&
+             (value  || !config.ConditionEnd.Contains(flag))))
             return;
 
         TaskHelper.Abort();
         TaskHelper.Enqueue(EnqueueFoodRefresh);
     }
-    
+
     private static unsafe bool IsValidState() =>
         !DService.Instance().Condition.IsBetweenAreas       &&
         !DService.Instance().Condition.IsOccupiedInEvent    &&
@@ -554,7 +602,10 @@ public class AutoCheckFoodUsage : ModuleBase
     private bool IsCooldownElapsed() =>
         (StandardTimeManager.Instance().Now - lastFoodUsageTime).TotalSeconds >= FOOD_USAGE_COOLDOWN_SECONDS;
 
-    private static uint ToFoodRowID(uint id) =>
+    private static uint ToFoodRowID
+    (
+        uint id
+    ) =>
         LuminaGetter.GetRow<ItemFood>(LuminaGetter.GetRowOrDefault<Item>(id).ItemAction.Value.Data[1])?.RowId ?? 0;
 
     private unsafe List<FoodUsagePreset> GetValidPresets()
@@ -564,18 +615,21 @@ public class AutoCheckFoodUsage : ModuleBase
         if (instance == null || zone == 0) return [];
 
         return config.Presets
-                           .Where
-                           (x => x.Enabled                                      &&
-                                 (x.Zones.Count == 0 || x.Zones.Contains(zone)) &&
-                                 (x.ClassJobs.Count == 0 ||
-                                  x.ClassJobs.Contains(DService.Instance().ObjectTable.LocalPlayer.ClassJob.RowId)) &&
-                                 instance->GetInventoryItemCount(x.ItemID, x.IsHQ) > 0
-                           )
-                           .OrderByDescending(x => x.Zones.Contains(zone))
-                           .ToList();
+                     .Where
+                     (x => x.Enabled                                      &&
+                           (x.Zones.Count == 0 || x.Zones.Contains(zone)) &&
+                           (x.ClassJobs.Count == 0 ||
+                            x.ClassJobs.Contains(DService.Instance().ObjectTable.LocalPlayer.ClassJob.RowId)) &&
+                           instance->GetInventoryItemCount(x.ItemID, x.IsHQ) > 0
+                     )
+                     .OrderByDescending(x => x.Zones.Contains(zone))
+                     .ToList();
     }
 
-    private bool ShouldRefreshFood(TimeSpan remainingTime) =>
+    private bool ShouldRefreshFood
+    (
+        TimeSpan remainingTime
+    ) =>
         remainingTime <= TimeSpan.FromSeconds(config.RefreshThreshold) &&
         remainingTime <= TimeSpan.FromMinutes(55);
 
@@ -583,9 +637,16 @@ public class AutoCheckFoodUsage : ModuleBase
     {
         public FoodUsagePreset() { }
 
-        public FoodUsagePreset(uint itemID) => ItemID = itemID;
+        public FoodUsagePreset
+        (
+            uint itemID
+        ) => ItemID = itemID;
 
-        public FoodUsagePreset(uint itemID, bool isHQ) : this(itemID) => IsHQ = isHQ;
+        public FoodUsagePreset
+        (
+            uint itemID,
+            bool isHQ
+        ) : this(itemID) => IsHQ = isHQ;
 
         public uint          ItemID    { get; set; }
         public bool          IsHQ      { get; set; } = true;
@@ -593,19 +654,33 @@ public class AutoCheckFoodUsage : ModuleBase
         public HashSet<uint> ClassJobs { get; set; } = [];
         public bool          Enabled   { get; set; } = true;
 
-        public bool Equals(FoodUsagePreset? other)
+        public bool Equals
+        (
+            FoodUsagePreset? other
+        )
             => other != null && ItemID == other.ItemID && IsHQ == other.IsHQ;
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
             => Equals(obj as FoodUsagePreset);
 
         public override int GetHashCode()
             => HashCode.Combine(ItemID, IsHQ);
 
-        public static bool operator ==(FoodUsagePreset? left, FoodUsagePreset? right) =>
+        public static bool operator ==
+        (
+            FoodUsagePreset? left,
+            FoodUsagePreset? right
+        ) =>
             EqualityComparer<FoodUsagePreset>.Default.Equals(left, right);
 
-        public static bool operator !=(FoodUsagePreset? left, FoodUsagePreset? right)
+        public static bool operator !=
+        (
+            FoodUsagePreset? left,
+            FoodUsagePreset? right
+        )
             => !(left == right);
     }
 

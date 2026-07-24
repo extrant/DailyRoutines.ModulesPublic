@@ -25,7 +25,7 @@ public class AutoHighlightCursor : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config             config = null!;
     private OverlayController? controller;
 
@@ -84,7 +84,7 @@ public class AutoHighlightCursor : ModuleBase
         if (ImGui.Checkbox($"{Lang.Get("OnlyInDuty")}", ref config.OnlyShowInDuty))
             config.Save(this);
     }
-    
+
     private class Config : ModuleConfig
     {
         public Vector4 Color            = Vector4.One;
@@ -103,13 +103,16 @@ public class AutoHighlightCursor : ModuleBase
         public override bool         HideWithNativeUi => true;
 
         private readonly Config moduleConfig;
-        
+
         private readonly IconImageNode imageNode;
-        
-        public CursorImageNode(Config config)
+
+        public CursorImageNode
+        (
+            Config config
+        )
         {
             moduleConfig = config;
-            
+
             imageNode = new IconImageNode
             {
                 IconId     = 60498,
@@ -159,10 +162,15 @@ public class AutoHighlightCursor : ModuleBase
             imageNode.Color  = moduleConfig.Color;
             imageNode.IconId = moduleConfig.IconID;
 
-            Timeline?.PlayAnimation(moduleConfig.PlayAnimation ? 1 : 2);
+            Timeline?.PlayAnimation
+            (
+                moduleConfig.PlayAnimation ?
+                    1 :
+                    2
+            );
 
             ref var cursorData = ref UIInputData.Instance()->CursorInputs;
-            Position = new Vector2(cursorData.PositionX, cursorData.PositionY) - imageNode.Size / 2.0f;
+            Position = new Vector2(cursorData.PositionX, cursorData.PositionY) - (imageNode.Size / 2.0f);
 
             var isLeftHeld  = (cursorData.MouseButtonHeldFlags & MouseButtonFlags.LBUTTON) != 0;
             var isRightHeld = (cursorData.MouseButtonHeldFlags & MouseButtonFlags.RBUTTON) != 0;
@@ -172,12 +180,12 @@ public class AutoHighlightCursor : ModuleBase
                 var shouldShow = true;
                 shouldShow &= !moduleConfig.OnlyShowInCombat || DService.Instance().Condition[ConditionFlag.InCombat];
                 shouldShow &= !moduleConfig.OnlyShowInDuty   || DService.Instance().Condition.IsBoundByDuty;
-                shouldShow &= !moduleConfig.HideOnCameraMove || !isLeftHeld && !isRightHeld;
+                shouldShow &= !moduleConfig.HideOnCameraMove || (!isLeftHeld && !isRightHeld);
 
                 IsVisible = shouldShow;
             }
             else
-                IsVisible = !isLeftHeld && !isRightHeld || !moduleConfig.HideOnCameraMove;
+                IsVisible = (!isLeftHeld && !isRightHeld) || !moduleConfig.HideOnCameraMove;
         }
     }
 }

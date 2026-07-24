@@ -1,4 +1,5 @@
 using System.Numerics;
+using DailyRoutines.Common.KamiToolKit.Nodes;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
@@ -9,7 +10,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Nodes;
-using DailyRoutines.Common.KamiToolKit.Nodes;
 using OmenTools.Dalamud.Abstractions;
 using OmenTools.Dalamud.Attributes;
 using OmenTools.Interop.Game.AddonEvent;
@@ -59,7 +59,7 @@ public class OptimizedLetter : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesNo);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonLetterAddress);
-        
+
         textInputButton?.Dispose();
         textInputButton = null;
 
@@ -70,13 +70,21 @@ public class OptimizedLetter : ModuleBase
         addon = null;
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         if (addon.IsOpen || !LetterList->IsAddonAndNodesReady()) return;
         addon.Open();
     }
 
-    private unsafe void OnAddonLetterAddress(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddonLetterAddress
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -86,17 +94,17 @@ public class OptimizedLetter : ModuleBase
                 break;
 
             case AddonEvent.PostDraw:
-                if (LetterAddress == null) return;
+                if (LetterAddress   == null) return;
                 if (textInputButton != null) return;
 
                 var titleNode = LetterAddress->GetTextNodeById(3);
                 if (titleNode != null)
                     titleNode->ToggleVisibility(false);
-                
+
                 textInputButton = new()
                 {
-                    Size      = new(200, 30),
-                    Position  = new(12, 32),
+                    Size     = new(200, 30),
+                    Position = new(12, 32),
                     OnInputReceived = name =>
                     {
                         if (listNode == null)
@@ -121,15 +129,16 @@ public class OptimizedLetter : ModuleBase
 
                             listNode.BackgroundNode.IsVisible            = false;
                             listNode.ScrollingListNode.AutoHideScrollBar = true;
-                            
+
                             listNode.AttachNode(LetterAddress);
                         }
 
                         List<string> names = [];
+
                         foreach (var chara in InfoProxyFriendList.Instance()->CharDataSpan)
                         {
                             if (chara.HomeWorld != GameState.HomeWorld) continue;
-                            
+
                             var remark   = GetRemarkByContentID.TryInvokeFunc(chara.ContentId)   ?? string.Empty;
                             var nickname = GetNicknameByContentID.TryInvokeFunc(chara.ContentId) ?? string.Empty;
 
@@ -149,11 +158,11 @@ public class OptimizedLetter : ModuleBase
                         var isInputEmpty = string.IsNullOrWhiteSpace(name.ToString());
 
                         listNode.IsVisible = !isInputEmpty;
-                        
+
                         var origList = LetterAddress->GetComponentListById(7);
                         if (origList != null)
                             origList->OwnerNode->ToggleVisibility(isInputEmpty);
-                        
+
                         listNode.MaxButtons = (int)MathF.Min(names.Count, 8);
                         listNode.Options    = names;
                     }
@@ -170,7 +179,11 @@ public class OptimizedLetter : ModuleBase
         }
     }
 
-    private void OnAddonSelectYesNo(AddonEvent type, AddonArgs args)
+    private void OnAddonSelectYesNo
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!TaskHelper.IsBusy) return;
         AddonSelectYesnoEvent.ClickYes();
@@ -183,7 +196,11 @@ public class OptimizedLetter : ModuleBase
     {
         private static AtkEventWrapper? FireRequestEvent;
 
-        protected override unsafe void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override unsafe void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (LetterList->IsAddonAndNodesReady())
             {
@@ -302,7 +319,10 @@ public class OptimizedLetter : ModuleBase
             layoutNode.AttachNode(this);
         }
 
-        protected override unsafe void OnUpdate(AtkUnitBase* addon)
+        protected override unsafe void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (LetterList == null)
             {
@@ -320,7 +340,10 @@ public class OptimizedLetter : ModuleBase
             );
         }
 
-        protected override unsafe void OnFinalize(AtkUnitBase* addon)
+        protected override unsafe void OnFinalize
+        (
+            AtkUnitBase* addon
+        )
         {
             FireRequestEvent?.Dispose();
             FireRequestEvent = null;
@@ -329,7 +352,11 @@ public class OptimizedLetter : ModuleBase
             LetterList->Close(true);
         }
 
-        private static unsafe bool TryFindLetters(Predicate<InfoProxyLetter.Letter> predicate, out List<(int Index, InfoProxyLetter.Letter)> letters)
+        private static unsafe bool TryFindLetters
+        (
+            Predicate<InfoProxyLetter.Letter>             predicate,
+            out List<(int Index, InfoProxyLetter.Letter)> letters
+        )
         {
             letters = [];
 
@@ -348,7 +375,7 @@ public class OptimizedLetter : ModuleBase
             return letters.Count > 0;
         }
     }
-    
+
     #region IPC
 
     [IPCSubscriber("DailyRoutines.Modules.OptimizedFriendlist.GetRemarkByContentID", DefaultValue = "")]

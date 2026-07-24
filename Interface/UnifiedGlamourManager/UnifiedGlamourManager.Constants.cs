@@ -15,7 +15,7 @@ public partial class UnifiedGlamourManager
     private const string STONE_URL         = "https://ff14risingstones.web.sdo.com/pc/index.html#/glamour";
     private const string FAVORITE_ICON_ON  = "★";
     private const string FAVORITE_ICON_OFF = "☆";
-    
+
     private const int TASK_TIMEOUT_MS              = 30_000;
     private const int REFRESH_STEP_DELAY_MS        = 1;
     private const int APPLY_RETRY_DELAY_MS         = 50;

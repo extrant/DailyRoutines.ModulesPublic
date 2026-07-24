@@ -24,7 +24,6 @@ using Lumina.Excel.Sheets;
 using OmenTools.Dalamud;
 using OmenTools.Dalamud.Abstractions;
 using OmenTools.Dalamud.Attributes;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.AgentEvent;
 using OmenTools.Interop.Game.Lumina;
@@ -42,7 +41,9 @@ public class FastWorldTravel : ModuleBase
     {
         Title = Lang.Get("FastWorldTravelTitle"),
         Description = Lang.Get("FastWorldTravelDescription", COMMAND) +
-                      (!GameState.IsCN ? string.Empty : "\n支持快捷超域旅行并实时显示各服务器超域旅行拥挤度 [国服特供]"),
+                      (!GameState.IsCN ?
+                           string.Empty :
+                           "\n支持快捷超域旅行并实时显示各服务器超域旅行拥挤度 [国服特供]"),
         Category            = ModuleCategory.System,
         ModulesRecommend    = ["InstantReturn", "InstantTeleport"],
         ModulesPrerequisite = ["InstantLogout"]
@@ -115,7 +116,10 @@ public class FastWorldTravel : ModuleBase
             config.Save(this);
     }
 
-    private void HandleDtrEntry(bool isAdd)
+    private void HandleDtrEntry
+    (
+        bool isAdd
+    )
     {
         switch (isAdd)
         {
@@ -146,13 +150,25 @@ public class FastWorldTravel : ModuleBase
         addon ??= new(this, TaskHelper)
         {
             InternalName = "DRFastWorldTravel",
-            Title        = GameState.IsCN ? $"Daily Routines {Info.Title}" : LuminaWrapper.GetAddonText(12510),
-            Size         = new(GameState.IsCN ? 710f : 180f, 480f)
+            Title = GameState.IsCN ?
+                        $"Daily Routines {Info.Title}" :
+                        LuminaWrapper.GetAddonText(12510),
+            Size = new
+            (
+                GameState.IsCN ?
+                    710f :
+                    180f,
+                480f
+            )
         };
 
     #region 事件
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (entry == null || (TaskHelper?.IsBusy ?? true)) return;
 
@@ -175,7 +191,11 @@ public class FastWorldTravel : ModuleBase
 
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (WorldTravelSelect == null) return;
         if (!config.ReplaceOrigAddon) return;
@@ -187,7 +207,10 @@ public class FastWorldTravel : ModuleBase
     }
 
     // 更新 DTR
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (entry == null || (TaskHelper?.IsBusy ?? true)) return;
 
@@ -202,7 +225,11 @@ public class FastWorldTravel : ModuleBase
     }
 
     // 指令
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         if (!Throttler.Shared.Throttle("FastWorldTravel-OnCommand", 1_000)) return;
 
@@ -290,7 +317,10 @@ public class FastWorldTravel : ModuleBase
 
     #region Enqueue
 
-    private unsafe void EnqueueWorldTravel(uint worldID)
+    private unsafe void EnqueueWorldTravel
+    (
+        uint worldID
+    )
     {
         if (!LuminaGetter.TryGetRow(worldID, out World targetWorld)) return;
 
@@ -338,7 +368,10 @@ public class FastWorldTravel : ModuleBase
         );
     }
 
-    private void EnqueueDCTravel(uint targetWorldID)
+    private void EnqueueDCTravel
+    (
+        uint targetWorldID
+    )
     {
         if (GameState.CurrentWorld == 0 ||
             GameState.HomeWorld    == 0 ||
@@ -447,32 +480,43 @@ public class FastWorldTravel : ModuleBase
 
     private unsafe void EnqueueLogout()
     {
-        TaskHelper.Enqueue(() =>
-        {
-            if (!(ModuleManager.Instance().IsModuleEnabled(MODULE_NAME_AUTO_LOGIN) ?? false))
-                return;
+        TaskHelper.Enqueue
+        (
+            () =>
+            {
+                if (!(ModuleManager.Instance().IsModuleEnabled(MODULE_NAME_AUTO_LOGIN) ?? false))
+                    return;
 
-            markNextAutoLoginHandledIPC.InvokeAction();
-        }, "禁用自动登录");
-        
-        TaskHelper.Enqueue(() =>
-        {
-            if (!Throttler.Shared.Throttle("FastWorldTravel.Logout"))
+                markNextAutoLoginHandledIPC.InvokeAction();
+            },
+            "禁用自动登录"
+        );
+
+        TaskHelper.Enqueue
+        (
+            () =>
+            {
+                if (!Throttler.Shared.Throttle("FastWorldTravel.Logout"))
+                    return false;
+
+                if (!GameState.IsLoggedIn)
+                    return true;
+
+                ChatManager.Instance().SendCommand("/logout");
                 return false;
+            },
+            "登出游戏"
+        );
 
-            if (!GameState.IsLoggedIn)
-                return true;
-            
-            ChatManager.Instance().SendCommand("/logout");
-            return false;
-        }, "登出游戏");
-        
         TaskHelper.Enqueue(() => TitleMenu->IsAddonAndNodesReady(), "等待标题界面");
-        
+
         TaskHelper.DelayNext(2000, "等待 2 秒");
     }
 
-    private async Task EnqueueDCTravelRequest(Travel[] data)
+    private async Task EnqueueDCTravelRequest
+    (
+        Travel[] data
+    )
     {
         try
         {
@@ -518,7 +562,7 @@ public class FastWorldTravel : ModuleBase
 
                     TaskHelper.DelayNext(500);
                     TaskHelper.Enqueue(() => AgentLobbyEvent.SelectCharacter(x => x.ContentId == travelData.ContentID), "选择目标角色");
-                    
+
                     TaskHelper.Enqueue(() => GameState.IsLoggedIn, "等待登录");
                     return;
                 }
@@ -547,7 +591,10 @@ public class FastWorldTravel : ModuleBase
         return DService.Instance().PartyList.Length < 2;
     }
 
-    private static (bool, uint) CheckCNDataCenterStatus(uint dcID)
+    private static (bool, uint) CheckCNDataCenterStatus
+    (
+        uint dcID
+    )
     {
         var worlds = Sheets.Worlds.Where(x => x.Value.DataCenter.RowId == dcID).Select(x => x.Key).ToList();
 
@@ -622,7 +669,11 @@ public class FastWorldTravel : ModuleBase
         private static bool IsPluginValid =>
             IsPluginEnabled && IsDCTravelerValid;
 
-        protected override unsafe void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override unsafe void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             ContextMenuService = new();
 
@@ -674,7 +725,10 @@ public class FastWorldTravel : ModuleBase
             UpdateWaitTimeInfo();
         }
 
-        protected override unsafe void OnUpdate(AtkUnitBase* addon)
+        protected override unsafe void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (DService.Instance().Condition.IsBoundByDuty)
             {
@@ -706,14 +760,23 @@ public class FastWorldTravel : ModuleBase
             }
 
             // 都在后台了就不要 DDOS 拂晓服务器了
-            if (Throttler.Shared.Throttle("FastWorldTravel-OnAddonUpdate-RequestQueueTime", GameState.IsForeground ? 15_000U : 60_000))
+            if (Throttler.Shared.Throttle
+                (
+                    "FastWorldTravel-OnAddonUpdate-RequestQueueTime",
+                    GameState.IsForeground ?
+                        15_000U :
+                        60_000
+                ))
                 RequestWaitTimeInfoUpdate();
 
             if (Throttler.Shared.Throttle("FastWorldTravel-OnAddonUpdate-UpdateQueueTime", 1_000))
                 UpdateWaitTimeInfo();
         }
 
-        protected override unsafe void OnFinalize(AtkUnitBase* addon)
+        protected override unsafe void OnFinalize
+        (
+            AtkUnitBase* addon
+        )
         {
             ContextMenuService?.Dispose();
             ContextMenuService = null;
@@ -811,7 +874,12 @@ public class FastWorldTravel : ModuleBase
             return mainLayoutContainer;
         }
 
-        private unsafe SimpleComponentNode CreateDataCenterColumn(uint dcID, List<KeyValuePair<uint, World>> worlds, ref int maxWorldCount)
+        private unsafe SimpleComponentNode CreateDataCenterColumn
+        (
+            uint                            dcID,
+            List<KeyValuePair<uint, World>> worlds,
+            ref int                         maxWorldCount
+        )
         {
             const float COLUMN_WIDTH                = 150f;
             const float HEADER_HEIGHT               = 30f;
@@ -1026,7 +1094,10 @@ public class FastWorldTravel : ModuleBase
 
         private bool disposed;
 
-        public WorldMonitor(Func<uint, (bool, uint)> checkLogic)
+        public WorldMonitor
+        (
+            Func<uint, (bool, uint)> checkLogic
+        )
         {
             checkLogicFunc = checkLogic;
             _              = ProcessChannelRequestsAsync(serviceCts.Token);
@@ -1058,7 +1129,10 @@ public class FastWorldTravel : ModuleBase
             serviceCts.Dispose();
         }
 
-        public void AddMonitor(uint dcID)
+        public void AddMonitor
+        (
+            uint dcID
+        )
         {
             if (disposed)
                 throw new ObjectDisposedException(nameof(WorldMonitor));
@@ -1074,7 +1148,10 @@ public class FastWorldTravel : ModuleBase
             }
         }
 
-        public void RemoveMonitor(uint dcID)
+        public void RemoveMonitor
+        (
+            uint dcID
+        )
         {
             if (disposed) return;
 
@@ -1104,7 +1181,10 @@ public class FastWorldTravel : ModuleBase
         public IEnumerable<uint> GetActiveMonitors() =>
             activeMonitors.Keys;
 
-        private async Task ProcessChannelRequestsAsync(CancellationToken serviceToken)
+        private async Task ProcessChannelRequestsAsync
+        (
+            CancellationToken serviceToken
+        )
         {
             try
             {
@@ -1133,7 +1213,11 @@ public class FastWorldTravel : ModuleBase
             }
         }
 
-        private async Task MonitorRoutineAsync(uint dcID, CancellationTokenSource cts)
+        private async Task MonitorRoutineAsync
+        (
+            uint                    dcID,
+            CancellationTokenSource cts
+        )
         {
             try
             {
@@ -1175,11 +1259,11 @@ public class FastWorldTravel : ModuleBase
     private IPCSubscriber<object> markNextAutoLoginHandledIPC;
 
     #endregion
-    
+
     #region 常量
 
     private const string COMMAND = "worldtravel";
-    
+
     private const string MODULE_NAME_AUTO_LOGIN = "AutoLogin";
 
     private static readonly FrozenSet<uint> WorldTravelValidZones = [132, 129, 130];

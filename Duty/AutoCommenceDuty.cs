@@ -22,11 +22,15 @@ public class AutoCommenceDuty : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinderConfirm", OnAddonSetup);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw,   "ContentsFinderConfirm", OnAddonSetup);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSetup);
 
-    private static unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
+    private static unsafe void OnAddonSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (args.Addon == nint.Zero) return;
 

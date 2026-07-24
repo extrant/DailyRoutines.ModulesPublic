@@ -11,7 +11,6 @@ using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.OmenService;
 
@@ -28,7 +27,7 @@ public partial class AutoOpenMapLinks : ModuleBase
     };
 
     private Config config = null!;
-    
+
     private readonly AutoOpenMapLinksMenuItem autoOpenMapLinksItem;
 
     public AutoOpenMapLinks() =>
@@ -47,7 +46,7 @@ public partial class AutoOpenMapLinks : ModuleBase
         DService.Instance().Chat.ChatMessage         -= HandleChatMessage;
         DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpen;
     }
-    
+
     protected override void ConfigUI()
     {
         if (ImGui.Checkbox(Lang.Get("AutoOpenMapLinks-AutoFocusFlag"), ref config.IsFlagCentered))
@@ -168,7 +167,10 @@ public partial class AutoOpenMapLinks : ModuleBase
         }
     }
 
-    private void OnMenuOpen(IMenuOpenedArgs args)
+    private void OnMenuOpen
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!autoOpenMapLinksItem.IsDisplay(args)) return;
         args.AddMenuItem(autoOpenMapLinksItem.Get());
@@ -209,7 +211,13 @@ public partial class AutoOpenMapLinks : ModuleBase
         }
     }
 
-    private unsafe void SetFlag(uint territoryID, uint mapID, int x, int y)
+    private unsafe void SetFlag
+    (
+        uint territoryID,
+        uint mapID,
+        int  x,
+        int  y
+    )
     {
         if (!config.IsFlagCentered)
             DService.Instance().GameGUI.OpenMapWithMapLink(new(territoryID, mapID, x, y));
@@ -237,21 +245,29 @@ public partial class AutoOpenMapLinks : ModuleBase
         public HashSet<string>      WhitelistPlayer  = [];
     }
 
-    private class AutoOpenMapLinksMenuItem(AutoOpenMapLinks module) : MenuItemBase
+    private class AutoOpenMapLinksMenuItem
+    (
+        AutoOpenMapLinks module
+    ) : MenuItemBase
     {
         public override string Name       { get; protected set; } = Lang.Get("AutoOpenMapLinks-ClickMenu");
         public override string Identifier { get; protected set; } = nameof(AutoOpenMapLinks);
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
-            if (args.Target is not MenuTargetDefault target) 
+            if (args.Target is not MenuTargetDefault target)
                 return;
             if (target.TargetCharacter == null               &&
                 string.IsNullOrWhiteSpace(target.TargetName) &&
-                target.TargetHomeWorld.ValueNullable == null) 
+                target.TargetHomeWorld.ValueNullable == null)
                 return;
 
-            var playerName  = target.TargetCharacter != null ? target.TargetCharacter.Name : target.TargetName;
+            var playerName = target.TargetCharacter != null ?
+                                 target.TargetCharacter.Name :
+                                 target.TargetName;
             var playerWorld = target.TargetCharacter?.HomeWorld ?? target.TargetHomeWorld;
 
             var id = $"{playerName}@{playerWorld.ValueNullable?.Name}";
@@ -259,7 +275,10 @@ public partial class AutoOpenMapLinks : ModuleBase
                 NotifyHelper.Instance().NotificationWarning(Lang.Get("AutoOpenMapLinks-AlreadyExistedInList"));
         }
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault target) return false;
 
@@ -273,10 +292,10 @@ public partial class AutoOpenMapLinks : ModuleBase
             };
         }
     }
-    
+
     #region 常量
-    
+
     private static FrozenSet<XivChatType> ValidChatTypes { get; } = [.. Enum.GetValues<XivChatType>()];
-    
+
     #endregion
 }

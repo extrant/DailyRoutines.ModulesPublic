@@ -17,20 +17,24 @@ public class AutoLockGameWindow : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["status102"]
     };
-    
+
     private          bool isLocked;
     private readonly Lock objectLock = new();
 
-    protected override void Init() => 
+    protected override void Init() =>
         DService.Instance().Condition.ConditionChange += OnConditionChange;
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange -= OnConditionChange;
         WindowLock.Cleanup();
     }
 
-    private void OnConditionChange(ConditionFlag flag, bool value)
+    private void OnConditionChange
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
 
@@ -65,22 +69,44 @@ public class AutoLockGameWindow : ModuleBase
         private static readonly Dictionary<nint, WndProcDelegate> WndProcDelegates = [];
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern nint SetWindowLongPtr(nint hWnd, int nIndex, nint newProc);
+        private static extern nint SetWindowLongPtr
+        (
+            nint hWnd,
+            int  nIndex,
+            nint newProc
+        );
 
         [DllImport("user32.dll")]
-        private static extern nint CallWindowProc(nint lpPrevWndFunc, nint hWnd, uint uMsg, nint wParam, nint lParam);
+        private static extern nint CallWindowProc
+        (
+            nint lpPrevWndFunc,
+            nint hWnd,
+            uint uMsg,
+            nint wParam,
+            nint lParam
+        );
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetWindowRect(nint hWnd, out Rect lpRect);
+        private static extern bool GetWindowRect
+        (
+            nint     hWnd,
+            out Rect lpRect
+        );
 
-        public static void LockWindowByHandle(nint hWnd)
+        public static void LockWindowByHandle
+        (
+            nint hWnd
+        )
         {
             if (hWnd == nint.Zero) return;
             SubclassWindow(hWnd);
         }
 
-        public static void UnlockWindow(nint hWnd)
+        public static void UnlockWindow
+        (
+            nint hWnd
+        )
         {
             if (hWnd != nint.Zero && WindowProcMap.TryGetValue(hWnd, out var oldProc))
             {
@@ -90,7 +116,10 @@ public class AutoLockGameWindow : ModuleBase
             }
         }
 
-        private static void SubclassWindow(nint hWnd)
+        private static void SubclassWindow
+        (
+            nint hWnd
+        )
         {
             var newWndProc = new WndProcDelegate(NewWindowProc);
             var newProcPtr = Marshal.GetFunctionPointerForDelegate(newWndProc);
@@ -106,7 +135,13 @@ public class AutoLockGameWindow : ModuleBase
             }
         }
 
-        private static nint NewWindowProc(nint hWnd, uint uMsg, nint wParam, nint lParam)
+        private static nint NewWindowProc
+        (
+            nint hWnd,
+            uint uMsg,
+            nint wParam,
+            nint lParam
+        )
         {
             if (uMsg == WM_WINDOWPOSCHANGING)
             {
@@ -152,6 +187,12 @@ public class AutoLockGameWindow : ModuleBase
             public uint flags;
         }
 
-        private delegate nint WndProcDelegate(nint hWnd, uint uMsg, nint wParam, nint lParam);
+        private delegate nint WndProcDelegate
+        (
+            nint hWnd,
+            uint uMsg,
+            nint wParam,
+            nint lParam
+        );
     }
 }

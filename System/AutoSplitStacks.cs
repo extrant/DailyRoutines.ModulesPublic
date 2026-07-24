@@ -1,10 +1,8 @@
-using System.Numerics;
 using DailyRoutines.Common.Info.Abstractions;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using DailyRoutines.Manager;
 using Dalamud.Game.Gui.ContextMenu;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -29,8 +27,17 @@ public unsafe class AutoSplitStacks : ModuleBase
 
     private Config config = null!;
 
-    private readonly ItemSelectCombo itemSelectCombo =
-        new
+    private ItemSelectCombo    itemSelectCombo        = null!;
+    private FastSplitItemStack fastSplitItemStackMenu = null!;
+
+    private string itemSearchInput  = string.Empty;
+    private int    splitAmountInput = 1;
+    private uint   fastSplitItemID;
+    private bool   isNeedToOpen;
+
+    protected override void Init()
+    {
+        itemSelectCombo = new
         (
             "Item",
             LuminaGetter.Get<Item>()
@@ -42,27 +49,17 @@ public unsafe class AutoSplitStacks : ModuleBase
                         .GroupBy(x => x.Name.ToString())
                         .Select(x => x.First())
         );
-    private readonly FastSplitItemStack fastSplitItemStackMenu;
-    
-    private string itemSearchInput  = string.Empty;
-    private int    splitAmountInput = 1;
-    private uint   fastSplitItemID;
-    private bool   isNeedToOpen;
-
-    public AutoSplitStacks() =>
         fastSplitItemStackMenu = new(this);
 
-    protected override void Init()
-    {
-        TaskHelper   = new();
-        config = Config.Load(this) ?? new();
+        TaskHelper = new();
+        config     = Config.Load(this) ?? new();
 
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoSplitStacks-CommandHelp") });
         DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
 
         WindowManager.Instance().PostDraw += OnDraw;
     }
-    
+
     protected override void Uninit()
     {
         WindowManager.Instance().PostDraw -= OnDraw;
@@ -170,6 +167,7 @@ public unsafe class AutoSplitStacks : ModuleBase
                         ))
                     {
                         var newGroup = new SplitGroup(itemSelectCombo.SelectedID, splitAmountInput);
+
                         if (!config.SplitGroups.Contains(newGroup))
                         {
                             config.SplitGroups.Add(newGroup);
@@ -252,7 +250,11 @@ public unsafe class AutoSplitStacks : ModuleBase
         }
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
         if (string.IsNullOrWhiteSpace(args)) return;
@@ -279,7 +281,10 @@ public unsafe class AutoSplitStacks : ModuleBase
         }
     }
 
-    private void OnMenuOpened(IMenuOpenedArgs args)
+    private void OnMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
         if (iTarget.TargetItem.Value.Quantity <= 1) return;
@@ -287,17 +292,28 @@ public unsafe class AutoSplitStacks : ModuleBase
         args.AddMenuItem(fastSplitItemStackMenu.Get());
     }
 
-    private void EnqueueSplit(SplitGroup group) => 
+    private void EnqueueSplit
+    (
+        SplitGroup group
+    ) =>
         EnqueueSplit(group.ItemID, group.Amount);
 
-    private void EnqueueSplit(uint itemID, int amount)
+    private void EnqueueSplit
+    (
+        uint itemID,
+        int  amount
+    )
     {
         TaskHelper.Enqueue(() => ClickItemToSplit(itemID, amount));
         TaskHelper.DelayNext(100, $"SplitRound_{itemID}_{amount}");
         TaskHelper.Enqueue(() => EnqueueSplit(itemID, amount));
     }
 
-    private bool ClickItemToSplit(uint itemID, int amount)
+    private bool ClickItemToSplit
+    (
+        uint itemID,
+        int  amount
+    )
     {
         if (InputNumeric != null || itemID == 0 || amount == 0)
         {
@@ -370,7 +386,13 @@ public unsafe class AutoSplitStacks : ModuleBase
         return true;
     }
 
-    private void EnqueueOperations(uint itemID, InventoryType foundType, int foundSlot, int amount)
+    private void EnqueueOperations
+    (
+        uint          itemID,
+        InventoryType foundType,
+        int           foundSlot,
+        int           amount
+    )
     {
         TaskHelper.DelayNext(20, $"ContextMenu_{itemID}_{foundType}_{foundSlot}", 2);
         TaskHelper.Enqueue
@@ -396,7 +418,7 @@ public unsafe class AutoSplitStacks : ModuleBase
             weight: 2
         );
     }
-    
+
     private class Config : ModuleConfig
     {
         public List<SplitGroup> SplitGroups = [];
@@ -406,7 +428,11 @@ public unsafe class AutoSplitStacks : ModuleBase
     {
         public SplitGroup() { }
 
-        public SplitGroup(uint itemID, int amount)
+        public SplitGroup
+        (
+            uint itemID,
+            int  amount
+        )
         {
             ItemID = itemID;
             Amount = amount;
@@ -416,7 +442,10 @@ public unsafe class AutoSplitStacks : ModuleBase
         public uint ItemID    { get; set; }
         public int  Amount    { get; set; }
 
-        public bool Equals(SplitGroup? other)
+        public bool Equals
+        (
+            SplitGroup? other
+        )
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -424,7 +453,10 @@ public unsafe class AutoSplitStacks : ModuleBase
             return ItemID == other.ItemID;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
         {
             if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -435,14 +467,20 @@ public unsafe class AutoSplitStacks : ModuleBase
         public override int GetHashCode() => (int)ItemID;
     }
 
-    private class FastSplitItemStack(AutoSplitStacks module) : MenuItemBase
+    private class FastSplitItemStack
+    (
+        AutoSplitStacks module
+    ) : MenuItemBase
     {
         public override string Name       { get; protected set; } = Lang.Get("AutoSplitStacks-FastSplit");
         public override string Identifier { get; protected set; } = nameof(AutoSplitStacks);
 
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             if (args.Target is not MenuTargetInventory { TargetItem: not null } iTarget) return;
             if (iTarget.TargetItem.Value.Quantity <= 1) return;
@@ -451,7 +489,7 @@ public unsafe class AutoSplitStacks : ModuleBase
             module.isNeedToOpen    = true;
         }
     }
-    
+
     #region 常量
 
     private const string COMMAND = "/pdrsplit";

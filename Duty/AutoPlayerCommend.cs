@@ -35,17 +35,17 @@ public unsafe class AutoPlayerCommend : ModuleBase
     }
 
     private Config config = null!;
-    
-    private readonly AssignPlayerCommendationMenu menuItem;
-    private readonly ContentSelectCombo           contentSelectCombo = new("Content");
+
+    private AssignPlayerCommendationMenu menuItem           = null!;
+    private ContentSelectCombo           contentSelectCombo = null!;
 
     private ulong assignedContentID;
 
-    public AutoPlayerCommend() =>
-        menuItem = new(this);
-
     protected override void Init()
     {
+        menuItem           = new(this);
+        contentSelectCombo = new("Content");
+
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new() { TimeoutMS = 10_000 };
 
@@ -86,16 +86,25 @@ public unsafe class AutoPlayerCommend : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         assignedContentID = 0;
 
-    private void OnMenuOpen(IMenuOpenedArgs args)
+    private void OnMenuOpen
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!menuItem.IsDisplay(args)) return;
         args.AddMenuItem(menuItem.Get());
     }
 
-    private void OnDutyComplete(IDutyStateEventArgs args)
+    private void OnDutyComplete
+    (
+        IDutyStateEventArgs args
+    )
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
         if (config.BlacklistContents.Contains(GameState.ContentFinderCondition)) return;
@@ -190,9 +199,9 @@ public unsafe class AutoPlayerCommend : ModuleBase
                                            x.Key.Role is PlayerRole.MeleeDPS or PlayerRole.RangedDPS)
                                        {
                                            return selfRole     == x.Key.Role &&
-                                                  selfCategory == x.Key.ClassJobCategory
-                                                      ? 1
-                                                      : 0;
+                                                  selfCategory == x.Key.ClassJobCategory ?
+                                                      1 :
+                                                      0;
                                        }
 
                                        // T / 奶
@@ -222,9 +231,9 @@ public unsafe class AutoPlayerCommend : ModuleBase
                                    {
                                        PlayerRole.Tank or PlayerRole.Healer
                                            => x.Key.Role
-                                                  is PlayerRole.Tank or PlayerRole.Healer
-                                                  ? 1
-                                                  : 0,
+                                                  is PlayerRole.Tank or PlayerRole.Healer ?
+                                                  1 :
+                                                  0,
 
                                        PlayerRole.MeleeDPS => x.Key.Role switch
                                        {
@@ -277,7 +286,12 @@ public unsafe class AutoPlayerCommend : ModuleBase
         NotifyHelper.Instance().ChatError(Lang.Get("AutoPlayerCommend-ErrorWhenGiveCommendationMessage"));
         return true;
 
-        bool TryFindPlayerIndex(string playerName, uint playerJob, out int playerIndex)
+        bool TryFindPlayerIndex
+        (
+            string  playerName,
+            uint    playerJob,
+            out int playerIndex
+        )
         {
             playerIndex = -1;
 
@@ -305,7 +319,10 @@ public unsafe class AutoPlayerCommend : ModuleBase
         }
     }
 
-    private static PlayerRole GetCharacterJobRole(byte rawRole) =>
+    private static PlayerRole GetCharacterJobRole
+    (
+        byte rawRole
+    ) =>
         rawRole switch
         {
             1 => PlayerRole.Tank,
@@ -338,30 +355,38 @@ public unsafe class AutoPlayerCommend : ModuleBase
         public override string Name       { get; protected set; } = Lang.Get("AutoPlayerCommend-AssignPlayerCommend");
         public override string Identifier { get; protected set; } = nameof(AutoPlayerCommend);
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
             if (!DService.Instance().Condition[ConditionFlag.BoundByDuty]) return false;
             if (args.MenuType != ContextMenuType.Default    ||
                 args.Target is not MenuTargetDefault target ||
-                target.TargetCharacter == null && target.TargetContentId == 0) return false;
+                (target.TargetCharacter == null && target.TargetContentId == 0)) return false;
 
             return true;
         }
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault target) return;
             if (target.TargetCharacter == null && target.TargetContentId == 0) return;
 
-            var contentID   = target.TargetCharacter?.ContentId ?? target.TargetContentId;
-            var playerName  = target.TargetCharacter != null ? target.TargetCharacter.Name : target.TargetName;
+            var contentID = target.TargetCharacter?.ContentId ?? target.TargetContentId;
+            var playerName = target.TargetCharacter != null ?
+                                 target.TargetCharacter.Name :
+                                 target.TargetName;
             var playerWorld = target.TargetCharacter?.HomeWorld ?? target.TargetHomeWorld;
 
             NotifyHelper.Instance().NotificationInfo
             (
-                contentID == LocalPlayerState.ContentID
-                    ? Lang.Get("AutoPlayerCommend-GiveNobodyCommendMessage")
-                    : Lang.Get("AutoPlayerCommend-AssignPlayerCommendMessage", playerName, playerWorld.Value.Name.ToString())
+                contentID == LocalPlayerState.ContentID ?
+                    Lang.Get("AutoPlayerCommend-GiveNobodyCommendMessage") :
+                    Lang.Get("AutoPlayerCommend-AssignPlayerCommendMessage", playerName, playerWorld.Value.Name.ToString())
             );
 
             module.assignedContentID = contentID;

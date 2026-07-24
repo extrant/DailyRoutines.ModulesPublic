@@ -31,6 +31,7 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
     };
 
     private static readonly CompSig UpdateMarkerLocalSig = new("E8 ?? ?? ?? ?? 4C 8B C5 8B D7 48 8B CB E8");
+
     private delegate void UpdateMarkerLocalDelegate
     (
         MarkingController* controller,
@@ -38,11 +39,12 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         GameObjectId       objectID,
         uint               entityID
     );
+
     private Hook<UpdateMarkerLocalDelegate>? UpdateMarkerLocalHook;
 
     private Config config = null!;
 
-    private readonly (short X, short Y)  basePosition  = (41, 35);
+    private readonly (short X, short Y)   basePosition  = (41, 35);
     private readonly Dictionary<int, int> markedObjects = new(8); // markID → memberIndex
     private readonly List<IconImageNode>  nodes         = new(8);
 
@@ -77,6 +79,7 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         var iconOffset = config.IconOffset;
         ImGui.SetNextItemWidth(200f * GlobalUIScale);
         ImGui.InputFloat2(Lang.Get("IconOffset"), ref iconOffset, format: "%.1f");
+
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
             config.IconOffset = iconOffset;
@@ -113,14 +116,17 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint zone)
+    private void OnZoneChanged
+    (
+        uint zone
+    )
     {
         for (var i = 0; i < 8; i++)
             SetNode(i, null);
         markedObjects.Clear();
         ModifyPartyMemberNumber(true);
     }
-    
+
     private void UpdateMarkerLocalDetour
     (
         MarkingController* controller,
@@ -133,7 +139,11 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         UpdateMarkerLocalHook.Original(controller, marker, objectID, entityID);
     }
 
-    private void OnPartyList(AddonEvent type, AddonArgs args)
+    private void OnPartyList
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -165,6 +175,7 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
                         return;
 
                     var markers = MarkingController.Instance()->Markers;
+
                     for (var i = 0; i < markers.Length; i++)
                     {
                         var gameObjectID = markers[i].ObjectId;
@@ -180,7 +191,10 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         }
     }
 
-    private void ModifyPartyMemberNumber(bool visible)
+    private void ModifyPartyMemberNumber
+    (
+        bool visible
+    )
     {
         if (!PartyList->IsAddonAndNodesReady() || (!config.HidePartyListIndexNumber && !visible))
             return;
@@ -197,12 +211,17 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         }
     }
 
-    private void ProcessMarkIconSetted(uint markIndex, uint entityID)
+    private void ProcessMarkIconSetted
+    (
+        uint markIndex,
+        uint entityID
+    )
     {
         if (AgentHUD.Instance() == null || InfoProxyCrossRealm.Instance() == null || !PartyList->IsAddonAndNodesReady())
             return;
 
         var mark = (int)(markIndex + 1);
+
         if (mark <= 0 || mark > LuminaGetter.Get<Marker>().Count || !LuminaGetter.TryGetRow((uint)mark, out Marker markerRow))
         {
             if (FindMember(entityID, out var memberIndex))
@@ -232,7 +251,10 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         ModifyPartyMemberNumber(false);
     }
 
-    private void ClearMemberMark(int memberIndex)
+    private void ClearMemberMark
+    (
+        int memberIndex
+    )
     {
         foreach (var kv in markedObjects)
         {
@@ -241,11 +263,15 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
             SetNode(memberIndex, null);
             break;
         }
+
         if (markedObjects.Count == 0)
             ModifyPartyMemberNumber(true);
     }
 
-    private void ClearMark(int markID)
+    private void ClearMark
+    (
+        int markID
+    )
     {
         if (markedObjects.Remove(markID, out var memberIndex))
             SetNode(memberIndex, null);
@@ -253,7 +279,11 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
             ModifyPartyMemberNumber(true);
     }
 
-    private void SetNode(int i, int? iconID)
+    private void SetNode
+    (
+        int  i,
+        int? iconID
+    )
     {
         if (i < 0 || i >= nodes.Count || !PartyList->IsAddonAndNodesReady())
             return;
@@ -270,18 +300,20 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         node.Size        = new(config.Size);
     }
 
-    private static bool FindMember(uint entityID, out int index)
+    private static bool FindMember
+    (
+        uint    entityID,
+        out int index
+    )
     {
         var pAgentHUD = AgentHUD.Instance();
 
         for (var i = 0; i < pAgentHUD->PartyMemberCount; ++i)
-        {
             if (entityID == pAgentHUD->PartyMembers[i].EntityId)
             {
                 index = i;
                 return true;
             }
-        }
 
         if (InfoProxyCrossRealm.Instance()->IsCrossRealm)
         {

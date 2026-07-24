@@ -21,23 +21,25 @@ public unsafe class AutoMateriaRetrive : ModuleBase
         Description = Lang.Get("AutoMateriaRetriveDescription"),
         Category    = ModuleCategory.System
     };
-    
+
     private Hook<EventFramework.Delegates.MaterializeItem>? RetriveMateriaHook;
 
-    private readonly ItemSelectCombo itemSelectCombo = new
-    (
-        "Item",
-        LuminaGetter.Get<Item>()
-                    .Where(x => x.MateriaSlotCount > 0 && !string.IsNullOrEmpty(x.Name.ToString()))
-                    .GroupBy(x => x.Name.ToString())
-                    .Select(x => x.First())
-                    .ToList()
-    );
+    private ItemSelectCombo itemSelectCombo = null!;
 
     protected override void Init()
     {
+        itemSelectCombo = new
+        (
+            "Item",
+            LuminaGetter.Get<Item>()
+                        .Where(x => x.MateriaSlotCount > 0 && !string.IsNullOrEmpty(x.Name.ToString()))
+                        .GroupBy(x => x.Name.ToString())
+                        .Select(x => x.First())
+                        .ToList()
+        );
+
         TaskHelper ??= new() { TimeoutMS = 5_000 };
-        
+
         RetriveMateriaHook = DService.Instance().Hook.HookFromMemberFunction
         (
             typeof(EventFramework.MemberFunctionPointers),
@@ -73,7 +75,10 @@ public unsafe class AutoMateriaRetrive : ModuleBase
         }
     }
 
-    private void EnqueueRetriveTaskByItemID(uint itemID)
+    private void EnqueueRetriveTaskByItemID
+    (
+        uint itemID
+    )
     {
         TaskHelper.Abort();
 
@@ -121,7 +126,11 @@ public unsafe class AutoMateriaRetrive : ModuleBase
         );
     }
 
-    private void EnqueueRetriveTask(InventoryType inventoryType, short inventorySlot)
+    private void EnqueueRetriveTask
+    (
+        InventoryType inventoryType,
+        short         inventorySlot
+    )
     {
         TaskHelper.Abort();
 
@@ -193,10 +202,21 @@ public unsafe class AutoMateriaRetrive : ModuleBase
         );
     }
 
-    private void Retrive(InventoryType type, short slot) =>
+    private void Retrive
+    (
+        InventoryType type,
+        short         slot
+    ) =>
         RetriveMateriaHook.Original(EventFramework.Instance(), EVENT_ID, type, slot, 0);
 
-    private void RetriveMateriaDetour(EventFramework* framework, EventId eventID, InventoryType inventoryType, short inventorySlot, int extraParam)
+    private void RetriveMateriaDetour
+    (
+        EventFramework* framework,
+        EventId         eventID,
+        InventoryType   inventoryType,
+        short           inventorySlot,
+        int             extraParam
+    )
     {
         RetriveMateriaHook.Original(framework, eventID, inventoryType, inventorySlot, extraParam);
         if (eventID == EVENT_ID && !TaskHelper.IsBusy)

@@ -10,7 +10,6 @@ using DailyRoutines.Manager;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Interface.Components;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using OmenTools.Dalamud.Attributes;
@@ -35,18 +34,34 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
-    private static readonly CompSig                            CameraUpdateRotationSig = new("40 53 48 81 EC ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 48 8B D9 44 0F 29 54 24");
-    private delegate        void                               CameraUpdateRotationDelegate(Camera* camera);
-    private                 Hook<CameraUpdateRotationDelegate> CameraUpdateRotationHook;
 
-    private static readonly CompSig                      UpdateVisualRotationSig = new("40 53 48 83 EC ?? 83 B9 ?? ?? ?? ?? ?? 48 8B D9 0F 85 ?? ?? ?? ?? F6 81");
-    private delegate        void*                        UpdateVisualRotationDelegate(GameObject* gameObject);
-    private readonly        UpdateVisualRotationDelegate UpdateVisualRotation    = UpdateVisualRotationSig.GetDelegate<UpdateVisualRotationDelegate>();
+    private CompSig cameraUpdateRotationSig = null!;
 
-    private static readonly CompSig                    SetRotationSig = new("40 53 48 83 EC ?? F3 0F 10 81 ?? ?? ?? ?? 48 8B D9 0F 2E C1");
-    private delegate        void                       SetRotationDelegate(GameObject* gameObject, float rotation);
-    private                 Hook<SetRotationDelegate>? SetRotationHook;
+    private delegate void CameraUpdateRotationDelegate
+    (
+        Camera* camera
+    );
+
+    private Hook<CameraUpdateRotationDelegate> CameraUpdateRotationHook;
+
+    private CompSig updateVisualRotationSig = null!;
+
+    private delegate void* UpdateVisualRotationDelegate
+    (
+        GameObject* gameObject
+    );
+
+    private UpdateVisualRotationDelegate UpdateVisualRotation = null!;
+
+    private CompSig setRotationSig = null!;
+
+    private delegate void SetRotationDelegate
+    (
+        GameObject* gameObject,
+        float       rotation
+    );
+
+    private Hook<SetRotationDelegate>? SetRotationHook;
 
     private Config config = null!;
 
@@ -65,12 +80,16 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        cameraUpdateRotationSig = new("40 53 48 81 EC ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 48 8B D9 44 0F 29 54 24");
+        updateVisualRotationSig = new("40 53 48 83 EC ?? 83 B9 ?? ?? ?? ?? ?? 48 8B D9 0F 85 ?? ?? ?? ?? F6 81");
+        setRotationSig          = new("40 53 48 83 EC ?? F3 0F 10 81 ?? ?? ?? ?? 48 8B D9 0F 2E C1");
+        UpdateVisualRotation    = updateVisualRotationSig.GetDelegate<UpdateVisualRotationDelegate>();
+        config                  = Config.Load(this) ?? new();
 
-        CameraUpdateRotationHook ??= CameraUpdateRotationSig.GetHook<CameraUpdateRotationDelegate>(CameraUpdateRotationDetour);
+        CameraUpdateRotationHook ??= cameraUpdateRotationSig.GetHook<CameraUpdateRotationDelegate>(CameraUpdateRotationDetour);
         CameraUpdateRotationHook.Enable();
 
-        SetRotationHook ??= SetRotationSig.GetHook<SetRotationDelegate>(SetRotationDetour);
+        SetRotationHook ??= setRotationSig.GetHook<SetRotationDelegate>(SetRotationDetour);
         SetRotationHook.Enable();
 
         GamePacketManager.Instance().RegPreSendPacket(OnPreSendPacket);
@@ -167,7 +186,11 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
             ImGui.TextUnformatted($"{cacheCamera->DirH:F2} → {RotationHelper.CameraDirHToChara(cacheCamera->DirH):F2}");
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim().ToLowerInvariant();
 
@@ -185,8 +208,10 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
             return;
         }
 
-        var typeRaw  = arguments[0];
-        var valueRaw = arguments.Length == 2 ? arguments[1] : string.Empty;
+        var typeRaw = arguments[0];
+        var valueRaw = arguments.Length == 2 ?
+                           arguments[1] :
+                           string.Empty;
 
         switch (typeRaw)
         {
@@ -238,16 +263,27 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
         return;
 
-        void NotifyCommandError()
-        {
+        void NotifyCommandError() =>
             NotifyHelper.Instance().NotificationError(Lang.Get("Commands-InvalidArgs", command, args));
-        }
     }
 
-    private void OnPostUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7) =>
+    private void OnPostUseAction
+    (
+        bool       result,
+        ActionType actionType,
+        uint       actionID,
+        ulong      targetID,
+        Vector3    location,
+        uint       extraParam,
+        byte       a7
+    ) =>
         OnUpdate(DService.Instance().Framework);
 
-    private void SetRotationDetour(GameObject* gameObject, float rotation)
+    private void SetRotationDetour
+    (
+        GameObject* gameObject,
+        float       rotation
+    )
     {
         if (gameObject == null || gameObject->EntityId != LocalPlayerState.EntityID || ShouldSkipUpdate())
         {
@@ -260,7 +296,10 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     }
 
     // 主动发包
-    private void OnUpdate(IFramework framework)
+    private void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (MathF.Abs(lastSendedRotation - cameraCharaRotation) < 0.001f) return;
 
@@ -273,7 +312,9 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
         var currentTick = Environment.TickCount64;
         var isDuty      = GameState.ContentFinderCondition != 0;
-        var interval    = isDuty ? 33 : 100;
+        var interval = isDuty ?
+                           33 :
+                           100;
 
         SetLocalRotation((GameObject*)localPlayer, cameraCharaRotation);
 
@@ -295,15 +336,26 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     }
 
     // 获取摄像机到人物的旋转角度
-    private void CameraUpdateRotationDetour(Camera* camera)
+    private void CameraUpdateRotationDetour
+    (
+        Camera* camera
+    )
     {
         CameraUpdateRotationHook.Original(camera);
         cacheCamera = camera;
 
-        cameraCharaRotation = lockOn ? lockOnRotation : RotationHelper.CameraDirHToChara(camera->DirH);
+        cameraCharaRotation = lockOn ?
+                                  lockOnRotation :
+                                  RotationHelper.CameraDirHToChara(camera->DirH);
     }
 
-    private void OnPreSendPacket(ref bool isPrevented, int opcode, ref nint packet, ref bool isPrioritize)
+    private void OnPreSendPacket
+    (
+        ref bool isPrevented,
+        int      opcode,
+        ref nint packet,
+        ref bool isPrioritize
+    )
     {
         if (cacheCamera == null || !ValidOpcodes.Contains(opcode) || ShouldSkipUpdate()) return;
 
@@ -341,7 +393,11 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         }
     }
 
-    private void SetLocalRotation(GameObject* gameObject, float value)
+    private void SetLocalRotation
+    (
+        GameObject* gameObject,
+        float       value
+    )
     {
         if (MathF.Abs(gameObject->Rotation - value) < 0.001f) return;
 
@@ -365,7 +421,10 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     #region IPC
 
     [IPCProvider("DailyRoutines.Modules.AutoFaceCameraDirection.SetWorkMode")]
-    private void SetWorkModeIPC(bool workMode) => 
+    private void SetWorkModeIPC
+    (
+        bool workMode
+    ) =>
         config.WorkMode = workMode;
 
     [IPCProvider("DailyRoutines.Modules.AutoFaceCameraDirection.CancelLockOn")]
@@ -376,7 +435,10 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     }
 
     [IPCProvider("DailyRoutines.Modules.AutoFaceCameraDirection.LockOnGround")]
-    private bool LockOnGroundIPC(string rotation)
+    private bool LockOnGroundIPC
+    (
+        string rotation
+    )
     {
         if (!WorldDirectionToNormalizedDirection.TryGetValue(rotation, out var dirGround))
             return false;
@@ -388,21 +450,27 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
     }
 
     [IPCProvider("DailyRoutines.Modules.AutoFaceCameraDirection.LockOnChara")]
-    private void LockOnCharaIPC(float rotation)
+    private void LockOnCharaIPC
+    (
+        float rotation
+    )
     {
         lockOnRotation = rotation;
         lockOn         = true;
     }
 
     [IPCProvider("DailyRoutines.Modules.AutoFaceCameraDirection.LockOnCamera")]
-    private void LockOnCameraIPC(float rotation)
+    private void LockOnCameraIPC
+    (
+        float rotation
+    )
     {
         lockOnRotation = RotationHelper.CameraDirHToChara(rotation);
         lockOn         = true;
     }
 
     #endregion
-    
+
 
     private class Config : ModuleConfig
     {
@@ -410,7 +478,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         // false - 按下打断热键则不保持人物面向与摄像机一致
         public bool WorkMode;
     }
-    
+
     #region 常量
 
     private const string COMMAND = "/pdrface";
@@ -436,7 +504,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         PositionUpdateInstancePacket.MoveType.NormalMove2,
         PositionUpdateInstancePacket.MoveType.NormalMove3
     ];
-    
+
     private static readonly FrozenDictionary<string, Vector2> WorldDirectionToNormalizedDirection = new Dictionary<string, Vector2>
     {
         ["south"]     = new(0, 1),
@@ -448,7 +516,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         ["northwest"] = new(-0.707f, -0.707f),
         ["southwest"] = new(-0.707f, 0.707f)
     }.ToFrozenDictionary();
-    
+
     private static readonly string GroundValuesString = string.Join(" / ", WorldDirectionToNormalizedDirection.Keys);
 
     #endregion

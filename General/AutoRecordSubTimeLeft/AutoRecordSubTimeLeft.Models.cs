@@ -19,16 +19,19 @@ public partial class AutoRecordSubTimeLeft
         queryEndDate   = today;
     }
 
-    private void DrawSubscriptionInfo(ulong contentID)
+    private void DrawSubscriptionInfo
+    (
+        ulong contentID
+    )
     {
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), "角色信息");
 
         using var indent = ImRaii.PushIndent();
 
-        if (contentID == 0                                           ||
+        if (contentID == 0                                     ||
             !config.Infos.TryGetValue(contentID, out var info) ||
-            info.Record == DateTime.MinValue                         ||
-            info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue)
+            info.Record == DateTime.MinValue                   ||
+            (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
         {
             ImGui.TextColored(KnownColor.Orange.ToVector4(), "暂无可用信息, 请先登录至任一角色");
             return;
@@ -37,9 +40,27 @@ public partial class AutoRecordSubTimeLeft
         using var table = ImRaii.Table("AutoRecordSubTimeLeft-Subscription", 2, ImGuiTableFlags.SizingStretchProp);
         if (!table) return;
 
-        DrawKeyValueRow("上次记录",   info.Record.ToString("yyyy/MM/dd HH:mm:ss"));
-        DrawKeyValueRow("月卡剩余时间", FormatTimeSpan(info.LeftMonth == TimeSpan.MinValue ? TimeSpan.Zero : info.LeftMonth));
-        DrawKeyValueRow("点卡剩余时间", FormatTimeSpan(info.LeftTime  == TimeSpan.MinValue ? TimeSpan.Zero : info.LeftTime));
+        DrawKeyValueRow("上次记录", info.Record.ToString("yyyy/MM/dd HH:mm:ss"));
+        DrawKeyValueRow
+        (
+            "月卡剩余时间",
+            FormatTimeSpan
+            (
+                info.LeftMonth == TimeSpan.MinValue ?
+                    TimeSpan.Zero :
+                    info.LeftMonth
+            )
+        );
+        DrawKeyValueRow
+        (
+            "点卡剩余时间",
+            FormatTimeSpan
+            (
+                info.LeftTime == TimeSpan.MinValue ?
+                    TimeSpan.Zero :
+                    info.LeftTime
+            )
+        );
     }
 
     private void DrawPlaytimeStatistics()
@@ -47,7 +68,7 @@ public partial class AutoRecordSubTimeLeft
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), "游玩时间信息统计");
 
         using var indent = ImRaii.PushIndent();
-        
+
         if (tracker == null)
         {
             ImGui.TextColored(KnownColor.Orange.ToVector4(), "游玩时长跟踪器尚未初始化");
@@ -55,9 +76,9 @@ public partial class AutoRecordSubTimeLeft
         }
 
         DrawRangePresetButtons();
-        
+
         DrawDatePickerButton("开始日期", "AutoRecordSubTimeLeft-StartDate", ref queryStartDate, startDatePicker);
-        
+
         ImGui.SameLine();
         DrawDatePickerButton("结束日期", "AutoRecordSubTimeLeft-EndDate", ref queryEndDate, endDatePicker);
 
@@ -78,17 +99,17 @@ public partial class AutoRecordSubTimeLeft
                 DrawKeyValueRow
                 (
                     "单日最长游玩",
-                    stats.LongestDay == null
-                        ? "暂无数据"
-                        : $"{stats.LongestDay.Date:yyyy/MM/dd} ({FormatTimeSpan(stats.LongestDay.Duration)})"
+                    stats.LongestDay == null ?
+                        "暂无数据" :
+                        $"{stats.LongestDay.Date:yyyy/MM/dd} ({FormatTimeSpan(stats.LongestDay.Duration)})"
                 );
             }
         }
 
         ImGui.Spacing();
-        
+
         using var dayIndent = ImRaii.PushIndent();
-        
+
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), "按天明细");
 
         using var detailTable = ImRaii.Table
@@ -131,26 +152,36 @@ public partial class AutoRecordSubTimeLeft
         ImGui.Spacing();
     }
 
-    private void ApplyPresetRange(int days)
+    private void ApplyPresetRange
+    (
+        int days
+    )
     {
         var today = StandardTimeManager.Instance().Now.Date;
         queryEndDate   = today;
         queryStartDate = today.AddDays(1 - days);
     }
 
-    private static void DrawDatePickerButton(string label, string popupID, ref DateTime value, DatePicker picker)
+    private static void DrawDatePickerButton
+    (
+        string       label,
+        string       popupID,
+        ref DateTime value,
+        DatePicker   picker
+    )
     {
         ImGui.AlignTextToFramePadding();
         ImGui.TextUnformatted(label);
-        
+
         ImGui.SameLine();
         if (ImGui.Button($"{value:yyyy/MM/dd}##{popupID}"))
             ImGui.OpenPopup(popupID);
 
         using var popup = ImRaii.Popup(popupID, ImGuiWindowFlags.NoTitleBar);
         if (!popup) return;
-        
+
         var tempValue = value;
+
         if (picker.Draw($"##{popupID}-Picker", ref tempValue))
         {
             value = tempValue.Date;
@@ -169,7 +200,11 @@ public partial class AutoRecordSubTimeLeft
         (queryStartDate, queryEndDate) = (queryEndDate, queryStartDate);
     }
 
-    private static void DrawKeyValueRow(string key, string value)
+    private static void DrawKeyValueRow
+    (
+        string key,
+        string value
+    )
     {
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
@@ -178,7 +213,11 @@ public partial class AutoRecordSubTimeLeft
         ImGui.TextUnformatted(value);
     }
 
-    private static unsafe void UpdateCharacterSelectRemain(TimeSpan leftMonth, TimeSpan leftTime)
+    private static unsafe void UpdateCharacterSelectRemain
+    (
+        TimeSpan leftMonth,
+        TimeSpan leftTime
+    )
     {
         if (CharaSelectRemain == null) return;
 
@@ -193,16 +232,30 @@ public partial class AutoRecordSubTimeLeft
         );
     }
 
-    private static TimeSpan NormalizeSubscriptionTime(long totalSeconds) =>
-        totalSeconds <= 0 ? TimeSpan.MinValue : TimeSpan.FromSeconds(totalSeconds);
+    private static TimeSpan NormalizeSubscriptionTime
+    (
+        long totalSeconds
+    ) =>
+        totalSeconds <= 0 ?
+            TimeSpan.MinValue :
+            TimeSpan.FromSeconds(totalSeconds);
 
-    private static DateTime UTCToLocalDateTime(long utcTicks) =>
+    private static DateTime UTCToLocalDateTime
+    (
+        long utcTicks
+    ) =>
         new DateTime(utcTicks, DateTimeKind.Utc).ToLocalTime();
 
-    private static int ToDateKey(DateTime localDate) =>
-        localDate.Year * 10_000 + localDate.Month * 100 + localDate.Day;
+    private static int ToDateKey
+    (
+        DateTime localDate
+    ) =>
+        (localDate.Year * 10_000) + (localDate.Month * 100) + localDate.Day;
 
-    private static string FormatTimeSpan(TimeSpan timeSpan)
+    private static string FormatTimeSpan
+    (
+        TimeSpan timeSpan
+    )
     {
         if (timeSpan == TimeSpan.MinValue || timeSpan <= TimeSpan.Zero)
             return "0 秒";
@@ -218,7 +271,9 @@ public partial class AutoRecordSubTimeLeft
         if (timeSpan.Seconds > 0)
             parts.Add($"{timeSpan.Seconds} 秒");
 
-        return parts.Count > 0 ? $"{string.Join(" ", parts)} [{timeSpan.TotalMinutes:F0} 分钟]" : "0 秒";
+        return parts.Count > 0 ?
+                   $"{string.Join(" ", parts)} [{timeSpan.TotalMinutes:F0} 分钟]" :
+                   "0 秒";
     }
 
     private sealed class Config : ModuleConfig

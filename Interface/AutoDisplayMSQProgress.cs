@@ -33,7 +33,11 @@ public unsafe class AutoDisplayMSQProgress : ModuleBase
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!Throttler.Shared.Throttle("ScenarioTree", 1_000)) return;
 
@@ -57,7 +61,10 @@ public unsafe class AutoDisplayMSQProgress : ModuleBase
         textNode->SetText(text);
     }
 
-    private static bool TryGetCurrentExpansionMSQProgress(out MSQProgressResult result)
+    private static bool TryGetCurrentExpansionMSQProgress
+    (
+        out MSQProgressResult result
+    )
     {
         var uiState = UIState.Instance();
 
@@ -87,20 +94,23 @@ public unsafe class AutoDisplayMSQProgress : ModuleBase
                 completedCount++;
         }
 
-        var totalCount = firstIncompleteData.JournalGenre.RowId == 1
-                             ? AdjustARRTotalCount(currentExpansionQuests.Count)
-                             : currentExpansionQuests.Count;
+        var totalCount = firstIncompleteData.JournalGenre.RowId == 1 ?
+                             AdjustARRTotalCount(currentExpansionQuests.Count) :
+                             currentExpansionQuests.Count;
 
         var remaining = totalCount - completedCount;
-        var percentComplete = totalCount > 0
-                                  ? completedCount * 100f / totalCount
-                                  : 100f;
+        var percentComplete = totalCount > 0 ?
+                                  completedCount * 100f / totalCount :
+                                  100f;
 
         result = new(remaining, percentComplete, firstIncompleteID);
         return true;
     }
 
-    private static int AdjustARRTotalCount(int baseCount)
+    private static int AdjustARRTotalCount
+    (
+        int baseCount
+    )
     {
         var adjustedCount = baseCount;
         var playerState   = PlayerState.Instance();

@@ -92,7 +92,15 @@ public class AutoTrackStatusOff : ModuleBase
         }
     }
 
-    private void OnGainStatus(IBattleChara player, ushort statusID, ushort param, ushort stackCount, TimeSpan remainingTime, ulong sourceID)
+    private void OnGainStatus
+    (
+        IBattleChara player,
+        ushort       statusID,
+        ushort       param,
+        ushort       stackCount,
+        TimeSpan     remainingTime,
+        ulong        sourceID
+    )
     {
         if (remainingTime.TotalSeconds <= 0) return;
         if (config.OnlyTrackSpecific && !config.StatusToMonitor.Contains(statusID)) return;
@@ -103,7 +111,14 @@ public class AutoTrackStatusOff : ModuleBase
         records[statusID] = ((float)remainingTime.TotalSeconds, sourceID, StandardTimeManager.Instance().Now, player.EntityID);
     }
 
-    private void OnLoseStatus(IBattleChara player, ushort statusID, ushort param, ushort stackCount, ulong sourceID)
+    private void OnLoseStatus
+    (
+        IBattleChara player,
+        ushort       statusID,
+        ushort       param,
+        ushort       stackCount,
+        ulong        sourceID
+    )
     {
         if (config.OnlyTrackSpecific && !config.StatusToMonitor.Contains(statusID)) return;
         if (!LuminaGetter.TryGetRow<Status>(statusID, out var status) || !status.CanStatusOff) return;

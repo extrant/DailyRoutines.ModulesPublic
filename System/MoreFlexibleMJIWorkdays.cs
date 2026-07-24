@@ -28,7 +28,7 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
         if (MJICraftSchedule->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
@@ -79,7 +79,8 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
                     while (list.Count < 4)
                         list.Add(0);
 
-                    ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.SetMJIWorkshopRest, (uint)list[0], (uint)list[1], (uint)list[2], (uint)list[3]);
+                    ExecuteCommandManager.Instance().ExecuteCommand
+                        (ExecuteCommandFlag.SetMJIWorkshopRest, (uint)list[0], (uint)list[1], (uint)list[2], (uint)list[3]);
                     ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.RequestMJIWorkshop, agent->Data->CycleDisplayed);
                 }
 
@@ -101,7 +102,11 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args) =>
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    ) =>
         Overlay.IsOpen = type switch
         {
             AddonEvent.PostSetup   => true,
@@ -109,7 +114,10 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
             _                      => Overlay.IsOpen
         };
 
-    private static uint EncodeRestDays(List<bool> restDays)
+    private static uint EncodeRestDays
+    (
+        List<bool> restDays
+    )
     {
         if (restDays.Count != 14)
             throw new ArgumentException("休息日列表长度必须为 14");
@@ -127,7 +135,10 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
         return result;
     }
 
-    private static List<bool> DecodeRestDays(uint value)
+    private static List<bool> DecodeRestDays
+    (
+        uint value
+    )
     {
         var restDays = new List<bool>(14);
 
@@ -135,7 +146,7 @@ public unsafe class MoreFlexibleMJIWorkdays : ModuleBase
             restDays.Add(false);
 
         for (var i = 0; i < 14; i++)
-            restDays[i] = (value & 1u << i) != 0;
+            restDays[i] = (value & (1u << i)) != 0;
 
         return restDays;
     }

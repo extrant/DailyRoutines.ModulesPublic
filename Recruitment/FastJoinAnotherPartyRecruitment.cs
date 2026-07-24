@@ -23,7 +23,7 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private TextButtonNode? button;
 
     protected override void Init()
@@ -50,13 +50,21 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
         button = null;
     }
 
-    private void OnAddonYesno(AddonEvent type, AddonArgs args)
+    private void OnAddonYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!TaskHelper.IsBusy) return;
         AddonSelectYesnoEvent.ClickYes();
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -74,7 +82,11 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
         }
     }
 
-    private void CreateButton(AtkUnitBase* addon, TaskHelper taskHelper)
+    private void CreateButton
+    (
+        AtkUnitBase* addon,
+        TaskHelper   taskHelper
+    )
     {
         if (addon == null || button != null) return;
 
@@ -102,7 +114,10 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
         button.AttachNode(containerNode);
     }
 
-    private void UpdateOtherButtons(AtkUnitBase* addon)
+    private void UpdateOtherButtons
+    (
+        AtkUnitBase* addon
+    )
     {
         if (addon == null) return;
 
@@ -148,7 +163,10 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
         }
     }
 
-    private static void Enqueue(TaskHelper taskHelper)
+    private static void Enqueue
+    (
+        TaskHelper taskHelper
+    )
     {
         taskHelper.Abort();
 

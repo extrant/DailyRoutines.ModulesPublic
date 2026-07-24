@@ -23,20 +23,37 @@ public unsafe class OptimizedChatBubble : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig ChatBubbleSig = new("E8 ?? ?? ?? ?? 0F B6 E8 48 8D 5F 18 40 0A 6C 24 ?? BE");
-    private delegate        ulong   ChatBubbleDelegate(ChatBubbleStruct* chatBubbleStruct);
-    private          Hook<ChatBubbleDelegate> ChatBubbleHook;
+
+    private delegate ulong ChatBubbleDelegate
+    (
+        ChatBubbleStruct* chatBubbleStruct
+    );
+
+    private Hook<ChatBubbleDelegate> ChatBubbleHook;
 
     private static readonly CompSig SetupChatBubbleSig = new("E8 ?? ?? ?? ?? 49 FF 46 60");
-    private delegate        byte    SetupChatBubbleDelegate(nint       unk,         nint        newBubble, nint a3);
-    private delegate        uint    GetStringSizeDelegate(TextChecker* textChecker, Utf8String* str);
-    private          Hook<SetupChatBubbleDelegate> SetupChatBubbleHook;
+
+    private delegate byte SetupChatBubbleDelegate
+    (
+        nint unk,
+        nint newBubble,
+        nint a3
+    );
+
+    private delegate uint GetStringSizeDelegate
+    (
+        TextChecker* textChecker,
+        Utf8String*  str
+    );
+
+    private Hook<SetupChatBubbleDelegate> SetupChatBubbleHook;
 
     private static readonly CompSig               GetStringSizeSig = new("E8 ?? ?? ?? ?? 49 8D 56 40");
-    private readonly GetStringSizeDelegate getStringSize    = GetStringSizeSig.GetDelegate<GetStringSizeDelegate>();
+    private                 GetStringSizeDelegate getStringSize    = null!;
 
-    private readonly MemoryPatch showMiniTalkPlayerPatch = new("0F 84 ?? ?? ?? ?? ?? ?? ?? 48 8B CF 49 89 46", [0x90, 0xE9]);
+    private MemoryPatch showMiniTalkPlayerPatch = null!;
 
     private Config moduleConfig = null!;
 
@@ -44,7 +61,9 @@ public unsafe class OptimizedChatBubble : ModuleBase
 
     protected override void Init()
     {
-        moduleConfig = Config.Load(this) ?? new();
+        getStringSize           = GetStringSizeSig.GetDelegate<GetStringSizeDelegate>();
+        showMiniTalkPlayerPatch = new("0F 84 ?? ?? ?? ?? ?? ?? ?? 48 8B CF 49 89 46", [0x90, 0xE9]);
+        moduleConfig            = Config.Load(this) ?? new();
 
         ChatBubbleHook = ChatBubbleSig.GetHook<ChatBubbleDelegate>(ChatBubbleDetour);
         ChatBubbleHook.Enable();
@@ -82,7 +101,10 @@ public unsafe class OptimizedChatBubble : ModuleBase
         }
     }
 
-    private ulong ChatBubbleDetour(ChatBubbleStruct* chatBubbleStruct)
+    private ulong ChatBubbleDetour
+    (
+        ChatBubbleStruct* chatBubbleStruct
+    )
     {
         try
         {
@@ -119,7 +141,12 @@ public unsafe class OptimizedChatBubble : ModuleBase
         }
     }
 
-    private byte SetupChatBubbleDetour(nint unk, nint newBubble, nint a3)
+    private byte SetupChatBubbleDetour
+    (
+        nint unk,
+        nint newBubble,
+        nint a3
+    )
     {
         try
         {
@@ -133,7 +160,7 @@ public unsafe class OptimizedChatBubble : ModuleBase
             return 0;
         }
     }
-    
+
     [StructLayout(LayoutKind.Explicit)]
     private struct ChatBubbleStruct
     {

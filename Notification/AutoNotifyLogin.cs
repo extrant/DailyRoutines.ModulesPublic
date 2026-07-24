@@ -33,19 +33,19 @@ public class AutoNotifyLogin : ModuleBase
     {
         if (ImGui.Checkbox(Lang.Get("OnlyNotifyWhenBackground"), ref config.IsOnlyBackground))
             config.Save(this);
-        
+
         ImGui.NewLine();
-        
+
         if (ImGui.Checkbox(Lang.Get("SendNotification"), ref config.SendNotification))
             config.Save(this);
-        
+
         if (ImGui.Checkbox(Lang.Get("SendSystemSound"), ref config.SendSystemSound))
             config.Save(this);
-        
+
         if (ImGui.Checkbox(Lang.Get("SendTTS"), ref config.SendTTS))
             config.Save(this);
     }
-    
+
     private void OnLogin()
     {
         // 后台
@@ -60,13 +60,13 @@ public class AutoNotifyLogin : ModuleBase
         if (config.SendTTS)
             NotifyHelper.Speak(message);
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool IsOnlyBackground = true;
-        
+
         public bool SendNotification = true;
-        public bool SendSystemSound = true;
+        public bool SendSystemSound  = true;
         public bool SendTTS;
     }
 }

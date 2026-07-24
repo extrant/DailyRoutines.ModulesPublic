@@ -12,10 +12,10 @@ public partial class AutoReplyChatBot
 {
     private Config             config = null!;
     private ConversationStore? conversationStore;
-    
+
     private static int                      PendingSaveConfig;
     private static CancellationTokenSource? SaveConfigTokenSource;
-    
+
     private class Config : ModuleConfig
     {
         public string APIKey            = string.Empty;
@@ -28,7 +28,7 @@ public partial class AutoReplyChatBot
         public bool            HardGuardEnabled  = true;
         public int             MaxMessageLength  = 500;
         public AttackAction    AttackBehavior    = AttackAction.Defend;
-        public HashSet<string> HardGuardKeywords = [..HardGuardDefaultKeywords];
+        public HashSet<string> HardGuardKeywords = [.. HardGuardDefaultKeywords];
 
         // 上下文 Token 限制
         public int MaxContextTokens = 250_000;
@@ -70,7 +70,9 @@ public partial class AutoReplyChatBot
         public string Role    = "TestUser";
         public float  ScrollY = 0f;
 
-        public string HistoryKey => string.IsNullOrEmpty(HistoryGUID) ? $"{Role}@{Name}" : HistoryGUID;
+        public string HistoryKey => string.IsNullOrEmpty(HistoryGUID) ?
+                                        $"{Role}@{Name}" :
+                                        HistoryGUID;
     }
 
     private class ToolCallRecord
@@ -84,7 +86,12 @@ public partial class AutoReplyChatBot
     {
         public ChatMessage() => Timestamp = GameState.ServerTimeUnix;
 
-        public ChatMessage(string role, string text, string name = null)
+        public ChatMessage
+        (
+            string role,
+            string text,
+            string name = null
+        )
         {
             Role      = role;
             Text      = text;
@@ -92,7 +99,13 @@ public partial class AutoReplyChatBot
             Name      = name ?? role;
         }
 
-        public ChatMessage(string role, string text, long timestamp, string name = null)
+        public ChatMessage
+        (
+            string role,
+            string text,
+            long   timestamp,
+            string name = null
+        )
         {
             Role      = role;
             Text      = text;
@@ -100,9 +113,10 @@ public partial class AutoReplyChatBot
             Name      = name ?? role;
         }
 
-        public string Role      { get; set; } = string.Empty;
-        
+        public string Role { get; set; } = string.Empty;
+
         private string textVal = string.Empty;
+
         public string Text
         {
             get => textVal;
@@ -112,10 +126,10 @@ public partial class AutoReplyChatBot
                 ParseText();
             }
         }
-        
+
         public long   Timestamp { get; set; }
         public string Name      { get; set; } = string.Empty;
-        
+
         public List<ToolCallRecord>? ToolCalls { get; set; }
 
         [JsonIgnore]
@@ -137,9 +151,11 @@ public partial class AutoReplyChatBot
             }
 
             var thinkStart = textVal.IndexOf("<think>", StringComparison.OrdinalIgnoreCase);
+
             if (thinkStart >= 0)
             {
                 var thinkEnd = textVal.IndexOf("</think>", StringComparison.OrdinalIgnoreCase);
+
                 if (thinkEnd >= 0)
                 {
                     ParsedReasoning = textVal.Substring(thinkStart + 7, thinkEnd - (thinkStart + 7)).Trim();
@@ -160,8 +176,8 @@ public partial class AutoReplyChatBot
 
         public override string ToString() => $"[{Name}] {Text}";
     }
-    
-        private sealed class ConversationStore : IDisposable
+
+    private sealed class ConversationStore : IDisposable
     {
         private const int HOT_TURN_LIMIT   = 200;
         private const int PRUNE_DAYS       = 30;
@@ -172,7 +188,10 @@ public partial class AutoReplyChatBot
         private readonly ConcurrentDictionary<string, byte>         pendingSaves = new(StringComparer.OrdinalIgnoreCase);
         private          CancellationTokenSource?                   saveCts;
 
-        public ConversationStore(string moduleConfigDir)
+        public ConversationStore
+        (
+            string moduleConfigDir
+        )
         {
             storageDir = Path.Join(moduleConfigDir, "Conversations");
             Directory.CreateDirectory(storageDir);
@@ -184,7 +203,10 @@ public partial class AutoReplyChatBot
             cache.Clear();
         }
 
-        public Conversation GetOrLoad(string id)
+        public Conversation GetOrLoad
+        (
+            string id
+        )
         {
             if (cache.TryGetValue(id, out var cached))
                 return cached;
@@ -196,13 +218,20 @@ public partial class AutoReplyChatBot
 
         public IReadOnlyCollection<string> GetKeys() => [.. LoadAllIds()];
 
-        public List<ChatMessage> GetTurns(string id)
+        public List<ChatMessage> GetTurns
+        (
+            string id
+        )
         {
             var conv = GetOrLoad(id);
             return conv.RecentTurns.ToList();
         }
 
-        public void AppendTurn(string id, ChatMessage turn)
+        public void AppendTurn
+        (
+            string      id,
+            ChatMessage turn
+        )
         {
             var conv = GetOrLoad(id);
             conv.RecentTurns.Add(turn);
@@ -214,7 +243,12 @@ public partial class AutoReplyChatBot
             RequestSave(id);
         }
 
-        public void UpdateSummary(string id, string? summary, int version)
+        public void UpdateSummary
+        (
+            string  id,
+            string? summary,
+            int     version
+        )
         {
             var conv = GetOrLoad(id);
             conv.CompressedSummary = summary;
@@ -223,7 +257,10 @@ public partial class AutoReplyChatBot
             RequestSave(id);
         }
 
-        public void DeleteConversation(string id)
+        public void DeleteConversation
+        (
+            string id
+        )
         {
             cache.TryRemove(id, out _);
             var hotPath  = HotPath(id);
@@ -281,7 +318,10 @@ public partial class AutoReplyChatBot
                 FlushSave(id);
         }
 
-        public void RequestSave(string id)
+        public void RequestSave
+        (
+            string id
+        )
         {
             pendingSaves.TryAdd(id, 0);
             var cts = new CancellationTokenSource();
@@ -314,7 +354,12 @@ public partial class AutoReplyChatBot
             await Task.CompletedTask;
         }
 
-        private void MigrateSet(Dictionary<string, List<ChatMessage>> source, HashSet<string> migrated, bool isPast)
+        private void MigrateSet
+        (
+            Dictionary<string, List<ChatMessage>> source,
+            HashSet<string>                       migrated,
+            bool                                  isPast
+        )
         {
             foreach (var (id, messages) in source)
             {
@@ -355,7 +400,10 @@ public partial class AutoReplyChatBot
             }
         }
 
-        private async Task SaveAfterDelayAsync(CancellationToken ct)
+        private async Task SaveAfterDelayAsync
+        (
+            CancellationToken ct
+        )
         {
             try
             {
@@ -374,7 +422,10 @@ public partial class AutoReplyChatBot
                 FlushSave(id);
         }
 
-        private void FlushSave(string id)
+        private void FlushSave
+        (
+            string id
+        )
         {
             pendingSaves.TryRemove(id, out _);
             if (!cache.TryGetValue(id, out var conv)) return;
@@ -391,7 +442,11 @@ public partial class AutoReplyChatBot
             }
         }
 
-        private void ArchiveOldestTurns(Conversation conv, int keepLast = HOT_TURN_LIMIT)
+        private void ArchiveOldestTurns
+        (
+            Conversation conv,
+            int          keepLast = HOT_TURN_LIMIT
+        )
         {
             if (conv.RecentTurns.Count <= keepLast) return;
 
@@ -416,7 +471,10 @@ public partial class AutoReplyChatBot
             }
         }
 
-        private Conversation LoadFromDisk(string id)
+        private Conversation LoadFromDisk
+        (
+            string id
+        )
         {
             var hotPath = HotPath(id);
 
@@ -463,9 +521,15 @@ public partial class AutoReplyChatBot
             return ids;
         }
 
-        private string HotPath(string id) => Path.Join(storageDir, $"{id}.json");
+        private string HotPath
+        (
+            string id
+        ) => Path.Join(storageDir, $"{id}.json");
 
-        private string ColdPath(string id) => Path.Join(storageDir, $"{id}.jsonl");
+        private string ColdPath
+        (
+            string id
+        ) => Path.Join(storageDir, $"{id}.jsonl");
 
         public class Conversation
         {
@@ -488,7 +552,10 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private void RequestSaveConfig(int delayMs = 800)
+    private void RequestSaveConfig
+    (
+        int delayMs = 800
+    )
     {
         if (delayMs < 0) delayMs = 0;
 
@@ -511,7 +578,11 @@ public partial class AutoReplyChatBot
         _ = SaveConfigAfterDelayAsync(delayMs, tokenSource.Token);
     }
 
-    private async Task SaveConfigAfterDelayAsync(int delayMs, CancellationToken ct)
+    private async Task SaveConfigAfterDelayAsync
+    (
+        int               delayMs,
+        CancellationToken ct
+    )
     {
         try
         {

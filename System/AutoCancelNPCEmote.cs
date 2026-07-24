@@ -17,12 +17,14 @@ public unsafe class AutoCancelNPCEmote : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
-    private static readonly CompSig WaitForBaseSig = 
-        new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B 49 ?? E8 ?? ?? ?? ?? 48 8B 35");
 
-    private delegate nint EventSceneScriptDelegate(EventSceneModuleImplBase* scene);
-    
+    private CompSig waitForBaseSig = null!;
+
+    private delegate nint EventSceneScriptDelegate
+    (
+        EventSceneModuleImplBase* scene
+    );
+
     private Hook<EventSceneScriptDelegate>? WaitForActionTimelineHook;
     private Hook<EventSceneScriptDelegate>? WaitForActionTimelineLoadHook;
     private Hook<EventSceneScriptDelegate>? PlayActionTimelineHook;
@@ -33,7 +35,8 @@ public unsafe class AutoCancelNPCEmote : ModuleBase
 
     protected override void Init()
     {
-        var baseAddress = WaitForBaseSig.ScanText();
+        waitForBaseSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B 49 ?? E8 ?? ?? ?? ?? 48 8B 35");
+        var baseAddress = waitForBaseSig.ScanText();
 
         WaitForActionTimelineHook ??=
             DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("WaitForActionTimeline"), EventSceneScriptDetour);
@@ -64,7 +67,13 @@ public unsafe class AutoCancelNPCEmote : ModuleBase
         IsEmotingHook.Enable();
     }
 
-    private static nint EventSceneScriptDetour(EventSceneModuleImplBase* scene) => 1;
+    private static nint EventSceneScriptDetour
+    (
+        EventSceneModuleImplBase* scene
+    ) => 1;
 
-    private static nint EventSceneScriptNoDetour(EventSceneModuleImplBase* scene) => 0;
+    private static nint EventSceneScriptNoDetour
+    (
+        EventSceneModuleImplBase* scene
+    ) => 0;
 }

@@ -32,7 +32,11 @@ public class AutoReuseEmote : ModuleBase
         CancelTokenAndNullify();
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         CancelTokenAndNullify();
 
@@ -43,16 +47,20 @@ public class AutoReuseEmote : ModuleBase
         if (spilited.Length is not (1 or 2)) return;
 
         var emoteName = spilited[0];
-        var repeatInterval = spilited.Length == 2 && int.TryParse(spilited[1], out var repeatIntervalTime)
-                                 ? repeatIntervalTime
-                                 : 2000;
+        var repeatInterval = spilited.Length == 2 && int.TryParse(spilited[1], out var repeatIntervalTime) ?
+                                 repeatIntervalTime :
+                                 2000;
         if (!TryParseEmoteByName(emoteName, out var emoteID)) return;
 
         cancelSource = new();
         DService.Instance().Framework.Run(() => UseEmoteByID(emoteID, repeatInterval, cancelSource), cancelSource.Token);
     }
 
-    private static unsafe bool TryParseEmoteByName(string name, out ushort id)
+    private static unsafe bool TryParseEmoteByName
+    (
+        string     name,
+        out ushort id
+    )
     {
         id   = 0;
         name = name.Trim().ToLowerInvariant();
@@ -87,7 +95,12 @@ public class AutoReuseEmote : ModuleBase
         cancelSource = null;
     }
 
-    private async Task UseEmoteByID(ushort id, int interval, CancellationTokenSource cts)
+    private async Task UseEmoteByID
+    (
+        ushort                  id,
+        int                     interval,
+        CancellationTokenSource cts
+    )
     {
         while (!cts.Token.IsCancellationRequested)
         {

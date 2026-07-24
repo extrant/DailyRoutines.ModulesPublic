@@ -1,7 +1,6 @@
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using DailyRoutines.Manager;
 using Lumina.Excel.Sheets;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
@@ -26,7 +25,11 @@ public class JobSwitchCommand : ModuleBase
     protected override void Uninit() =>
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-    private static void OnCommand(string command, string args)
+    private static void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.ToLowerInvariant().Trim();
         if (string.IsNullOrEmpty(args)) return;

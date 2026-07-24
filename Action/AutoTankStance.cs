@@ -18,18 +18,18 @@ public class AutoTankStance : ModuleBase
         Description = Lang.Get("AutoTankStanceDescription"),
         Category    = ModuleCategory.Action
     };
-    
+
     private Config config = null!;
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 30_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 30_000 };
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
@@ -44,7 +44,10 @@ public class AutoTankStance : ModuleBase
         ImGuiOm.HelpMarker(Lang.Get("AutoTankStance-OnlyAutoStanceWhenOneTankHelp"));
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
 
@@ -58,7 +61,10 @@ public class AutoTankStance : ModuleBase
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
@@ -76,7 +82,7 @@ public class AutoTankStance : ModuleBase
 
         return UseActionManager.Instance().UseAction(ActionType.Action, info.Action);
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool OnlyAutoStanceWhenOneTank = true;

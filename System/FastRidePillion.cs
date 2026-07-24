@@ -37,11 +37,15 @@ public unsafe class FastRidePillion : ModuleBase
 
         DService.Instance().Condition.ConditionChange += OnCondition;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().Condition.ConditionChange -= OnCondition;
 
-    private static void OnCondition(ConditionFlag flag, bool value)
+    private static void OnCondition
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.RidingPillion || !value) return;
 

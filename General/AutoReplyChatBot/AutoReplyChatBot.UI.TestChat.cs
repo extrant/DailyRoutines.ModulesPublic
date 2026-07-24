@@ -130,8 +130,10 @@ public partial class AutoReplyChatBot
                         var maxBubbleWidth  = chatWidth * 0.75f;
                         var isLongOrSpecial = message.Text.Length > 20;
                         var textSize        = ImGui.CalcTextSize(message.Text);
-                        var messageWidth    = isLongOrSpecial ? maxBubbleWidth : Math.Min(textSize.X + (32f * GlobalUIScale), maxBubbleWidth);
-                        var startPosX       = chatWidth - messageWidth - (16f * GlobalUIScale);
+                        var messageWidth = isLongOrSpecial ?
+                                               maxBubbleWidth :
+                                               Math.Min(textSize.X + (32f * GlobalUIScale), maxBubbleWidth);
+                        var startPosX = chatWidth - messageWidth - (16f * GlobalUIScale);
 
                         using (ImRaii.Group())
                         {
@@ -306,7 +308,13 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private async Task StreamReplyAsync(ChatWindow window, string historyKey, string userText, ChatMessage placeholder)
+    private async Task StreamReplyAsync
+    (
+        ChatWindow  window,
+        string      historyKey,
+        string      userText,
+        ChatMessage placeholder
+    )
     {
         try
         {
@@ -434,7 +442,11 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private void DrawReasoningBlock(string reasoning, string id)
+    private void DrawReasoningBlock
+    (
+        string reasoning,
+        string id
+    )
     {
         var blockID    = $"reasoning_{id}";
         var isExpanded = expandedBlocks.Contains(blockID);
@@ -456,9 +468,9 @@ public partial class AutoReplyChatBot
         var isHovered = ImGui.IsItemHovered();
         var drawList  = ImGui.GetWindowDrawList();
 
-        var bgCol = isHovered
-                        ? KnownColor.DarkSlateGray.ToVector4() with { W = 0.8f }
-                        : KnownColor.DarkSlateGray.ToVector4() with { W = 0.5f };
+        var bgCol = isHovered ?
+                        KnownColor.DarkSlateGray.ToVector4() with { W = 0.8f } :
+                        KnownColor.DarkSlateGray.ToVector4() with { W = 0.5f };
         var borderCol = KnownColor.SlateGray.ToVector4() with { W = 0.4f };
 
         drawList.AddRectFilled(screenPos, screenPos + new Vector2(width, barHeight), ImGui.GetColorU32(bgCol), 6f * GlobalUIScale);
@@ -493,7 +505,9 @@ public partial class AutoReplyChatBot
         drawList.AddText(new(textPosX, textY), ImGui.GetColorU32(KnownColor.White.ToVector4()), label);
 
         // 右侧状态和折叠箭头
-        var arrowStr  = isExpanded ? FontAwesomeIcon.AngleDown.ToIconString() : FontAwesomeIcon.AngleRight.ToIconString();
+        var arrowStr = isExpanded ?
+                           FontAwesomeIcon.AngleDown.ToIconString() :
+                           FontAwesomeIcon.AngleRight.ToIconString();
         var arrowSize = ImGui.CalcTextSize(arrowStr);
         drawList.AddText
         (
@@ -539,7 +553,11 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private void DrawToolCallsBlock(List<ToolCallRecord> toolCalls, string id)
+    private void DrawToolCallsBlock
+    (
+        List<ToolCallRecord> toolCalls,
+        string               id
+    )
     {
         for (var index = 0; index < toolCalls.Count; index++)
         {
@@ -568,9 +586,9 @@ public partial class AutoReplyChatBot
             var isHovered = ImGui.IsItemHovered();
             var drawList  = ImGui.GetWindowDrawList();
 
-            var bgCol = isHovered
-                            ? KnownColor.DarkSlateGray.ToVector4() with { W = 0.8f }
-                            : KnownColor.DarkSlateGray.ToVector4() with { W = 0.5f };
+            var bgCol = isHovered ?
+                            KnownColor.DarkSlateGray.ToVector4() with { W = 0.8f } :
+                            KnownColor.DarkSlateGray.ToVector4() with { W = 0.5f };
             var borderCol = KnownColor.SlateGray.ToVector4() with { W = 0.4f };
 
             drawList.AddRectFilled(screenPos, screenPos + new Vector2(width, barHeight), ImGui.GetColorU32(bgCol), 6f * GlobalUIScale);
@@ -596,13 +614,21 @@ public partial class AutoReplyChatBot
             {
                 circleBgCol = KnownColor.Crimson.ToVector4() with { W = 0.4f };
                 iconCol     = KnownColor.Crimson.ToVector4();
-                icon        = isShell ? FontAwesomeIcon.Terminal : FontAwesomeIcon.Times;
+                icon = isShell ?
+                           FontAwesomeIcon.Terminal :
+                           FontAwesomeIcon.Times;
             }
             else
             {
-                circleBgCol = isShell ? KnownColor.Crimson.ToVector4() with { W = 0.4f } : KnownColor.ForestGreen.ToVector4() with { W = 0.4f };
-                iconCol     = isShell ? KnownColor.Crimson.ToVector4() : KnownColor.GreenYellow.ToVector4();
-                icon        = isShell ? FontAwesomeIcon.Terminal : FontAwesomeIcon.Wrench;
+                circleBgCol = isShell ?
+                                  KnownColor.Crimson.ToVector4() with { W = 0.4f } :
+                                  KnownColor.ForestGreen.ToVector4() with { W = 0.4f };
+                iconCol = isShell ?
+                              KnownColor.Crimson.ToVector4() :
+                              KnownColor.GreenYellow.ToVector4();
+                icon = isShell ?
+                           FontAwesomeIcon.Terminal :
+                           FontAwesomeIcon.Wrench;
             }
 
             drawList.AddCircleFilled(new(circleCenterX, circleCenterY), circleRadius, ImGui.GetColorU32(circleBgCol));
@@ -620,13 +646,17 @@ public partial class AutoReplyChatBot
             var textY    = screenPos.Y + ((barHeight - ImGui.GetTextLineHeight()) / 2f);
             var textPosX = screenPos.X + (32f                                     * GlobalUIScale);
 
-            var typeStr = isShell ? "shell" : "tool";
+            var typeStr = isShell ?
+                              "shell" :
+                              "tool";
             drawList.AddText(new(textPosX, textY), ImGui.GetColorU32(KnownColor.DarkGray.ToVector4()), typeStr);
             textPosX += ImGui.CalcTextSize(typeStr).X + (6f * GlobalUIScale);
             drawList.AddText(new(textPosX, textY), ImGui.GetColorU32(KnownColor.White.ToVector4()), tc.Name);
 
             // 绘制右侧状态和折叠箭头
-            var arrowStr  = isExpanded ? FontAwesomeIcon.AngleDown.ToIconString() : FontAwesomeIcon.AngleRight.ToIconString();
+            var arrowStr = isExpanded ?
+                               FontAwesomeIcon.AngleDown.ToIconString() :
+                               FontAwesomeIcon.AngleRight.ToIconString();
             var arrowSize = ImGui.CalcTextSize(arrowStr);
             drawList.AddText
             (

@@ -30,9 +30,15 @@ public unsafe class FCMemberManagePanel : ModuleBase
     };
 
     private static readonly CompSig AgentFCReceiveEventInternalSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 41 56 48 83 EC ?? 48 8B F1 48 8B DA");
-    private delegate        nint AgentFCReceiveEventInternalDelegate(AgentFreeCompany* agent, nint a2);
-    private static          AgentFCReceiveEventInternalDelegate? AgentFCReceiveEventInternal;
-    
+
+    private delegate nint AgentFCReceiveEventInternalDelegate
+    (
+        AgentFreeCompany* agent,
+        nint              a2
+    );
+
+    private static AgentFCReceiveEventInternalDelegate? AgentFCReceiveEventInternal;
+
     private readonly Dictionary<ulong, FreeCompanyMemberInfo> characterDataDict = [];
     private readonly HashSet<FreeCompanyMemberInfo>           selectedMembers   = [];
 
@@ -186,7 +192,7 @@ public unsafe class FCMemberManagePanel : ModuleBase
                 if (onlineStatusIcon != null)
                 {
                     var origPosY = ImGui.GetCursorPosY();
-                    ImGui.SetCursorPosY(origPosY + 2f * GlobalUIScale);
+                    ImGui.SetCursorPosY(origPosY + (2f * GlobalUIScale));
                     ImGui.Image(onlineStatusIcon.Handle, new(ImGui.GetTextLineHeight()));
                     ImGui.SetCursorPosY(origPosY);
                     ImGui.SameLine();
@@ -200,7 +206,7 @@ public unsafe class FCMemberManagePanel : ModuleBase
             if (data.JobIcon != null)
             {
                 var origPosY = ImGui.GetCursorPosY();
-                ImGui.SetCursorPosY(origPosY + 2f * GlobalUIScale);
+                ImGui.SetCursorPosY(origPosY + (2f * GlobalUIScale));
                 ImGui.Image(data.JobIcon.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeight()));
                 ImGui.SetCursorPosY(origPosY);
                 ImGui.SameLine();
@@ -220,9 +226,10 @@ public unsafe class FCMemberManagePanel : ModuleBase
     private void DrawHeaderRow()
     {
         ImGui.TableNextColumn();
-        var arrowButton = isReverse
-                              ? ImGui.Button(FontAwesomeIcon.ArrowUp.ToIconString())
-                              : ImGui.Button(FontAwesomeIcon.ArrowDown.ToIconString());
+        var arrowButton = isReverse ?
+                              ImGui.Button(FontAwesomeIcon.ArrowUp.ToIconString()) :
+                              ImGui.Button(FontAwesomeIcon.ArrowDown.ToIconString());
+
         if (arrowButton)
         {
             isReverse            ^= true;
@@ -262,9 +269,12 @@ public unsafe class FCMemberManagePanel : ModuleBase
 
         DrawMultiContextMenu();
     }
-    
+
     // 不能用 ImRaii - 会导致延迟执行产生的数据错误
-    private void DrawSingleContextMenu(FreeCompanyMemberInfo data)
+    private void DrawSingleContextMenu
+    (
+        FreeCompanyMemberInfo data
+    )
     {
         if (ImGui.BeginPopupContextItem($"{data.ContentID}_Popup"))
         {
@@ -349,7 +359,11 @@ public unsafe class FCMemberManagePanel : ModuleBase
         }
     }
 
-    private void OnAddonMember(AddonEvent type, AddonArgs? args)
+    private void OnAddonMember
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         Overlay.IsOpen = type switch
         {
@@ -369,7 +383,11 @@ public unsafe class FCMemberManagePanel : ModuleBase
         }
     }
 
-    private void OnAddonYesno(AddonEvent type, AddonArgs args)
+    private void OnAddonYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!TaskHelper.IsBusy || args.Addon == nint.Zero) return;
 
@@ -400,7 +418,11 @@ public unsafe class FCMemberManagePanel : ModuleBase
         }
     }
 
-    private void OpenContextMenuAndClick(int dataIndex, string menuText)
+    private void OpenContextMenuAndClick
+    (
+        int    dataIndex,
+        string menuText
+    )
     {
         AgentFreeCompany.Instance()->OpenContextMenuForMember((byte)dataIndex);
         TaskHelper.Enqueue
@@ -424,7 +446,10 @@ public unsafe class FCMemberManagePanel : ModuleBase
         );
     }
 
-    private void SwitchFreeCompanyMemberListPage(int page)
+    private void SwitchFreeCompanyMemberListPage
+    (
+        int page
+    )
     {
         var memoryBlock = Marshal.AllocHGlobal(32);
         var agent       = AgentFreeCompany.Instance();
@@ -454,29 +479,31 @@ public unsafe class FCMemberManagePanel : ModuleBase
     {
         var agent = AgentFreeCompany.Instance();
         if (agent == null) return;
-        
+
         var info = agent->InfoProxyFreeCompanyMember;
         if (info == null) return;
-        
+
         info->ClearData();
 
         characterDataDict.Clear();
         selectedMembers.Clear();
     }
-    
+
     private List<FreeCompanyMemberInfo> FilterAndSortCharacterData()
     {
-        var filteredList = string.IsNullOrWhiteSpace(filterMemberName)
-                               ? characterDataDict.Values.ToList()
-                               : characterDataDict.Values
-                                                  .Where(member => member.Name.Contains(filterMemberName, StringComparison.OrdinalIgnoreCase))
-                                                  .ToList();
+        var filteredList = string.IsNullOrWhiteSpace(filterMemberName) ?
+                               characterDataDict.Values.ToList() :
+                               characterDataDict.Values
+                                                .Where(member => member.Name.Contains(filterMemberName, StringComparison.OrdinalIgnoreCase))
+                                                .ToList();
 
         filteredList.Sort
         ((a, b) =>
             {
                 var comparison = a.Index.CompareTo(b.Index);
-                return isReverse ? -comparison : comparison;
+                return isReverse ?
+                           -comparison :
+                           comparison;
             }
         );
 
@@ -506,13 +533,24 @@ public unsafe class FCMemberManagePanel : ModuleBase
         public string                   Job          { get; set; }
         public string                   Location     { get; set; }
 
-        public int CompareTo(FreeCompanyMemberInfo? other)
-            => other is null ? 1 : Index.CompareTo(other.Index);
+        public int CompareTo
+        (
+            FreeCompanyMemberInfo? other
+        )
+            => other is null ?
+                   1 :
+                   Index.CompareTo(other.Index);
 
-        public bool Equals(FreeCompanyMemberInfo? other)
+        public bool Equals
+        (
+            FreeCompanyMemberInfo? other
+        )
             => other is not null && ContentID == other.ContentID;
 
-        public ChangeFlags UpdateFrom(FreeCompanyMemberInfo other)
+        public ChangeFlags UpdateFrom
+        (
+            FreeCompanyMemberInfo other
+        )
         {
             var changes = ChangeFlags.None;
 
@@ -555,14 +593,18 @@ public unsafe class FCMemberManagePanel : ModuleBase
             return changes;
         }
 
-        public static FreeCompanyMemberInfo Parse(InfoProxyCommonList.CharacterData data, int index)
+        public static FreeCompanyMemberInfo Parse
+        (
+            InfoProxyCommonList.CharacterData data,
+            int                               index
+        )
         {
             var stringArray    = AtkStage.Instance()->GetStringArrayData()[36]->StringArray;
             var lastOnlineTime = string.Empty;
 
             try
             {
-                lastOnlineTime = SeString.Parse(stringArray[1 + index * 5].Value).TextValue;
+                lastOnlineTime = SeString.Parse(stringArray[1 + (index * 5)].Value).TextValue;
             }
             catch (Exception)
             {
@@ -574,16 +616,27 @@ public unsafe class FCMemberManagePanel : ModuleBase
                 ContentID    = data.ContentId,
                 Index        = index,
                 OnlineStatus = (uint)GetOrigOnlineStatusID(data.State),
-                Name         = string.IsNullOrWhiteSpace(data.NameString) ? LuminaWrapper.GetAddonText(964) : data.NameString,
-                JobIcon      = data.Job == 0 ? null : DService.Instance().Texture.GetFromGameIcon(new(62100U + data.Job)),
-                Job          = data.Job == 0 ? string.Empty : LuminaGetter.GetRow<ClassJob>(data.Job)?.Abbreviation.ToString(),
-                Location = data.Location != 0
-                               ? LuminaGetter.TryGetRow<TerritoryType>(data.Location, out var zone) ? zone.PlaceName.Value.Name.ToString() : lastOnlineTime
-                               : lastOnlineTime
+                Name = string.IsNullOrWhiteSpace(data.NameString) ?
+                           LuminaWrapper.GetAddonText(964) :
+                           data.NameString,
+                JobIcon = data.Job == 0 ?
+                              null :
+                              DService.Instance().Texture.GetFromGameIcon(new(62100U + data.Job)),
+                Job = data.Job == 0 ?
+                          string.Empty :
+                          LuminaGetter.GetRow<ClassJob>(data.Job)?.Abbreviation.ToString(),
+                Location = data.Location != 0 ?
+                               LuminaGetter.TryGetRow<TerritoryType>(data.Location, out var zone) ?
+                                   zone.PlaceName.Value.Name.ToString() :
+                                   lastOnlineTime :
+                               lastOnlineTime
             };
         }
 
-        public static int GetOrigOnlineStatusID(InfoProxyCommonList.CharacterData.OnlineStatus status)
+        public static int GetOrigOnlineStatusID
+        (
+            InfoProxyCommonList.CharacterData.OnlineStatus status
+        )
         {
             // 默认的 0 无法获取图标
             if (status == InfoProxyCommonList.CharacterData.OnlineStatus.Offline)
@@ -591,7 +644,7 @@ public unsafe class FCMemberManagePanel : ModuleBase
 
             var value = (ulong)status;
 
-            var lowestBit = value & ~value + 1;
+            var lowestBit = value & (~value + 1);
 
             var position = 0;
 
@@ -604,28 +657,59 @@ public unsafe class FCMemberManagePanel : ModuleBase
             return position;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
             => Equals(obj as FreeCompanyMemberInfo);
 
         public override int GetHashCode()
             => ContentID.GetHashCode();
 
-        public static bool operator ==(FreeCompanyMemberInfo? left, FreeCompanyMemberInfo? right)
+        public static bool operator ==
+        (
+            FreeCompanyMemberInfo? left,
+            FreeCompanyMemberInfo? right
+        )
             => left?.Equals(right) ?? ReferenceEquals(right, null);
 
-        public static bool operator !=(FreeCompanyMemberInfo left, FreeCompanyMemberInfo right)
+        public static bool operator !=
+        (
+            FreeCompanyMemberInfo left,
+            FreeCompanyMemberInfo right
+        )
             => !(left == right);
 
-        public static bool operator <(FreeCompanyMemberInfo left, FreeCompanyMemberInfo? right)
-            => ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
+        public static bool operator <
+        (
+            FreeCompanyMemberInfo  left,
+            FreeCompanyMemberInfo? right
+        )
+            => ReferenceEquals(left, null) ?
+                   !ReferenceEquals(right, null) :
+                   left.CompareTo(right) < 0;
 
-        public static bool operator <=(FreeCompanyMemberInfo left, FreeCompanyMemberInfo? right)
+        public static bool operator <=
+        (
+            FreeCompanyMemberInfo  left,
+            FreeCompanyMemberInfo? right
+        )
             => ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
 
-        public static bool operator >(FreeCompanyMemberInfo left, FreeCompanyMemberInfo? right)
+        public static bool operator >
+        (
+            FreeCompanyMemberInfo  left,
+            FreeCompanyMemberInfo? right
+        )
             => !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
 
-        public static bool operator >=(FreeCompanyMemberInfo left, FreeCompanyMemberInfo? right)
-            => ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
+        public static bool operator >=
+        (
+            FreeCompanyMemberInfo  left,
+            FreeCompanyMemberInfo? right
+        )
+            => ReferenceEquals(left,      null) ?
+                   ReferenceEquals(right, null) :
+                   left.CompareTo(right) >= 0;
     }
 }

@@ -3,7 +3,6 @@ using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
 using OmenTools.Interop.Game.Lumina;
@@ -19,7 +18,7 @@ public class AutoNotifyDiademWeather : ModuleBase
         Description = Lang.Get("AutoNotifyDiademWeatherDescription"),
         Category    = ModuleCategory.Notification
     };
-    
+
     private Config config = null!;
 
     private uint lastWeather;
@@ -48,8 +47,8 @@ public class AutoNotifyDiademWeather : ModuleBase
         (
             ',',
             config.Weathers
-                        .Select(x => LuminaGetter.GetRow<Weather>(x)?.Name.ToString() ?? string.Empty)
-                        .Distinct()
+                  .Select(x => LuminaGetter.GetRow<Weather>(x)?.Name.ToString() ?? string.Empty)
+                  .Distinct()
         );
         using var combo = ImRaii.Combo("###WeathersCombo", weathers, ImGuiComboFlags.HeightLarge);
 
@@ -78,7 +77,10 @@ public class AutoNotifyDiademWeather : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -87,7 +89,10 @@ public class AutoNotifyDiademWeather : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 10_000);
     }
 
-    private unsafe void OnUpdate(IFramework framework)
+    private unsafe void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (GameState.TerritoryType != 939)
         {
@@ -110,7 +115,7 @@ public class AutoNotifyDiademWeather : ModuleBase
     {
         public HashSet<uint> Weathers = [];
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<uint> SpecialWeathers = [133, 134, 135, 136];

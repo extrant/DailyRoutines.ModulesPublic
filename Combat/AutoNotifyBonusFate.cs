@@ -62,7 +62,10 @@ public class AutoNotifyBonusFate : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         ExecuteCommandManager.Instance().Unreg(OnPostExecuteCommand);
         TaskHelper.Abort();
@@ -73,7 +76,14 @@ public class AutoNotifyBonusFate : ModuleBase
         ExecuteCommandManager.Instance().RegPost(OnPostExecuteCommand);
     }
 
-    private void OnPostExecuteCommand(ExecuteCommandFlag command, uint param1, uint param2, uint param3, uint param4)
+    private void OnPostExecuteCommand
+    (
+        ExecuteCommandFlag command,
+        uint               param1,
+        uint               param2,
+        uint               param3,
+        uint               param4
+    )
     {
         if (command != ExecuteCommandFlag.LoadFate) return;
 
@@ -110,7 +120,10 @@ public class AutoNotifyBonusFate : ModuleBase
             notifiedFates.IntersectWith(currentBonusFates);
     }
 
-    private unsafe void NotifyFate(IFate fate)
+    private unsafe void NotifyFate
+    (
+        IFate fate
+    )
     {
         var mapPos = PositionHelper.WorldToMap(fate.Position.ToVector2(), GameState.MapData);
 
@@ -153,15 +166,15 @@ public class AutoNotifyBonusFate : ModuleBase
         public bool SendNotification = true;
         public bool SendTTS          = true;
     }
-    
+
     #region 常量
-    
+
     private static readonly FrozenSet<uint> ValidTerritories =
         LuminaGetter.Get<TerritoryType>()
                     .Where(x => x.TerritoryIntendedUse.RowId == 1)
                     .Where(x => x.ExVersion.Value.RowId      >= 2)
                     .Select(x => x.RowId)
                     .ToFrozenSet();
-    
+
     #endregion
 }

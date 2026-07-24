@@ -3,7 +3,6 @@ using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using OmenTools.Interop.Game.AddonEvent;
@@ -19,7 +18,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
         Description = Lang.Get("AutoMiniCactpotDescription"),
         Category    = ModuleCategory.GoldSaucer
     };
-    
+
     private readonly MiniCactpotSolver solver = new();
 
     protected override void Init()
@@ -38,7 +37,11 @@ public unsafe class AutoMiniCactpot : ModuleBase
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -53,7 +56,10 @@ public unsafe class AutoMiniCactpot : ModuleBase
         }
     }
 
-    private void OnUpdate(IFramework framework)
+    private void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var addon = (AddonLotteryDaily*)LotteryDaily;
         var agent = AgentLotteryDaily.Instance();
@@ -104,7 +110,11 @@ public unsafe class AutoMiniCactpot : ModuleBase
         }
     }
 
-    private static void ClickGameNode(AddonLotteryDaily* addon, int i)
+    private static void ClickGameNode
+    (
+        AddonLotteryDaily* addon,
+        int                i
+    )
     {
         var nodeID = addon->GameBoard[i]->AtkComponentButton.AtkComponentBase.OwnerNode->AtkResNode.NodeId;
         if (nodeID is < 30 or > 38) return;
@@ -112,7 +122,11 @@ public unsafe class AutoMiniCactpot : ModuleBase
         addon->AtkUnitBase.Callback(1, (int)(nodeID - 30));
     }
 
-    private static void ClickLaneNode(AddonLotteryDaily* addon, int i)
+    private static void ClickLaneNode
+    (
+        AddonLotteryDaily* addon,
+        int                i
+    )
     {
         if (i is < 0 or > 8) return;
 
@@ -147,7 +161,10 @@ public unsafe class AutoMiniCactpot : ModuleBase
 
         private readonly Dictionary<ulong, float> memo = new();
 
-        public bool[] Solve(ReadOnlySpan<byte> state)
+        public bool[] Solve
+        (
+            ReadOnlySpan<byte> state
+        )
         {
             ulong board         = 0;
             var   revealedCount = 0;
@@ -157,8 +174,8 @@ public unsafe class AutoMiniCactpot : ModuleBase
             {
                 var val = state[i];
                 if (val <= 0) continue;
-                board    |= (ulong)val << i * 4;
-                usedMask |= 1          << val - 1;
+                board    |= (ulong)val << (i * 4);
+                usedMask |= 1          << (val - 1);
                 revealedCount++;
             }
 
@@ -170,7 +187,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
                 Span<byte> available = stackalloc byte[9];
                 var        avCount   = 0;
                 for (var i = 1; i <= 9; i++)
-                    if ((usedMask & 1 << i - 1) == 0)
+                    if ((usedMask & (1 << (i - 1))) == 0)
                         available[avCount++] = (byte)i;
                 var availableSpan = available[..avCount];
 
@@ -198,7 +215,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
 
                 for (var i = 0; i < 9; i++)
                 {
-                    if ((board >> i * 4 & 0xF) != 0) continue;
+                    if (((board >> (i * 4)) & 0xF) != 0) continue;
 
                     var ev = EvaluateCell(board, usedMask, revealedCount, i);
 
@@ -216,7 +233,12 @@ public unsafe class AutoMiniCactpot : ModuleBase
             }
         }
 
-        private float GetMaxEV(ulong board, int usedMask, int revealedCount)
+        private float GetMaxEV
+        (
+            ulong board,
+            int   usedMask,
+            int   revealedCount
+        )
         {
             if (revealedCount == 4)
             {
@@ -226,7 +248,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
                 Span<byte> available = stackalloc byte[9];
                 var        avCount   = 0;
                 for (var i = 1; i <= 9; i++)
-                    if ((usedMask & 1 << i - 1) == 0)
+                    if ((usedMask & (1 << (i - 1))) == 0)
                         available[avCount++] = (byte)i;
 
                 var availableSpan = available[..avCount];
@@ -249,7 +271,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
 
                 for (var i = 0; i < 9; i++)
                 {
-                    if ((board >> i * 4 & 0xF) != 0) continue;
+                    if (((board >> (i * 4)) & 0xF) != 0) continue;
 
                     var ev = EvaluateCell(board, usedMask, revealedCount, i);
                     if (ev > maxCellEv)
@@ -261,7 +283,13 @@ public unsafe class AutoMiniCactpot : ModuleBase
             }
         }
 
-        private float EvaluateCell(ulong board, int usedMask, int revealedCount, int cellIndex)
+        private float EvaluateCell
+        (
+            ulong board,
+            int   usedMask,
+            int   revealedCount,
+            int   cellIndex
+        )
         {
             var sumEv         = 0f;
             var count         = 0;
@@ -269,17 +297,24 @@ public unsafe class AutoMiniCactpot : ModuleBase
 
             for (var v = 1; v <= 9; v++)
             {
-                if ((availableMask & 1 << v - 1) == 0) continue;
+                if ((availableMask & (1 << (v - 1))) == 0) continue;
 
-                var nextBoard = board | (ulong)v << cellIndex * 4;
-                sumEv += GetMaxEV(nextBoard, usedMask | 1 << v - 1, revealedCount + 1);
+                var nextBoard = board | ((ulong)v << (cellIndex * 4));
+                sumEv += GetMaxEV(nextBoard, usedMask | (1 << (v - 1)), revealedCount + 1);
                 count++;
             }
 
-            return count == 0 ? 0 : sumEv / count;
+            return count == 0 ?
+                       0 :
+                       sumEv / count;
         }
 
-        private static float CalculateLineEV(ulong board, int lineIdx, ReadOnlySpan<byte> available)
+        private static float CalculateLineEV
+        (
+            ulong              board,
+            int                lineIdx,
+            ReadOnlySpan<byte> available
+        )
         {
             var lineIndices = Lines[lineIdx];
             var currentSum  = 0;
@@ -290,7 +325,7 @@ public unsafe class AutoMiniCactpot : ModuleBase
             for (var k = 0; k < 3; k++)
             {
                 var idx = lineIndices[k];
-                var val = (int)(board >> idx * 4 & 0xF);
+                var val = (int)((board >> (idx * 4)) & 0xF);
                 if (val > 0)
                     currentSum += val;
                 else

@@ -74,13 +74,20 @@ public unsafe partial class AutoRefuseTrade : ModuleBase
             config.Save(this);
     }
 
-    private void SendTradeRequestDetour(InventoryManager* instance, uint entityID)
+    private void SendTradeRequestDetour
+    (
+        InventoryManager* instance,
+        uint              entityID
+    )
     {
         Throttler.Shared.Throttle("AutoRefuseTrade-Show", 3_000, true);
         SendTradeRequestHook.Original(instance, entityID);
     }
 
-    private void AgentTradeShowDetour(AgentInterface* agent)
+    private void AgentTradeShowDetour
+    (
+        AgentInterface* agent
+    )
     {
         // 没有 Block => 五秒内没有发起交易的请求
         if (Throttler.Shared.Check("AutoRefuseTrade-Show"))

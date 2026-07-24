@@ -38,7 +38,9 @@ public unsafe class PoolOfTributeHelper : ModuleBase
         handle = ZoneIndicatorRenderer.Instance().RegPermanent<nint>
         (
             ZONE_ID,
-            () => gameObject == nint.Zero ? [] : [gameObject],
+            () => gameObject == nint.Zero ?
+                      [] :
+                      [gameObject],
             ptr => ((GameObject*)ptr)->Position,
             new()
             {
@@ -89,7 +91,10 @@ public unsafe class PoolOfTributeHelper : ModuleBase
         gameObject = player.Address;
     }
 
-    private void OnZoneChanged(uint obj)
+    private void OnZoneChanged
+    (
+        uint obj
+    )
     {
         CharacterStatusManager.Instance().Unreg(OnStatusGain);
         CharacterStatusManager.Instance().Unreg(OnStatusLose);
@@ -101,7 +106,7 @@ public unsafe class PoolOfTributeHelper : ModuleBase
         CharacterStatusManager.Instance().RegGain(OnStatusGain);
         CharacterStatusManager.Instance().RegLose(OnStatusLose);
     }
-    
+
     #region 常量
 
     private const uint STATUS_ID = 292;

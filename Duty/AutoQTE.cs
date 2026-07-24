@@ -22,20 +22,24 @@ public class AutoQTE : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     protected override void Init()
     {
         InputIDManager.Instance().RegPrePressed(OnPreIsInputIDPressed);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, QTETypes, OnQTEAddon);
     }
-    
+
     protected override void Uninit()
     {
         InputIDManager.Instance().UnregPrePressed(OnPreIsInputIDPressed);
         DService.Instance().AddonLifecycle.UnregisterListener(OnQTEAddon);
     }
 
-    private static void OnPreIsInputIDPressed(ref bool? overrideResult, ref InputId id)
+    private static void OnPreIsInputIDPressed
+    (
+        ref bool?   overrideResult,
+        ref InputId id
+    )
     {
         if (GameState.ContentFinderCondition == 0)
             return;
@@ -44,13 +48,17 @@ public class AutoQTE : ModuleBase
             overrideResult = false;
     }
 
-    private static unsafe void OnQTEAddon(AddonEvent type, AddonArgs args)
+    private static unsafe void OnQTEAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         Throttler.Shared.Throttle("AutoQTE-QTE", 1_000, true);
         KeyEmulationHelper.SendKeypress(Keys.Space);
         AtkStage.Instance()->ClearFocus();
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<string> QTETypes =

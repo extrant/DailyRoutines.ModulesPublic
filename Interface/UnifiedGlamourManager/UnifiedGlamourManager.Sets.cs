@@ -7,7 +7,10 @@ namespace DailyRoutines.ModulesPublic.Interface.UnifiedGlamourManager;
 
 public partial class UnifiedGlamourManager
 {
-    private static List<SetPartInfo> GetSetParts(uint setItemID)
+    private static List<SetPartInfo> GetSetParts
+    (
+        uint setItemID
+    )
     {
         if (!LuminaGetter.TryGetRow<MirageStoreSetItem>(setItemID, out var row)) return [];
 
@@ -26,7 +29,12 @@ public partial class UnifiedGlamourManager
         return parts;
     }
 
-    private static void AddSetPart(List<SetPartInfo> parts, uint itemID, int slotIndex)
+    private static void AddSetPart
+    (
+        List<SetPartInfo> parts,
+        uint              itemID,
+        int               slotIndex
+    )
     {
         if (itemID == 0) return;
 
@@ -78,19 +86,24 @@ public partial class UnifiedGlamourManager
         );
     }
 
-    private static string GetNativeItemCategoryName(ItemSheet item)
+    private static string GetNativeItemCategoryName
+    (
+        ItemSheet item
+    )
     {
         var categoryName = item.ItemUICategory.ValueNullable?.Name.ExtractText();
-        return string.IsNullOrWhiteSpace(categoryName) ? item.Name.ExtractText() : categoryName;
+        return string.IsNullOrWhiteSpace(categoryName) ?
+                   item.Name.ExtractText() :
+                   categoryName;
     }
 
     private void MergeItems()
     {
         var merged = items
                      .GroupBy
-                     (static item => item.IsSetPart
-                                         ? $"set:{item.ParentSetItemID}:{item.PrismBoxIndex}:{item.ItemID}"
-                                         : $"item:{item.ItemID}"
+                     (static item => item.IsSetPart ?
+                                         $"set:{item.ParentSetItemID}:{item.PrismBoxIndex}:{item.ItemID}" :
+                                         $"item:{item.ItemID}"
                      )
                      .Select(MergeItemGroup)
                      .ToList();
@@ -99,7 +112,10 @@ public partial class UnifiedGlamourManager
         items.AddRange(merged);
     }
 
-    private static UnifiedItem MergeItemGroup(IGrouping<string, UnifiedItem> group)
+    private static UnifiedItem MergeItemGroup
+    (
+        IGrouping<string, UnifiedItem> group
+    )
     {
         var first = group.First();
         if (first.IsSetPart) return first;

@@ -17,10 +17,16 @@ public unsafe class AutoDisableBattleBGM : ModuleBase
         Description = Lang.Get("AutoDisableBattleBGMDescription"),
         Category    = ModuleCategory.Combat
     };
-    
-    private static readonly CompSig                   IsInBattleStateSig = new("E8 ?? ?? ?? ?? 38 87 ?? ?? ?? ?? 75 09");
-    private delegate        byte                      IsInBattleDelegate(BGMSystem* system, BGMSystem.Scene* scene);
-    private                 Hook<IsInBattleDelegate>? IsInBattleStateHook;
+
+    private static readonly CompSig IsInBattleStateSig = new("E8 ?? ?? ?? ?? 38 87 ?? ?? ?? ?? 75 09");
+
+    private delegate byte IsInBattleDelegate
+    (
+        BGMSystem*       system,
+        BGMSystem.Scene* scene
+    );
+
+    private Hook<IsInBattleDelegate>? IsInBattleStateHook;
 
     private Config config = null!;
 
@@ -39,14 +45,18 @@ public unsafe class AutoDisableBattleBGM : ModuleBase
         ImGuiOm.HelpMarker(Lang.Get("AutoDisableBattleBGM-EnableInDutyHelp"), 20f * GlobalUIScale);
     }
 
-    private byte IsInBattleStateDetour(BGMSystem* system, BGMSystem.Scene* scene)
+    private byte IsInBattleStateDetour
+    (
+        BGMSystem*       system,
+        BGMSystem.Scene* scene
+    )
     {
         if (!config.EnableInDuty && GameState.ContentFinderCondition > 0)
             return IsInBattleStateHook.Original(system, scene);
 
         return 0;
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool EnableInDuty;

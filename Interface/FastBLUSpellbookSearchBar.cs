@@ -21,7 +21,7 @@ public unsafe class FastBLUSpellbookSearchBar : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private TextInputNode? searchBarNode;
-    
+
     private string searchBarInput = string.Empty;
 
     protected override void Init()
@@ -31,7 +31,7 @@ public unsafe class FastBLUSpellbookSearchBar : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "AOZNotebook", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "AOZNotebook", OnAddon);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
@@ -40,7 +40,11 @@ public unsafe class FastBLUSpellbookSearchBar : ModuleBase
         searchBarNode = null;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -94,8 +98,10 @@ public unsafe class FastBLUSpellbookSearchBar : ModuleBase
         }
     }
 
-    private void ConductSearch(string input)
-    {
+    private void ConductSearch
+    (
+        string input
+    ) =>
         TaskHelper.Enqueue
         (() =>
             {
@@ -120,5 +126,4 @@ public unsafe class FastBLUSpellbookSearchBar : ModuleBase
                 return true;
             }
         );
-    }
 }

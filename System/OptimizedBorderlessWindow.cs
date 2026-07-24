@@ -19,16 +19,30 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig WindowProcessSig =
         new("40 55 53 56 57 41 54 41 56 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 E0");
-    private delegate nint                        WindowProcessDelegate(ulong hWnd, uint uMsg, ulong wParam, long lParam);
-    private          Hook<WindowProcessDelegate> WindowProcessHook = null!;
+
+    private delegate nint WindowProcessDelegate
+    (
+        ulong hWnd,
+        uint  uMsg,
+        ulong wParam,
+        long  lParam
+    );
+
+    private Hook<WindowProcessDelegate> WindowProcessHook = null!;
 
     private static readonly CompSig SetMainWindowBorderlessSig =
         new("40 53 48 83 EC 60 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 48 8B D9 48 8B 49 18");
-    private delegate void                                  SetMainWindowBorderlessDelegate(GameWindow* self, bool borderless);
-    private          Hook<SetMainWindowBorderlessDelegate> SetMainWindowBorderlessHook = null!;
+
+    private delegate void SetMainWindowBorderlessDelegate
+    (
+        GameWindow* self,
+        bool        borderless
+    );
+
+    private Hook<SetMainWindowBorderlessDelegate> SetMainWindowBorderlessHook = null!;
 
     protected override void Init()
     {
@@ -53,7 +67,13 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
         }
     }
 
-    private nint WindowProcessDetour(ulong hWnd, uint uMsg, ulong wParam, long lParam)
+    private nint WindowProcessDetour
+    (
+        ulong hWnd,
+        uint  uMsg,
+        ulong wParam,
+        long  lParam
+    )
     {
         switch (uMsg)
         {
@@ -89,7 +109,11 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
         return WindowProcessHook.Original(hWnd, uMsg, wParam, lParam);
     }
 
-    private void SetMainWindowBorderlessDetour(GameWindow* self, bool borderless)
+    private void SetMainWindowBorderlessDetour
+    (
+        GameWindow* self,
+        bool        borderless
+    )
     {
         if (borderless)
         {
@@ -113,7 +137,11 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
         WinAPI.SetWindowPos(windowHandle, 0, rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, WinAPI.SWP_NO_Z_ORDER | WinAPI.SWP_FRAME_CHANGED);
     }
 
-    private static void SyncSwapchainResolution(int width, int height)
+    private static void SyncSwapchainResolution
+    (
+        int width,
+        int height
+    )
     {
         if (width <= 0 || height <= 0) return;
 
@@ -125,7 +153,10 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
         device->RequestResolutionChange = 1;
     }
 
-    private static void ConvertToBorderlessRect(ref WinAPI.Rect rect)
+    private static void ConvertToBorderlessRect
+    (
+        ref WinAPI.Rect rect
+    )
     {
         var originalRect = rect;
         var monitor      = WinAPI.MonitorFromRect(&originalRect, WinAPI.MONITOR_DEFAULT_TO_PRIMARY);
@@ -152,22 +183,52 @@ public unsafe class OptimizedBorderlessWindow : ModuleBase
         public const uint MONITOR_DEFAULT_TO_PRIMARY = 1;
 
         [DllImport("user32.dll", EntryPoint = "GetWindowRect", ExactSpelling = true)]
-        public static extern bool GetWindowRect(nint hWnd, Rect* lpRect);
+        public static extern bool GetWindowRect
+        (
+            nint  hWnd,
+            Rect* lpRect
+        );
 
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", ExactSpelling = true)]
-        public static extern ulong SetWindowLongPtrW(nint hWnd, int nIndex, ulong dwNewLong);
+        public static extern ulong SetWindowLongPtrW
+        (
+            nint  hWnd,
+            int   nIndex,
+            ulong dwNewLong
+        );
 
         [DllImport("user32.dll", EntryPoint = "SetWindowPos", ExactSpelling = true)]
-        public static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+        public static extern bool SetWindowPos
+        (
+            nint hWnd,
+            nint hWndInsertAfter,
+            int  X,
+            int  Y,
+            int  cx,
+            int  cy,
+            uint uFlags
+        );
 
         [DllImport("user32.dll", EntryPoint = "ShowWindow", ExactSpelling = true)]
-        public static extern bool ShowWindow(nint hWnd, int nCmdShow);
+        public static extern bool ShowWindow
+        (
+            nint hWnd,
+            int  nCmdShow
+        );
 
         [DllImport("user32.dll", EntryPoint = "MonitorFromRect", ExactSpelling = true)]
-        public static extern ulong MonitorFromRect(Rect* lprc, uint dwFlags);
+        public static extern ulong MonitorFromRect
+        (
+            Rect* lprc,
+            uint  dwFlags
+        );
 
         [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW", ExactSpelling = true)]
-        public static extern bool GetMonitorInfoW(ulong hmonitor, MonitorInfo* lpmi);
+        public static extern bool GetMonitorInfoW
+        (
+            ulong        hmonitor,
+            MonitorInfo* lpmi
+        );
 
         public struct Rect
         {

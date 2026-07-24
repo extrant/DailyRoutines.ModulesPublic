@@ -7,7 +7,7 @@ namespace DailyRoutines.ModulesPublic;
 public partial class AutoReplyChatBot
 {
     #region Guard Types
-    
+
     private enum APIProvider
     {
         OpenAI = 0,
@@ -32,7 +32,10 @@ public partial class AutoReplyChatBot
     {
         public static GuardResult Safe() => new() { Level = GuardLevel.Safe };
 
-        public static GuardResult Blocked(string reason) => new() { Level = GuardLevel.Block, Reason = reason };
+        public static GuardResult Blocked
+        (
+            string reason
+        ) => new() { Level = GuardLevel.Block, Reason = reason };
 
         public GuardLevel Level  { get; init; }
         public string?    Reason { get; init; }
@@ -158,9 +161,9 @@ public partial class AutoReplyChatBot
         [未完成事项]
         (如有)
         """;
-    
+
     private const int MAX_TOOL_ROUNDS = 8;
-    
+
     private const string HTTP_CLIENT_NAME = "AutoReplyChatBot-Default";
 
     private static readonly FrozenDictionary<APIProvider, IChatBackend> Backends = new Dictionary<APIProvider, IChatBackend>
@@ -168,14 +171,14 @@ public partial class AutoReplyChatBot
         [APIProvider.OpenAI] = new OpenAIBackend(),
         [APIProvider.Ollama] = new OllamaBackend()
     }.ToFrozenDictionary();
-    
+
     private static readonly FrozenDictionary<string, ChatTool> ToolRegistry = new Dictionary<string, ChatTool>
     {
-        [ReadPastMessagesTool.TOOL_NAME]  = new ReadPastMessagesTool(),
-        [ExdSchemaTool.TOOL_NAME]         = new ExdSchemaTool(),
-        [ExdQueryTool.TOOL_NAME]          = new ExdQueryTool(),
-        [GetGameStateTool.TOOL_NAME]      = new GetGameStateTool(),
-        [ExecuteCommandTool.TOOL_NAME]    = new ExecuteCommandTool()
+        [ReadPastMessagesTool.TOOL_NAME] = new ReadPastMessagesTool(),
+        [ExdSchemaTool.TOOL_NAME]        = new ExdSchemaTool(),
+        [ExdQueryTool.TOOL_NAME]         = new ExdQueryTool(),
+        [GetGameStateTool.TOOL_NAME]     = new GetGameStateTool(),
+        [ExecuteCommandTool.TOOL_NAME]   = new ExecuteCommandTool()
     }.ToFrozenDictionary();
 
     private static readonly FrozenDictionary<XivChatType, string> ChatTypeToCommand = new Dictionary<XivChatType, string>
@@ -202,7 +205,7 @@ public partial class AutoReplyChatBot
         [XivChatType.Yell]            = "/yell",
         [XivChatType.Shout]           = "/shout"
     }.ToFrozenDictionary();
-    
+
     private static FrozenDictionary<string, string> ChannelCommands { get; } = new Dictionary<string, string>
     {
         ["say"]          = "/say",

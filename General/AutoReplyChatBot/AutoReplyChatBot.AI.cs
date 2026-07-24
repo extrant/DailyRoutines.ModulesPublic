@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -13,7 +12,12 @@ namespace DailyRoutines.ModulesPublic;
 
 public partial class AutoReplyChatBot
 {
-    private static void SendReply(XivChatType originalType, string target, string reply)
+    private static void SendReply
+    (
+        XivChatType originalType,
+        string      target,
+        string      reply
+    )
     {
         if (originalType == XivChatType.TellIncoming || !ChatTypeToCommand.TryGetValue(originalType, out var command))
         {
@@ -25,7 +29,12 @@ public partial class AutoReplyChatBot
     }
 
     private async Task<string?> GenerateReplyAsync
-        (Config cfg, string historyKey, ToolExecutionContext toolContext, CancellationToken ct)
+    (
+        Config               cfg,
+        string               historyKey,
+        ToolExecutionContext toolContext,
+        CancellationToken    ct
+    )
     {
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseURL.IsNullOrWhitespace() || cfg.Model.IsNullOrWhitespace())
             return null;
@@ -68,6 +77,7 @@ public partial class AutoReplyChatBot
         var messages = BuildMessageList(cfg, historyKey, hist);
 
         var round = 0;
+
         while (true)
         {
             var tools = GetToolAPIDefinitions();
@@ -87,6 +97,7 @@ public partial class AutoReplyChatBot
             var jObj         = JObject.Parse(jsonResponse);
 
             var toolCall = ParseToolCallsFromResponse(jObj, Backends[cfg.Provider]);
+
             if (toolCall != null && round < MAX_TOOL_ROUNDS)
             {
                 var toolResult = await ExecuteToolAsync(toolCall.Name, toolCall.Arguments, toolContext).ConfigureAwait(false);
@@ -94,7 +105,7 @@ public partial class AutoReplyChatBot
                 var reasoning = jObj["choices"]?[0]?["message"]?["reasoning_content"]?.Value<string>();
                 var assistantMessage = new Dictionary<string, object>
                 {
-                    ["role"] = "assistant",
+                    ["role"]    = "assistant",
                     ["content"] = null,
                     ["tool_calls"] = new[]
                     {
@@ -108,9 +119,7 @@ public partial class AutoReplyChatBot
                 };
 
                 if (!string.IsNullOrEmpty(reasoning))
-                {
                     assistantMessage["reasoning_content"] = reasoning;
-                }
 
                 messages.Add(assistantMessage);
 
@@ -124,12 +133,19 @@ public partial class AutoReplyChatBot
             if (string.IsNullOrWhiteSpace(final))
                 return null;
 
-            return final.StartsWith("[ATTACK", StringComparison.Ordinal) ? string.Empty : final;
+            return final.StartsWith("[ATTACK", StringComparison.Ordinal) ?
+                       string.Empty :
+                       final;
         }
     }
 
-    private async Task CompressConversationIfNeededAsync(
-        Config cfg, string historyKey, List<ChatMessage> hist, CancellationToken ct)
+    private async Task CompressConversationIfNeededAsync
+    (
+        Config            cfg,
+        string            historyKey,
+        List<ChatMessage> hist,
+        CancellationToken ct
+    )
     {
         var cmprConv = conversationStore!.GetOrLoad(historyKey);
         var estimate = hist.Sum(m => m.Text.Length * 2 / 7);
@@ -164,12 +180,17 @@ public partial class AutoReplyChatBot
         hist.AddRange(keep);
     }
 
-    private static async Task<string?> SummarizeMessagesAsync(
-        Config cfg, string? previousSummary, List<ChatMessage> messages, CancellationToken ct)
+    private static async Task<string?> SummarizeMessagesAsync
+    (
+        Config            cfg,
+        string?           previousSummary,
+        List<ChatMessage> messages,
+        CancellationToken ct
+    )
     {
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseURL.IsNullOrWhitespace() || cfg.Model.IsNullOrWhitespace())
             return previousSummary ?? string.Empty;
-        
+
         var input = new StringBuilder();
 
         if (!string.IsNullOrWhiteSpace(previousSummary))
@@ -207,14 +228,19 @@ public partial class AutoReplyChatBot
         return Backends[cfg.Provider].ParseContent(jObj);
     }
 
-    private List<object> BuildMessageList(Config cfg, string historyKey, List<ChatMessage> hist)
+    private List<object> BuildMessageList
+    (
+        Config            cfg,
+        string            historyKey,
+        List<ChatMessage> hist
+    )
     {
         if (cfg.SelectedPromptIndex < 0 || cfg.SelectedPromptIndex >= cfg.SystemPrompts.Count)
             cfg.SelectedPromptIndex = 0;
         var currentPrompt = cfg.SystemPrompts[cfg.SelectedPromptIndex];
-        var sys = string.IsNullOrWhiteSpace(currentPrompt.Content)
-                      ? DEFAULT_SYSTEM_PROMPT
-                      : currentPrompt.Content;
+        var sys = string.IsNullOrWhiteSpace(currentPrompt.Content) ?
+                      DEFAULT_SYSTEM_PROMPT :
+                      currentPrompt.Content;
 
         var worldBookContext = string.Empty;
 
@@ -265,9 +291,16 @@ public partial class AutoReplyChatBot
     }
 
     private async IAsyncEnumerable<string> GenerateReplyStreamAsync
-        (Config cfg, string historyKey, ToolExecutionContext toolContext, ChatMessage placeholder, [EnumeratorCancellation] CancellationToken ct)
+    (
+        Config                                     cfg,
+        string                                     historyKey,
+        ToolExecutionContext                       toolContext,
+        ChatMessage                                placeholder,
+        [EnumeratorCancellation] CancellationToken ct
+    )
     {
         DLog.Debug($"[GenerateReplyStreamAsync] 开始流式生成回复, historyKey: {historyKey}");
+
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseURL.IsNullOrWhitespace() || cfg.Model.IsNullOrWhitespace())
         {
             DLog.Warning("[GenerateReplyStreamAsync] API 配置不完整，退出");
@@ -276,6 +309,7 @@ public partial class AutoReplyChatBot
 
         var strmConv = conversationStore!.GetOrLoad(historyKey);
         var hist     = strmConv.RecentTurns.ToList();
+
         if (hist.Count == 0)
         {
             DLog.Warning("[GenerateReplyStreamAsync] 历史记录为空，退出");
@@ -283,6 +317,7 @@ public partial class AutoReplyChatBot
         }
 
         var userMessage = hist.LastOrDefault(x => x.Role == "user").Text;
+
         if (string.IsNullOrWhiteSpace(userMessage))
         {
             DLog.Warning("[GenerateReplyStreamAsync] 用户的最新消息为空，退出");
@@ -291,14 +326,14 @@ public partial class AutoReplyChatBot
 
         var messages = BuildMessageList(cfg, historyKey, hist);
         var backend  = Backends[cfg.Provider];
-        
+
         for (var round = 0; round <= MAX_TOOL_ROUNDS; round++)
         {
             DLog.Debug($"[GenerateReplyStreamAsync] 进入第 {round} 轮 Tool-Call 迭代");
             var tools = GetToolAPIDefinitions();
             DLog.Debug($"[GenerateReplyStreamAsync] 当前已定义工具数量: {tools.Count}");
-            
-            var body  = backend.BuildRequestBodyWithTools(messages, cfg.Model, cfg.MaxTokens, cfg.Temperature, tools);
+
+            var body = backend.BuildRequestBodyWithTools(messages, cfg.Model, cfg.MaxTokens, cfg.Temperature, tools);
             body["stream"] = true;
 
             var url  = backend.BuildURL(cfg.BaseURL);
@@ -322,6 +357,7 @@ public partial class AutoReplyChatBot
             var lineCount   = 0;
 
             DLog.Debug("[GenerateReplyStreamAsync] 开始读取 SSE 流...");
+
             while (await reader.ReadLineAsync(ct).ConfigureAwait(false) is { } line)
             {
                 lineCount++;
@@ -337,19 +373,21 @@ public partial class AutoReplyChatBot
                     yield return text;
                 }
             }
+
             DLog.Debug($"[GenerateReplyStreamAsync] SSE 流读取完毕, 总行数: {lineCount}, hasContent: {hasContent}");
 
             accumulator.BuildToolCalls();
-            DLog.Debug($"[GenerateReplyStreamAsync] 组装 ToolCalls 完毕. 发现工具调用数量: {(accumulator.ToolCalls?.Count ?? 0)}");
+            DLog.Debug($"[GenerateReplyStreamAsync] 组装 ToolCalls 完毕. 发现工具调用数量: {accumulator.ToolCalls?.Count ?? 0}");
 
             if (!accumulator.HasToolCalls)
             {
-                DLog.Debug($"[GenerateReplyStreamAsync] 没有检测到工具调用，流式正常结束。退出流。");
+                DLog.Debug("[GenerateReplyStreamAsync] 没有检测到工具调用，流式正常结束。退出流。");
                 yield break;
             }
 
             var toolCalls = accumulator.ToolCalls;
-            if (toolCalls == null) 
+
+            if (toolCalls == null)
             {
                 DLog.Warning("[GenerateReplyStreamAsync] toolCalls 为 null，异常退出");
                 yield break;
@@ -358,7 +396,9 @@ public partial class AutoReplyChatBot
             foreach (var tc in toolCalls)
             {
                 DLog.Debug($"[GenerateReplyStreamAsync] 触发工具: {tc.Name}, ID: {tc.ID}, 参数: {tc.Arguments}");
-                var currentToolCalls = placeholder.ToolCalls != null ? new List<ToolCallRecord>(placeholder.ToolCalls) : [];
+                var currentToolCalls = placeholder.ToolCalls != null ?
+                                           new List<ToolCallRecord>(placeholder.ToolCalls) :
+                                           [];
                 var record = new ToolCallRecord
                 {
                     Name      = tc.Name,
@@ -376,7 +416,7 @@ public partial class AutoReplyChatBot
 
                 var assistantMessage = new Dictionary<string, object>
                 {
-                    ["role"] = "assistant",
+                    ["role"]    = "assistant",
                     ["content"] = null,
                     ["tool_calls"] = new[]
                     {
@@ -390,20 +430,23 @@ public partial class AutoReplyChatBot
                 };
 
                 if (!string.IsNullOrEmpty(accumulator.Reasoning))
-                {
                     assistantMessage["reasoning_content"] = accumulator.Reasoning;
-                }
 
                 messages.Add(assistantMessage);
 
                 messages.Add(new { role = "tool", tool_call_id = tc.ID, content = toolResult });
             }
-            
+
             DLog.Debug("[GenerateReplyStreamAsync] 准备进入下一轮 Tool-Call 请求循环");
         }
     }
 
-    private static async Task<GuardResult?> FilterMessageAsync(Config cfg, string userMessage, CancellationToken ct)
+    private static async Task<GuardResult?> FilterMessageAsync
+    (
+        Config            cfg,
+        string            userMessage,
+        CancellationToken ct
+    )
     {
         if (cfg.APIKey.IsNullOrWhitespace() || cfg.BaseURL.IsNullOrWhitespace() || cfg.FilterModel.IsNullOrWhitespace())
             return GuardResult.Safe();
@@ -413,7 +456,9 @@ public partial class AutoReplyChatBot
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cfg.APIKey);
 
-        var systemPrompt = string.IsNullOrWhiteSpace(cfg.FilterPrompt) ? FILTER_SYSTEM_PROMPT : cfg.FilterPrompt;
+        var systemPrompt = string.IsNullOrWhiteSpace(cfg.FilterPrompt) ?
+                               FILTER_SYSTEM_PROMPT :
+                               cfg.FilterPrompt;
 
         var messages = new List<object>
         {
@@ -435,7 +480,9 @@ public partial class AutoReplyChatBot
             var jObj         = JObject.Parse(jsonResponse);
             var raw          = Backends[cfg.Provider].ParseContent(jObj);
 
-            return string.IsNullOrWhiteSpace(raw) ? null : ParseGuardResponse(raw);
+            return string.IsNullOrWhiteSpace(raw) ?
+                       null :
+                       ParseGuardResponse(raw);
         }
         catch (OperationCanceledException)
         {
@@ -448,7 +495,10 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private static GuardResult? ParseGuardResponse(string raw)
+    private static GuardResult? ParseGuardResponse
+    (
+        string raw
+    )
     {
         var trimmed = raw.Trim();
 
@@ -484,7 +534,12 @@ public partial class AutoReplyChatBot
         return new GuardResult { Level = GuardLevel.Flag, Reason = "分类器返回非 JSON 格式" };
     }
 
-    private static void ReplaceLastUserMessage(ConversationStore.Conversation conv, List<ChatMessage> hist, string newText)
+    private static void ReplaceLastUserMessage
+    (
+        ConversationStore.Conversation conv,
+        List<ChatMessage>              hist,
+        string                         newText
+    )
     {
         for (var i = conv.RecentTurns.Count - 1; i >= 0; i--)
             if (conv.RecentTurns[i].Role == "user")
@@ -501,7 +556,11 @@ public partial class AutoReplyChatBot
             }
     }
 
-    private static GuardResult? HardGuardCheck(string message, Config cfg)
+    private static GuardResult? HardGuardCheck
+    (
+        string message,
+        Config cfg
+    )
     {
         if (!cfg.HardGuardEnabled) return null;
 
@@ -512,7 +571,7 @@ public partial class AutoReplyChatBot
         var keywords = cfg.HardGuardKeywords;
 
         if (keywords is not { Count: > 0 })
-            keywords = [..HardGuardDefaultKeywords];
+            keywords = [.. HardGuardDefaultKeywords];
 
         foreach (var kw in keywords)
         {
@@ -542,24 +601,58 @@ public partial class AutoReplyChatBot
 
     private interface IChatBackend
     {
-        string BuildURL(string baseURL);
+        string BuildURL
+        (
+            string baseURL
+        );
 
-        Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature);
+        Dictionary<string, object> BuildRequestBody
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature
+        );
 
-        string? ParseContent(JObject jsonObject);
+        string? ParseContent
+        (
+            JObject jsonObject
+        );
 
-        Dictionary<string, object> BuildRequestBodyWithTools(List<object> messages, string model, int maxTokens, float temperature, List<object> tools);
+        Dictionary<string, object> BuildRequestBodyWithTools
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature,
+            List<object> tools
+        );
 
-        List<ToolCall>? ParseToolCalls(JObject jsonObject);
+        List<ToolCall>? ParseToolCalls
+        (
+            JObject jsonObject
+        );
 
-        StreamChunkResult ParseStreamChunkFull(string chunk);
+        StreamChunkResult ParseStreamChunkFull
+        (
+            string chunk
+        );
     }
 
     private class OpenAIBackend : IChatBackend
     {
-        public string BuildURL(string baseURL) => baseURL.TrimEnd('/') + "/chat/completions";
+        public string BuildURL
+        (
+            string baseURL
+        ) => baseURL.TrimEnd('/') + "/chat/completions";
 
-        public Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature)
+        public Dictionary<string, object> BuildRequestBody
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature
+        )
         {
             var body = new Dictionary<string, object>
             {
@@ -571,22 +664,37 @@ public partial class AutoReplyChatBot
             return body;
         }
 
-        public string? ParseContent(JObject jsonObject)
+        public string? ParseContent
+        (
+            JObject jsonObject
+        )
         {
-            var msg = jsonObject["choices"] is JArray { Count: > 0 } choices ? choices[0]["message"] : null;
+            var msg = jsonObject["choices"] is JArray { Count: > 0 } choices ?
+                          choices[0]["message"] :
+                          null;
             return msg?["content"]?.Value<string>();
         }
 
-        public Dictionary<string, object> BuildRequestBodyWithTools(List<object> messages, string model, int maxTokens, float temperature, List<object> tools)
+        public Dictionary<string, object> BuildRequestBodyWithTools
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature,
+            List<object> tools
+        )
         {
             var body = BuildRequestBody(messages, model, maxTokens, temperature);
             body["tools"] = tools;
             return body;
         }
 
-        public List<ToolCall>? ParseToolCalls(JObject jsonObject)
+        public List<ToolCall>? ParseToolCalls
+        (
+            JObject jsonObject
+        )
         {
-            if (jsonObject["choices"]?[0]?["message"]?["tool_calls"] is not JArray { Count: > 0 } toolCalls) 
+            if (jsonObject["choices"]?[0]?["message"]?["tool_calls"] is not JArray { Count: > 0 } toolCalls)
                 return null;
 
             return toolCalls.Select
@@ -599,7 +707,10 @@ public partial class AutoReplyChatBot
             ).ToList();
         }
 
-        public StreamChunkResult ParseStreamChunkFull(string chunk)
+        public StreamChunkResult ParseStreamChunkFull
+        (
+            string chunk
+        )
         {
             var result = new StreamChunkResult();
             if (!chunk.StartsWith("data:", StringComparison.Ordinal)) return result;
@@ -630,12 +741,12 @@ public partial class AutoReplyChatBot
                         (
                             new StreamChunkFragment
                             {
-                                Index          = tc["index"]?.Value<int>() ?? 0,
-                                ID             = tc["id"]?.Value<string>(),
-                                Name           = func?["name"]?.Value<string>(),
-                                ArgumentsDelta = func?["arguments"]?.Type == JTokenType.Object 
-                                                     ? func["arguments"]?.ToString(Formatting.None) 
-                                                     : func?["arguments"]?.Value<string>()
+                                Index = tc["index"]?.Value<int>() ?? 0,
+                                ID    = tc["id"]?.Value<string>(),
+                                Name  = func?["name"]?.Value<string>(),
+                                ArgumentsDelta = func?["arguments"]?.Type == JTokenType.Object ?
+                                                     func["arguments"]?.ToString(Formatting.None) :
+                                                     func?["arguments"]?.Value<string>()
                             }
                         );
                     }
@@ -654,9 +765,18 @@ public partial class AutoReplyChatBot
 
     private class OllamaBackend : IChatBackend
     {
-        public string BuildURL(string baseURL) => baseURL.TrimEnd('/') + "/chat";
+        public string BuildURL
+        (
+            string baseURL
+        ) => baseURL.TrimEnd('/') + "/chat";
 
-        public Dictionary<string, object> BuildRequestBody(List<object> messages, string model, int maxTokens, float temperature)
+        public Dictionary<string, object> BuildRequestBody
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature
+        )
         {
             var body = new Dictionary<string, object>
             {
@@ -673,20 +793,33 @@ public partial class AutoReplyChatBot
             return body;
         }
 
-        public string? ParseContent(JObject jsonObject)
+        public string? ParseContent
+        (
+            JObject jsonObject
+        )
         {
             var messageToken = jsonObject["message"];
             return messageToken?["content"]?.Value<string>();
         }
 
-        public Dictionary<string, object> BuildRequestBodyWithTools(List<object> messages, string model, int maxTokens, float temperature, List<object> tools)
+        public Dictionary<string, object> BuildRequestBodyWithTools
+        (
+            List<object> messages,
+            string       model,
+            int          maxTokens,
+            float        temperature,
+            List<object> tools
+        )
         {
             var body = BuildRequestBody(messages, model, maxTokens, temperature);
             body["tools"] = tools;
             return body;
         }
 
-        public List<ToolCall>? ParseToolCalls(JObject jsonObject)
+        public List<ToolCall>? ParseToolCalls
+        (
+            JObject jsonObject
+        )
         {
             if (jsonObject["message"]?["tool_calls"] is not JArray { Count: > 0 } toolCalls) return null;
 
@@ -700,7 +833,10 @@ public partial class AutoReplyChatBot
             ).ToList();
         }
 
-        public StreamChunkResult ParseStreamChunkFull(string chunk)
+        public StreamChunkResult ParseStreamChunkFull
+        (
+            string chunk
+        )
         {
             var result = new StreamChunkResult();
 
@@ -713,7 +849,9 @@ public partial class AutoReplyChatBot
                 result = result with
                 {
                     Content = message["content"]?.Value<string>(),
-                    FinishReason = jObj["done"]?.Value<bool>() == true ? "stop" : null
+                    FinishReason = jObj["done"]?.Value<bool>() == true ?
+                                       "stop" :
+                                       null
                 };
 
                 if (message["tool_calls"] is JArray { Count: > 0 } tcArray)

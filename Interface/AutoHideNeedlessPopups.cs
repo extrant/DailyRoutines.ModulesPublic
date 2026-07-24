@@ -26,14 +26,18 @@ public unsafe class AutoHideNeedlessPopups : ModuleBase
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AtkUnitBase*)args.Addon.Address;
         if (addon == null) return;
 
         args.PreventOriginal();
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<string> AddonNames =

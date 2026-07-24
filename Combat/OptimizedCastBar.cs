@@ -41,7 +41,7 @@ public unsafe class OptimizedCastBar : ModuleBase
 
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange -= OnConditionChanged;
@@ -250,8 +250,12 @@ public unsafe class OptimizedCastBar : ModuleBase
                 config.Save(this);
         }
     }
-    
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (!ValidFlags.Contains(flag)) return;
 
@@ -264,7 +268,11 @@ public unsafe class OptimizedCastBar : ModuleBase
         UpdateOriginalAddonNodes();
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -288,10 +296,10 @@ public unsafe class OptimizedCastBar : ModuleBase
                 if (!Throttler.Shared.Throttle("OptimizedCastBar-PostDraw-UpdateSlideCast", 10)) return;
 
                 var slidePerercentage = ((float)(addon->CastTime * 10) - config.SlideCastZoneAdjust) / (addon->CastTime * 10);
-                var slidePosition     = 160                                                                * slidePerercentage;
-                var slideColor = DService.Instance().Condition[ConditionFlag.Casting] || DService.Instance().Condition[ConditionFlag.OccupiedInEvent]
-                                     ? config.SlideCastNotReadyColor
-                                     : config.SlideCastReadyColor;
+                var slidePosition     = 160                                                          * slidePerercentage;
+                var slideColor = DService.Instance().Condition[ConditionFlag.Casting] || DService.Instance().Condition[ConditionFlag.OccupiedInEvent] ?
+                                     config.SlideCastNotReadyColor :
+                                     config.SlideCastReadyColor;
 
                 switch (config.SlideCastHighlightType)
                 {
@@ -341,8 +349,8 @@ public unsafe class OptimizedCastBar : ModuleBase
                         }
 
                         slideMarkerLineNode.IsVisible = true;
-                        slideMarkerLineNode.Size      = new(config.SlideCastLineWidth, 12 + config.SlideCastLineHeight * 2);
-                        slideMarkerLineNode.Position  = new(slidePosition, 4                    - config.SlideCastLineHeight);
+                        slideMarkerLineNode.Size      = new(config.SlideCastLineWidth, 12 + (config.SlideCastLineHeight * 2));
+                        slideMarkerLineNode.Position  = new(slidePosition, 4              - config.SlideCastLineHeight);
                         slideMarkerLineNode.Color     = slideColor;
                         break;
                 }
@@ -462,7 +470,7 @@ public unsafe class OptimizedCastBar : ModuleBase
         Zone,
         Line
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<ConditionFlag> ValidFlags =

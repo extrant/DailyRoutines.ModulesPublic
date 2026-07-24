@@ -19,18 +19,20 @@ public class AutoLeaveDuty : ModuleBase
         Description = Lang.Get("AutoLeaveDutyDescription"),
         Category    = ModuleCategory.Duty
     };
-    
+
     private Config config = null!;
 
-    private readonly ContentSelectCombo contentSelectCombo = new("Blacklist");
-    private readonly ContentSelectCombo immediateLeaveCombo = new("ImmediateLeave");
+    private ContentSelectCombo contentSelectCombo  = null!;
+    private ContentSelectCombo immediateLeaveCombo = null!;
 
     protected override void Init()
     {
-        config     =   Config.Load(this) ?? new();
-        TaskHelper ??= new();
+        contentSelectCombo  =   new("Blacklist");
+        immediateLeaveCombo =   new("ImmediateLeave");
+        config              =   Config.Load(this) ?? new();
+        TaskHelper          ??= new();
 
-        contentSelectCombo.SelectedIDs = config.BlacklistContent;
+        contentSelectCombo.SelectedIDs  = config.BlacklistContent;
         immediateLeaveCombo.SelectedIDs = config.ImmediateLeaveContent;
 
         LogMessageManager.Instance().RegPre(OnPreReceiveLogmessage);
@@ -38,7 +40,7 @@ public class AutoLeaveDuty : ModuleBase
         DService.Instance().DutyState.DutyCompleted      += OnDutyComplete;
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().DutyState.DutyCompleted      -= OnDutyComplete;
@@ -50,18 +52,18 @@ public class AutoLeaveDuty : ModuleBase
     protected override void ConfigUI()
     {
         using var itemWidth = ImRaii.ItemWidth(250f * GlobalUIScale);
-        
+
         // 延迟
         if (ImGui.InputInt($"{Lang.Get("Delay")} (ms)###DelayInput", ref config.Delay))
             config.Delay = Math.Max(0, config.Delay);
         if (ImGui.IsItemDeactivatedAfterEdit())
             config.Save(this);
-        
+
         // 不退高难
         if (ImGui.Checkbox($"{Lang.Get("AutoLeaveDuty-NoLeaveHighEndDuties")}###NoLeaveHighEndDuties", ref config.NoLeaveHighEndDuties))
             config.Save(this);
         ImGuiOm.HelpMarker(Lang.Get("AutoLeaveDuty-NoLeaveHighEndDuties-Help"));
-        
+
         // 强制退本
         if (ImGui.Checkbox($"{Lang.Get("AutoLeaveDuty-ForceToLeave")}###ForceToLeave", ref config.ForceToLeave))
             config.Save(this);
@@ -81,7 +83,7 @@ public class AutoLeaveDuty : ModuleBase
 
             ImGuiOm.HelpMarker(Lang.Get("AutoLeaveDuty-BlacklistContents-Help"));
         }
-        
+
         // 立刻退出
         {
             if (immediateLeaveCombo.DrawCheckbox())
@@ -89,15 +91,18 @@ public class AutoLeaveDuty : ModuleBase
                 config.ImmediateLeaveContent = immediateLeaveCombo.SelectedIDs;
                 config.Save(this);
             }
-            
+
             ImGui.SameLine();
             ImGui.TextUnformatted(Lang.Get("AutoLeaveDuty-ImmediateLeaveContents"));
-            
+
             ImGuiOm.HelpMarker(Lang.Get("AutoLeaveDuty-ImmediateLeaveContents-Help"));
         }
     }
 
-    private void OnDutyComplete(IDutyStateEventArgs args)
+    private void OnDutyComplete
+    (
+        IDutyStateEventArgs args
+    )
     {
         if (config.BlacklistContent.Contains(GameState.ContentFinderCondition))
             return;
@@ -124,19 +129,27 @@ public class AutoLeaveDuty : ModuleBase
             TaskHelper.Enqueue(() => DutyCommand.Leave(DutyCommand.LeaveDutyKind.Inactive));
     }
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         TaskHelper.Abort();
 
     // 拦截一下那个信息
-    private static void OnPreReceiveLogmessage(ref bool isPrevented, ref uint logMessageID, ref LogMessageQueueItem values)
+    private static void OnPreReceiveLogmessage
+    (
+        ref bool                isPrevented,
+        ref uint                logMessageID,
+        ref LogMessageQueueItem values
+    )
     {
         if (logMessageID != 914) return;
         isPrevented = true;
     }
-    
+
     private class Config : ModuleConfig
     {
-        public HashSet<uint> BlacklistContent = [];
+        public HashSet<uint> BlacklistContent      = [];
         public HashSet<uint> ImmediateLeaveContent = [];
         public int           Delay;
         public bool          ForceToLeave;

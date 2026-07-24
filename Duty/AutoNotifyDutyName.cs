@@ -4,7 +4,6 @@ using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
@@ -21,7 +20,7 @@ public class AutoNotifyDutyName : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     protected override void Init()
@@ -30,10 +29,10 @@ public class AutoNotifyDutyName : ModuleBase
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
-    
+
     protected override void ConfigUI()
     {
         if (ImGui.Checkbox(Lang.Get("SendTTS"), ref config.SendTTS))
@@ -46,23 +45,26 @@ public class AutoNotifyDutyName : ModuleBase
             config.Save(this);
     }
 
-    private unsafe void OnZoneChange(uint u)
+    private unsafe void OnZoneChange
+    (
+        uint u
+    )
     {
         if (GameMain.Instance()->CurrentContentFinderConditionId == 0 ||
             !LuminaGetter.TryGetRow<ContentFinderCondition>(GameMain.Instance()->CurrentContentFinderConditionId, out var content))
             return;
 
         var levelText = content.ClassJobLevelRequired == content.ClassJobLevelSync ||
-                        content.ClassJobLevelRequired > content.ClassJobLevelSync
-                            ? content.ClassJobLevelSync.ToString()
-                            : $"{content.ClassJobLevelRequired}-{content.ClassJobLevelSync}";
+                        content.ClassJobLevelRequired > content.ClassJobLevelSync ?
+                            content.ClassJobLevelSync.ToString() :
+                            $"{content.ClassJobLevelRequired}-{content.ClassJobLevelSync}";
 
-        var maxILGearIL = content.ClassJobLevelSync == 0
-                              ? 0
-                              : Sheets.Gears.Values
-                                      .Where(x => x.LevelEquip != 1 && x.LevelEquip <= content.ClassJobLevelSync)
-                                      .OrderByDescending(x => x.LevelItem.RowId)
-                                      .FirstOrDefault().LevelItem.RowId;
+        var maxILGearIL = content.ClassJobLevelSync == 0 ?
+                              0 :
+                              Sheets.Gears.Values
+                                    .Where(x => x.LevelEquip != 1 && x.LevelEquip <= content.ClassJobLevelSync)
+                                    .OrderByDescending(x => x.LevelItem.RowId)
+                                    .FirstOrDefault().LevelItem.RowId;
 
         var message = Lang.Get
         (
@@ -72,7 +74,9 @@ public class AutoNotifyDutyName : ModuleBase
             Lang.Get("ILMinimum"),
             content.ItemLevelRequired,
             Lang.Get("ILMaximum"),
-            content.ItemLevelSync != 0 ? content.ItemLevelSync : maxILGearIL
+            content.ItemLevelSync != 0 ?
+                content.ItemLevelSync :
+                maxILGearIL
         );
 
         if (config.SendTTS)
@@ -82,7 +86,7 @@ public class AutoNotifyDutyName : ModuleBase
         if (config.SendNotification)
             NotifyHelper.Instance().NotificationInfo(message);
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool SendChat         = true;

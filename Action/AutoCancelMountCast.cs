@@ -20,7 +20,7 @@ public class AutoCancelMountCast : ModuleBase
         Author           = ["Bill"],
         ModulesRecommend = ["BetterMountRoulette"]
     };
-    
+
     private Config config = null!;
 
     private CancellationTokenSource? cancelSource;
@@ -33,7 +33,7 @@ public class AutoCancelMountCast : ModuleBase
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange -= OnConditionChanged;
@@ -53,8 +53,12 @@ public class AutoCancelMountCast : ModuleBase
         if (ImGui.Checkbox(Lang.Get("AutoCancelMountCast-CancelWhenJump"), ref config.CancelWhenJump))
             config.Save(this);
     }
-    
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         switch (flag)
         {

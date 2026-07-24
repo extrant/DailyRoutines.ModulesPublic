@@ -1,6 +1,5 @@
 ﻿using DailyRoutines.Common.KamiToolKit.Nodes;
 using DailyRoutines.Extensions;
-using KamiToolKit.Nodes;
 using OmenTools.Threading.TaskHelper;
 
 namespace DailyRoutines.ModulesPublic.Interface;
@@ -27,7 +26,10 @@ public partial class AutoRetainerWork
             taskHelper = null;
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-Refresh-Title"),

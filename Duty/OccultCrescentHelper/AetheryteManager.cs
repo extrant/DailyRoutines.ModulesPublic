@@ -10,7 +10,6 @@ using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Info.Game.Packets.Upstream;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 using OmenTools.Threading;
 using OmenTools.Threading.TaskHelper;
@@ -113,19 +112,30 @@ public partial class OccultCrescentHelper
                 ImGui.TextUnformatted($"/pdr {COMMAND_TP} {Lang.Get("OccultCrescentHelper-Command-PTP-Help")}");
         }
 
-        private void OnLogout(int type, int code)
+        private void OnLogout
+        (
+            int type,
+            int code
+        )
         {
             moveTaskHelper?.Abort();
             vnavmeshIPC.StopPathfind();
         }
 
-        private void OnZoneChanged(uint u)
+        private void OnZoneChanged
+        (
+            uint u
+        )
         {
             moveTaskHelper?.Abort();
             vnavmeshIPC.StopPathfind();
         }
 
-        private void OnCommandTP(string command, string args)
+        private void OnCommandTP
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
@@ -149,7 +159,10 @@ public partial class OccultCrescentHelper
             UseAetheryte(aetheryte);
         }
 
-        public unsafe void UseAetheryte(CrescentAetheryte aetheryte)
+        public unsafe void UseAetheryte
+        (
+            CrescentAetheryte aetheryte
+        )
         {
             if (aetheryte == null) return;
 
@@ -194,7 +207,7 @@ public partial class OccultCrescentHelper
                 }
 
                 // 启用了绿玩移动
-                if (MainModule.config.IsEnabledMoveToAetheryte                            &&
+                if (MainModule.config.IsEnabledMoveToAetheryte                        &&
                     DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
                     distance3D <= MainModule.config.DistanceToMoveToAetheryte)
                 {

@@ -23,7 +23,7 @@ public class AutoMoveGearsNotInSet : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private TextButtonNode? button;
 
     protected override void Init()
@@ -61,7 +61,11 @@ public class AutoMoveGearsNotInSet : ModuleBase
             EnqueueRetrieve();
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -99,7 +103,11 @@ public class AutoMoveGearsNotInSet : ModuleBase
         }
     }
 
-    private static void OnCommand(string command, string args) =>
+    private static void OnCommand
+    (
+        string command,
+        string args
+    ) =>
         EnqueueRetrieve();
 
     private static unsafe void EnqueueRetrieve()

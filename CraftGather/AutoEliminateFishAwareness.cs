@@ -29,12 +29,13 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
 
     private Config config = null!;
 
-    private readonly ZoneSelectCombo zoneSelectCombo = new("BlacklistZone");
+    private ZoneSelectCombo zoneSelectCombo = null!;
 
     protected override void Init()
     {
-        config     =   Config.Load(this) ?? new();
-        TaskHelper ??= new() { TimeoutMS = 30_000, ShowDebug = true };
+        zoneSelectCombo =   new("BlacklistZone");
+        config          =   Config.Load(this) ?? new();
+        TaskHelper      ??= new() { TimeoutMS = 30_000, ShowDebug = true };
 
         zoneSelectCombo.SelectedIDs = config.BlacklistZones;
 
@@ -77,7 +78,11 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
             config.Save(this);
     }
 
-    private void OnPost(uint logMessageID, LogMessageQueueItem item)
+    private void OnPost
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (config.BlacklistZones.Contains(GameState.TerritoryType))
             return;
@@ -88,11 +93,11 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
                 NotifyHelper.SystemWarning();
                 NotifyHelper.Instance().NotificationWarning(Lang.Get("AutoEliminateFishAwareness-Notification-GlobalWarning"));
                 NotifyHelper.Speak(Lang.Get("AutoEliminateFishAwareness-Notification-GlobalWarning"));
-                
+
                 if (config.LogoutWhenGlobalWarning)
                     ChatManager.Instance().SendCommand("/logout");
                 break;
-            
+
             // 非全局警惕
             case 3516 or 5517:
                 TaskHelper.Abort();
@@ -127,7 +132,7 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
                     return;
 
                 TaskHelper.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 289) == 0, "等待技能抛竿可用");
-                
+
                 TaskHelper.Enqueue
                 (
                     () =>
@@ -151,7 +156,10 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
         return !DService.Instance().Condition[ConditionFlag.Fishing];
     }
 
-    private static bool ExitDuty(uint targetContent)
+    private static bool ExitDuty
+    (
+        uint targetContent
+    )
     {
         if (!Throttler.Shared.Throttle("AutoEliminateFishAwareness-ExitDuty")) return false;
         if (GameState.ContentFinderCondition != targetContent) return false;

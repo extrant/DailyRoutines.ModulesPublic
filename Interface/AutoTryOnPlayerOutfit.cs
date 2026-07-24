@@ -43,7 +43,11 @@ public unsafe class AutoTryOnPlayerOutfit : ModuleBase
         tryOnButtonNode = null;
     }
 
-    private void OnAddonList(AddonEvent type, AddonArgs? args)
+    private void OnAddonList
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -57,11 +61,11 @@ public unsafe class AutoTryOnPlayerOutfit : ModuleBase
                 if (tryOnButtonNode == null)
                 {
                     designButtonNode->SetHeight(24);
-                    
+
                     tryOnButtonNode = new()
                     {
-                        Size      = new(designButtonNode->Width, designButtonNode->Height),
-                        Position  = new(designButtonNode->X, designButtonNode->Y + designButtonNode->Height + 4)
+                        Size     = new(designButtonNode->Width, designButtonNode->Height),
+                        Position = new(designButtonNode->X, designButtonNode->Y + designButtonNode->Height + 4)
                     };
                     tryOnButtonNode.AttachNode(CharacterInspect->RootNode);
                 }
@@ -148,7 +152,9 @@ public unsafe class AutoTryOnPlayerOutfit : ModuleBase
             var glamourItemID = item.GlamourId;
 
             // 有幻化→试穿幻化，无幻化→试穿原装备
-            var tryOnItemID = glamourItemID != 0 ? glamourItemID : itemID;
+            var tryOnItemID = glamourItemID != 0 ?
+                                  glamourItemID :
+                                  itemID;
 
             if (tryOnItemID == 0) continue;
 

@@ -94,9 +94,11 @@ public partial class AutoReplyChatBot
 
             var replyContext = new ReplyContext
             {
-                Target          = target,
-                OriginalType    = chatType,
-                DefaultChannel  = chatType == XivChatType.TellIncoming ? "tell" : "say",
+                Target       = target,
+                OriginalType = chatType,
+                DefaultChannel = chatType == XivChatType.TellIncoming ?
+                                     "tell" :
+                                     "say",
                 ChannelCommands = ChannelCommands
             };
 
@@ -147,7 +149,9 @@ public partial class AutoReplyChatBot
 
             // ── Stage 6: Dispatch ──
             var sentViaTool = toolContext.SendMessageCalled;
-            var toolMsg     = sentViaTool ? replyContext.SentMessage : null;
+            var toolMsg = sentViaTool ?
+                              replyContext.SentMessage :
+                              null;
 
             if (sentViaTool && !string.IsNullOrWhiteSpace(toolMsg))
             {

@@ -31,9 +31,16 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private static readonly CompSig SetContentRouletteRoleBonusSig = new("48 89 4C 24 ?? 55 41 56 48 83 EC ?? ?? ?? ?? 4C 8B F1");
-    private delegate        void    SetContentRouletteRoleBonusDelegate(AgentContentsFinder* instance, void* data, uint bonusIndex);
-    private                 Hook<SetContentRouletteRoleBonusDelegate>? SetContentRouletteRoleBonusHook;
-    
+
+    private delegate void SetContentRouletteRoleBonusDelegate
+    (
+        AgentContentsFinder* instance,
+        void*                data,
+        uint                 bonusIndex
+    );
+
+    private Hook<SetContentRouletteRoleBonusDelegate>? SetContentRouletteRoleBonusHook;
+
     private Config config = null!;
 
     private ContentsRouletteRole[] lastKnownRoles = [];
@@ -43,8 +50,8 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new();
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new();
 
         if (lastKnownRoles.Length != ROULETTE_BONUS_ARRAY_SIZE)
         {
@@ -132,11 +139,11 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         {
             var rowID = roulette.RowId;
 
-            if (!this.config.Roulettes.TryGetValue(rowID, out var rouletteConfig))
+            if (!config.Roulettes.TryGetValue(rowID, out var rouletteConfig))
             {
-                rouletteConfig                       = new RouletteConfig();
-                this.config.Roulettes[rowID] = rouletteConfig;
-                this.config.Save(this);
+                rouletteConfig          = new RouletteConfig();
+                config.Roulettes[rowID] = rouletteConfig;
+                config.Save(this);
             }
 
             var isEnabled = rouletteConfig.Tank || rouletteConfig.Healer || rouletteConfig.DPS;
@@ -167,13 +174,13 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
                             case 2: rouletteConfig.DPS    = check; break;
                         }
 
-                        this.config.Save(this);
+                        config.Save(this);
                     }
                 }
 
                 ImGui.TableNextColumn();
                 if (ImGui.Checkbox($"##Incomplete_{rowID}", ref rouletteConfig.OnlyIncomplete))
-                    this.config.Save(this);
+                    config.Save(this);
 
                 ImGui.TableNextColumn();
                 var bonusIndex = roulette.ContentRouletteRoleBonus.RowId;
@@ -189,13 +196,21 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         }
     }
 
-    private void SetContentRouletteRoleBonusDetour(AgentContentsFinder* instance, void* data, uint bonusIndex)
+    private void SetContentRouletteRoleBonusDetour
+    (
+        AgentContentsFinder* instance,
+        void*                data,
+        uint                 bonusIndex
+    )
     {
         SetContentRouletteRoleBonusHook.Original(instance, data, bonusIndex);
         OnRoleBonusUpdated();
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(() => UIModule.IsScreenReady() && !DService.Instance().Condition.IsBetweenAreas);
@@ -211,7 +226,11 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         );
     }
 
-    private void OnClickRouletteLinkPayload(uint id, SeString _)
+    private void OnClickRouletteLinkPayload
+    (
+        uint     id,
+        SeString _
+    )
     {
         if (!rouletteLinkPayloadIDs.TryGetValue(id, out var rouletteRowID)) return;
         if (GameState.ContentFinderCondition != 0) return;
@@ -242,7 +261,7 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
             lastKnownRoles[index] = currentRole;
             if (lastRole == ContentsRouletteRole.None) continue;
             if (!RouletteIndexToRowID.TryGetValue(index, out var rowID)) continue;
-            if (!this.config.Roulettes.TryGetValue(rowID, out var rouletteConfig)) continue;
+            if (!config.Roulettes.TryGetValue(rowID, out var rouletteConfig)) continue;
             if (currentRole > ContentsRouletteRole.Dps) continue;
 
             var shouldAlert = currentRole switch
@@ -261,7 +280,10 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         NotifyRoleBonuses(bonuses);
     }
 
-    private void NotifyRoleBonuses(List<(uint RowID, ContentsRouletteRole Role)> bonuses)
+    private void NotifyRoleBonuses
+    (
+        List<(uint RowID, ContentsRouletteRole Role)> bonuses
+    )
     {
         if (bonuses.Count == 0) return;
 
@@ -330,14 +352,20 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
             NotifyHelper.Speak(notificationString);
     }
 
-    private static bool IsRouletteComplete(uint rowID)
+    private static bool IsRouletteComplete
+    (
+        uint rowID
+    )
     {
         if (rowID > byte.MaxValue) return false;
         var instanceContent = InstanceContent.Instance();
         return instanceContent->IsRouletteComplete((byte)rowID);
     }
 
-    private static string GetRoleBonusText(ContentsRouletteRole role) =>
+    private static string GetRoleBonusText
+    (
+        ContentsRouletteRole role
+    ) =>
         LuminaWrapper.GetAddonText
         (
             role switch
@@ -348,7 +376,10 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
             }
         );
 
-    private DalamudLinkPayload GetRouletteLinkPayload(uint rowID)
+    private DalamudLinkPayload GetRouletteLinkPayload
+    (
+        uint rowID
+    )
     {
         if (rouletteLinkPayloads.TryGetValue(rowID, out var payload)) return payload;
 
@@ -358,7 +389,11 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         return linkPayload;
     }
 
-    private static void DrawRoleBonusHeaderIcon(IDalamudTextureWrap? texture, Vector2 invTexSize)
+    private static void DrawRoleBonusHeaderIcon
+    (
+        IDalamudTextureWrap? texture,
+        Vector2              invTexSize
+    )
     {
         if (texture == null)
         {
@@ -369,7 +404,12 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         DrawIcon(texture, invTexSize, new(888f, 0f), new(56f, 56f));
     }
 
-    private static void DrawRoleBonusCellIcon(IDalamudTextureWrap? texture, Vector2 invTexSize, ContentsRouletteRole role)
+    private static void DrawRoleBonusCellIcon
+    (
+        IDalamudTextureWrap? texture,
+        Vector2              invTexSize,
+        ContentsRouletteRole role
+    )
     {
         if (texture == null || (byte)role > 2)
         {
@@ -380,14 +420,25 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         DrawIcon(texture, invTexSize, new(40f * (byte)role, 216f), new(40f, 40f));
     }
 
-    private static void DrawIcon(IDalamudTextureWrap texture, Vector2 invTexSize, Vector2 iconPosPx, Vector2 sizePx)
+    private static void DrawIcon
+    (
+        IDalamudTextureWrap texture,
+        Vector2             invTexSize,
+        Vector2             iconPosPx,
+        Vector2             sizePx
+    )
     {
         var uv0 = iconPosPx            * invTexSize;
         var uv1 = (iconPosPx + sizePx) * invTexSize;
         ImGui.Image(texture.Handle, new(ImGui.GetTextLineHeightWithSpacing()), uv0, uv1);
     }
 
-    private static void GetTextureInfo(string path, out IDalamudTextureWrap? texture, out Vector2 invTexSize)
+    private static void GetTextureInfo
+    (
+        string                   path,
+        out IDalamudTextureWrap? texture,
+        out Vector2              invTexSize
+    )
     {
         texture = DService.Instance().Texture.GetFromGame(path).GetWrapOrDefault();
 
@@ -399,7 +450,7 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
 
         invTexSize = new(1f / texture.Width, 1f / texture.Height);
     }
-    
+
     private class Config : ModuleConfig
     {
         public Dictionary<uint, RouletteConfig> Roulettes = [];
@@ -415,24 +466,24 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         public bool OnlyIncomplete;
         public bool Tank;
     }
-    
+
     #region 常量
 
     private const int ROULETTE_BONUS_ARRAY_SIZE = 11;
-    
+
     private static readonly FrozenDictionary<byte, uint> RouletteIndexToRowID = new Dictionary<byte, uint>
     {
         [1] = 1, [2] = 2, [3] = 3, [4] = 4, [5]   = 5,
         [6] = 6, [7] = 8, [8] = 9, [9] = 15, [10] = 17
     }.ToFrozenDictionary();
-    
+
     private static readonly FrozenDictionary<ContentsRouletteRole, BitmapFontIcon> RoleIcons = new Dictionary<ContentsRouletteRole, BitmapFontIcon>
     {
         [ContentsRouletteRole.Tank]   = BitmapFontIcon.Tank,
         [ContentsRouletteRole.Healer] = BitmapFontIcon.Healer,
         [ContentsRouletteRole.Dps]    = BitmapFontIcon.DPS
     }.ToFrozenDictionary();
-    
+
     private static readonly ContentRoulette[] CachedRoulettes =
         LuminaGetter.Get<ContentRoulette>()
                     .Where(x => x is { RowId: > 0, ContentRouletteRoleBonus.RowId: > 0 })

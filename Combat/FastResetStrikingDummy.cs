@@ -22,7 +22,7 @@ public class FastResetStrikingDummy : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private readonly CancellationTokenSource cancelSource = new();
+    private CancellationTokenSource cancelSource = null!;
 
     private Config config = null!;
 
@@ -30,7 +30,8 @@ public class FastResetStrikingDummy : ModuleBase
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        cancelSource = new();
+        config       = Config.Load(this) ?? new();
 
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
 
@@ -82,7 +83,11 @@ public class FastResetStrikingDummy : ModuleBase
         }
     }
 
-    private void OnCommand(string command, string arguments) =>
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) =>
         ResetAllStrikingDummies();
 
     public void OnResetStrikingDummies
@@ -121,7 +126,11 @@ public class FastResetStrikingDummy : ModuleBase
 
     #endregion
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat || !value) return;
         isAlreadyRequest = false;

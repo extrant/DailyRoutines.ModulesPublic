@@ -10,7 +10,6 @@ using OmenTools.ImGuiOm.Widgets.MapRenderer;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Packets.Upstream;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Interop.Game.Models;
 using OmenTools.Interop.Game.Models.Native;
 using OmenTools.OmenService;
 using OmenTools.OmenService.ZoneIndicator;
@@ -30,7 +29,7 @@ public partial class OccultCrescentHelper
 
         private Queue<TreasureHuntPoint> queuedGatheringList = [];
 
-        private List<nint>    treasureObjects    = [];
+        private List<nint>    treasureObjects      = [];
         private List<Vector3> surveyPointPositions = [];
         private List<Vector3> carrotPositions      = [];
 
@@ -183,7 +182,7 @@ public partial class OccultCrescentHelper
                                 {
                                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
                                 }
-                                
+
                                 await MovementManager.Instance().TPSmoothAsync
                                 (
                                     originalPosition,
@@ -204,6 +203,7 @@ public partial class OccultCrescentHelper
                                 {
                                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
                                 }
+
                                 return true;
                             }
                         );
@@ -231,7 +231,7 @@ public partial class OccultCrescentHelper
                                 {
                                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
                                 }
-                                
+
                                 await MovementManager.Instance().TPSmoothAsync
                                 (
                                     treasureObject.Position,
@@ -241,7 +241,7 @@ public partial class OccultCrescentHelper
                                     -20,
                                     ct
                                 );
-                                
+
                                 if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) return false;
 
                                 if (LocalPlayerState.DistanceTo2D(treasureObject.Position.ToVector2()) >= 3) return false;
@@ -252,6 +252,7 @@ public partial class OccultCrescentHelper
                                 {
                                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
                                 }
+
                                 return true;
                             }
                         );
@@ -270,7 +271,11 @@ public partial class OccultCrescentHelper
 
         #region 事件
 
-        private void OnCommandTreasure(string command, string args)
+        private void OnCommandTreasure
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
@@ -291,7 +296,13 @@ public partial class OccultCrescentHelper
             EnqueueAutoTreasureHunt(routeData);
         }
 
-        private void OnPreSendPacket(ref bool isPrevented, int opcode, ref nint packet, ref bool isPrioritize)
+        private void OnPreSendPacket
+        (
+            ref bool isPrevented,
+            int      opcode,
+            ref nint packet,
+            ref bool isPrioritize
+        )
         {
             if (opcode                         != UpstreamOpcode.PositionUpdateInstanceOpcode ||
                 GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent         ||
@@ -301,21 +312,24 @@ public partial class OccultCrescentHelper
             isPrevented = true;
         }
 
-        private unsafe void OnZoneChanged(uint u)
+        private unsafe void OnZoneChanged
+        (
+            uint u
+        )
         {
             currentRoute.Clear();
             queuedGatheringList.Clear();
-            
+
             treasureObjects.Clear();
             surveyPointPositions.Clear();
             carrotPositions.Clear();
 
             treasureHandle?.Unreg();
             treasureHandle = null;
-            
+
             surveyPointHandle?.Unreg();
             surveyPointHandle = null;
-            
+
             carrotHandle?.Unreg();
             carrotHandle = null;
 
@@ -323,7 +337,9 @@ public partial class OccultCrescentHelper
 
             treasureHandle = ZoneIndicatorRenderer.Instance().RegTemporary
             (
-                () => MainModule.config.IsEnabledHighlightTreasure ? treasureObjects : [],
+                () => MainModule.config.IsEnabledHighlightTreasure ?
+                          treasureObjects :
+                          [],
                 ptr => ((GameObject*)ptr)->Position,
                 new()
                 {
@@ -334,10 +350,12 @@ public partial class OccultCrescentHelper
                     }
                 }
             );
-            
+
             surveyPointHandle = ZoneIndicatorRenderer.Instance().RegTemporary
             (
-                () => MainModule.config.IsEnabledHighlightSurveyPoint ? surveyPointPositions : [],
+                () => MainModule.config.IsEnabledHighlightSurveyPoint ?
+                          surveyPointPositions :
+                          [],
                 pos => pos,
                 new()
                 {
@@ -348,10 +366,12 @@ public partial class OccultCrescentHelper
                     }
                 }
             );
-            
+
             carrotHandle = ZoneIndicatorRenderer.Instance().RegTemporary
             (
-                () => MainModule.config.IsEnabledHighlightCarrot ? carrotPositions : [],
+                () => MainModule.config.IsEnabledHighlightCarrot ?
+                          carrotPositions :
+                          [],
                 pos => pos,
                 new()
                 {
@@ -383,7 +403,10 @@ public partial class OccultCrescentHelper
 
         #endregion
 
-        private void EnqueueAutoTreasureHunt(List<TreasureHuntPoint> routeData)
+        private void EnqueueAutoTreasureHunt
+        (
+            List<TreasureHuntPoint> routeData
+        )
         {
             treasureTaskHelper.Abort();
             queuedGatheringList.Clear();
@@ -447,18 +470,18 @@ public partial class OccultCrescentHelper
                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
                     MovementManager.Instance().TPSmooth(position, 24, -20);
 
-                    if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) 
+                    if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check"))
                         return false;
 
                     if (!data.IsExact)
                     {
                         // 还没加载出来呢
-                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50) 
+                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50)
                             return false;
                     }
                     else
                     {
-                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 3) 
+                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 3)
                             return false;
                     }
 
@@ -555,7 +578,7 @@ public partial class OccultCrescentHelper
                 {
                     var gameObject = (Treasure*)ptr;
                     if (gameObject == null) return false;
-                    
+
                     if (gameObject->ObjectKind != ObjectKind.Treasure)
                         return false;
 
@@ -582,15 +605,15 @@ public partial class OccultCrescentHelper
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
-            List<Vector3> surveyPoints  = [];
-            List<Vector3> carrots       = [];
-            
+            List<Vector3> surveyPoints = [];
+            List<Vector3> carrots      = [];
+
             var treasures = EventObjectManager.Instance()->FindAll
             (ptr =>
                 {
                     var gameObject = (Treasure*)ptr;
                     if (gameObject == null) return false;
-                    
+
                     if (gameObject->ObjectKind != ObjectKind.Treasure)
                         return false;
 
@@ -600,21 +623,21 @@ public partial class OccultCrescentHelper
                     return true;
                 }
             );
-            
+
             foreach (var eventObjectPtr in EventObjectManager.Instance()->EventObjects)
             {
                 if (eventObjectPtr.IsNull) continue;
 
                 var eventObject = eventObjectPtr.Value;
                 if (!eventObject->IsReadyToDraw()) return;
-                
+
                 switch (eventObject->ObjectKind)
                 {
                     case ObjectKind.Treasure:
                         var treasureObject = (Treasure*)eventObject;
                         if (treasureObject->Flags.IsSetAny(Treasure.TreasureFlags.Opened, Treasure.TreasureFlags.FadedOut))
                             break;
-                        
+
                         treasures.Add((nint)treasureObject);
                         break;
                 }
@@ -626,7 +649,7 @@ public partial class OccultCrescentHelper
 
                 var eventObject = eventObjectPtr.Value;
                 if (!eventObject->IsReadyToDraw()) return;
-                
+
                 switch (eventObject->ObjectKind)
                 {
                     case ObjectKind.EventObj:
@@ -642,6 +665,7 @@ public partial class OccultCrescentHelper
                                 carrots.Add(eventObject->Position);
                                 break;
                         }
+
                         break;
                 }
             }
@@ -651,7 +675,10 @@ public partial class OccultCrescentHelper
             carrotPositions      = carrots;
         }
 
-        private static unsafe void InteractWithTreasure(Treasure* treasure)
+        private static unsafe void InteractWithTreasure
+        (
+            Treasure* treasure
+        )
         {
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
 
@@ -675,7 +702,11 @@ public partial class OccultCrescentHelper
 
         private static class PathPlanner
         {
-            public static Queue<TreasureHuntPoint> PlanShortestPath(Vector3 currentPosition, List<TreasureHuntPoint> locations)
+            public static Queue<TreasureHuntPoint> PlanShortestPath
+            (
+                Vector3                 currentPosition,
+                List<TreasureHuntPoint> locations
+            )
             {
                 if (locations == null || locations.Count == 0)
                     return [];
@@ -693,7 +724,10 @@ public partial class OccultCrescentHelper
                 return new Queue<TreasureHuntPoint>(orderedPath);
             }
 
-            private static List<TreasureHuntPoint> CreateInitialPathNearestNeighbor(List<TreasureHuntPoint> points)
+            private static List<TreasureHuntPoint> CreateInitialPathNearestNeighbor
+            (
+                List<TreasureHuntPoint> points
+            )
             {
                 var remainingPoints = new List<TreasureHuntPoint>(points);
                 var orderedPath     = new List<TreasureHuntPoint>();
@@ -729,7 +763,10 @@ public partial class OccultCrescentHelper
                 return orderedPath;
             }
 
-            private static void OptimizePath2Opt(List<TreasureHuntPoint> path)
+            private static void OptimizePath2Opt
+            (
+                List<TreasureHuntPoint> path
+            )
             {
                 var improvementFound = true;
                 var n                = path.Count;

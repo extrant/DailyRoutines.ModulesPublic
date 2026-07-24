@@ -24,6 +24,7 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
     };
 
     private static readonly CompSig ProcessPacketActionEffectSig = new("E8 ?? ?? ?? ?? 48 8B 8D F0 03 00 00");
+
     private delegate void ProcessPacketActionEffectDelegate
     (
         uint                        sourceID,
@@ -33,17 +34,21 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
         ActionEffectHandler.Effect* effectArray,
         ulong*                      effectTrail
     );
+
     private Hook<ProcessPacketActionEffectDelegate> ProcessPacketActionEffectHook;
 
     private Config config = null!;
 
-    private readonly ActionSelectCombo whitelistCombo = new("Whitelist");
-    private readonly ActionSelectCombo blacklistCombo = new("Blacklist");
-    private readonly ActionSelectCombo selectedCombo  = new("Selected");
+    private ActionSelectCombo whitelistCombo = null!;
+    private ActionSelectCombo blacklistCombo = null!;
+    private ActionSelectCombo selectedCombo  = null!;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        whitelistCombo = new("Whitelist");
+        blacklistCombo = new("Blacklist");
+        selectedCombo  = new("Selected");
+        config         = Config.Load(this) ?? new();
 
         whitelistCombo.SelectedIDs = config.WhitelistActions;
         blacklistCombo.SelectedIDs = config.BlacklistActions;
@@ -100,7 +105,12 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
             config.Save(this);
 
         ImGui.SameLine();
-        ImGui.TextUnformatted(config.WorkMode ? Lang.Get("Whitelist") : Lang.Get("Blacklist"));
+        ImGui.TextUnformatted
+        (
+            config.WorkMode ?
+                Lang.Get("Whitelist") :
+                Lang.Get("Blacklist")
+        );
 
         ImGui.AlignTextToFramePadding();
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("Action")}:");
@@ -108,9 +118,9 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
         ImGui.SameLine();
         ImGui.SetNextItemWidth(200f * GlobalUIScale);
 
-        if (config.WorkMode
-                ? whitelistCombo.DrawCheckbox()
-                : blacklistCombo.DrawCheckbox())
+        if (config.WorkMode ?
+                whitelistCombo.DrawCheckbox() :
+                blacklistCombo.DrawCheckbox())
         {
             config.BlacklistActions = blacklistCombo.SelectedIDs;
             config.WhitelistActions = blacklistCombo.SelectedIDs;
@@ -215,7 +225,12 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
         Parse(sourceID, effectHeader, effectArray);
     }
 
-    private void Parse(uint sourceEntityID, ActionEffectHandler.Header* effectHeader, ActionEffectHandler.Effect* effectArray)
+    private void Parse
+    (
+        uint                        sourceEntityID,
+        ActionEffectHandler.Header* effectHeader,
+        ActionEffectHandler.Effect* effectArray
+    )
     {
         try
         {
@@ -240,9 +255,9 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
             }
 
             var actionName = config.CustomActionName.TryGetValue(actionID, out var customName) &&
-                             !string.IsNullOrWhiteSpace(customName)
-                                 ? customName
-                                 : actionData.Value.Name.ToString();
+                             !string.IsNullOrWhiteSpace(customName) ?
+                                 customName :
+                                 actionData.Value.Name.ToString();
 
             var message = effectArray->Param0 switch
             {

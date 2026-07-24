@@ -18,14 +18,15 @@ public unsafe class AutoDisplayFateItemCount : ModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title           = Lang.Get("AutoDisplayFateItemCountTitle"),
-        Description     = Lang.Get("AutoDisplayFateItemCountDescription"),
-        Category        = ModuleCategory.Combat,
-        PreviewImageURL = ["https://gh.atmoomen.top/raw.githubusercontent.com/AtmoOmen/StaticAssets/main/DailyRoutines/image/AutoDisplayFateItemCount-UI.png"] // TODO: 仓库迁移
+        Title       = Lang.Get("AutoDisplayFateItemCountTitle"),
+        Description = Lang.Get("AutoDisplayFateItemCountDescription"),
+        Category    = ModuleCategory.Combat,
+        PreviewImageURL =
+            ["https://gh.atmoomen.top/raw.githubusercontent.com/AtmoOmen/StaticAssets/main/DailyRoutines/image/AutoDisplayFateItemCount-UI.png"] // TODO: 仓库迁移
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private OverlayController? controller;
 
     protected override void Init()
@@ -55,7 +56,7 @@ public unsafe class AutoDisplayFateItemCount : ModuleBase
         private TextNode HoldCountNode   { get; set; }
         private TextNode HandInLabelNode { get; set; }
         private TextNode HandInCountNode { get; set; }
-        
+
         public FateInfoNode()
         {
             Scale = new(1.5f);
@@ -144,7 +145,7 @@ public unsafe class AutoDisplayFateItemCount : ModuleBase
 
             TableNode.AttachNode(this);
         }
-        
+
         protected override void OnUpdate()
         {
             var currentFate = FateManager.Instance()->CurrentFate;
@@ -200,7 +201,10 @@ public unsafe class AutoDisplayFateItemCount : ModuleBase
             HandInCountNode.SetNumber(currentFate->HandInCount);
         }
 
-        private void UpdateFateItemHeader(EventItem item)
+        private void UpdateFateItemHeader
+        (
+            EventItem item
+        )
         {
             HeaderNode.IsVisible = true;
 

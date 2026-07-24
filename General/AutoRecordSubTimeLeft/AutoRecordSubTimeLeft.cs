@@ -8,13 +8,9 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Gui.Dtr;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Text.Payloads;
-using Lumina.Text.ReadOnly;
 using OmenTools.Dalamud;
 using OmenTools.ImGuiOm.Widgets;
 using OmenTools.Interop.Game.Models;
@@ -33,14 +29,19 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         Author      = ["Due"]
     };
 
-    private static readonly CompSig                          AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 45 ?? ?? E9 ?? ?? ?? ?? 83 FB 03");
-    private unsafe delegate nint                             AgentLobbyOnLoginDelegate(AgentLobby* agent);
-    private                 Hook<AgentLobbyOnLoginDelegate>? AgentLobbyOnLoginHook;
+    private static readonly CompSig AgentLobbyOnLoginSig = new("E8 ?? ?? ?? ?? 41 C6 45 ?? ?? E9 ?? ?? ?? ?? 83 FB 03");
+
+    private unsafe delegate nint AgentLobbyOnLoginDelegate
+    (
+        AgentLobby* agent
+    );
+
+    private Hook<AgentLobbyOnLoginDelegate>? AgentLobbyOnLoginHook;
 
     private Config           config = null!;
     private IDtrBarEntry?    entry;
     private PlaytimeTracker? tracker;
-    
+
     private DatePicker? startDatePicker;
     private DatePicker? endDatePicker;
     private DateTime    queryStartDate;
@@ -123,16 +124,27 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         );
     }
 
-    private void OnLogout(int code, int type)
+    private void OnLogout
+    (
+        int code,
+        int type
+    )
     {
         tracker?.OnLogout();
         TaskHelper?.Abort();
     }
 
-    private void OnUpdate(IFramework _) => 
+    private void OnUpdate
+    (
+        IFramework _
+    ) =>
         UpdateEntryAndTimeInfo();
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs _)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  _
+    )
     {
         if (CharaSelect == null) return;
 
@@ -153,14 +165,20 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         UpdateEntryAndTimeInfo(contentID);
     }
 
-    private unsafe nint AgentLobbyOnLoginDetour(AgentLobby* agent)
+    private unsafe nint AgentLobbyOnLoginDetour
+    (
+        AgentLobby* agent
+    )
     {
         var ret = AgentLobbyOnLoginHook!.Original(agent);
         UpdateSubscriptionFromAgent(agent);
         return ret;
     }
 
-    private unsafe void UpdateSubscriptionFromAgent(AgentLobby* agent)
+    private unsafe void UpdateSubscriptionFromAgent
+    (
+        AgentLobby* agent
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue
@@ -192,15 +210,21 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         );
     }
 
-    private bool TryUpdateSubscriptionInfo(ulong contentID, in LobbySubscriptionInfo info, out TimeSpan leftMonth, out TimeSpan leftTime)
+    private bool TryUpdateSubscriptionInfo
+    (
+        ulong                     contentID,
+        in  LobbySubscriptionInfo info,
+        out TimeSpan              leftMonth,
+        out TimeSpan              leftTime
+    )
     {
         var timeInfo = GetLeftTimeSecond(info);
         leftMonth = NormalizeSubscriptionTime(timeInfo.MonthTime);
         leftTime  = NormalizeSubscriptionTime(timeInfo.PointTime);
 
         if (config.Infos.TryGetValue(contentID, out var current) &&
-            current.LeftMonth == leftMonth                             &&
-            current.LeftTime  == leftTime                              &&
+            current.LeftMonth == leftMonth                       &&
+            current.LeftTime  == leftTime                        &&
             current.Record    != DateTime.MinValue) return false;
 
         config.Infos[contentID] = new(StandardTimeManager.Instance().Now, leftMonth, leftTime);
@@ -208,33 +232,42 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         return true;
     }
 
-    private static unsafe (long MonthTime, long PointTime) GetLeftTimeSecond(in LobbySubscriptionInfo info)
+    private static unsafe (long MonthTime, long PointTime) GetLeftTimeSecond
+    (
+        in LobbySubscriptionInfo info
+    )
     {
         var ptr = Unsafe.AsPointer(ref Unsafe.AsRef(in info));
         return (Marshal.ReadInt64((nint)ptr, 16), Marshal.ReadInt64((nint)ptr, 24));
     }
 
-    private void UpdateEntryAndTimeInfo(ulong contentID = 0)
+    private void UpdateEntryAndTimeInfo
+    (
+        ulong contentID = 0
+    )
     {
         if (entry == null || tracker == null || !GameState.IsLoggedIn) return;
 
         if (contentID == 0)
             contentID = LocalPlayerState.ContentID;
 
-        if (contentID == 0                                           ||
-            DService.Instance().Condition[ConditionFlag.InCombat]    ||
-            !config.Infos.TryGetValue(contentID, out var info) ||
-            info.Record == DateTime.MinValue                         ||
-            info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue)
+        if (contentID == 0                                        ||
+            DService.Instance().Condition[ConditionFlag.InCombat] ||
+            !config.Infos.TryGetValue(contentID, out var info)    ||
+            info.Record == DateTime.MinValue                      ||
+            (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))
         {
             entry.Shown = false;
             return;
         }
 
-        var isMonth    = info.LeftMonth != TimeSpan.MinValue;
-        var expireTime = info.Record + (isMonth ? info.LeftMonth : info.LeftTime);
-        var now        = StandardTimeManager.Instance().Now;
-        var stats      = tracker.Snapshot;
+        var isMonth = info.LeftMonth != TimeSpan.MinValue;
+        var expireTime = info.Record +
+                         (isMonth ?
+                              info.LeftMonth :
+                              info.LeftTime);
+        var now   = StandardTimeManager.Instance().Now;
+        var stats = tracker.Snapshot;
 
         using var builder = new RentedSeStringBuilder();
         builder.Builder
@@ -293,7 +326,10 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         entry.Shown   = true;
     }
 
-    private static void OnDTREntryClick(DtrInteractionEvent eventData)
+    private static void OnDTREntryClick
+    (
+        DtrInteractionEvent eventData
+    )
     {
         switch (eventData.ClickType)
         {

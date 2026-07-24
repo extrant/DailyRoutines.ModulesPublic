@@ -25,8 +25,9 @@ public unsafe class CustomizeInterfaceText : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private static readonly CompSig SetPlayerNamePlateSig = new("48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ?? 44 0F B6 EA");
+
     private delegate nint SetPlayerNamePlateDelegate
     (
         nint namePlateObjectPtr,
@@ -38,11 +39,18 @@ public unsafe class CustomizeInterfaceText : ModuleBase
         nint prefix,
         int  iconID
     );
+
     private Hook<SetPlayerNamePlateDelegate>? SetPlayerNamePlateHook;
 
-    private static readonly CompSig TextNodeSetStringSig = 
+    private static readonly CompSig TextNodeSetStringSig =
         new("E8 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC 40 55 56 57 48 81 EC");
-    private delegate        void    TextNodeSetStringDelegate(AtkTextNode* textNode, CStringPointer text);
+
+    private delegate void TextNodeSetStringDelegate
+    (
+        AtkTextNode*   textNode,
+        CStringPointer text
+    );
+
     private Hook<TextNodeSetStringDelegate>? TextNodeSetStringHook;
 
     private Config config = null!;
@@ -54,7 +62,7 @@ public unsafe class CustomizeInterfaceText : ModuleBase
     private string keyEditInput   = string.Empty;
     private string valueEditInput = string.Empty;
     private int    replaceModeEditInput;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -248,7 +256,11 @@ public unsafe class CustomizeInterfaceText : ModuleBase
         }
     }
 
-    private void TextNodeSetStringDetour(AtkTextNode* textNode, CStringPointer text)
+    private void TextNodeSetStringDetour
+    (
+        AtkTextNode*   textNode,
+        CStringPointer text
+    )
     {
         if (textNode == null || !text.HasValue)
         {
@@ -310,15 +322,22 @@ public unsafe class CustomizeInterfaceText : ModuleBase
         );
     }
 
-    private PinnedMemory ReplaceTextAndAllocate(nint originalTextPtr)
+    private PinnedMemory ReplaceTextAndAllocate
+    (
+        nint originalTextPtr
+    )
     {
         var origText = MemoryHelper.ReadSeStringNullTerminated(originalTextPtr);
-        return ApplyTextReplacements(origText, out var modifiedText)
-                   ? new PinnedMemory(modifiedText)
-                   : new PinnedMemory(Array.Empty<byte>());
+        return ApplyTextReplacements(origText, out var modifiedText) ?
+                   new PinnedMemory(modifiedText) :
+                   new PinnedMemory(Array.Empty<byte>());
     }
 
-    private bool ApplyTextReplacements(SeString origText, out byte[]? modifiedText)
+    private bool ApplyTextReplacements
+    (
+        SeString    origText,
+        out byte[]? modifiedText
+    )
     {
         modifiedText = null;
         var textPayloads = origText.Payloads.OfType<TextPayload>().ToArray();
@@ -334,12 +353,12 @@ public unsafe class CustomizeInterfaceText : ModuleBase
                 var originalText = payload.Text;
                 var replacedText = pattern.Mode switch
                 {
-                    ReplaceMode.部分匹配 => originalText.Contains(pattern.Key, StringComparison.Ordinal)
-                                            ? originalText.Replace(pattern.Key, pattern.Value)
-                                            : null,
-                    ReplaceMode.完全匹配 => originalText.Equals(pattern.Key, StringComparison.Ordinal)
-                                            ? pattern.Value
-                                            : null,
+                    ReplaceMode.部分匹配 => originalText.Contains(pattern.Key, StringComparison.Ordinal) ?
+                                            originalText.Replace(pattern.Key, pattern.Value) :
+                                            null,
+                    ReplaceMode.完全匹配 => originalText.Equals(pattern.Key, StringComparison.Ordinal) ?
+                                            pattern.Value :
+                                            null,
                     ReplaceMode.正则 => pattern.Regex?.Replace(originalText, pattern.Value),
                     _              => null
                 };
@@ -377,7 +396,13 @@ public unsafe class CustomizeInterfaceText : ModuleBase
     {
         public ReplacePattern() { }
 
-        public ReplacePattern(string key, string value, ReplaceMode mode, bool enabled)
+        public ReplacePattern
+        (
+            string      key,
+            string      value,
+            ReplaceMode mode,
+            bool        enabled
+        )
         {
             Key     = key;
             Value   = value;
@@ -394,16 +419,33 @@ public unsafe class CustomizeInterfaceText : ModuleBase
         public bool        Enabled { get; set; }
         public Regex?      Regex   { get; set; }
 
-        public int CompareTo(ReplacePattern? other) =>
-            other == null ? 1 : string.Compare(Key, other.Key, StringComparison.Ordinal);
+        public int CompareTo
+        (
+            ReplacePattern? other
+        ) =>
+            other == null ?
+                1 :
+                string.Compare(Key, other.Key, StringComparison.Ordinal);
 
-        public bool Equals(ReplacePattern? other) => other != null && Key == other.Key;
+        public bool Equals
+        (
+            ReplacePattern? other
+        ) => other != null && Key == other.Key;
 
-        public override bool Equals(object? obj) => Equals(obj as ReplacePattern);
+        public override bool Equals
+        (
+            object? obj
+        ) => Equals(obj as ReplacePattern);
 
         public override int GetHashCode() => Key.GetHashCode(StringComparison.Ordinal);
 
-        public void Deconstruct(out string key, out string value, out ReplaceMode mode, out bool enabled) =>
+        public void Deconstruct
+        (
+            out string      key,
+            out string      value,
+            out ReplaceMode mode,
+            out bool        enabled
+        ) =>
             (key, value, mode, enabled) = (Key, Value, Mode, Enabled);
     }
 
@@ -412,7 +454,10 @@ public unsafe class CustomizeInterfaceText : ModuleBase
         public readonly nint     Pointer;
         private         GCHandle handle;
 
-        public PinnedMemory(IEnumerable array)
+        public PinnedMemory
+        (
+            IEnumerable array
+        )
         {
             handle  = GCHandle.Alloc(array, GCHandleType.Pinned);
             Pointer = handle.AddrOfPinnedObject();

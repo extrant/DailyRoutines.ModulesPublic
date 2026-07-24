@@ -6,7 +6,6 @@ using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Controllers;
 using KamiToolKit.Nodes;
@@ -110,13 +109,20 @@ public unsafe class OptimizedMacro : ModuleBase
 
     #region Event Handlers
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         if (string.IsNullOrWhiteSpace(args)) return;
         LoadPreset(args);
     }
 
-    private void OnAddonSetup(AtkUnitBase* addon)
+    private void OnAddonSetup
+    (
+        AtkUnitBase* addon
+    )
     {
         if (addon == null) return;
 
@@ -198,7 +204,10 @@ public unsafe class OptimizedMacro : ModuleBase
         controlListNode.AddNode(saveButtonNode);
     }
 
-    private void OnAddonFinalize(AtkUnitBase* addon)
+    private void OnAddonFinalize
+    (
+        AtkUnitBase* addon
+    )
     {
         presetDropdownNode?.Dispose();
         presetDropdownNode = null;
@@ -216,7 +225,10 @@ public unsafe class OptimizedMacro : ModuleBase
         controlListNode = null;
     }
 
-    private void OnPresetSelected(string selection)
+    private void OnPresetSelected
+    (
+        string selection
+    )
     {
         var isDefaultOption = selection == DefaultOption;
 
@@ -286,7 +298,11 @@ public unsafe class OptimizedMacro : ModuleBase
 
     #region Preset Management
 
-    private void SavePreset(string presetName, bool isOverwrite = false)
+    private void SavePreset
+    (
+        string presetName,
+        bool   isOverwrite = false
+    )
     {
         try
         {
@@ -311,7 +327,16 @@ public unsafe class OptimizedMacro : ModuleBase
             config.Presets[presetName] = presetData;
             config.Save(this);
 
-            NotifyHelper.Instance().Chat(Lang.Get(isOverwrite ? "OptimizedMacro-Notification-Overwritten" : "OptimizedMacro-Notification-Saved", presetName));
+            NotifyHelper.Instance().Chat
+            (
+                Lang.Get
+                (
+                    isOverwrite ?
+                        "OptimizedMacro-Notification-Overwritten" :
+                        "OptimizedMacro-Notification-Saved",
+                    presetName
+                )
+            );
         }
         catch
         {
@@ -319,7 +344,10 @@ public unsafe class OptimizedMacro : ModuleBase
         }
     }
 
-    private void LoadPreset(string presetName)
+    private void LoadPreset
+    (
+        string presetName
+    )
     {
         try
         {
@@ -349,7 +377,10 @@ public unsafe class OptimizedMacro : ModuleBase
         }
     }
 
-    private void DeletePreset(string presetName)
+    private void DeletePreset
+    (
+        string presetName
+    )
     {
         try
         {
@@ -373,7 +404,11 @@ public unsafe class OptimizedMacro : ModuleBase
         }
     }
 
-    private static List<MacroData> ReadMacrosFromMemory(RaptureMacroModule* macroModule, uint set)
+    private static List<MacroData> ReadMacrosFromMemory
+    (
+        RaptureMacroModule* macroModule,
+        uint                set
+    )
     {
         List<MacroData> macros = [];
 
@@ -400,14 +435,16 @@ public unsafe class OptimizedMacro : ModuleBase
             {
                 Index  = i,
                 IconID = macro->IconId,
-                Name   = nameSpan.Length > 0 ? [..nameSpan, 0] : null
+                Name = nameSpan.Length > 0 ?
+                           [.. nameSpan, 0] :
+                           null
             };
 
             for (var lineIdx = 0; lineIdx < MAX_MACRO_LINES; lineIdx++)
             {
                 var lineSpan = macro->Lines[lineIdx].AsSpan();
                 if (lineSpan.Length > 0)
-                    macroData.Lines[lineIdx] = [..lineSpan, 0];
+                    macroData.Lines[lineIdx] = [.. lineSpan, 0];
             }
 
             macros.Add(macroData);
@@ -416,7 +453,12 @@ public unsafe class OptimizedMacro : ModuleBase
         return macros;
     }
 
-    private static void WriteMacrosToMemory(RaptureMacroModule* macroModule, uint set, List<MacroData> macrosData)
+    private static void WriteMacrosToMemory
+    (
+        RaptureMacroModule* macroModule,
+        uint                set,
+        List<MacroData>     macrosData
+    )
     {
         for (uint i = 0; i < MACROS_PER_SET; i++)
         {
@@ -467,15 +509,15 @@ public unsafe class OptimizedMacro : ModuleBase
     }
 
     #endregion
-    
+
     #region Tools
 
     private List<string> GetPresetNames()
     {
         var sortedList = config.Presets
-                                     .OrderByDescending(x => x.Value.CreatedAt)
-                                     .Select(x => x.Key)
-                                     .ToList();
+                               .OrderByDescending(x => x.Value.CreatedAt)
+                               .Select(x => x.Key)
+                               .ToList();
 
         return sortedList.Prepend(DefaultOption).ToList();
     }
@@ -487,7 +529,10 @@ public unsafe class OptimizedMacro : ModuleBase
         protected TextButtonNode? CancelButton;
         protected TextButtonNode? ConfirmButton;
 
-        protected void SetupButtons(float yOffset = 0f)
+        protected void SetupButtons
+        (
+            float yOffset = 0f
+        )
         {
             var buttonSize = new Vector2(120, 28);
             var targetYPos = ContentSize.Y - buttonSize.Y + ContentStartPosition.Y + yOffset;
@@ -522,7 +567,11 @@ public unsafe class OptimizedMacro : ModuleBase
         public string          PlaceholderString { get; set; } = string.Empty;
         public string          DefaultString     { get; set; } = string.Empty;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             inputNode = new TextInputNode
             {
@@ -551,7 +600,11 @@ public unsafe class OptimizedMacro : ModuleBase
     {
         public Action? OnConfirm { get; set; }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues) =>
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        ) =>
             SetupButtons(-5f);
 
         protected override void OnConfirmClick()
@@ -567,7 +620,7 @@ public unsafe class OptimizedMacro : ModuleBase
         public bool                           ConfirmOverwrite = true;
         public Dictionary<string, PresetData> Presets          = [];
     }
-    
+
     #region 常量
 
     private const int MACROS_PER_SET  = 100;

@@ -28,14 +28,15 @@ public class CustomActionQueueTime : ModuleBase
 
     private Config config = null!;
 
-    private readonly ActionSelectCombo actionSelectCombo = new("Action");
+    private ActionSelectCombo actionSelectCombo = null!;
 
     private float queueTimeMSInput = 500;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
-        Overlay      = new(this);
+        actionSelectCombo = new("Action");
+        config            = Config.Load(this) ?? new();
+        Overlay           = new(this);
 
         Overlay.Flags |= ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove;
 
@@ -44,7 +45,7 @@ public class CustomActionQueueTime : ModuleBase
         if (config.DisplayQueueActionOverlay)
             Overlay.IsOpen = true;
     }
-    
+
     protected override void Uninit() =>
         UseActionManager.Instance().Unreg(OnPreIsActionOffCooldown);
 
@@ -312,7 +313,7 @@ public class CustomActionQueueTime : ModuleBase
             manager->QueuedActionType = ActionType.None;
         }
     }
-    
+
     private void OnPreIsActionOffCooldown
     (
         ref bool   isPrevented,
@@ -324,7 +325,9 @@ public class CustomActionQueueTime : ModuleBase
         if (actionType != ActionType.Action) return;
 
         var queueTimeMS =
-            config.QueueTime.TryGetValue(actionID, out var queueTime) ? queueTime : GetDefaultQueueTime();
+            config.QueueTime.TryGetValue(actionID, out var queueTime) ?
+                queueTime :
+                GetDefaultQueueTime();
         queueTimeSecond = queueTimeMS / 1000f;
     }
 
@@ -335,7 +338,7 @@ public class CustomActionQueueTime : ModuleBase
             DefaultQueueMode.Fixed => config.DefaultQueueTime,
             DefaultQueueMode.BasedOnFrameRate => Math.Clamp
             (
-                500 + (90 - Framework.Instance()->FrameRate) / 5 * 20,
+                500 + ((90 - Framework.Instance()->FrameRate) / 5 * 20),
                 300,
                 800
             ),
@@ -354,7 +357,7 @@ public class CustomActionQueueTime : ModuleBase
         // Action ID - Time (ms)
         public Dictionary<uint, float> QueueTime = [];
     }
-    
+
     private enum DefaultQueueMode
     {
         None,
@@ -364,7 +367,7 @@ public class CustomActionQueueTime : ModuleBase
 
     #region 常量
 
-    private static readonly FrozenDictionary<DefaultQueueMode, string> DefaultQueueModesLoc = new Dictionary<DefaultQueueMode, string>()
+    private static readonly FrozenDictionary<DefaultQueueMode, string> DefaultQueueModesLoc = new Dictionary<DefaultQueueMode, string>
     {
         [DefaultQueueMode.None]             = Lang.Get("CustomActionQueueTime-DefaultQueueMode-None"),
         [DefaultQueueMode.Fixed]            = Lang.Get("CustomActionQueueTime-DefaultQueueMode-Fixed"),

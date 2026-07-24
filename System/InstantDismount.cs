@@ -16,10 +16,16 @@ public unsafe class InstantDismount : ModuleBase
         Description = Lang.Get("InstantDismountDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private static readonly CompSig                 DismountSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 49 8B 06");
-    private delegate        bool                    DismountDelegate(nint a1, Vector3* location);
-    private                 Hook<DismountDelegate>? DismountHook;
+
+    private static readonly CompSig DismountSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 49 8B 06");
+
+    private delegate bool DismountDelegate
+    (
+        nint     a1,
+        Vector3* location
+    );
+
+    private Hook<DismountDelegate>? DismountHook;
 
     protected override void Init()
     {
@@ -27,7 +33,11 @@ public unsafe class InstantDismount : ModuleBase
         DismountHook.Enable();
     }
 
-    private static bool DismountDetour(nint a1, Vector3* location)
+    private static bool DismountDetour
+    (
+        nint     a1,
+        Vector3* location
+    )
     {
         MovementManager.Instance().Dismount();
         return false;

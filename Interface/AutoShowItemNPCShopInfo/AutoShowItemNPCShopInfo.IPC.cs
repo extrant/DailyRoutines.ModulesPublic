@@ -9,7 +9,10 @@ namespace DailyRoutines.ModulesPublic.Interface.AutoShowItemNPCShopInfo;
 public partial class AutoShowItemNPCShopInfo
 {
     [IPCProvider("DailyRoutines.Modules.AutoShowItemNPCShopInfo.OpenByItemID")]
-    private static bool OpenByItemID(uint itemID)
+    private static bool OpenByItemID
+    (
+        uint itemID
+    )
     {
         var shopResult     = ItemSourceInfo.Query(itemID);
         var exchangeResult = ItemSourceInfo.QueryExchangeItems(itemID);
@@ -37,14 +40,25 @@ public partial class AutoShowItemNPCShopInfo
     }
 
     [IPCProvider("DailyRoutines.Modules.AutoShowItemNPCShopInfo.OpenShopInfoByItemID")]
-    private static bool OpenShopInfoByItemID(uint itemID) =>
+    private static bool OpenShopInfoByItemID
+    (
+        uint itemID
+    ) =>
         TryOpenShopInfo(itemID, ItemSourceInfo.Query(itemID), true);
 
     [IPCProvider("DailyRoutines.Modules.AutoShowItemNPCShopInfo.OpenExchangeInfoByItemID")]
-    private static bool OpenExchangeInfoByItemID(uint itemID) =>
+    private static bool OpenExchangeInfoByItemID
+    (
+        uint itemID
+    ) =>
         TryOpenExchangeInfo(itemID, ItemSourceInfo.QueryExchangeItems(itemID), true);
 
-    private static bool TryOpenShopInfo(uint itemID, ItemSourceQueryResult result, bool showError)
+    private static bool TryOpenShopInfo
+    (
+        uint                  itemID,
+        ItemSourceQueryResult result,
+        bool                  showError
+    )
     {
         if (AddonNPCShopsSource.Addon is { IsOpen: true } addon &&
             addon.SourceInfo.ItemID == itemID)
@@ -65,7 +79,12 @@ public partial class AutoShowItemNPCShopInfo
         return false;
     }
 
-    private static bool TryOpenExchangeInfo(uint itemID, ExchangeItemsQueryResult result, bool showError)
+    private static bool TryOpenExchangeInfo
+    (
+        uint                     itemID,
+        ExchangeItemsQueryResult result,
+        bool                     showError
+    )
     {
         if (AddonNPCShopsDestination.Addon is { IsOpen: true } addon &&
             addon.SourceInfo.CostItemID == itemID)

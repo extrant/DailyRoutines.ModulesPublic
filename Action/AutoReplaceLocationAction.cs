@@ -35,13 +35,14 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
 
     private Config? config;
 
-    private readonly ContentSelectCombo contentSelectCombo = new("Blakclist");
+    private ContentSelectCombo contentSelectCombo = null!;
 
     private bool isNeedToReplace;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        contentSelectCombo = new("Blakclist");
+        config             = Config.Load(this) ?? new();
 
         contentSelectCombo.SelectedIDs = config.BlacklistContents;
 
@@ -55,7 +56,7 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
             (PronounModule.Delegates.ResolvePlaceholder)ParseActionCommandArgDetour
         );
         ParseActionCommandArgHook.Enable();
-        
+
         _ = ZoneMapMarkers;
     }
 
@@ -177,10 +178,14 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
 
         using var indent = ImRaii.PushIndent();
 
-        var       isMapValid             = GameState.TerritoryTypeData is { RowId: > 0, ContentFinderCondition.RowId: > 0 };
-        var       currentMapPlaceName    = isMapValid ? GameState.MapData.PlaceName.Value.Name.ToString() : string.Empty;
-        var       currentMapPlaceNameSub = isMapValid ? GameState.MapData.PlaceNameSub.Value.Name.ToString() : string.Empty;
-        using var disabled               = ImRaii.Disabled(!isMapValid);
+        var isMapValid = GameState.TerritoryTypeData is { RowId: > 0, ContentFinderCondition.RowId: > 0 };
+        var currentMapPlaceName = isMapValid ?
+                                      GameState.MapData.PlaceName.Value.Name.ToString() :
+                                      string.Empty;
+        var currentMapPlaceNameSub = isMapValid ?
+                                         GameState.MapData.PlaceNameSub.Value.Name.ToString() :
+                                         string.Empty;
+        using var disabled = ImRaii.Disabled(!isMapValid);
 
         ImGui.AlignTextToFramePadding();
 
@@ -188,7 +193,13 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
 
         using (ImRaii.PushIndent())
         {
-            ImGui.TextUnformatted($"{currentMapPlaceName}" + (string.IsNullOrEmpty(currentMapPlaceNameSub) ? string.Empty : $" / {currentMapPlaceNameSub}"));
+            ImGui.TextUnformatted
+            (
+                $"{currentMapPlaceName}" +
+                (string.IsNullOrEmpty(currentMapPlaceNameSub) ?
+                     string.Empty :
+                     $" / {currentMapPlaceNameSub}")
+            );
 
             if (ImGui.Button($"{Lang.Get("OpenMap")}"))
             {
@@ -311,7 +322,7 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
     {
         if (type != ActionType.Action) return;
 
-        if (!config.EnabledActions.TryGetValue(actionID, out var isEnabled) || !isEnabled && !isNeedToReplace)
+        if (!config.EnabledActions.TryGetValue(actionID, out var isEnabled) || (!isEnabled && !isNeedToReplace))
         {
             isNeedToReplace = false;
             return;
@@ -396,7 +407,10 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
     }
 
     // 自定义中心点场中
-    private bool HandleCustomLocation(ref Vector3 sourceLocation)
+    private bool HandleCustomLocation
+    (
+        ref Vector3 sourceLocation
+    )
     {
         if (!config.CustomMarkers.TryGetValue(GameState.Map, out var markers)) return false;
 
@@ -414,7 +428,11 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
     }
 
     // 地图标记场中
-    private bool HandleMapLocation(Dictionary<MapMarker, Vector2>? markers, ref Vector3 sourceLocation)
+    private bool HandleMapLocation
+    (
+        Dictionary<MapMarker, Vector2>? markers,
+        ref Vector3                     sourceLocation
+    )
     {
         if (markers is not { Count: > 0 }) return false;
 
@@ -431,7 +449,10 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
     }
 
     // 预设场中
-    private bool HandlePresetCenterLocation(ref Vector3 sourceLocation)
+    private bool HandlePresetCenterLocation
+    (
+        ref Vector3 sourceLocation
+    )
     {
         if (!LuminaGetter.TryGetRow<ContentFinderCondition>
                 (GameMain.Instance()->CurrentContentFinderConditionId, out var content) ||
@@ -443,7 +464,11 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
         return UpdateLocationIfClose(ref sourceLocation, modifiedLocation);
     }
 
-    private bool UpdateLocationIfClose(ref Vector3 sourceLocation, Vector3 candidateLocation)
+    private bool UpdateLocationIfClose
+    (
+        ref Vector3 sourceLocation,
+        Vector3     candidateLocation
+    )
     {
         if (Vector3.DistanceSquared(sourceLocation, candidateLocation) >
             config.AdjustDistance * config.AdjustDistance) return false;
@@ -452,7 +477,10 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
         return true;
     }
 
-    private void NotifyLocationRedirect(Vector3 location)
+    private void NotifyLocationRedirect
+    (
+        Vector3 location
+    )
     {
         if (config.SendChat)
         {

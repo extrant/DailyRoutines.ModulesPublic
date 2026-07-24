@@ -1,7 +1,6 @@
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using DailyRoutines.Manager;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Interop.Game.ExecuteCommand.Implementations;
@@ -20,11 +19,15 @@ public unsafe class GlamourPlateApplyCommand : ModuleBase
 
     protected override void Init() =>
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("GlamourPlateApplyCommand-CommandHelp") });
-    
+
     protected override void Uninit() =>
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-    private static void OnCommand(string command, string arguments)
+    private static void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         if (string.IsNullOrWhiteSpace(arguments)           ||
             !int.TryParse(arguments.Trim(), out var index) ||
@@ -42,7 +45,10 @@ public unsafe class GlamourPlateApplyCommand : ModuleBase
         ApplyGlamourPlate(index);
     }
 
-    private static void ApplyGlamourPlate(int index)
+    private static void ApplyGlamourPlate
+    (
+        int index
+    )
     {
         GlamourPlateCommand.Enter();
         GlamourPlateCommand.ApplyPlate((uint)index - 1);

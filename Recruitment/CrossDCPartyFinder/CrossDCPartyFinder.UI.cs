@@ -180,7 +180,10 @@ public partial class CrossDCPartyFinder
         ImGui.End();
     }
 
-    private void DrawPartyFinderList(bool isNeedToResetY)
+    private void DrawPartyFinderList
+    (
+        bool isNeedToResetY
+    )
     {
         if (isNeedToResetY)
             ImGui.SetScrollHereY();
@@ -195,12 +198,18 @@ public partial class CrossDCPartyFinder
             DrawListingCard(listing, availableWidth);
     }
 
-    private void DrawListingCard(PartyFinderList.PartyFinderListing listing, float availableWidth)
+    private void DrawListingCard
+    (
+        PartyFinderList.PartyFinderListing listing,
+        float                              availableWidth
+    )
     {
         using var id = ImRaii.PushId(listing.ID);
 
         var isDescEmpty = string.IsNullOrEmpty(listing.Description);
-        var displayDesc = isDescEmpty ? $"({LuminaWrapper.GetAddonText(11100)})" : listing.Description;
+        var displayDesc = isDescEmpty ?
+                              $"({LuminaWrapper.GetAddonText(11100)})" :
+                              listing.Description;
 
         if (!cardHeights.TryGetValue(listing.ID, out var cardHeight))
         {
@@ -239,9 +248,9 @@ public partial class CrossDCPartyFinder
             var winPos         = ImGui.GetWindowPos();
             var contentStartX  = startCursorPos.X + accentWidth + (4f * GlobalUIScale);
 
-            var accentColor = listing.MinItemLevel > 0
-                                  ? KnownColor.Gold.ToUInt()
-                                  : KnownColor.LightSkyBlue.ToUInt();
+            var accentColor = listing.MinItemLevel > 0 ?
+                                  KnownColor.Gold.ToUInt() :
+                                  KnownColor.LightSkyBlue.ToUInt();
 
             drawList.AddRectFilled
             (
@@ -254,7 +263,9 @@ public partial class CrossDCPartyFinder
             // === 第一行:标题(左) + 职业图标(右) ===
             ImGui.SetCursorPos(startCursorPos + new Vector2(accentWidth + (4f * GlobalUIScale), 0));
 
-            var dutyName        = string.IsNullOrEmpty(listing.Duty) ? LuminaWrapper.GetAddonText(7) : listing.Duty;
+            var dutyName = string.IsNullOrEmpty(listing.Duty) ?
+                               LuminaWrapper.GetAddonText(7) :
+                               listing.Duty;
             var hasCategoryIcon = DService.Instance().Texture.TryGetFromGameIcon(new(listing.CategoryIcon), out var categoryTexture);
 
             var titleLineHeight = categoryIconSize.Y;
@@ -337,7 +348,9 @@ public partial class CrossDCPartyFinder
                                 var slot = listing.Detail.Slots[i];
                                 if (slot.JobIcons.Count == 0) continue;
 
-                                var displayIcon = slot.JobIcons.Count > 1 ? 62146 : slot.JobIcons[0];
+                                var displayIcon = slot.JobIcons.Count > 1 ?
+                                                      62146 :
+                                                      slot.JobIcons[0];
 
                                 if (DService.Instance().Texture.TryGetFromGameIcon(new(displayIcon), out var jobTexture))
                                 {
@@ -427,12 +440,16 @@ public partial class CrossDCPartyFinder
                                         (timeSize.X + (capsulePadX * 2)) +
                                         capsuleSpacing                   +
                                         (worldSize.X + (capsulePadX * 2));
-                
+
                 ImGui.SameLine();
                 ImGui.SetCursorPosX(availableWidth - totalCapsuleWidth - (8f * GlobalUIScale));
 
-                var slotBgColor = remaining > 0 ? KnownColor.DarkGreen : KnownColor.DimGray;
-                var slotFgColor = remaining > 0 ? KnownColor.LimeGreen : KnownColor.Gray;
+                var slotBgColor = remaining > 0 ?
+                                      KnownColor.DarkGreen :
+                                      KnownColor.DimGray;
+                var slotFgColor = remaining > 0 ?
+                                      KnownColor.LimeGreen :
+                                      KnownColor.Gray;
                 DrawCapsuleBadge(drawList, remainingText, remainSize, capsulePadX, capsulePadY, slotBgColor.ToVector4(), slotFgColor.ToVector4());
 
                 ImGui.SameLine(0, capsuleSpacing);
@@ -452,7 +469,9 @@ public partial class CrossDCPartyFinder
             using (ImRaii.PushColor
                    (
                        ImGuiCol.Text,
-                       isDescEmpty ? KnownColor.DarkGray.ToVector4() : KnownColor.LightGray.ToVector4()
+                       isDescEmpty ?
+                           KnownColor.DarkGray.ToVector4() :
+                           KnownColor.LightGray.ToVector4()
                    ))
             using (ImRaii.TextWrapPos(availableWidth - (8f * GlobalUIScale)))
                 ImGui.TextUnformatted(displayDesc);
@@ -492,7 +511,12 @@ public partial class CrossDCPartyFinder
         ImGui.Dummy(new Vector2(0, cardSpacing));
     }
 
-    private static void DrawCenteredState(FontAwesomeIcon icon, string text, bool withPulse)
+    private static void DrawCenteredState
+    (
+        FontAwesomeIcon icon,
+        string          text,
+        bool            withPulse
+    )
     {
         var childSize = ImGui.GetContentRegionAvail();
         var iconStr   = icon.ToIconString();
@@ -510,7 +534,9 @@ public partial class CrossDCPartyFinder
         var startY      = MathF.Max(0f, (childSize.Y - totalHeight) * 0.5f);
         var centerX     = childSize.X * 0.5f;
 
-        var alpha     = withPulse ? 0.4f + (0.6f * (0.5f + (0.5f * MathF.Sin((float)ImGui.GetTime() * 3f)))) : 0.85f;
+        var alpha = withPulse ?
+                        0.4f + (0.6f * (0.5f + (0.5f * MathF.Sin((float)ImGui.GetTime() * 3f)))) :
+                        0.85f;
         var iconColor = new Vector4(0.45f, 0.65f, 0.95f, alpha);
         var textColor = new Vector4(0.55f, 0.55f, 0.6f,  0.85f);
 

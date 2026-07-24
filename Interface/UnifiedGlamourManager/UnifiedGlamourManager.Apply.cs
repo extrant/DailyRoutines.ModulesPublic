@@ -18,7 +18,10 @@ public unsafe partial class UnifiedGlamourManager
 
     private bool openMissingApplyItemsPopup;
 
-    private void ApplySelectedItemToCurrentPlateSlot(UnifiedItem item)
+    private void ApplySelectedItemToCurrentPlateSlot
+    (
+        UnifiedItem item
+    )
     {
         if (!item.CanUseInPlate || !TryGetReadyPlateEditor(out var agent)) return;
 
@@ -44,7 +47,11 @@ public unsafe partial class UnifiedGlamourManager
         }
     }
 
-    private static bool TryApplyPrismBoxItem(AgentMiragePrismMiragePlate* agent, UnifiedItem item)
+    private static bool TryApplyPrismBoxItem
+    (
+        AgentMiragePrismMiragePlate* agent,
+        UnifiedItem                  item
+    )
     {
         if (!TryGetLoadedMirageManager(out var manager)) return false;
         if (item.PrismBoxIndex >= PRISM_BOX_CAPACITY) return false;
@@ -52,21 +59,31 @@ public unsafe partial class UnifiedGlamourManager
         var rawItemID = manager->PrismBoxItemIds[(int)item.PrismBoxIndex];
         if (rawItemID == 0) return false;
 
-        var expectedItemID = item is { IsSetPart: true, ParentSetItemID: not 0 }
-                                 ? item.ParentSetItemID
-                                 : item.ItemID;
+        var expectedItemID = item is { IsSetPart: true, ParentSetItemID: not 0 } ?
+                                 item.ParentSetItemID :
+                                 item.ItemID;
         if (ItemUtil.GetBaseId(rawItemID).ItemId != expectedItemID) return false;
 
-        var itemID = !item.IsSetPart && item.RawItemID != 0 ? item.RawItemID : item.ItemID;
-        var stain0 = (byte)(item.IsSetPart ? 0 : item.Stain0ID);
-        var stain1 = (byte)(item.IsSetPart ? 0 : item.Stain1ID);
+        var itemID = !item.IsSetPart && item.RawItemID != 0 ?
+                         item.RawItemID :
+                         item.ItemID;
+        var stain0 = (byte)(item.IsSetPart ?
+                                0 :
+                                item.Stain0ID);
+        var stain1 = (byte)(item.IsSetPart ?
+                                0 :
+                                item.Stain1ID);
 
         agent->SetSelectedItemData(ItemSource.PrismBox, item.PrismBoxIndex, itemID, stain0, stain1);
         MarkPlateSelectionDirty(agent);
         return true;
     }
 
-    private static bool TryApplyCabinetItem(AgentMiragePrismMiragePlate* agent, UnifiedItem item)
+    private static bool TryApplyCabinetItem
+    (
+        AgentMiragePrismMiragePlate* agent,
+        UnifiedItem                  item
+    )
     {
         var cabinet = GetLoadedCabinet();
         if (cabinet == null) return false;
@@ -77,7 +94,11 @@ public unsafe partial class UnifiedGlamourManager
         return true;
     }
 
-    private void QueueApplyRetry(UnifiedItem item, ItemSource source)
+    private void QueueApplyRetry
+    (
+        UnifiedItem item,
+        ItemSource  source
+    )
     {
         var itemID          = item.ItemID;
         var prismBoxIndex   = item.PrismBoxIndex;
@@ -97,9 +118,9 @@ public unsafe partial class UnifiedGlamourManager
                      x.IsSetPart       == isSetPart       &&
                      x.ParentSetItemID == parentSetItemID &&
                      x.CanUseInPlate                      &&
-                     (source == ItemSource.PrismBox
-                          ? x.InPrismBox && x.PrismBoxIndex == prismBoxIndex
-                          : x.InCabinet  && x.CabinetID     == cabinetID)
+                     (source == ItemSource.PrismBox ?
+                          x.InPrismBox && x.PrismBoxIndex == prismBoxIndex :
+                          x.InCabinet  && x.CabinetID     == cabinetID)
                 );
 
                 if (retryItem == null) return;
@@ -114,7 +135,10 @@ public unsafe partial class UnifiedGlamourManager
         );
     }
 
-    private static void MarkPlateSelectionDirty(AgentMiragePrismMiragePlate* agent)
+    private static void MarkPlateSelectionDirty
+    (
+        AgentMiragePrismMiragePlate* agent
+    )
     {
         if (agent == null || agent->Data == null) return;
 
@@ -122,10 +146,17 @@ public unsafe partial class UnifiedGlamourManager
         agent->CharaView.IsUpdatePending = true;
     }
 
-    private void SaveCurrentPlateAsPreset(string title, string note, PresetSource source)
+    private void SaveCurrentPlateAsPreset
+    (
+        string       title,
+        string       note,
+        PresetSource source
+    )
     {
         var isInspect = source == PresetSource.OtherPlayer;
-        var items     = isInspect ? GetInspectPlateItems() : GetCurrentPlateItems();
+        var items = isInspect ?
+                        GetInspectPlateItems() :
+                        GetCurrentPlateItems();
         if (items.Count == 0) return;
 
         // get目标对象的种族/性别
@@ -143,7 +174,9 @@ public unsafe partial class UnifiedGlamourManager
         // 根据玩家设置的内容/时间生成一个新的预设
         PlatePreset preset = new()
         {
-            Title     = string.IsNullOrWhiteSpace(title) ? GetDefaultPresetTitle(source) : title.Trim(),
+            Title = string.IsNullOrWhiteSpace(title) ?
+                        GetDefaultPresetTitle(source) :
+                        title.Trim(),
             Note      = note.Trim(),
             Race      = GetRaceName(sourceRace, sourceSex),
             Sex       = GetSexName(sourceSex),
@@ -245,9 +278,9 @@ public unsafe partial class UnifiedGlamourManager
                     {
                         currentItem.Flags |= ItemFlag.HasStain0;
 
-                        var dye0ID = LuminaGetter.TryGetRow<Stain>(entry.Stain0ID, out var dye0Row)
-                                         ? dye0Row.Item[0].RowId
-                                         : 0;
+                        var dye0ID = LuminaGetter.TryGetRow<Stain>(entry.Stain0ID, out var dye0Row) ?
+                                         dye0Row.Item[0].RowId :
+                                         0;
 
                         Inventories.Player.TryGetFirstItem(x => x.ItemId == dye0ID, out var dye0);
                         applyAgent->SetItemStain(entry.SlotIndex, entry.Stain0ID, dye0, dye0ID, 0);
@@ -257,9 +290,9 @@ public unsafe partial class UnifiedGlamourManager
                     {
                         currentItem.Flags |= ItemFlag.HasStain1;
 
-                        var dye1ID = LuminaGetter.TryGetRow<Stain>(entry.Stain1ID, out var dye1Row)
-                                         ? dye1Row.Item[0].RowId
-                                         : 0;
+                        var dye1ID = LuminaGetter.TryGetRow<Stain>(entry.Stain1ID, out var dye1Row) ?
+                                         dye1Row.Item[0].RowId :
+                                         0;
 
                         Inventories.Player.TryGetFirstItem(x => x.ItemId == dye1ID, out var dye1);
                         applyAgent->SetItemStain(entry.SlotIndex, entry.Stain1ID, dye1, dye1ID, 1);
@@ -284,7 +317,10 @@ public unsafe partial class UnifiedGlamourManager
         return true;
     }
 
-    private bool StartTryOnPreset(PlatePreset preset)
+    private bool StartTryOnPreset
+    (
+        PlatePreset preset
+    )
     {
         if (DService.Instance().Condition.IsOccupiedInEvent ||
             AgentTryon.Instance() == null)
@@ -293,7 +329,7 @@ public unsafe partial class UnifiedGlamourManager
         var entries = preset.Items
                             .Where
                             (x =>
-                                 x.ItemID    > 0                                &&
+                                 x.ItemID    > 0                            &&
                                  x.SlotIndex < PlateSlotAddonTextIDs.Length &&
                                  LuminaGetter.TryGetRow<Item>(ItemUtil.GetBaseId(x.ItemID).ItemId, out _)
                             )

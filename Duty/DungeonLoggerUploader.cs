@@ -104,7 +104,10 @@ public class DungeonLoggerUploader : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         if (!isLoggedIn) return;
 
@@ -130,7 +133,10 @@ public class DungeonLoggerUploader : ModuleBase
             NotifyHelper.Instance().Chat("已进入 “随机任务：指导者” 任务, 完成后将自动上传记录至网站");
     }
 
-    private void OnDutyCompleted(IDutyStateEventArgs args)
+    private void OnDutyCompleted
+    (
+        IDutyStateEventArgs args
+    )
     {
         if (!inDungeon) return;
 
@@ -139,7 +145,10 @@ public class DungeonLoggerUploader : ModuleBase
         Task.Run(UploadDungeonRecordAsync);
     }
 
-    private async Task LoginAsync(bool showNotification = false)
+    private async Task LoginAsync
+    (
+        bool showNotification = false
+    )
     {
         if (string.IsNullOrEmpty(config.Username) ||
             string.IsNullOrEmpty(config.Password))

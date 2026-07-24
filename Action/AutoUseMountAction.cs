@@ -32,8 +32,8 @@ public unsafe class AutoUseMountAction : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new();
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new();
 
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
         UseActionManager.Instance().RegPostUseActionLocation(OnPostUseAction);
@@ -75,9 +75,9 @@ public unsafe class AutoUseMountAction : ModuleBase
                 using (var combo = ImRaii.Combo
                        (
                            $"{LuminaWrapper.GetAddonText(4964)}##MountSelectCombo",
-                           selectedMountID > 0 && LuminaGetter.TryGetRow(selectedMountID, out Mount selectedMount)
-                               ? $"{selectedMount.Singular.ToString()}"
-                               : string.Empty,
+                           selectedMountID > 0 && LuminaGetter.TryGetRow(selectedMountID, out Mount selectedMount) ?
+                               $"{selectedMount.Singular.ToString()}" :
+                               string.Empty,
                            ImGuiComboFlags.HeightLarge
                        ))
                 {
@@ -180,7 +180,11 @@ public unsafe class AutoUseMountAction : ModuleBase
         }
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (InvalidConditions.Contains(flag))
         {
@@ -207,7 +211,16 @@ public unsafe class AutoUseMountAction : ModuleBase
         }
     }
 
-    private void OnPostUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7)
+    private void OnPostUseAction
+    (
+        bool       result,
+        ActionType actionType,
+        uint       actionID,
+        ulong      targetID,
+        Vector3    location,
+        uint       extraParam,
+        byte       a7
+    )
     {
         if (actionType != ActionType.Action) return;
         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
@@ -240,7 +253,11 @@ public unsafe class AutoUseMountAction : ModuleBase
     {
         public MountAction() { }
 
-        public MountAction(uint mountID, uint actionID)
+        public MountAction
+        (
+            uint mountID,
+            uint actionID
+        )
         {
             MountID  = mountID;
             ActionID = actionID;
@@ -249,20 +266,26 @@ public unsafe class AutoUseMountAction : ModuleBase
         public uint MountID  { get; set; }
         public uint ActionID { get; set; }
 
-        public bool Equals(MountAction? other)
+        public bool Equals
+        (
+            MountAction? other
+        )
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return MountID == other.MountID;
         }
 
-        public override bool Equals(object? obj) =>
+        public override bool Equals
+        (
+            object? obj
+        ) =>
             obj is MountAction other && Equals(other);
 
         public override int GetHashCode() =>
             (int)MountID;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<ConditionFlag> InvalidConditions =

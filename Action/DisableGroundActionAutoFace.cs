@@ -13,7 +13,7 @@ public class DisableGroundActionAutoFace : ModuleBase
         Description = Lang.Get("DisableGroundActionAutoFaceDescription"),
         Category    = ModuleCategory.Action
     };
-    
+
     private readonly MemoryPatch groundActionAutoFacePatch =
         new("74 ?? 48 8D 8E ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 75 ?? 48 8B 55", [0xEB]);
 

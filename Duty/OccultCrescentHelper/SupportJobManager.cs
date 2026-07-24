@@ -10,7 +10,6 @@ using Lumina.Excel.Sheets;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 using OmenTools.Threading;
 using OmenTools.Threading.TaskHelper;
@@ -176,7 +175,11 @@ public partial class OccultCrescentHelper
             }
         }
 
-        private unsafe void OnCommandSwitchJob(string command, string args)
+        private unsafe void OnCommandSwitchJob
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
             {
@@ -219,7 +222,11 @@ public partial class OccultCrescentHelper
                 AgentMKDSupportJobList.Instance()->ChangeSupportJob((byte)matchingJob.Data.RowId);
         }
 
-        private static void OnCommandBuff(string command, string args)
+        private static void OnCommandBuff
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
             ExecuteBuffSequence();

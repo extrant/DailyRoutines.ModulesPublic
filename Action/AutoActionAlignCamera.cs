@@ -25,7 +25,7 @@ public unsafe class AutoActionAlignCamera : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private Config config = null!;
 
     protected override void Init()
@@ -54,7 +54,7 @@ public unsafe class AutoActionAlignCamera : ModuleBase
         ImGuiOm.Text(Lang.Get("Action"));
 
         ImGui.TableNextColumn();
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 4f * GlobalUIScale);
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (4f * GlobalUIScale));
         ImGuiOm.Text(FontAwesomeIcon.Undo.ToIconString());
         ImGuiOm.TooltipHover(Lang.Get("AutoActionAlignCamera-ReverseDirection"));
 
@@ -78,11 +78,11 @@ public unsafe class AutoActionAlignCamera : ModuleBase
             }
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 4f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (4f * GlobalUIScale));
             ImGui.Image(actionIcon.Handle, new(ImGui.GetTextLineHeight()));
 
             ImGui.SameLine();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (2f * GlobalUIScale));
             ImGui.TextUnformatted($"{data.Name.ToString()}");
 
             ImGui.TableNextColumn();
@@ -139,7 +139,7 @@ public unsafe class AutoActionAlignCamera : ModuleBase
         public Dictionary<uint, bool> ActionEnabled = new()
         {
             // 回避跳跃
-            [94] = true,
+            [94]    = true,
             // 回避跳跃 (PVP)
             [29494] = true,
             // 地狱入境
@@ -157,11 +157,11 @@ public unsafe class AutoActionAlignCamera : ModuleBase
             // 前冲步 (PVP)
             [29430] = true,
             // 火焰喷射器
-            [7418] = true,
+            [7418]  = true,
             // 以太变移
             [37008] = true,
             // 武装戍卫
-            [7385] = true,
+            [7385]  = true,
             // 本轮 (PVP)
             [41506] = true,
 

@@ -29,7 +29,7 @@ public unsafe class AutoDismount : ModuleBase
 
         UseActionManager.Instance().RegPostUseAction(OnUseAction);
     }
-    
+
     protected override void Uninit() =>
         UseActionManager.Instance().Unreg(OnUseAction);
 
@@ -69,7 +69,12 @@ public unsafe class AutoDismount : ModuleBase
         );
     }
 
-    private static bool IsNeedToDismount(ActionType actionType, uint actionID, ulong actionTargetID)
+    private static bool IsNeedToDismount
+    (
+        ActionType actionType,
+        uint       actionID,
+        ulong      actionTargetID
+    )
     {
         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
         if (!LuminaGetter.TryGetRow<Action>(actionID, out var actionRow)) return false;
@@ -78,7 +83,7 @@ public unsafe class AutoDismount : ModuleBase
         if (actionManager == null) return false;
 
         // 坐骑
-        if (actionType == ActionType.Mount) return false;
+        if (actionType                                                                         == ActionType.Mount) return false;
         // 该技能无须下坐骑
         if (actionManager->GetActionStatus(actionType, actionID, actionTargetID, false, false) == 0) return false;
         // 必须下坐骑的技能类型
@@ -110,7 +115,7 @@ public unsafe class AutoDismount : ModuleBase
 
         return true;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<ActionType> MustDismountActionTypes = [ActionType.Item, ActionType.Ornament];

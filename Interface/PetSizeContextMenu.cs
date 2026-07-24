@@ -20,16 +20,22 @@ public unsafe class PetSizeContextMenu : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private readonly UpperContainerItem containerItem = new();
 
-    protected override void Init() =>
+    private UpperContainerItem containerItem = null!;
+
+    protected override void Init()
+    {
+        containerItem                                =  new();
         DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+    }
 
     protected override void Uninit() =>
         DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
-    
-    private void OnMenuOpened(IMenuOpenedArgs args)
+
+    private void OnMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!containerItem.IsDisplay(args)) return;
         args.AddMenuItem(containerItem.Get());
@@ -42,7 +48,10 @@ public unsafe class PetSizeContextMenu : ModuleBase
 
         protected override bool IsSubmenu { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) => 
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             args.OpenSubmenu(Name, ProcessMenuItems());
 
         private static List<MenuItem> ProcessMenuItems() =>
@@ -64,7 +73,10 @@ public unsafe class PetSizeContextMenu : ModuleBase
             }
         ];
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault defautTarget) return false;
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;

@@ -17,7 +17,7 @@ public partial class UnifiedGlamourManager : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["ErxCharlotte"]
     };
-    
+
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init()
@@ -63,8 +63,16 @@ public partial class UnifiedGlamourManager : ModuleBase
         plateSaveButtonNode = null;
     }
 
-    private void OnCommand(string command, string arguments) => Overlay!.IsOpen = true;
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) => Overlay!.IsOpen = true;
 
-    private static bool IsEquipSlotCategoryCompatibleWithPlateSlot(EquipSlotCategory category, uint slotIndex) =>
+    private static bool IsEquipSlotCategoryCompatibleWithPlateSlot
+    (
+        EquipSlotCategory category,
+        uint              slotIndex
+    ) =>
         slotIndex < PlateSlotDefinitions.Length && PlateSlotDefinitions[slotIndex].CanUse(category);
 }

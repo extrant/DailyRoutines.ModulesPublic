@@ -26,14 +26,18 @@ public class AutoNotifyReadyCheck : ModuleBase
     protected override void Uninit() =>
         LogMessageManager.Instance().Unreg(OnLogMessage);
 
-    private static void OnLogMessage(uint logMessageID, LogMessageQueueItem item)
+    private static void OnLogMessage
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (!ValidLogMessages.Contains(logMessageID)) return;
 
         NotifyHelper.Instance().NotificationInfo(LuminaWrapper.GetLogMessageText(3790));
         NotifyHelper.Speak(LuminaWrapper.GetLogMessageText(3790));
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<uint> ValidLogMessages = [3790, 3791];

@@ -33,7 +33,7 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private Config config = null!;
-    
+
     private readonly Dictionary<Guid, MarkerRecord> markerIndex = [];
 
     private AddonController<AddonAreaMap>? areaMapController;
@@ -101,10 +101,17 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         markerIndex.Clear();
     }
 
-    private void OnCommand(string command, string arguments) =>
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) =>
         markerListAddon?.Open();
 
-    private void AttachAreaMapButtons(AddonAreaMap* addon)
+    private void AttachAreaMapButtons
+    (
+        AddonAreaMap* addon
+    )
     {
         mapButtonContainer?.Dispose();
 
@@ -140,7 +147,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         mapButtonContainer.AttachNode(addon->LocationContainerNode);
     }
 
-    private void DetachAreaMapButtons(AddonAreaMap* addon)
+    private void DetachAreaMapButtons
+    (
+        AddonAreaMap* addon
+    )
     {
         isPlacingMarker = false;
         mapButtonContainer?.Dispose();
@@ -161,14 +171,20 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
     {
         if (mapAddButton is not null)
         {
-            mapAddButton.Icon = isPlacingMarker ? CircleButtonIcon.CrossSmall : CircleButtonIcon.Add;
+            mapAddButton.Icon = isPlacingMarker ?
+                                    CircleButtonIcon.CrossSmall :
+                                    CircleButtonIcon.Add;
             mapAddButton.TextTooltip = isPlacingMarker ?
                                            Lang.Get("CustomizeMapMarker-CancelPlacement") :
                                            Lang.Get("CustomizeMapMarker-AddMarker");
         }
     }
 
-    private void AddMarkerAtMapPosition(uint mapID, Vector2 overlayPosition)
+    private void AddMarkerAtMapPosition
+    (
+        uint    mapID,
+        Vector2 overlayPosition
+    )
     {
         if (!isPlacingMarker) return;
 
@@ -196,10 +212,16 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         markerDetailsAddon?.OpenMarker(marker.ID);
     }
 
-    private MarkerRecord? FindMarker(Guid markerID) =>
+    private MarkerRecord? FindMarker
+    (
+        Guid markerID
+    ) =>
         markerIndex.GetValueOrDefault(markerID);
 
-    private void DeleteMarker(Guid markerID)
+    private void DeleteMarker
+    (
+        Guid markerID
+    )
     {
         if (!markerIndex.Remove(markerID, out var marker)) return;
 
@@ -207,7 +229,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         SaveAndRefresh();
     }
 
-    private static void SetGameFlag(MarkerRecord marker) =>
+    private static void SetGameFlag
+    (
+        MarkerRecord marker
+    ) =>
         AgentMap.Instance()->SetMapFlagAndOpen
         (
             marker.MapID,
@@ -222,7 +247,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         markerDetailsAddon?.RefreshMarker();
     }
 
-    private static string FormatMarkerLocation(MarkerRecord marker)
+    private static string FormatMarkerLocation
+    (
+        MarkerRecord marker
+    )
     {
         if (!LuminaGetter.TryGetRow<Map>(marker.MapID, out var map))
             return $"Map {marker.MapID}";
@@ -231,7 +259,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         return $"{GetMapName(map, marker.MapID)}  X: {mapPosition.X:F1}  Y: {mapPosition.Y:F1}";
     }
 
-    private static string FormatMapName(uint mapID)
+    private static string FormatMapName
+    (
+        uint mapID
+    )
     {
         if (!LuminaGetter.TryGetRow<Map>(mapID, out var map))
             return $"Map {mapID}";
@@ -239,13 +270,22 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         return GetMapName(map, mapID);
     }
 
-    private static string GetMapName(Map map, uint mapID)
+    private static string GetMapName
+    (
+        Map  map,
+        uint mapID
+    )
     {
         var mapName = map.PlaceName.ValueNullable?.Name.ToString();
-        return string.IsNullOrWhiteSpace(mapName) ? $"Map {mapID}" : mapName;
+        return string.IsNullOrWhiteSpace(mapName) ?
+                   $"Map {mapID}" :
+                   mapName;
     }
 
-    private static void ExportMarkers(IEnumerable<MarkerRecord> markers)
+    private static void ExportMarkers
+    (
+        IEnumerable<MarkerRecord> markers
+    )
     {
         try
         {
@@ -310,7 +350,7 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
 
             NormalizeConfig();
             SaveAndRefresh();
-            
+
             NotifyHelper.ToastQuest
             (
                 Lang.Get("CustomizeMapMarker-Imported", importedCount),
@@ -327,7 +367,11 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         }
     }
 
-    private static void CopyMarker(MarkerRecord source, MarkerRecord destination)
+    private static void CopyMarker
+    (
+        MarkerRecord source,
+        MarkerRecord destination
+    )
     {
         destination.TerritoryID     = source.TerritoryID;
         destination.MapID           = source.MapID;
@@ -371,7 +415,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         }
     }
 
-    private void HandleMarkerClick(Guid markerID)
+    private void HandleMarkerClick
+    (
+        Guid markerID
+    )
     {
         if (FindMarker(markerID) is not { } marker) return;
 

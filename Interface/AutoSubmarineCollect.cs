@@ -56,13 +56,18 @@ public unsafe class AutoSubmarineCollect : ModuleBase
     (
         "40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ?? E8 ?? ?? ?? ?? 48 8B D3 48 8D 48 ?? 48 83 C4 ?? 5B E9 ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ?? E8 ?? ?? ?? ?? 48 8B D3"
     );
-    private delegate nint                               SubmarineReturnTimeDelegate(SubmarineReturnTimePacket* packet);
-    private          Hook<SubmarineReturnTimeDelegate>? SubmarineReturnTimeHook;
+
+    private delegate nint SubmarineReturnTimeDelegate
+    (
+        SubmarineReturnTimePacket* packet
+    );
+
+    private Hook<SubmarineReturnTimeDelegate>? SubmarineReturnTimeHook;
 
     private Config config = null!;
-    
+
     private DalamudLinkPayload? collectSubmarinePayload;
-    
+
     private          VerticalListNode?     itemListLayout;
     private readonly List<ItemDisplayNode> itemRenderers = [];
     private          TextButtonNode?       autoCollectNode;
@@ -103,7 +108,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
 
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectString);
-        
+
         itemListLayout?.Dispose();
         itemListLayout = null;
 
@@ -152,7 +157,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
                 config.Save(this);
         }
     }
-    
+
     #region Teleport
 
     // 传送
@@ -326,7 +331,9 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         {
             MovementManager.Instance().TPSmart_InZone
             (
-                RaycastHelper.TryGetNearestVerticalHit(realPanelPosition, out var result) ? result.Point : realPanelPosition
+                RaycastHelper.TryGetNearestVerticalHit(realPanelPosition, out var result) ?
+                    result.Point :
+                    realPanelPosition
             );
             return false;
         }
@@ -346,7 +353,11 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
     #region Events
 
-    private void OnExplorationResult(AddonEvent type, AddonArgs args)
+    private void OnExplorationResult
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (AirShipExplorationResult == null || !AirShipExplorationResult->IsAddonAndNodesReady()) return;
 
@@ -355,7 +366,11 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             AirShipExplorationResult->IsVisible = false;
     }
 
-    private void OnAddonSelectString(AddonEvent type, AddonArgs args)
+    private void OnAddonSelectString
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -442,13 +457,20 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         }
     }
 
-    private void OnAddonSelectYesno(AddonEvent type, AddonArgs args)
+    private void OnAddonSelectYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!TaskHelper.IsBusy) return;
         AddonSelectYesnoEvent.ClickYes();
     }
 
-    private nint SubmarineReturnTimeDetour(SubmarineReturnTimePacket* submarineReturnTimePacket)
+    private nint SubmarineReturnTimeDetour
+    (
+        SubmarineReturnTimePacket* submarineReturnTimePacket
+    )
     {
         NotifyFinishCount(submarineReturnTimePacket);
         return SubmarineReturnTimeHook.Original(submarineReturnTimePacket);
@@ -461,16 +483,32 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         SendRefreshSubmarineInfo();
     }
 
-    private static void OnClickCollectSubmarinePayload(uint arg1, SeString arg2) =>
+    private static void OnClickCollectSubmarinePayload
+    (
+        uint     arg1,
+        SeString arg2
+    ) =>
         ChatManager.Instance().SendMessage("/pdr submarine");
 
-    private static void OnUpdate(IFramework _) =>
+    private static void OnUpdate
+    (
+        IFramework _
+    ) =>
         SendRefreshSubmarineInfo();
 
-    private void OnCommand(string command, string arguments) =>
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) =>
         EnqueueTeleportTasks();
 
-    private static void OnPreSendLogMessage(ref bool isPrevented, ref uint logMessageID, ref LogMessageQueueItem values)
+    private static void OnPreSendLogMessage
+    (
+        ref bool                isPrevented,
+        ref uint                logMessageID,
+        ref LogMessageQueueItem values
+    )
     {
         if (logMessageID != 4109) return;
         isPrevented = true;
@@ -541,7 +579,10 @@ public unsafe class AutoSubmarineCollect : ModuleBase
     }
 
     // 是否有潜艇部件需要修理
-    private static bool IsAnySubmarinePartWaitForRepair(out List<int> parts)
+    private static bool IsAnySubmarinePartWaitForRepair
+    (
+        out List<int> parts
+    )
     {
         parts = [];
 
@@ -590,7 +631,10 @@ public unsafe class AutoSubmarineCollect : ModuleBase
     }
 
     // 是否存在待收潜艇
-    private static bool IsAnySubmarinesAvailable(out int index)
+    private static bool IsAnySubmarinesAvailable
+    (
+        out int index
+    )
     {
         index = -1;
 
@@ -630,7 +674,10 @@ public unsafe class AutoSubmarineCollect : ModuleBase
     }
 
     // 通知潜水艇完成情况
-    private void NotifyFinishCount(SubmarineReturnTimePacket* packet)
+    private void NotifyFinishCount
+    (
+        SubmarineReturnTimePacket* packet
+    )
     {
         if (packet->GetAvailableCount() == 0)
         {
@@ -641,8 +688,8 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         var maxCount      = packet->GetAvailableCount();
         var finishedCount = packet->GetFinishCount();
 
-        if (config.NotifyWhenLogin && isJustLogin ||
-            config.NotifyCount > 0 && finishedCount >= Math.Min(maxCount, config.NotifyCount))
+        if ((config.NotifyWhenLogin && isJustLogin) ||
+            (config.NotifyCount > 0 && finishedCount >= Math.Min(maxCount, config.NotifyCount)))
         {
             isJustLogin = false;
 
@@ -682,14 +729,17 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.RequestSubmarine, 1);
     }
 
-    private static string SantisizeText(string text)
+    private static string SantisizeText
+    (
+        string text
+    )
     {
         char[] charsToReplace = ['(', '.', ')', ']', ':', '/'];
         foreach (var c in charsToReplace)
             text = text.Replace(c, ' ');
         return text.Trim();
     }
-    
+
     private class Config : ModuleConfig
     {
         public uint AutoCollectCount;
@@ -699,7 +749,11 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
     private class ItemDisplayNode : HorizontalListNode
     {
-        public ItemDisplayNode(uint itemID, float width)
+        public ItemDisplayNode
+        (
+            uint  itemID,
+            float width
+        )
         {
             ItemID = itemID;
 
@@ -739,15 +793,20 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
             CountNode = new()
             {
-                IsVisible        = true,
-                TextFlags        = TextFlags.AutoAdjustNodeSize | TextFlags.Edge | TextFlags.Emboss,
-                FontType         = FontType.MiedingerMed,
-                AlignmentType    = AlignmentType.TopRight,
-                Position         = new(width - 20, 4),
-                TextColor        = ColorHelper.GetColor(50),
-                TextOutlineColor = ColorHelper.GetColor((uint)(itemCount > 20 ? 28 : 17)),
-                FontSize         = 16,
-                String           = textBuilder.Build().Encode()
+                IsVisible     = true,
+                TextFlags     = TextFlags.AutoAdjustNodeSize | TextFlags.Edge | TextFlags.Emboss,
+                FontType      = FontType.MiedingerMed,
+                AlignmentType = AlignmentType.TopRight,
+                Position      = new(width - 20, 4),
+                TextColor     = ColorHelper.GetColor(50),
+                TextOutlineColor = ColorHelper.GetColor
+                (
+                    (uint)(itemCount > 20 ?
+                               28 :
+                               17)
+                ),
+                FontSize = 16,
+                String   = textBuilder.Build().Encode()
             };
             CountNode.AttachNode(this);
         }
@@ -770,11 +829,20 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
             textBuilder.AddText($"{itemCount}");
 
-            CountNode.String           = textBuilder.Build().Encode();
-            CountNode.TextOutlineColor = ColorHelper.GetColor((uint)(itemCount > 20 ? 28 : 17));
+            CountNode.String = textBuilder.Build().Encode();
+            CountNode.TextOutlineColor = ColorHelper.GetColor
+            (
+                (uint)(itemCount > 20 ?
+                           28 :
+                           17)
+            );
         }
 
-        protected override void Dispose(bool disposing, bool isNativeDestructor)
+        protected override void Dispose
+        (
+            bool disposing,
+            bool isNativeDestructor
+        )
         {
             IconNode?.Dispose();
             IconNode = null;
@@ -820,7 +888,12 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
     private record FreeCompanyWorkshopInfo
     {
-        public FreeCompanyWorkshopInfo(uint territoryType, uint wardIndex, uint plotIndex)
+        public FreeCompanyWorkshopInfo
+        (
+            uint territoryType,
+            uint wardIndex,
+            uint plotIndex
+        )
         {
             TerritoryType = territoryType;
             WardIndex     = wardIndex;
@@ -843,7 +916,10 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         public uint    WardIndex     { get; init; }
         public uint    PlotIndex     { get; init; }
 
-        public static bool TryGet([NotNullWhen(true)] out FreeCompanyWorkshopInfo? workshopInfo)
+        public static bool TryGet
+        (
+            [NotNullWhen(true)] out FreeCompanyWorkshopInfo? workshopInfo
+        )
         {
             workshopInfo = null;
 
@@ -854,7 +930,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             return true;
         }
     }
-    
+
     #region 常量
 
     private const string COMMAND = "submarine";
@@ -864,11 +940,11 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
     private static List<string> VoyageListTitleText { get; } =
     [
-        ..LuminaGetter.GetRowOrDefault<HouFixCompanySubmarine>(2).Text.ToDalamudString().Payloads
-                      .Where(x => x.Type == PayloadType.RawText)
-                      .Select(text => SantisizeText((text as TextPayload).Text))
-                      .Where(x => !string.IsNullOrWhiteSpace(x))
-                      .ToList()
+        .. LuminaGetter.GetRowOrDefault<HouFixCompanySubmarine>(2).Text.ToDalamudString().Payloads
+                       .Where(x => x.Type == PayloadType.RawText)
+                       .Select(text => SantisizeText((text as TextPayload).Text))
+                       .Where(x => !string.IsNullOrWhiteSpace(x))
+                       .ToList()
     ];
 
     #endregion

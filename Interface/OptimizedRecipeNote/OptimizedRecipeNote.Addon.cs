@@ -6,7 +6,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Classes;
 using KamiToolKit.Nodes;
@@ -39,7 +38,11 @@ public partial class OptimizedRecipeNote
         private int currentCraftRound;
         private int totalCraftRounds;
 
-        public static void OpenWithActions(TaskHelper taskHelper, CaculationResult result)
+        public static void OpenWithActions
+        (
+            TaskHelper       taskHelper,
+            CaculationResult result
+        )
         {
             if (OpenAddonTask != null) return;
 
@@ -65,11 +68,20 @@ public partial class OptimizedRecipeNote
                     };
                     Addon.Open();
                 },
-                TimeSpan.FromMilliseconds(isAddonExisted ? 500 : 0)
+                TimeSpan.FromMilliseconds
+                (
+                    isAddonExisted ?
+                        500 :
+                        0
+                )
             ).ContinueWith(_ => OpenAddonTask = null);
         }
 
-        protected override unsafe void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override unsafe void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (Result.Actions.Count == 0) return;
 
@@ -188,7 +200,7 @@ public partial class OptimizedRecipeNote
                 IsVisible = true,
                 Size      = new(120, 28),
                 String    = Lang.Get("Execute"),
-                OnClick   = () =>
+                OnClick = () =>
                 {
                     if (!TaskHelper.TryGetTarget(out var th)) return;
                     if (Result.Actions is not { Count: > 0 } actions) return;
@@ -209,7 +221,7 @@ public partial class OptimizedRecipeNote
                 Max       = 0,
                 Step      = 1,
                 Value     = 0,
-                OnValueUpdate =  _ =>
+                OnValueUpdate = _ =>
                 {
                     CraftMultipleButton.String    = Lang.Get("OptimizedRecipeNote-Button-CraftMultiple", CraftCountInput.Value);
                     CraftMultipleButton.IsEnabled = CraftCountInput.Value > 0;
@@ -225,7 +237,7 @@ public partial class OptimizedRecipeNote
                 Size      = new(120, 28),
                 String    = Lang.Get("OptimizedRecipeNote-Button-CraftMultiple", 0),
                 IsEnabled = false,
-                OnClick   = () =>
+                OnClick = () =>
                 {
                     if (!TaskHelper.TryGetTarget(out var th)) return;
                     if (Result.Actions is not { Count: > 0 } actions) return;
@@ -272,19 +284,19 @@ public partial class OptimizedRecipeNote
                 }
             };
             craftRow.AddNode(CraftMultipleButton);
-            
+
             craftRow.AddDummy(4f);
-            
+
             // 制作进度文本 (平时隐藏)
             CraftProgressText = new TextNode
             {
                 IsVisible = false,
                 TextFlags = TextFlags.AutoAdjustNodeSize,
                 TextColor = ColorHelper.GetColor(3),
-                FontSize  = 14,
+                FontSize  = 14
             };
             craftRow.AddNode(CraftProgressText);
-            
+
             craftRow.AttachNode(this);
 
             // Row 4: 技能序列
@@ -332,7 +344,9 @@ public partial class OptimizedRecipeNote
                     IsClickable  = true,
                     Payload = new()
                     {
-                        Type = actionID > 10_0000 ? DragDropType.CraftingAction : DragDropType.Action,
+                        Type = actionID > 10_0000 ?
+                                   DragDropType.CraftingAction :
+                                   DragDropType.Action,
                         Int2 = (int)actionID
                     },
                     OnRollOver = node =>
@@ -340,8 +354,10 @@ public partial class OptimizedRecipeNote
                         var tooltipArgs = new AtkTooltipManager.AtkTooltipArgs();
 
                         tooltipArgs.ActionArgs.Flags = 1;
-                        tooltipArgs.ActionArgs.Kind  = actionID > 10_0000 ? DetailKind.CraftingAction : DetailKind.Action;
-                        tooltipArgs.ActionArgs.Id    = (int)actionID;
+                        tooltipArgs.ActionArgs.Kind = actionID > 10_0000 ?
+                                                          DetailKind.CraftingAction :
+                                                          DetailKind.Action;
+                        tooltipArgs.ActionArgs.Id = (int)actionID;
 
                         AtkStage.Instance()->TooltipManager.ShowTooltip(AtkTooltipType.Action, addon->Id, node, &tooltipArgs);
                     },
@@ -384,7 +400,10 @@ public partial class OptimizedRecipeNote
             container.AttachNode(this);
         }
 
-        protected override unsafe void OnUpdate(AtkUnitBase* addon)
+        protected override unsafe void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (DService.Instance().KeyState[VirtualKey.ESCAPE])
             {
@@ -411,7 +430,11 @@ public partial class OptimizedRecipeNote
             }
         }
 
-        private void EnqueueActionSequence(TaskHelper th, List<uint> actions)
+        private void EnqueueActionSequence
+        (
+            TaskHelper th,
+            List<uint> actions
+        )
         {
             for (var index = 0; index < actions.Count; index++)
             {
@@ -431,13 +454,21 @@ public partial class OptimizedRecipeNote
             }
         }
 
-        private void OnCraftLogMessage(uint logMessageID, LogMessageQueueItem item)
+        private void OnCraftLogMessage
+        (
+            uint                logMessageID,
+            LogMessageQueueItem item
+        )
         {
             if (!CraftFailedLogMessages.Contains(logMessageID)) return;
             OnCraftingLoopFinished(0, true);
         }
 
-        private void OnCraftingLoopFinished(int completedCount, bool isCraftFailed = false)
+        private void OnCraftingLoopFinished
+        (
+            int  completedCount,
+            bool isCraftFailed = false
+        )
         {
             LogMessageManager.Instance().Unreg(OnCraftLogMessage);
             if (TaskHelper.TryGetTarget(out var th))
@@ -447,7 +478,10 @@ public partial class OptimizedRecipeNote
             currentCraftRound           = 0;
             totalCraftRounds            = 0;
 
-            var message = isCraftFailed ? Lang.Get("OptimizedRecipeNote-Message-CraftFailed") : Lang.Get("OptimizedRecipeNote-Message-CraftComplete", completedCount);
+            var message = isCraftFailed ?
+                              Lang.Get("OptimizedRecipeNote-Message-CraftFailed") :
+                              Lang.Get("OptimizedRecipeNote-Message-CraftComplete", completedCount);
+
             if (isCraftFailed)
             {
                 NotifyHelper.Instance().ChatError(message);
@@ -460,8 +494,9 @@ public partial class OptimizedRecipeNote
                 NotifyHelper.SystemInformation();
                 NotifyHelper.Instance().NotificationSuccess(message);
             }
+
             NotifyHelper.Speak(message);
-            
+
             foreach (var node in Nodes)
                 node.Alpha = 1;
         }

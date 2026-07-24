@@ -17,9 +17,9 @@ public class AutoJumboCactpot : ModuleBase
         Description = Lang.Get("AutoJumboCactpotDescription"),
         Category    = ModuleCategory.GoldSaucer
     };
-    
+
     private Config config = null!;
-    
+
     protected override unsafe void Init()
     {
         config = Config.Load(this) ?? new();
@@ -30,7 +30,7 @@ public class AutoJumboCactpot : ModuleBase
         if (LotteryWeeklyInput->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
@@ -68,7 +68,11 @@ public class AutoJumboCactpot : ModuleBase
         }
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         TaskHelper.Abort();
 
@@ -116,10 +120,10 @@ public class AutoJumboCactpot : ModuleBase
         Random,
         Fixed
     }
-    
+
     #region 常量
 
-    private static readonly FrozenDictionary<Mode, string> NumberModeLoc = new Dictionary<Mode, string>()
+    private static readonly FrozenDictionary<Mode, string> NumberModeLoc = new Dictionary<Mode, string>
     {
         [Mode.Random] = Lang.Get("AutoJumboCactpot-Random"),
         [Mode.Fixed]  = Lang.Get("AutoJumboCactpot-Fixed")

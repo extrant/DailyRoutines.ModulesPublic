@@ -29,41 +29,70 @@ public unsafe class OptimizedInteraction : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     // 当前位置无法进行该操作
-    private static readonly CompSig                            CameraObjectBlockedSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? EB ?? 40 B7");
-    private delegate        bool                               CameraObjectBlockedDelegate(nint a1, nint a2, nint a3);
-    private                 Hook<CameraObjectBlockedDelegate>? CameraObjectBlockedHook;
+    private static readonly CompSig CameraObjectBlockedSig = new("E8 ?? ?? ?? ?? 84 C0 75 ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? EB ?? 40 B7");
+
+    private delegate bool CameraObjectBlockedDelegate
+    (
+        nint a1,
+        nint a2,
+        nint a3
+    );
+
+    private Hook<CameraObjectBlockedDelegate>? CameraObjectBlockedHook;
 
     // 目标处于视野之外
     private static readonly CompSig IsObjectInViewRangeSig = new
         ("E8 ?? ?? ?? ?? 84 C0 75 ?? 48 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 52 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? E9");
-    private delegate bool                               IsObjectInViewRangeDelegate(TargetSystem* system, GameObject* gameObject);
-    private          Hook<IsObjectInViewRangeDelegate>? IsObjectInViewRangeHook;
+
+    private delegate bool IsObjectInViewRangeDelegate
+    (
+        TargetSystem* system,
+        GameObject*   gameObject
+    );
+
+    private Hook<IsObjectInViewRangeDelegate>? IsObjectInViewRangeHook;
 
     // 跳跃中无法进行该操作 / 飞行中无法进行该操作
     private static readonly CompSig InteractCheck0Sig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 49 8B 00 49 8B C8 49 8B F8 48 8B F2");
-    private delegate        bool    InteractCheck0Delegate(nint a1, nint a2, nint a3, nint a4, bool a5);
-    private                 Hook<InteractCheck0Delegate>? InteractCheck0Hook;
+
+    private delegate bool InteractCheck0Delegate
+    (
+        nint a1,
+        nint a2,
+        nint a3,
+        nint a4,
+        bool a5
+    );
+
+    private Hook<InteractCheck0Delegate>? InteractCheck0Hook;
 
     private static readonly CompSig IsPlayerOnJumping0Sig =
         new
         (
             "83 B9 ?? ?? ?? ?? ?? 0F 95 C0 C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 83 B9 ?? ?? ?? ?? ?? 0F 94 C0 C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 83 B9"
         );
+
     // 跳跃中无法进行该操作
-    private delegate bool                             IsPlayerOnJumpingDelegate(nint a1);
-    private          Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping0Hook;
-    
+    private delegate bool IsPlayerOnJumpingDelegate
+    (
+        nint a1
+    );
+
+    private Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping0Hook;
+
     private static readonly CompSig                          IsPlayerOnJumping1Sig = new("E8 ?? ?? ?? ?? 84 C0 0F 85 ?? ?? ?? ?? 83 BF ?? ?? ?? ?? ?? 75 ?? 38 1D");
     private                 Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping1Hook;
 
     private static readonly CompSig IsPlayerOnJumping2Sig =
         new("40 53 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 84 C0 75");
+
     private Hook<IsPlayerOnJumpingDelegate>? IsPlayerOnJumping2Hook;
 
     // 检查目标高低
     private static readonly CompSig CheckTargetPositionSig = new("40 53 57 41 56 48 83 EC ?? 48 8B 02");
+
     private delegate bool CheckTargetPositionDelegate
     (
         EventFramework* framework,
@@ -73,30 +102,46 @@ public unsafe class OptimizedInteraction : ModuleBase
         bool            sendError,
         byte            a6
     );
+
     private Hook<CheckTargetPositionDelegate>? CheckTargetPositionHook;
 
     // 检查目标距离
     private static readonly CompSig CheckTargetDistanceSig =
         new("E8 ?? ?? ?? ?? 0F 2F 05 ?? ?? ?? ?? 76 ?? 48 8B 03 48 8B CB FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? EB");
-    private delegate float                              CheckTargetDistanceDelegate(GameObject* localPlayer, GameObject* target);
-    private          Hook<CheckTargetDistanceDelegate>? CheckTargetDistanceHook;
+
+    private delegate float CheckTargetDistanceDelegate
+    (
+        GameObject* localPlayer,
+        GameObject* target
+    );
+
+    private Hook<CheckTargetDistanceDelegate>? CheckTargetDistanceHook;
 
     // 交互
     private static readonly CompSig InteractWithObjectSig =
         new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 48 83 EC ?? 48 8B E9 41 0F B6 F0");
+
     private delegate ulong InteractWithObjectDelegate
     (
         TargetSystem* system,
         GameObject*   obj,
         bool          checkLOS = true
     );
+
     private Hook<InteractWithObjectDelegate>? InteractWithObjectHook;
 
     // 当前位置无法进行该操作
     private static readonly CompSig CheckCameraPositionSig =
         new("E8 ?? ?? ?? ?? 84 C0 75 ?? B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? EB");
-    private delegate bool                               CheckCameraPositionDelegate(TargetSystem* system, Camera* activeCamera, GameObject* obj);
-    private          Hook<CheckCameraPositionDelegate>? CheckCameraPositionHook;
+
+    private delegate bool CheckCameraPositionDelegate
+    (
+        TargetSystem* system,
+        Camera*       activeCamera,
+        GameObject*   obj
+    );
+
+    private Hook<CheckCameraPositionDelegate>? CheckCameraPositionHook;
 
     protected override void Init()
     {
@@ -132,7 +177,10 @@ public unsafe class OptimizedInteraction : ModuleBase
             CheckCameraPositionSig.GetHook<CheckCameraPositionDelegate>(CheckCameraPositionDetour);
     }
 
-    private void SwitchHooks(bool isEnable)
+    private void SwitchHooks
+    (
+        bool isEnable
+    )
     {
         CameraObjectBlockedHook.Toggle(isEnable);
         IsObjectInViewRangeHook.Toggle(isEnable);
@@ -146,13 +194,32 @@ public unsafe class OptimizedInteraction : ModuleBase
         CheckCameraPositionHook.Toggle(isEnable);
     }
 
-    private static bool CameraObjectBlockedDetour(nint a1, nint a2, nint a3) => true;
+    private static bool CameraObjectBlockedDetour
+    (
+        nint a1,
+        nint a2,
+        nint a3
+    ) => true;
 
-    private static bool IsObjectInViewRangeHookDetour(TargetSystem* system, GameObject* gameObject) => true;
+    private static bool IsObjectInViewRangeHookDetour
+    (
+        TargetSystem* system,
+        GameObject*   gameObject
+    ) => true;
 
-    private static bool InteractCheck0Detour(nint a1, nint a2, nint a3, nint a4, bool a5) => true;
+    private static bool InteractCheck0Detour
+    (
+        nint a1,
+        nint a2,
+        nint a3,
+        nint a4,
+        bool a5
+    ) => true;
 
-    private static bool IsPlayerOnJumpingDetour(nint a1) => false;
+    private static bool IsPlayerOnJumpingDetour
+    (
+        nint a1
+    ) => false;
 
     private static bool CheckTargetPositionDetour
     (
@@ -165,9 +232,18 @@ public unsafe class OptimizedInteraction : ModuleBase
     )
         => true;
 
-    private static float CheckTargetDistanceDetour(GameObject* localPlayer, GameObject* target) => 0f;
+    private static float CheckTargetDistanceDetour
+    (
+        GameObject* localPlayer,
+        GameObject* target
+    ) => 0f;
 
-    private ulong InteractWithObjectDetour(TargetSystem* system, GameObject* obj, bool checkLOS)
+    private ulong InteractWithObjectDetour
+    (
+        TargetSystem* system,
+        GameObject*   obj,
+        bool          checkLOS
+    )
     {
         if (obj == null || DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return 0;
 
@@ -217,13 +293,16 @@ public unsafe class OptimizedInteraction : ModuleBase
 
         return InteractWithObjectHook.Original(system, obj, false);
 
-        void DismountAndSend(uint eventID)
+        void DismountAndSend
+        (
+            uint eventID
+        )
         {
             MovementManager.Instance().Dismount();
             TaskHelper.Enqueue
             (() =>
                 {
-                    if (MovementManager.Instance().IsManagerBusy                        ||
+                    if (MovementManager.Instance().IsManagerBusy             ||
                         DService.Instance().Condition[ConditionFlag.Mounted] ||
                         DService.Instance().Condition[ConditionFlag.Jumping]) return false;
                     new EventStartPackt(localPlayer.GameObjectID, eventID).Send();
@@ -233,8 +312,13 @@ public unsafe class OptimizedInteraction : ModuleBase
         }
     }
 
-    private static bool CheckCameraPositionDetour(TargetSystem* system, Camera* activeCamera, GameObject* obj) => true;
-    
+    private static bool CheckCameraPositionDetour
+    (
+        TargetSystem* system,
+        Camera*       activeCamera,
+        GameObject*   obj
+    ) => true;
+
     #region 常量
 
     private static readonly FrozenSet<string> WhitelistObjectNames =

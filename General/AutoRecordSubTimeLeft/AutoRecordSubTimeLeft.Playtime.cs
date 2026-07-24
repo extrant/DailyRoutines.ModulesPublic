@@ -10,10 +10,10 @@ public partial class AutoRecordSubTimeLeft
 {
     private sealed class PlaytimeTracker : IDisposable
     {
-        private static readonly UTF8Encoding UTF8NoBOM = new(false);
-        private static readonly TimeSpan SnapshotInterval  = TimeSpan.FromSeconds(5);
-        private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(20);
-        private static readonly TimeSpan StaleLeaseGrace   = TimeSpan.FromSeconds(40);
+        private static readonly UTF8Encoding UTF8NoBOM         = new(false);
+        private static readonly TimeSpan     SnapshotInterval  = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan     HeartbeatInterval = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan     StaleLeaseGrace   = TimeSpan.FromSeconds(40);
 
         private readonly string storePath;
         private readonly string legacyLogPath;
@@ -30,7 +30,11 @@ public partial class AutoRecordSubTimeLeft
         private long sessionStartUTCTicks;
         private long lastHeartbeatPersistedUTCTicks;
 
-        public PlaytimeTracker(string storePath, string legacyLogPath)
+        public PlaytimeTracker
+        (
+            string storePath,
+            string legacyLogPath
+        )
         {
             this.storePath     = storePath;
             this.legacyLogPath = legacyLogPath;
@@ -66,7 +70,11 @@ public partial class AutoRecordSubTimeLeft
         public void OnLogout() =>
             FinalizeSession(StandardTimeManager.Instance().UTCNow);
 
-        public PlaytimeRangeStats QueryRange(DateTime startDate, DateTime endDate)
+        public PlaytimeRangeStats QueryRange
+        (
+            DateTime startDate,
+            DateTime endDate
+        )
         {
             if (endDate < startDate)
                 (startDate, endDate) = (endDate, startDate);
@@ -93,16 +101,20 @@ public partial class AutoRecordSubTimeLeft
                     activeDays++;
 
                 if (longestDay == null || duration > longestDay.Duration)
-                    longestDay = duration > TimeSpan.Zero ? row : longestDay;
+                    longestDay = duration > TimeSpan.Zero ?
+                                     row :
+                                     longestDay;
             }
 
             return new()
             {
-                Total               = TimeSpan.FromTicks(totalTicks),
-                ActiveDays          = activeDays,
-                AveragePerActiveDay = activeDays == 0 ? TimeSpan.Zero : TimeSpan.FromTicks(totalTicks / activeDays),
-                LongestDay          = longestDay,
-                Rows                = rows
+                Total      = TimeSpan.FromTicks(totalTicks),
+                ActiveDays = activeDays,
+                AveragePerActiveDay = activeDays == 0 ?
+                                          TimeSpan.Zero :
+                                          TimeSpan.FromTicks(totalTicks / activeDays),
+                LongestDay = longestDay,
+                Rows       = rows
             };
         }
 
@@ -130,7 +142,10 @@ public partial class AutoRecordSubTimeLeft
             fileMutex.Dispose();
         }
 
-        private async Task BackgroundLoopAsync(CancellationToken token)
+        private async Task BackgroundLoopAsync
+        (
+            CancellationToken token
+        )
         {
             using var timer = new PeriodicTimer(SnapshotInterval);
 
@@ -150,7 +165,7 @@ public partial class AutoRecordSubTimeLeft
                     }
                     else if (Volatile.Read(ref sessionActive) != 0)
                         FinalizeSession(nowUTC);
-                    else if (nowUTC.Ticks - Volatile.Read(ref lastHeartbeatPersistedUTCTicks) >= HeartbeatInterval.Ticks) 
+                    else if (nowUTC.Ticks - Volatile.Read(ref lastHeartbeatPersistedUTCTicks) >= HeartbeatInterval.Ticks)
                         RefreshStore(nowUTC, true);
 
                     RefreshSnapshot(nowUTC);
@@ -191,7 +206,10 @@ public partial class AutoRecordSubTimeLeft
             );
         }
 
-        private void ActivateSession(DateTime nowUTC)
+        private void ActivateSession
+        (
+            DateTime nowUTC
+        )
         {
             if (Interlocked.CompareExchange(ref sessionActive, 1, 0) != 0)
                 return;
@@ -201,7 +219,10 @@ public partial class AutoRecordSubTimeLeft
             PersistHeartbeat(nowUTC);
         }
 
-        private void PersistHeartbeat(DateTime nowUTC)
+        private void PersistHeartbeat
+        (
+            DateTime nowUTC
+        )
         {
             if (Volatile.Read(ref sessionActive) == 0)
                 return;
@@ -231,7 +252,10 @@ public partial class AutoRecordSubTimeLeft
             Volatile.Write(ref lastHeartbeatPersistedUTCTicks, nowUTC.Ticks);
         }
 
-        private void FinalizeSession(DateTime nowUTC)
+        private void FinalizeSession
+        (
+            DateTime nowUTC
+        )
         {
             if (Interlocked.Exchange(ref sessionActive, 0) == 0)
                 return;
@@ -264,7 +288,11 @@ public partial class AutoRecordSubTimeLeft
             RefreshSnapshot(nowUTC);
         }
 
-        private void RefreshStore(DateTime nowUTC, bool persistChanges)
+        private void RefreshStore
+        (
+            DateTime nowUTC,
+            bool     persistChanges
+        )
         {
             ExecuteWithFileLock
             (() =>
@@ -280,7 +308,10 @@ public partial class AutoRecordSubTimeLeft
             Volatile.Write(ref lastHeartbeatPersistedUTCTicks, nowUTC.Ticks);
         }
 
-        private void RefreshSnapshot(DateTime nowUTC)
+        private void RefreshSnapshot
+        (
+            DateTime nowUTC
+        )
         {
             var effectiveTotals = BuildEffectiveDailyTotals(nowUTC);
             var today           = nowUTC.ToLocalTime().Date;
@@ -303,7 +334,10 @@ public partial class AutoRecordSubTimeLeft
             );
         }
 
-        private Dictionary<int, long> BuildEffectiveDailyTotals(DateTime nowUTC)
+        private Dictionary<int, long> BuildEffectiveDailyTotals
+        (
+            DateTime nowUTC
+        )
         {
             var store  = Volatile.Read(ref storeState);
             var totals = new Dictionary<int, long>(store.DailyTotals);
@@ -334,11 +368,16 @@ public partial class AutoRecordSubTimeLeft
             return totals;
         }
 
-        private static void AddLeaseContribution(Dictionary<int, long> totals, SessionLease lease, DateTime nowUTC)
+        private static void AddLeaseContribution
+        (
+            Dictionary<int, long> totals,
+            SessionLease          lease,
+            DateTime              nowUTC
+        )
         {
-            var leaseEndUTCTicks = nowUTC.Ticks - lease.LastHeartbeatUTCTicks > StaleLeaseGrace.Ticks
-                                       ? lease.LastHeartbeatUTCTicks + StaleLeaseGrace.Ticks
-                                       : nowUTC.Ticks;
+            var leaseEndUTCTicks = nowUTC.Ticks - lease.LastHeartbeatUTCTicks > StaleLeaseGrace.Ticks ?
+                                       lease.LastHeartbeatUTCTicks + StaleLeaseGrace.Ticks :
+                                       nowUTC.Ticks;
 
             if (leaseEndUTCTicks <= lease.StartUTCTicks)
                 return;
@@ -346,7 +385,12 @@ public partial class AutoRecordSubTimeLeft
             AddRangeToDailyTotals(totals, UTCToLocalDateTime(lease.StartUTCTicks), UTCToLocalDateTime(leaseEndUTCTicks));
         }
 
-        private static TimeSpan GetRangeDuration(IReadOnlyDictionary<int, long> totals, DateTime startDate, DateTime endDate)
+        private static TimeSpan GetRangeDuration
+        (
+            IReadOnlyDictionary<int, long> totals,
+            DateTime                       startDate,
+            DateTime                       endDate
+        )
         {
             if (endDate < startDate)
                 (startDate, endDate) = (endDate, startDate);
@@ -359,7 +403,12 @@ public partial class AutoRecordSubTimeLeft
             return TimeSpan.FromTicks(totalTicks);
         }
 
-        private static void AddRangeToDailyTotals(Dictionary<int, long> dailyTotals, DateTime startLocal, DateTime endLocal)
+        private static void AddRangeToDailyTotals
+        (
+            Dictionary<int, long> dailyTotals,
+            DateTime              startLocal,
+            DateTime              endLocal
+        )
         {
             if (endLocal <= startLocal)
                 return;
@@ -376,7 +425,12 @@ public partial class AutoRecordSubTimeLeft
             AddDurationToDay(dailyTotals, current.Date, endLocal - current);
         }
 
-        private static void AddDurationToDay(Dictionary<int, long> dailyTotals, DateTime date, TimeSpan duration)
+        private static void AddDurationToDay
+        (
+            Dictionary<int, long> dailyTotals,
+            DateTime              date,
+            TimeSpan              duration
+        )
         {
             if (duration <= TimeSpan.Zero)
                 return;
@@ -385,7 +439,12 @@ public partial class AutoRecordSubTimeLeft
             dailyTotals[key] = dailyTotals.GetValueOrDefault(key) + duration.Ticks;
         }
 
-        private PlaytimeStoreV2 RecoverStaleSessions(PlaytimeStoreV2 store, DateTime nowUTC, out bool changed)
+        private PlaytimeStoreV2 RecoverStaleSessions
+        (
+            PlaytimeStoreV2 store,
+            DateTime        nowUTC,
+            out bool        changed
+        )
         {
             changed = false;
 
@@ -476,7 +535,9 @@ public partial class AutoRecordSubTimeLeft
                         case "autoClose":
                             if (state.StartUTC.HasValue)
                             {
-                                var endUTC = utcTimestamp < state.StartUTC.Value ? state.StartUTC.Value : utcTimestamp;
+                                var endUTC = utcTimestamp < state.StartUTC.Value ?
+                                                 state.StartUTC.Value :
+                                                 utcTimestamp;
                                 intervals.Add(new(state.StartUTC.Value, endUTC));
                                 state.StartUTC = null;
                             }
@@ -517,7 +578,10 @@ public partial class AutoRecordSubTimeLeft
             }
         }
 
-        private static List<TimeRange> MergeIntervals(List<TimeRange> intervals)
+        private static List<TimeRange> MergeIntervals
+        (
+            List<TimeRange> intervals
+        )
         {
             if (intervals.Count == 0)
                 return [];
@@ -533,7 +597,12 @@ public partial class AutoRecordSubTimeLeft
 
                 if (next.StartUTC <= current.EndUTC)
                 {
-                    current = current with { EndUTC = next.EndUTC > current.EndUTC ? next.EndUTC : current.EndUTC };
+                    current = current with
+                    {
+                        EndUTC = next.EndUTC > current.EndUTC ?
+                                     next.EndUTC :
+                                     current.EndUTC
+                    };
                     continue;
                 }
 
@@ -545,10 +614,16 @@ public partial class AutoRecordSubTimeLeft
             return merged;
         }
 
-        private void PublishStore(PlaytimeStoreV2 store) =>
+        private void PublishStore
+        (
+            PlaytimeStoreV2 store
+        ) =>
             Volatile.Write(ref storeState, store);
 
-        private void WriteStoreSynchronously(PlaytimeStoreV2 store)
+        private void WriteStoreSynchronously
+        (
+            PlaytimeStoreV2 store
+        )
         {
             var content = JsonConvert.SerializeObject(store, Formatting.Indented, JsonSerializerSettings.GetShared());
 
@@ -570,7 +645,10 @@ public partial class AutoRecordSubTimeLeft
             }
         }
 
-        private void ExecuteWithFileLock(Action action)
+        private void ExecuteWithFileLock
+        (
+            Action action
+        )
         {
             var lockTaken = false;
 
@@ -597,7 +675,10 @@ public partial class AutoRecordSubTimeLeft
             }
         }
 
-        private static PlaytimeStoreV2 NormalizeStore(PlaytimeStoreV2? store)
+        private static PlaytimeStoreV2 NormalizeStore
+        (
+            PlaytimeStoreV2? store
+        )
         {
             if (store == null || store.Version != 2)
                 return PlaytimeStoreV2.Empty;
@@ -610,7 +691,10 @@ public partial class AutoRecordSubTimeLeft
             };
         }
 
-        private static PlaytimeStoreV2 CloneStore(PlaytimeStoreV2 store) =>
+        private static PlaytimeStoreV2 CloneStore
+        (
+            PlaytimeStoreV2 store
+        ) =>
             new()
             {
                 Version     = 2,
@@ -623,12 +707,15 @@ public partial class AutoRecordSubTimeLeft
                 )
             };
 
-        private static uint GetStableHashCode(string value)
+        private static uint GetStableHashCode
+        (
+            string value
+        )
         {
             var hash = 2166136261u;
 
             foreach (var character in value)
-                hash = hash * 16777619u ^ character;
+                hash = (hash * 16777619u) ^ character;
 
             return hash;
         }

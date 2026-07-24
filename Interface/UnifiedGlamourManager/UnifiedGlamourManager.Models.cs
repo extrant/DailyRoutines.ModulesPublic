@@ -61,8 +61,13 @@ public partial class UnifiedGlamourManager
 
         public bool CanUseInPlate => (InPrismBox || InCabinet) && !IsSetContainer;
 
-        public Stain? Stain0 => LuminaGetter.TryGetRow<Stain>(Stain0ID, out var stain) ? stain : null;
-        public Stain? Stain1 => LuminaGetter.TryGetRow<Stain>(Stain1ID, out var stain) ? stain : null;
+        public Stain? Stain0 => LuminaGetter.TryGetRow<Stain>(Stain0ID, out var stain) ?
+                                    stain :
+                                    null;
+
+        public Stain? Stain1 => LuminaGetter.TryGetRow<Stain>(Stain1ID, out var stain) ?
+                                    stain :
+                                    null;
 
         public string SourceLabel
         {
@@ -72,7 +77,9 @@ public partial class UnifiedGlamourManager
                 if (InPrismBox) labels.Add(LuminaWrapper.GetAddonText(11910));
                 if (InCabinet) labels.Add(LuminaWrapper.GetAddonText(12216));
                 if (IsSetPart || IsSetContainer) labels.Add(LuminaWrapper.GetAddonText(15624));
-                return labels.Count == 0 ? Lang.Get("Unknown") : string.Join(" / ", labels);
+                return labels.Count == 0 ?
+                           Lang.Get("Unknown") :
+                           string.Join(" / ", labels);
             }
         }
 
@@ -90,20 +97,31 @@ public partial class UnifiedGlamourManager
                                      .Distinct()
                                      .ToArray();
 
-                return availableSlots.Length > 0 ? string.Join(" / ", availableSlots) : Lang.Get("Unknown");
+                return availableSlots.Length > 0 ?
+                           string.Join(" / ", availableSlots) :
+                           Lang.Get("Unknown");
             }
         }
 
-        public bool IsCompatibleWithSlot(uint slotIndex)
+        public bool IsCompatibleWithSlot
+        (
+            uint slotIndex
+        )
         {
             if (!LuminaGetter.TryGetRow<EquipSlotCategory>(EquipSlotCategoryRowID, out var categoryRow)) return false;
             return slotIndex < PlateSlotDefinitions.Length && IsEquipSlotCategoryCompatibleWithPlateSlot(categoryRow, slotIndex);
         }
 
-        public bool IsCompatibleWithJobs(uint[] classJobIDs) =>
+        public bool IsCompatibleWithJobs
+        (
+            uint[] classJobIDs
+        ) =>
             classJobIDs.Length == 0 || classJobIDs.Any(id => ClassJobCategory.IsClassJobInCategory(id, ClassJobCategoryRowID));
 
-        public void MergeWith(UnifiedItem other)
+        public void MergeWith
+        (
+            UnifiedItem other
+        )
         {
             if (other is null) return;
             InPrismBox |= other.InPrismBox;
@@ -124,12 +142,20 @@ public partial class UnifiedGlamourManager
 
             if (other.InCabinet)
             {
-                CabinetID              =  other.CabinetID;
-                IconID                 =  IconID                 == 0 ? other.IconID : IconID;
-                EquipSlotCategoryRowID =  EquipSlotCategoryRowID == 0 ? other.EquipSlotCategoryRowID : EquipSlotCategoryRowID;
-                ClassJobCategoryRowID  =  ClassJobCategoryRowID  == 0 ? other.ClassJobCategoryRowID : ClassJobCategoryRowID;
-                LevelEquip             =  LevelEquip             == 0 ? other.LevelEquip : LevelEquip;
-                IsSetContainer         |= other.IsSetContainer;
+                CabinetID = other.CabinetID;
+                IconID = IconID == 0 ?
+                             other.IconID :
+                             IconID;
+                EquipSlotCategoryRowID = EquipSlotCategoryRowID == 0 ?
+                                             other.EquipSlotCategoryRowID :
+                                             EquipSlotCategoryRowID;
+                ClassJobCategoryRowID = ClassJobCategoryRowID == 0 ?
+                                            other.ClassJobCategoryRowID :
+                                            ClassJobCategoryRowID;
+                LevelEquip = LevelEquip == 0 ?
+                                 other.LevelEquip :
+                                 LevelEquip;
+                IsSetContainer |= other.IsSetContainer;
             }
         }
 
@@ -172,7 +198,10 @@ public partial class UnifiedGlamourManager
                 SetPartLabel           = setPartLabel
             };
 
-        public bool Equals(UnifiedItem? other)
+        public bool Equals
+        (
+            UnifiedItem? other
+        )
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -182,17 +211,28 @@ public partial class UnifiedGlamourManager
                    ParentSetItemID == other.ParentSetItemID;
         }
 
-        public override bool Equals(object? obj) => Equals(obj as UnifiedItem);
+        public override bool Equals
+        (
+            object? obj
+        ) => Equals(obj as UnifiedItem);
 
         public override int GetHashCode() => HashCode.Combine(ItemID, PrismBoxIndex, IsSetPart, ParentSetItemID);
 
-        public static bool operator ==(UnifiedItem? left, UnifiedItem? right)
+        public static bool operator ==
+        (
+            UnifiedItem? left,
+            UnifiedItem? right
+        )
         {
             if (left is null) return right is null;
             return left.Equals(right);
         }
 
-        public static bool operator !=(UnifiedItem? left, UnifiedItem? right) => !(left == right);
+        public static bool operator !=
+        (
+            UnifiedItem? left,
+            UnifiedItem? right
+        ) => !(left == right);
     }
 
     private sealed class SavedItem

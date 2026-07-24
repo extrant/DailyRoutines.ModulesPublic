@@ -2,7 +2,6 @@ using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using OmenTools.OmenService;
 
@@ -17,7 +16,7 @@ public unsafe class AutoNotifyLeveUpdate : ModuleBase
         Category    = ModuleCategory.Notification,
         Author      = ["HSS"]
     };
-    
+
     private Config config = null!;
 
     private DateTime nextLeveCheck = DateTime.MinValue;
@@ -57,7 +56,10 @@ public unsafe class AutoNotifyLeveUpdate : ModuleBase
         }
     }
 
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (!GameState.IsLoggedIn)
             return;
@@ -84,16 +86,39 @@ public unsafe class AutoNotifyLeveUpdate : ModuleBase
         }
     }
 
-    private static DateTime MathNextTime(DateTime nowUTC) =>
-        nowUTC.AddHours(nowUTC.Hour >= 12 ? 24 - nowUTC.Hour : 12 - nowUTC.Hour).Date;
+    private static DateTime MathNextTime
+    (
+        DateTime nowUTC
+    ) =>
+        nowUTC.AddHours
+        (
+            nowUTC.Hour >= 12 ?
+                24 - nowUTC.Hour :
+                12 - nowUTC.Hour
+        ).Date;
 
-    private static DateTime MathFinishTime(int num, DateTime nowUTC)
+    private static DateTime MathFinishTime
+    (
+        int      num,
+        DateTime nowUTC
+    )
     {
         if (num >= 100)
             return nowUTC;
 
-        var requiredPeriods      = (100 - num + 2) / 3;
-        var lastIncrementTimeUTC = new DateTime(nowUTC.Year, nowUTC.Month, nowUTC.Day, nowUTC.Hour >= 12 ? 12 : 0, 0, 0, DateTimeKind.Utc);
+        var requiredPeriods = (100 - num + 2) / 3;
+        var lastIncrementTimeUTC = new DateTime
+        (
+            nowUTC.Year,
+            nowUTC.Month,
+            nowUTC.Day,
+            nowUTC.Hour >= 12 ?
+                12 :
+                0,
+            0,
+            0,
+            DateTimeKind.Utc
+        );
         return lastIncrementTimeUTC.AddHours(12 * requiredPeriods);
     }
 

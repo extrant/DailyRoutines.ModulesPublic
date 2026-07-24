@@ -36,13 +36,27 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig SendInventoryRefreshSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 8B DA 48 8B F1 33 D2 0F B7 FA");
-    private delegate        bool    SendInventoryRefreshDelegate(InventoryManager* instance, int inventoryType);
-    private                 Hook<SendInventoryRefreshDelegate>? SendInventoryRefreshHook;
-    
-    private delegate nint MoveItemDelegate(void* agent, InventoryType srcInv, uint srcSlot, InventoryType dstInv, uint dstSlot);
-    private readonly MoveItemDelegate moveItem = new CompSig("40 53 55 56 57 41 57 48 83 EC ?? 45 33 FF").GetDelegate<MoveItemDelegate>();
+
+    private delegate bool SendInventoryRefreshDelegate
+    (
+        InventoryManager* instance,
+        int               inventoryType
+    );
+
+    private Hook<SendInventoryRefreshDelegate>? SendInventoryRefreshHook;
+
+    private delegate nint MoveItemDelegate
+    (
+        void*         agent,
+        InventoryType srcInv,
+        uint          srcSlot,
+        InventoryType dstInv,
+        uint          dstSlot
+    );
+
+    private MoveItemDelegate moveItem = null!;
 
     private Config config = null!;
 
@@ -53,13 +67,14 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     private HorizontalListNode? componentNode;
     private IconImageNode?      gilIconNode;
     private TextNode?           gilItemsValueCountNode;
-    
+
     private bool isNeedToClose;
     private long lastTotalPrice;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        moveItem = new CompSig("40 53 55 56 57 41 57 48 83 EC ?? 45 33 FF").GetDelegate<MoveItemDelegate>();
+        config   = Config.Load(this) ?? new();
 
         SendInventoryRefreshHook ??= SendInventoryRefreshSig.GetHook<SendInventoryRefreshDelegate>(SendInventoryRefreshDetour);
         SendInventoryRefreshHook.Enable();
@@ -72,7 +87,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
 
         DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
@@ -87,7 +102,11 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     // 打开部队储物柜时请求所有页面数据, 并生成 Node
-    private void OnAddonChest(AddonEvent type, AddonArgs args)
+    private void OnAddonChest
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -168,7 +187,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
                             UpdateDefaultPageTooltip();
                             defaultPageNode.HideTooltip();
                             defaultPageNode.ShowTooltip();
-                        },
+                        }
                     };
                     UpdateDefaultPageTooltip();
                     defaultPageNode.AttachNode(FreeCompanyChest->GetNodeById(9));
@@ -189,7 +208,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
                         Position    = new(380, -38),
                         Size        = new(0, 60),
                         ItemSpacing = 4,
-                        Alignment = HorizontalListAnchor.Right
+                        Alignment   = HorizontalListAnchor.Right
                     };
                     componentNode.AddNodeFlags(NodeFlags.HasCollision);
 
@@ -209,7 +228,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
                         String        = "0\ue049",
                         FontSize      = 14,
                         AlignmentType = AlignmentType.Right,
-                        TextTooltip   = Lang.Get("OptimizedFreeCompanyChest-ExchangableItemsTotalValue"),
+                        TextTooltip   = Lang.Get("OptimizedFreeCompanyChest-ExchangableItemsTotalValue")
                     };
                     AtkColors.Value.ApplyTo(ref gilItemsValueCountNode);
 
@@ -220,11 +239,13 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
 
                 if (Throttler.Shared.Throttle("OptimizedFreeCompanyChest-OnUpdateGilItemsValue", 100))
                 {
-                    lastTotalPrice = TryGetTotalPrice(out var totalPrice) ? totalPrice : 0;
+                    lastTotalPrice = TryGetTotalPrice(out var totalPrice) ?
+                                         totalPrice :
+                                         0;
 
                     gilItemsValueCountNode.String = $"{lastTotalPrice.ToChineseString()}\ue049";
                     gilItemsValueCountNode.Width  = gilItemsValueCountNode.GetTextDrawSize(false).X - 8;
-                    
+
                     componentNode.RecalculateLayout();
 
                     componentNode.IsVisible = lastTotalPrice > 0;
@@ -259,7 +280,10 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     // 快捷存取
-    private void OnContextMenuOpened(IMenuOpenedArgs args)
+    private void OnContextMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (FreeCompanyChest == null || !config.FastMoveItem) return;
 
@@ -301,7 +325,11 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     // 处理存取后的右键菜单关闭
-    private void OnAddonContextMenu(AddonEvent type, AddonArgs args)
+    private void OnAddonContextMenu
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!isNeedToClose || ContextMenuAddon == null) return;
 
@@ -311,7 +339,11 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     // 自动确认数量
-    private void OnAddonInput(AddonEvent type, AddonArgs args)
+    private void OnAddonInput
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!config.FastMoveItem || InputNumeric == null || !FreeCompanyChest->IsAddonAndNodesReady()) return;
 
@@ -319,7 +351,11 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     // 移除操作锁
-    private static bool SendInventoryRefreshDetour(InventoryManager* instance, int inventoryType)
+    private static bool SendInventoryRefreshDetour
+    (
+        InventoryManager* instance,
+        int               inventoryType
+    )
     {
         // 直接返回 true 防锁
         ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.RequestInventory, (uint)inventoryType);
@@ -343,10 +379,14 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
         gilItemsValueCountNode?.Dispose();
         gilItemsValueCountNode = null;
     }
-    
+
     #region 工具
 
-    private static bool TryGetSelectedItemSource(out InventoryType sourceInventory, out ushort sourceSlot)
+    private static bool TryGetSelectedItemSource
+    (
+        out InventoryType sourceInventory,
+        out ushort        sourceSlot
+    )
     {
         sourceInventory = InventoryType.Invalid;
         sourceSlot      = 0;
@@ -364,7 +404,10 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
         return true;
     }
 
-    private static bool TryGetCurrentFCPage(out InventoryType page)
+    private static bool TryGetCurrentFCPage
+    (
+        out InventoryType page
+    )
     {
         page = InventoryType.Invalid;
 
@@ -381,7 +424,12 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
         return true;
     }
 
-    private static bool TryFindFirstSuitableSlot(InventoryType type, InventoryItem* srcItem, out short foundSlot)
+    private static bool TryFindFirstSuitableSlot
+    (
+        InventoryType  type,
+        InventoryItem* srcItem,
+        out short      foundSlot
+    )
     {
         foundSlot = -1;
 
@@ -428,7 +476,10 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
         return false;
     }
 
-    private static bool TryGetTotalPrice(out long totalPrice)
+    private static bool TryGetTotalPrice
+    (
+        out long totalPrice
+    )
     {
         totalPrice = 0;
 
@@ -454,7 +505,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
     }
 
     #endregion
-    
+
     private class Config : ModuleConfig
     {
         public InventoryType DefaultPage  = InventoryType.Invalid;

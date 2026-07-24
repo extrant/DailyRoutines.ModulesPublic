@@ -29,11 +29,14 @@ public unsafe class AutoCheckItemLevel : ModuleBase
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
 
@@ -49,7 +52,10 @@ public unsafe class AutoCheckItemLevel : ModuleBase
         TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
     }
 
-    private bool CheckMembersItemLevel(HashSet<ulong> checkedMembers)
+    private bool CheckMembersItemLevel
+    (
+        HashSet<ulong> checkedMembers
+    )
     {
         var agent        = AgentHUD.Instance();
         var agentInspect = AgentInspect.Instance();
@@ -167,7 +173,12 @@ public unsafe class AutoCheckItemLevel : ModuleBase
         return true;
     }
 
-    private static void SendNotification(HudPartyMember partyMember, uint avgIL, uint lowIL)
+    private static void SendNotification
+    (
+        HudPartyMember partyMember,
+        uint           avgIL,
+        uint           lowIL
+    )
     {
         if (partyMember.Object == null) return;
 
@@ -184,15 +195,33 @@ public unsafe class AutoCheckItemLevel : ModuleBase
 
         var level = partyMember.Object->Level;
         ssb.Append($" {Lang.Get("Level")}: ")
-           .AddUiForeground(level.ToString(), (ushort)(level >= content.ClassJobLevelSync ? 43 : 17));
+           .AddUiForeground
+           (
+               level.ToString(),
+               (ushort)(level >= content.ClassJobLevelSync ?
+                            43 :
+                            17)
+           );
 
         ssb.Add(new NewLinePayload());
 
         ssb.Append($" {Lang.Get("ILAverage")}: ")
-           .AddUiForeground(avgIL.ToString(), (ushort)(avgIL > content.ItemLevelSync ? 43 : 17));
+           .AddUiForeground
+           (
+               avgIL.ToString(),
+               (ushort)(avgIL > content.ItemLevelSync ?
+                            43 :
+                            17)
+           );
 
         ssb.Append($" {Lang.Get("ILMinimum")}: ")
-           .AddUiForeground(lowIL.ToString(), (ushort)(lowIL > content.ItemLevelRequired ? 43 : 17));
+           .AddUiForeground
+           (
+               lowIL.ToString(),
+               (ushort)(lowIL > content.ItemLevelRequired ?
+                            43 :
+                            17)
+           );
 
         ssb.Add(new NewLinePayload());
 

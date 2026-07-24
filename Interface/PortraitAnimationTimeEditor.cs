@@ -25,7 +25,7 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         Author      = ["Yarukon"],
         Category    = ModuleCategory.Interface
     };
-    
+
     private float duration;
     private int   frameCount;
     private float currentFrame;
@@ -46,7 +46,7 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         if (BannerEditor->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
@@ -69,8 +69,8 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
 
         using var font = FontManager.Instance().UIFont80.Push();
 
-        ImGui.SetWindowPos(nodeState.TopLeft with { Y = nodeState.Y - ImGui.GetWindowSize().Y - 2f * GlobalUIScale });
-        ImGui.SetWindowSize(nodeState.Size with { Y = 3f * ImGui.GetTextLineHeightWithSpacing() - 1 * ImGui.GetStyle().ItemSpacing.Y });
+        ImGui.SetWindowPos(nodeState.TopLeft with { Y = nodeState.Y - ImGui.GetWindowSize().Y - (2f * GlobalUIScale) });
+        ImGui.SetWindowSize(nodeState.Size with { Y = (3f * ImGui.GetTextLineHeightWithSpacing()) - (1 * ImGui.GetStyle().ItemSpacing.Y) });
 
         var control = GetAnimationControl(PortraitChara);
         ImGuiHelpers.CenterCursorFor(componentSize.X);
@@ -96,7 +96,13 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             var isPlaying = control->PlaybackSpeed > 0;
             ImGui.SameLine(0, 8f * GlobalUIScale);
 
-            if (ImGuiOm.ButtonIcon("PauseAndPlay", isPlaying ? FontAwesomeIcon.Pause : FontAwesomeIcon.Play))
+            if (ImGuiOm.ButtonIcon
+                (
+                    "PauseAndPlay",
+                    isPlaying ?
+                        FontAwesomeIcon.Pause :
+                        FontAwesomeIcon.Play
+                ))
             {
                 CharaView->ToggleAnimationPlayback(isPlaying);
                 ((AddonBannerEditor*)BannerEditor)->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
@@ -131,22 +137,28 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
 
         componentSize = ImGui.GetItemRectSize();
 
-        ImGui.SetNextItemWidth(nodeState.Size.X - 4 * ImGui.GetStyle().ItemSpacing.X);
+        ImGui.SetNextItemWidth(nodeState.Size.X - (4 * ImGui.GetStyle().ItemSpacing.X));
         if (ImGui.SliderFloat
             (
                 "###TimestampSlider",
                 ref currentFrame,
                 0f,
                 frameCount,
-                frameCount < 100 ? $"%.3f / {frameCount}" : $"%.2f / {frameCount}"
+                frameCount < 100 ?
+                    $"%.3f / {frameCount}" :
+                    $"%.2f / {frameCount}"
             ))
             UpdatePortraitCurrentFrame(currentFrame);
 
         currentFrame = CharaView->GetAnimationTime();
         UpdateDuration(PortraitChara);
     }
-    
-    private void OnAddon(AddonEvent type, AddonArgs? args) =>
+
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    ) =>
         Overlay.IsOpen = type switch
         {
             AddonEvent.PostSetup   => true,
@@ -154,7 +166,10 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             _                      => Overlay.IsOpen
         };
 
-    private static void UpdatePortraitCurrentFrame(float frame)
+    private static void UpdatePortraitCurrentFrame
+    (
+        float frame
+    )
     {
         var baseTimeline = PortraitChara->Timeline.TimelineSequencer.GetSchedulerTimeline(0);
         if (baseTimeline == null) return;
@@ -172,7 +187,10 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             EditorState->SetHasChanged(true);
     }
 
-    private void UpdateDuration(Character* chara)
+    private void UpdateDuration
+    (
+        Character* chara
+    )
     {
         var animation = GetAnimationControl(chara);
         if (animation == null)
@@ -186,7 +204,10 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         frameCount = (int)Math.Round(30f * duration);
     }
 
-    public static hkaDefaultAnimationControl* GetAnimationControl(Character* charaActor)
+    public static hkaDefaultAnimationControl* GetAnimationControl
+    (
+        Character* charaActor
+    )
     {
         if (charaActor == null) return null;
 
@@ -218,9 +239,15 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
 
     #region 常量
 
-    private static AgentBannerEditorState* EditorState   => AgentBannerEditor.Instance()->EditorState;
-    private static CharaViewPortrait*      CharaView     => EditorState != null ? EditorState->CharaView : null;
-    private static Character*              PortraitChara => CharaView   != null ? CharaView->GetCharacter() : null;
+    private static AgentBannerEditorState* EditorState => AgentBannerEditor.Instance()->EditorState;
+
+    private static CharaViewPortrait* CharaView => EditorState != null ?
+                                                       EditorState->CharaView :
+                                                       null;
+
+    private static Character* PortraitChara => CharaView != null ?
+                                                   CharaView->GetCharacter() :
+                                                   null;
 
     #endregion
 }

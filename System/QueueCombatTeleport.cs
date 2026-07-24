@@ -12,7 +12,6 @@ using OmenTools.Info.Game.Enums;
 using OmenTools.Interop.Game;
 using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
-using OmenTools.Threading.TaskHelper;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -26,27 +25,29 @@ public unsafe class QueueCombatTeleport : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private static readonly CompSig CanUseTeleportSig =
         new("84 C0 0F 84 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 89 5C 24");
 
     // test al, al → mov al, 1
-    private readonly MemoryPatch canUseTeleportPatch = new(CanUseTeleportSig.Get(), [0xB0, 0x01]);
+    private MemoryPatch canUseTeleportPatch = null!;
 
     private static readonly CompSig CanUseTeleportMapSig =
         new("84 C0 0F 44 CA 8B C1 48 83 C4 ?? C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC");
 
     // test → or, cmovz → nop
-    private readonly MemoryPatch canUseTeleportMapPatch = new(CanUseTeleportMapSig.Get(), [0x08, 0xC0, 0x90, 0x90, 0x90]);
+    private MemoryPatch canUseTeleportMapPatch = null!;
 
     private Config? config;
-    
+
     private (uint ID, uint SubID)? queuedTeleport;
-    
+
     protected override void Init()
     {
-        config     =   Config.Load(this) ?? new();
-        TaskHelper ??= new() { TimeoutMS = 60_000 };
+        canUseTeleportPatch    =   new(CanUseTeleportSig.Get(), [0xB0, 0x01]);
+        canUseTeleportMapPatch =   new(CanUseTeleportMapSig.Get(), [0x08, 0xC0, 0x90, 0x90, 0x90]);
+        config                 =   Config.Load(this) ?? new();
+        TaskHelper             ??= new() { TimeoutMS = 60_000 };
 
         canUseTeleportPatch.Enable();
         canUseTeleportMapPatch.Enable();
@@ -55,7 +56,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
         ExecuteCommandManager.Instance().RegPre(OnPreUseCommand);
         DService.Instance().Condition.ConditionChange += OnConditionChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Condition.ConditionChange -= OnConditionChanged;
@@ -123,7 +124,11 @@ public unsafe class QueueCombatTeleport : ModuleBase
     }
 
     // 实际执行传送
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat || value || queuedTeleport == null) return;
         var currentFate = FateManager.Instance()->CurrentFate;
@@ -151,7 +156,10 @@ public unsafe class QueueCombatTeleport : ModuleBase
         );
     }
 
-    private void Notify(QueueTeleportNotifyType type)
+    private void Notify
+    (
+        QueueTeleportNotifyType type
+    )
     {
         if (!config.SendChat && !config.SendNotification) return;
 

@@ -51,7 +51,7 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonString);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonMenu);
     }
-    
+
     protected override void ConfigUI() => ImGuiOm.ConflictKeyText();
 
     protected override void OverlayUI()
@@ -127,7 +127,11 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         return true;
     }
 
-    private void OnAddonMenu(AddonEvent type, AddonArgs args)
+    private void OnAddonMenu
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         Overlay.IsOpen = type switch
         {
@@ -143,7 +147,11 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         }
     }
 
-    private void OnAddonYesno(AddonEvent type, AddonArgs args)
+    private void OnAddonYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (HousingManager.Instance()->WorkshopTerritory == null) return;
         if (SubmarinePartsMenu == null || !TaskHelper.IsBusy) return;
@@ -158,7 +166,11 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         AddonSelectYesnoEvent.ClickYes();
     }
 
-    private void OnAddonString(AddonEvent type, AddonArgs args)
+    private void OnAddonString
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!Throttler.Shared.Throttle("AutoFCWSDeliver-ClickSelectString", 3_000)) return;
 
@@ -199,10 +211,17 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         );
     }
 
-    private void OnAddonRecipeNote(AddonEvent type, AddonArgs args) => TaskHelper.Abort();
+    private void OnAddonRecipeNote
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) => TaskHelper.Abort();
 
-    public static long SetHighDword(int value) => (long)value << 32;
-    
+    public static long SetHighDword
+    (
+        int value
+    ) => (long)value << 32;
+
     private record WorkshopCraftItem
     (
         uint ItemID,
@@ -210,7 +229,10 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         uint Index
     )
     {
-        public static List<WorkshopCraftItem> Parse(AtkUnitBase* addon)
+        public static List<WorkshopCraftItem> Parse
+        (
+            AtkUnitBase* addon
+        )
         {
             List<WorkshopCraftItem> result = [];
 

@@ -23,7 +23,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         Description = Lang.Get("AutoRefreshPartyFinderDescription"),
         Category    = ModuleCategory.Recruitment
     };
-    
+
     private Config config = null!;
 
     private Timer? refreshTimer;
@@ -34,7 +34,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
     private CheckboxNode?       onlyInactiveNode;
     private TextNode?           leftTimeNode;
     private HorizontalListNode? layoutNode;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -54,7 +54,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         if (LookingForGroup != null)
             OnAddonPF(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonPF);
@@ -73,7 +73,11 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
     }
 
     // 招募
-    private void OnAddonPF(AddonEvent type, AddonArgs? args)
+    private void OnAddonPF
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -97,7 +101,11 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
     }
 
     // 招募详情
-    private void OnAddonLFGD(AddonEvent type, AddonArgs? args)
+    private void OnAddonLFGD
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -111,7 +119,11 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         }
     }
 
-    private void OnRefreshTimer(object? sender, ElapsedEventArgs e)
+    private void OnRefreshTimer
+    (
+        object?          sender,
+        ElapsedEventArgs e
+    )
     {
         if (!LookingForGroup->IsAddonAndNodesReady() || LookingForGroupDetail->IsAddonAndNodesReady())
         {
@@ -212,13 +224,16 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         layoutNode.AttachNode(LookingForGroup->RootNode);
     }
 
-    private void UpdateNextRefreshTime(int leftTime)
+    private void UpdateNextRefreshTime
+    (
+        int leftTime
+    )
     {
         if (leftTimeNode == null) return;
 
         leftTimeNode.String = $"({leftTime})  ";
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool OnlyInactive    = true;

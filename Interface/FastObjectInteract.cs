@@ -11,11 +11,10 @@ using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
-using OmenTools.Info.Game.Data;
+using OmenTools.Info.Game.AetheryteRecord;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Helpers;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Info.Game.AetheryteRecord;
 using OmenTools.OmenService;
 using OmenTools.Threading;
 using Aetheryte = Lumina.Excel.Sheets.Aetheryte;
@@ -53,14 +52,14 @@ public unsafe partial class FastObjectInteract : ModuleBase
     protected override void Init()
     {
         config = Config.Load(this) ??
-                       new()
-                       {
-                           SelectedKinds =
-                           [
-                               ObjectKind.EventNpc, ObjectKind.EventObj, ObjectKind.Treasure, ObjectKind.Aetheryte,
-                               ObjectKind.GatheringPoint
-                           ]
-                       };
+                 new()
+                 {
+                     SelectedKinds =
+                     [
+                         ObjectKind.EventNpc, ObjectKind.EventObj, ObjectKind.Treasure, ObjectKind.Aetheryte,
+                         ObjectKind.GatheringPoint
+                     ]
+                 };
 
         TaskHelper ??= new() { TimeoutMS = 5_000, ShowDebug = true };
 
@@ -92,7 +91,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
         currentObjects.Clear();
     }
-    
+
     #region UI
 
     protected override void ConfigUI()
@@ -287,7 +286,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
     )
     {
         var isAnyRendered = false;
-        
+
         instanceChangeObject = null;
         worldTravelObject    = null;
         currentAetheryteID   = 0;
@@ -301,7 +300,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
             if (obj.Kind == ObjectKind.Aetheryte)
             {
                 currentAetheryteID = obj.Pointer->BaseId;
-                
+
                 if (LuminaGetter.GetRow<Aetheryte>(obj.Pointer->BaseId) is { IsAetheryte: true })
                 {
                     if (InstancesManager.IsInstancedArea)
@@ -320,7 +319,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
         return isAnyRendered;
     }
 
-    private void RenderSingleObjectButton(InteractableObject obj)
+    private void RenderSingleObjectButton
+    (
+        InteractableObject obj
+    )
     {
         var isReachable   = obj.Pointer->IsReachable();
         var clickToTarget = config.AllowClickToTarget;
@@ -381,8 +383,11 @@ public unsafe partial class FastObjectInteract : ModuleBase
                 ChatManager.Instance().SendMessage($"/pdr worldtravel {worldPair.Key}");
         }
     }
-    
-    private void RenderAethernetShardButtons(uint aetheryteID)
+
+    private void RenderAethernetShardButtons
+    (
+        uint aetheryteID
+    )
     {
         foreach (var shard in currentAethernetShards)
         {
@@ -393,20 +398,24 @@ public unsafe partial class FastObjectInteract : ModuleBase
         }
     }
 
-    public bool ButtonCenterText(string id, string text)
+    public bool ButtonCenterText
+    (
+        string id,
+        string text
+    )
     {
         using var idPush = ImRaii.PushId($"{id}_{text}");
 
         var textSize    = ImGui.CalcTextSize(text);
         var cursorPos   = ImGui.GetCursorScreenPos();
         var padding     = ImGui.GetStyle().FramePadding;
-        var buttonWidth = Math.Clamp(textSize.X + padding.X * 2, windowWidth, config.MaxButtonWidth);
-        var result      = ImGui.Button(string.Empty, new Vector2(buttonWidth, textSize.Y + padding.Y * 2));
+        var buttonWidth = Math.Clamp(textSize.X + (padding.X * 2), windowWidth, config.MaxButtonWidth);
+        var result      = ImGui.Button(string.Empty, new Vector2(buttonWidth, textSize.Y + (padding.Y * 2)));
 
         ImGuiOm.TooltipHover(text);
 
         ImGui.GetWindowDrawList()
-             .AddText(new(cursorPos.X + (buttonWidth - textSize.X) / 2, cursorPos.Y + padding.Y), ImGui.GetColorU32(ImGuiCol.Text), text);
+             .AddText(new(cursorPos.X + ((buttonWidth - textSize.X) / 2), cursorPos.Y + padding.Y), ImGui.GetColorU32(ImGuiCol.Text), text);
 
         return result;
     }
@@ -415,7 +424,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
     #region 事件
 
-    private void OnUpdate(IFramework framework)
+    private void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var localPlayer    = Control.GetLocalPlayer();
         var canShowOverlay = !DService.Instance().Condition.IsBetweenAreas && localPlayer != null;
@@ -443,6 +455,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
             TryPopulateAethernetShards();
 
         var shouldShowWindow = currentObjects.Count > 0 && IsWindowShouldBeOpen();
+
         if (Overlay != null)
         {
             Overlay.IsOpen = shouldShowWindow;
@@ -453,7 +466,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
     private void OnLogin() =>
         LoadWorldData();
 
-    private void OnTerritoryChanged(uint u)
+    private void OnTerritoryChanged
+    (
+        uint u
+    )
     {
         forceObjectUpdate = true;
         currentAethernetShards.Clear();
@@ -461,7 +477,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
     #endregion
 
-    private void UpdateObjectsList(GameObject* localPlayer)
+    private void UpdateObjectsList
+    (
+        GameObject* localPlayer
+    )
     {
         currentObjects.Clear();
 
@@ -561,7 +580,11 @@ public unsafe partial class FastObjectInteract : ModuleBase
         return true;
     }
 
-    private void InteractWithObject(GameObject* obj, ObjectKind kind)
+    private void InteractWithObject
+    (
+        GameObject* obj,
+        ObjectKind  kind
+    )
     {
         TaskHelper.RemoveQueueTasks(2);
 
@@ -591,12 +614,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
         return;
 
-        static bool IsAbleToInteract()
-        {
-            return !DService.Instance().Condition.IsOnMount                                          &&
-                   !DService.Instance().Condition.Any(ConditionFlag.Jumping, ConditionFlag.InFlight) &&
-                   !MovementManager.Instance().IsManagerBusy;
-        }
+        static bool IsAbleToInteract() =>
+            !DService.Instance().Condition.IsOnMount                                          &&
+            !DService.Instance().Condition.Any(ConditionFlag.Jumping, ConditionFlag.InFlight) &&
+            !MovementManager.Instance().IsManagerBusy;
     }
 
     private void LoadWorldData()
@@ -621,7 +642,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
         }
     }
 
-    private void PopulateAethernetShards(uint baseID)
+    private void PopulateAethernetShards
+    (
+        uint baseID
+    )
     {
         var manager = AetheryteRecordManager.Instance();
 
@@ -636,7 +660,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
             currentAethernetShards.Add(record);
         }
     }
-    
+
     [GeneratedRegex(@"\[.*?\]")]
     private static partial Regex FastObjectInteractTitleRegex();
 
@@ -671,7 +695,11 @@ public unsafe partial class FastObjectInteract : ModuleBase
         public nint ID => (nint)Pointer;
     }
 
-    private static int InteractableObjectComparison(InteractableObject x, InteractableObject y)
+    private static int InteractableObjectComparison
+    (
+        InteractableObject x,
+        InteractableObject y
+    )
     {
         var c = x.DistanceSq.CompareTo(y.DistanceSq);
         if (c != 0) return c;
@@ -679,7 +707,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
         return GetKindPriority(x.Kind).CompareTo(GetKindPriority(y.Kind));
     }
 
-    private static int GetKindPriority(ObjectKind kind) => kind switch
+    private static int GetKindPriority
+    (
+        ObjectKind kind
+    ) => kind switch
     {
         ObjectKind.Aetheryte      => 1,
         ObjectKind.EventNpc       => 2,
@@ -704,7 +735,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
         [ObjectKind.HousingEventObject] = 30,
         [ObjectKind.Treasure]           = 100
     }.ToFrozenDictionary();
-    
+
     private static FrozenDictionary<uint, string> ENPCTitle { get; } =
         LuminaGetter.Get<ENpcResident>()
                     .Where(x => x.Unknown1 && !string.IsNullOrWhiteSpace(x.Title.ToString()))

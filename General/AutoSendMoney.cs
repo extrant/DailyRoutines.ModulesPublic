@@ -1,4 +1,3 @@
-
 using System.Collections.Frozen;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -10,7 +9,6 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -18,7 +16,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using OmenTools.Dalamud;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -39,9 +36,9 @@ public unsafe class AutoSendMoney : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private bool IsRunning => runtime != null;
-    
+
     private Config config = null!;
 
     private int[] moneyButtons = [];
@@ -54,7 +51,7 @@ public unsafe class AutoSendMoney : ModuleBase
     private long   currentChange;
 
     private SendMoneyRuntime? runtime;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -65,7 +62,7 @@ public unsafe class AutoSendMoney : ModuleBase
 
     protected override void Uninit() =>
         Stop();
-    
+
     #region UI
 
     protected override void ConfigUI()
@@ -222,7 +219,10 @@ public unsafe class AutoSendMoney : ModuleBase
         }
     }
 
-    private void DrawMemberPlan(Member p)
+    private void DrawMemberPlan
+    (
+        Member p
+    )
     {
         using var group   = ImRaii.Group();
         var       hasPlan = editPlan.ContainsKey(p.EntityID);
@@ -256,7 +256,9 @@ public unsafe class AutoSendMoney : ModuleBase
         else
         {
             ImGui.SetNextItemWidth(80f * GlobalUIScale);
-            var value = editPlan.TryGetValue(p.EntityID, out var valueToken) ? valueToken / 10000.0 : 0;
+            var value = editPlan.TryGetValue(p.EntityID, out var valueToken) ?
+                            valueToken / 10000.0 :
+                            0;
             ImGui.InputDouble($"{Lang.Get("Wan")}##{p.EntityID}-Money", ref value, 0, 0, "%.1lf", ImGuiInputTextFlags.CharsDecimal);
             if (ImGui.IsItemDeactivatedAfterEdit())
                 editPlan[p.EntityID] = (long)(value * 10000);
@@ -324,7 +326,11 @@ public unsafe class AutoSendMoney : ModuleBase
                             .Max();
     }
 
-    private void AddCrossRealmGroupMembers(CrossRealmGroup crossRealmGroup, int groupIndex)
+    private void AddCrossRealmGroupMembers
+    (
+        CrossRealmGroup crossRealmGroup,
+        int             groupIndex
+    )
     {
         for (var i = 0; i < crossRealmGroup.GroupMemberCount; i++)
         {
@@ -333,7 +339,13 @@ public unsafe class AutoSendMoney : ModuleBase
         }
     }
 
-    private void AddMember(uint entityID, string fullName, ushort worldID, int groupIndex = -1)
+    private void AddMember
+    (
+        uint   entityID,
+        string fullName,
+        ushort worldID,
+        int    groupIndex = -1
+    )
     {
         if (string.IsNullOrWhiteSpace(fullName))
             return;
@@ -382,13 +394,16 @@ public unsafe class AutoSendMoney : ModuleBase
 
     #region 工具
 
-    private static bool IsWithinTradeDistance(Vector3 pos2)
+    private static bool IsWithinTradeDistance
+    (
+        Vector3 pos2
+    )
     {
         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
             return false;
 
         var delta      = localPlayer.Position - pos2;
-        var distanceSq = delta.X * delta.X    + delta.Z * delta.Z;
+        var distanceSq = (delta.X * delta.X)  + (delta.Z * delta.Z);
         return distanceSq < 16;
     }
 
@@ -445,10 +460,13 @@ public unsafe class AutoSendMoney : ModuleBase
 
         public Member() { }
 
-        public Member(ICharacter gameObject)
+        public Member
+        (
+            ICharacter gameObject
+        )
         {
             EntityID  = gameObject.EntityID;
-            FirstName = gameObject.Name.ToString();
+            FirstName = gameObject.Name;
 
             var worldID = gameObject.ToBCStruct()->HomeWorld;
             World = LuminaWrapper.GetWorldName(worldID) ?? "???";
@@ -467,16 +485,29 @@ public unsafe class AutoSendMoney : ModuleBase
     private sealed class SendMoneyRuntime : IDisposable
     {
         private static readonly CompSig TradeRequestSig = new("48 89 6C 24 ?? 56 57 41 56 48 83 EC ?? 48 8B E9 44 8B F2 48 8D 0D");
-        private delegate nint                        TradeRequestDelegate(InventoryManager* manager, uint entityID);
-        private          Hook<TradeRequestDelegate>? TradeRequestHook;
-        
+
+        private delegate nint TradeRequestDelegate
+        (
+            InventoryManager* manager,
+            uint              entityID
+        );
+
+        private Hook<TradeRequestDelegate>? TradeRequestHook;
+
         private static readonly CompSig TradeStatusUpdateSig = new
         (
             "E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 4C 8B C2 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 48 8D 0D"
         );
-        private delegate nint                             TradeStatusUpdateDelegate(InventoryManager* manager, nint entityID, nint a3);
-        private          Hook<TradeStatusUpdateDelegate>? TradeStatusUpdateHook;
-        
+
+        private delegate nint TradeStatusUpdateDelegate
+        (
+            InventoryManager* manager,
+            nint              entityID,
+            nint              a3
+        );
+
+        private Hook<TradeStatusUpdateDelegate>? TradeStatusUpdateHook;
+
         private readonly AutoSendMoney          owner;
         private readonly HashSet<uint>          pendingTradeRequests = [];
         private readonly Dictionary<uint, long> tradePlan;
@@ -486,8 +517,11 @@ public unsafe class AutoSendMoney : ModuleBase
 
         private bool isTrading;
         private uint lastTradeEntityID;
-        
-        public SendMoneyRuntime(AutoSendMoney owner)
+
+        public SendMoneyRuntime
+        (
+            AutoSendMoney owner
+        )
         {
             this.owner = owner;
             tradePlan  = [.. owner.editPlan.Where(i => i.Value > 0)];
@@ -525,10 +559,17 @@ public unsafe class AutoSendMoney : ModuleBase
             owner.TaskHelper?.Abort();
         }
 
-        public long GetRemaining(uint entityID) =>
+        public long GetRemaining
+        (
+            uint entityID
+        ) =>
             tradePlan.GetValueOrDefault(entityID, 0);
 
-        private void OnLogMessage(uint logMessageID, LogMessageQueueItem item)
+        private void OnLogMessage
+        (
+            uint                logMessageID,
+            LogMessageQueueItem item
+        )
         {
             if (!TradeFinishLogMessages.Contains(logMessageID)) return;
             if (Trade == null) return;
@@ -537,7 +578,11 @@ public unsafe class AutoSendMoney : ModuleBase
             CompleteTrade();
         }
 
-        private void OnTradeAddonSetup(AddonEvent type, AddonArgs args)
+        private void OnTradeAddonSetup
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
             owner.TaskHelper?.Abort();
             pendingTradeRequests.Clear();
@@ -556,7 +601,11 @@ public unsafe class AutoSendMoney : ModuleBase
             }
         }
 
-        private nint OnTradeRequest(InventoryManager* manager, uint entityID)
+        private nint OnTradeRequest
+        (
+            InventoryManager* manager,
+            uint              entityID
+        )
         {
             if (TradeRequestHook == null) return 0;
             var ret = TradeRequestHook.Original(manager, entityID);
@@ -569,7 +618,12 @@ public unsafe class AutoSendMoney : ModuleBase
             return ret;
         }
 
-        private nint OnTradeStatusUpdate(InventoryManager* manager, nint entityID, nint a3)
+        private nint OnTradeStatusUpdate
+        (
+            InventoryManager* manager,
+            nint              entityID,
+            nint              a3
+        )
         {
             var eventType = Marshal.ReadByte(a3 + 4);
 
@@ -601,10 +655,15 @@ public unsafe class AutoSendMoney : ModuleBase
                     break;
             }
 
-            return TradeStatusUpdateHook == null ? 0 : TradeStatusUpdateHook.Original(manager, entityID, a3);
+            return TradeStatusUpdateHook == null ?
+                       0 :
+                       TradeStatusUpdateHook.Original(manager, entityID, a3);
         }
 
-        private void BeginTrade(uint entityID)
+        private void BeginTrade
+        (
+            uint entityID
+        )
         {
             currentMoney      = 0;
             checkState        = default;
@@ -613,7 +672,11 @@ public unsafe class AutoSendMoney : ModuleBase
             pendingTradeRequests.Remove(entityID);
         }
 
-        private void UpdatePreCheck(uint objectID, bool confirm)
+        private void UpdatePreCheck
+        (
+            uint objectID,
+            bool confirm
+        )
         {
             if (objectID == LocalPlayerState.EntityID)
                 checkState = checkState with { SelfConfirmed = confirm };
@@ -675,13 +738,20 @@ public unsafe class AutoSendMoney : ModuleBase
                 StopSelf();
         }
 
-        private void IssueTradeRequest(uint entityID, GameObject* gameObjectAddress)
+        private void IssueTradeRequest
+        (
+            uint        entityID,
+            GameObject* gameObjectAddress
+        )
         {
             TargetSystem.Instance()->Target = gameObjectAddress;
             InventoryManager.Instance()->SendTradeRequest(entityID);
         }
 
-        private bool SetTradeGil(uint money)
+        private bool SetTradeGil
+        (
+            uint money
+        )
         {
             if (!Trade->IsAddonAndNodesReady()) return false;
 
@@ -700,7 +770,10 @@ public unsafe class AutoSendMoney : ModuleBase
             return true;
         }
 
-        private void OnFrameworkTick(IFramework framework) =>
+        private void OnFrameworkTick
+        (
+            IFramework framework
+        ) =>
             TryQueueNextTrade();
 
         private void TryQueueNextTrade()
@@ -733,7 +806,11 @@ public unsafe class AutoSendMoney : ModuleBase
             Dispose();
         }
 
-        private bool TrySelectTarget(out uint entityID, out nint address)
+        private bool TrySelectTarget
+        (
+            out uint entityID,
+            out nint address
+        )
         {
             entityID = 0;
             address  = 0;
@@ -773,19 +850,27 @@ public unsafe class AutoSendMoney : ModuleBase
             Trade->Callback(1, 0);
         }
 
-        private static void FinalCheckTradeAddon(bool confirm = true)
+        private static void FinalCheckTradeAddon
+        (
+            bool confirm = true
+        )
         {
             if (SelectYesno == null) return;
-            SelectYesno->Callback(confirm ? 0 : 1);
+            SelectYesno->Callback
+            (
+                confirm ?
+                    0 :
+                    1
+            );
         }
-        
+
         #region 常量
 
-        private static readonly FrozenSet<uint>        TradeFinishLogMessages = [10920, 10921, 10922, 10923];
+        private static readonly FrozenSet<uint> TradeFinishLogMessages = [10920, 10921, 10922, 10923];
 
         #endregion
     }
-    
+
     #region 常量
 
     private const uint MAXIMUM_GIL_PER_TRADE = 1_000_000;

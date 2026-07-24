@@ -24,8 +24,17 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private static readonly CompSig ShowTreasureMapSig = new("4C 8B DC 55 53 56 49 8D AB ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 49 89 7B ?? 48 8D 45");
-    private delegate void ShowTreasureMapDelegate(nint agent, ushort rankID, ushort subRowID, byte isJustOpened);
+    private static readonly CompSig ShowTreasureMapSig = new
+        ("4C 8B DC 55 53 56 49 8D AB ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 49 89 7B ?? 48 8D 45");
+
+    private delegate void ShowTreasureMapDelegate
+    (
+        nint   agent,
+        ushort rankID,
+        ushort subRowID,
+        byte   isJustOpened
+    );
+
     private Hook<ShowTreasureMapDelegate>? ShowTreasureMapHook;
 
     private Config config = null!;
@@ -37,10 +46,14 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         ShowTreasureMapHook = ShowTreasureMapSig.GetHook<ShowTreasureMapDelegate>(ShowTreasureMapDetour);
         ShowTreasureMapHook.Enable();
 
-        CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand)
-        {
-            HelpMessage = Lang.Get("AutoDisplayTreasureMapLocation-CommandHelp")
-        });
+        CommandManager.Instance().AddSubCommand
+        (
+            COMMAND,
+            new(OnCommand)
+            {
+                HelpMessage = Lang.Get("AutoDisplayTreasureMapLocation-CommandHelp")
+            }
+        );
     }
 
     protected override void Uninit() =>
@@ -53,7 +66,7 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
             ImGui.TextUnformatted($"/pdr {COMMAND} -> {Lang.Get("AutoDisplayTreasureMapLocation-CommandHelp")}");
 
         ImGui.NewLine();
-        
+
         ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("AutoDisplayTreasureMapLocation-AutoOpen"));
 
         using (ImRaii.PushIndent())
@@ -74,9 +87,17 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         }
     }
 
-    private void ShowTreasureMapDetour(nint agent, ushort rankID, ushort subRowID, byte isJustOpened)
+    private void ShowTreasureMapDetour
+    (
+        nint   agent,
+        ushort rankID,
+        ushort subRowID,
+        byte   isJustOpened
+    )
     {
-        var shouldOpenLocation = isJustOpened != 0 ? config.ShowOnDecipher : config.ShowOnOpen;
+        var shouldOpenLocation = isJustOpened != 0 ?
+                                     config.ShowOnDecipher :
+                                     config.ShowOnOpen;
 
         if (shouldOpenLocation && TryGetTreasureMap(rankID, subRowID, out var treasureMap))
         {
@@ -87,13 +108,20 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         ShowTreasureMapHook.Original(agent, rankID, subRowID, isJustOpened);
     }
 
-    private static void OnCommand(string command, string arguments)
+    private static void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         if (TryGetCurrentTreasureMap(out var treasureMap))
             OpenMapLocation(treasureMap);
     }
 
-    private static bool TryGetCurrentTreasureMap(out TreasureMap treasureMap)
+    private static bool TryGetCurrentTreasureMap
+    (
+        out TreasureMap treasureMap
+    )
     {
         treasureMap = default;
 
@@ -107,7 +135,12 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         return TryGetTreasureMap((ushort)rankID, eventItemManager->GetTreasureSpotSubKey(), out treasureMap);
     }
 
-    private static bool TryGetTreasureMap(ushort rankID, ushort subRowID, out TreasureMap treasureMap)
+    private static bool TryGetTreasureMap
+    (
+        ushort          rankID,
+        ushort          subRowID,
+        out TreasureMap treasureMap
+    )
     {
         treasureMap = default;
 
@@ -129,7 +162,10 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         return true;
     }
 
-    private static void OpenMapLocation(TreasureMap treasureMap)
+    private static void OpenMapLocation
+    (
+        TreasureMap treasureMap
+    )
     {
         var agent = AgentMap.Instance();
         if (agent == null) return;

@@ -29,7 +29,10 @@ public unsafe partial class AutoRetainerWork
             taskHelper = null;
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-GilsShare-Title"),
@@ -97,11 +100,13 @@ public unsafe partial class AutoRetainerWork
             }
 
             // 规划操作序列, 交替存取以避免玩家金币溢出
-            var operations     = new List<(uint Index, uint Amount, bool IsWithdraw)>();
-            var richIdx        = 0;
-            var poorIdx        = 0;
-            var pendingExcess  = richRetainers[0].Excess;
-            var pendingDeficit = poorRetainers.Count > 0 ? poorRetainers[0].Deficit : 0U;
+            var operations    = new List<(uint Index, uint Amount, bool IsWithdraw)>();
+            var richIdx       = 0;
+            var poorIdx       = 0;
+            var pendingExcess = richRetainers[0].Excess;
+            var pendingDeficit = poorRetainers.Count > 0 ?
+                                     poorRetainers[0].Deficit :
+                                     0U;
 
             while (richIdx < richRetainers.Count || poorIdx < poorRetainers.Count)
             {
@@ -167,7 +172,12 @@ public unsafe partial class AutoRetainerWork
             );
         }
 
-        private void EnqueueRetainerGilOperation(uint index, uint amount, bool isWithdraw)
+        private void EnqueueRetainerGilOperation
+        (
+            uint index,
+            uint amount,
+            bool isWithdraw
+        )
         {
             taskHelper.Enqueue
             (
@@ -218,7 +228,7 @@ public unsafe partial class AutoRetainerWork
         #region 常量
 
         private const uint MAX_PLAYER_GIL = 999_999_999U;
-    
+
         private static readonly string[] GilManageTexts =
         [
             "金币管理",

@@ -39,7 +39,7 @@ public unsafe class AutoExpertDelivery : ModuleBase
         Category            = ModuleCategory.Interface,
         ModulesPrerequisite = ["FastGrandCompanyExchange"]
     };
-    
+
     private Config config = null!;
 
     private DRAutoExpertDelivery? addonExpertDelivery;
@@ -122,7 +122,10 @@ public unsafe class AutoExpertDelivery : ModuleBase
         return false;
     }
 
-    private void EnqueueGrandCompanyExchangeOpen(bool isAutoExchange)
+    private void EnqueueGrandCompanyExchangeOpen
+    (
+        bool isAutoExchange
+    )
     {
         if (!ZoneInfo.TryGetValue(GameState.TerritoryType, out var info)) return;
 
@@ -189,7 +192,10 @@ public unsafe class AutoExpertDelivery : ModuleBase
         return true;
     }
 
-    private static bool IsAboutToReachTheCap(uint sealReward)
+    private static bool IsAboutToReachTheCap
+    (
+        uint sealReward
+    )
     {
         var grandCompany = PlayerState.Instance()->GrandCompany;
         if ((GrandCompany)grandCompany == GrandCompany.None) return true;
@@ -236,17 +242,25 @@ public unsafe class AutoExpertDelivery : ModuleBase
         private static VerticalListNode SettingTabLayout;
 
         private static List<CheckboxNode> DefaultPageCheckboxes = [];
-        
+
         protected override bool CanOpenAddon => !instance.TaskHelper.IsBusy;
 
-        protected override void OnHostAddon(AddonEvent type, AddonArgs? args)
+        protected override void OnHostAddon
+        (
+            AddonEvent type,
+            AddonArgs? args
+        )
         {
             if (type != AddonEvent.PostSetup || GrandCompanySupplyList == null) return;
 
             GrandCompanySupplyList->Callback(0, instance.config.DefaultPage);
         }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             // 禁止 ESC 键关闭
             FlagHelper.UpdateFlag(ref addon->Flags1A1, 0x4, true);
@@ -295,8 +309,8 @@ public unsafe class AutoExpertDelivery : ModuleBase
 
             ControlTabLayout = new()
             {
-                IsVisible = true,
-                Position  = tabContentPosition + new Vector2(0, 5),
+                IsVisible   = true,
+                Position    = tabContentPosition + new Vector2(0, 5),
                 ItemSpacing = 4f
             };
 
@@ -475,7 +489,10 @@ public unsafe class AutoExpertDelivery : ModuleBase
             SettingTabLayout.AttachNode(this);
         }
 
-        protected override bool CanCloseHostAddon(AtkUnitBase* hostAddon) =>
+        protected override bool CanCloseHostAddon
+        (
+            AtkUnitBase* hostAddon
+        ) =>
             base.CanCloseHostAddon(hostAddon) && !instance.TaskHelper.IsBusy;
     }
 
@@ -506,11 +523,14 @@ public unsafe class AutoExpertDelivery : ModuleBase
 
         public void HandIn() => GrandCompanySupplyList->Callback(1, GetIndex());
 
-        public bool IsNeedToSkip(AutoExpertDelivery instance)
+        public bool IsNeedToSkip
+        (
+            AutoExpertDelivery instance
+        )
         {
             if (GetSlot() == null) return true;
-            if (instance.config.SkipWhenHQ      && IsHQ()) return true;
-            if (instance.config.SkipWhenMateria && HasMateria()) return true;
+            if (instance.config.SkipWhenHQ                     && IsHQ()) return true;
+            if (instance.config.SkipWhenMateria                && HasMateria()) return true;
             if (instance.config.SkipUltimateTotemExchangeItems && IsUltimateTotemExchangeItem()) return true;
 
             return false;
@@ -627,10 +647,9 @@ public unsafe class AutoExpertDelivery : ModuleBase
 
     [IPCSubscriber("DailyRoutines.Modules.FastGrandCompanyExchange.IsBusy")]
     private IPCSubscriber<bool> IsCurrentlyBusyIPC;
-    
+
     [IPCSubscriber("DailyRoutines.Modules.FastGrandCompanyExchange.EnqueueByName")]
     private IPCSubscriber<string, int, bool> EnqueueByNameIPC;
 
     #endregion
 }
-

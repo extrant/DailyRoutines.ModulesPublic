@@ -16,43 +16,42 @@ public class AutoAddChatPrefixSuffix : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["那年雪落"]
     };
-    
+
     private Config? config;
 
     protected override void Init()
     {
         config = Config.Load(this) ??
-                       new()
-                       {
-                           Blacklist = !GameState.IsCN
-                                           ? []
-                                           :
-                                           [
-                                               ".",
-                                               "。",
-                                               "？",
-                                               "?",
-                                               "！",
-                                               "!",
-                                               "吗",
-                                               "吧",
-                                               "呢",
-                                               "啊",
-                                               "呗",
-                                               "呀",
-                                               "阿",
-                                               "哦",
-                                               "嘛",
-                                               "咯",
-                                               "哎",
-                                               "啦",
-                                               "哇",
-                                               "呵",
-                                               "哈",
-                                               "奥",
-                                               "嗷"
-                                           ]
-                       };
+                 new()
+                 {
+                     Blacklist = !GameState.IsCN ?
+                                     [] :
+                                     [
+                                         ".",
+                                         "。",
+                                         "？",
+                                         "?",
+                                         "！",
+                                         "!",
+                                         "吗",
+                                         "吧",
+                                         "呢",
+                                         "啊",
+                                         "呗",
+                                         "呀",
+                                         "阿",
+                                         "哦",
+                                         "嘛",
+                                         "咯",
+                                         "哎",
+                                         "啦",
+                                         "哇",
+                                         "呵",
+                                         "哈",
+                                         "奥",
+                                         "嗷"
+                                     ]
+                 };
 
         ChatManager.Instance().RegPreExecuteCommandInner(OnPreExecuteCommandInner);
     }
@@ -140,13 +139,17 @@ public class AutoAddChatPrefixSuffix : ModuleBase
         }
     }
 
-    private void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
         var messageText   = message.ToString();
         var isCommand     = messageText.StartsWith('/') || messageText.StartsWith('／');
         var isTellCommand = isCommand && messageText.StartsWith("/tell ");
 
-        if (!string.IsNullOrWhiteSpace(messageText) && !isCommand || isTellCommand)
+        if ((!string.IsNullOrWhiteSpace(messageText) && !isCommand) || isTellCommand)
         {
             if (IsBlackListChat(messageText) || IsGameItemChat(messageText))
                 return;
@@ -156,13 +159,24 @@ public class AutoAddChatPrefixSuffix : ModuleBase
         }
     }
 
-    private bool IsBlackListChat(string message) =>
+    private bool IsBlackListChat
+    (
+        string message
+    ) =>
         config?.Blacklist.Any(blackListChat => !string.IsNullOrEmpty(blackListChat) && message.EndsWith(blackListChat)) ?? false;
 
-    private static bool IsGameItemChat(string message) =>
+    private static bool IsGameItemChat
+    (
+        string message
+    ) =>
         message.Contains("<item>") || message.Contains("<flag>") || message.Contains("<pfinder>");
 
-    private bool AddPrefixAndSuffixIfNeeded(string original, out string handledMessage, bool isTellCommand = false)
+    private bool AddPrefixAndSuffixIfNeeded
+    (
+        string     original,
+        out string handledMessage,
+        bool       isTellCommand = false
+    )
     {
         handledMessage = original;
 

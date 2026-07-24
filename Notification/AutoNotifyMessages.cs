@@ -5,7 +5,6 @@ using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using OmenTools.OmenService;
 
@@ -19,7 +18,7 @@ public class AutoNotifyMessages : ModuleBase
         Description = Lang.Get("AutoNotifyMessagesDescription"),
         Category    = ModuleCategory.Notification
     };
-    
+
     private Config config = null!;
 
     private string searchChatTypesContent = string.Empty;
@@ -28,10 +27,10 @@ public class AutoNotifyMessages : ModuleBase
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
-        
+
         DService.Instance().Chat.ChatMessage += OnChatMessage;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().Chat.ChatMessage -= OnChatMessage;
 
@@ -141,7 +140,10 @@ public class AutoNotifyMessages : ModuleBase
         }
     }
 
-    private unsafe void OnChatMessage(IHandleableChatMessage message)
+    private unsafe void OnChatMessage
+    (
+        IHandleableChatMessage message
+    )
     {
         if (!KnownChatTypes.Contains(message.LogKind)) return;
         if (config.OnlyNotifyWhenBackground  && !Framework.Instance()->WindowInactive) return;
@@ -166,7 +168,7 @@ public class AutoNotifyMessages : ModuleBase
         public HashSet<XivChatType> ValidChatTypes = [];
         public List<string>         ValidKeywords  = [];
     }
-    
+
     #region 常量
 
     private static FrozenSet<XivChatType> KnownChatTypes { get; } = [.. Enum.GetValues<XivChatType>()];

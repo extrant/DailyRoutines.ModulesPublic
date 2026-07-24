@@ -55,7 +55,11 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
         addon = null;
     }
 
-    private void OnAgent(AgentEvent type, AgentArgs args)
+    private void OnAgent
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         var formatted = args as AgentReceiveEventArgs;
 
@@ -225,13 +229,17 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
         config.Save(this);
     }
 
-    private void ApplyPreset(PartyFinderSetting setting)
+    private void ApplyPreset
+    (
+        PartyFinderSetting setting
+    )
     {
         if (!LookingForGroup->IsAddonAndNodesReady() || !LookingForGroupCondition->IsAddonAndNodesReady())
             return;
 
         if (setting.Type != null)
             TaskHelper.Enqueue(() => SendEvent(35, setting.Type.Value, 0));
+
         if (setting.Category != null)
         {
             TaskHelper.Enqueue(() => SendEvent(12, setting.Category.Value, 0));
@@ -257,13 +265,49 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
         }
 
         if (setting.WelcomeNew != null)
-            TaskHelper.Enqueue(() => SendEvent(setting.WelcomeNew.Value ? 18 : 19, 0, 1));
+            TaskHelper.Enqueue
+            (() => SendEvent
+             (
+                 setting.WelcomeNew.Value ?
+                     18 :
+                     19,
+                 0,
+                 1
+             )
+            );
         if (setting.Unrestricted != null)
-            TaskHelper.Enqueue(() => SendEvent(setting.Unrestricted.Value ? 18 : 19, 0, 3));
+            TaskHelper.Enqueue
+            (() => SendEvent
+             (
+                 setting.Unrestricted.Value ?
+                     18 :
+                     19,
+                 0,
+                 3
+             )
+            );
         if (setting.MinIL != null)
-            TaskHelper.Enqueue(() => SendEvent(setting.MinIL.Value ? 18 : 19, 1, 3));
+            TaskHelper.Enqueue
+            (() => SendEvent
+             (
+                 setting.MinIL.Value ?
+                     18 :
+                     19,
+                 1,
+                 3
+             )
+            );
         if (setting.SilenceEcho != null)
-            TaskHelper.Enqueue(() => SendEvent(setting.SilenceEcho.Value ? 18 : 19, 2, 3));
+            TaskHelper.Enqueue
+            (() => SendEvent
+             (
+                 setting.SilenceEcho.Value ?
+                     18 :
+                     19,
+                 2,
+                 3
+             )
+            );
         if (setting.Goal != null)
             TaskHelper.Enqueue(() => SendEvent(20, setting.Goal.Value, 0));
 
@@ -286,7 +330,7 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
             TaskHelper.Enqueue(() => SendEvent(34, setting.OnlyClassJob.Value, 0));
         if (setting.NoAudiences != null)
             TaskHelper.Enqueue(() => SendEvent(36, setting.NoAudiences.Value, 0));
-        
+
         if (TaskHelper.IsBusy)
         {
             TaskHelper.Enqueue(() => LookingForGroupCondition->Close(true));
@@ -295,7 +339,10 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
 
         return;
 
-        void SendEvent(params object[] args) =>
+        void SendEvent
+        (
+            params object[] args
+        ) =>
             AgentId.LookingForGroup.SendEvent(3, args);
     }
 
@@ -359,7 +406,7 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
 
         // 启用装等
         public bool? IsEnableAvgIL = false;
-        
+
         // 装等
         public uint? AvgIL = 1;
 
@@ -374,11 +421,11 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
             {
                 field = null;
                 if (string.IsNullOrEmpty(value)) return;
-                
+
                 DisplayName = value;
             }
         }
-        
+
         // 兼容用
         public string? Description
         {

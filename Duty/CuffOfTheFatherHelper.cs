@@ -33,7 +33,7 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private ZoneIndicatorHandle? handle;
-    
+
     private List<nint> bombObjects = [];
 
     protected override void Init()
@@ -68,14 +68,17 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         handle?.Unreg();
         handle = null;
-        
+
         bombObjects.Clear();
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
         bombObjects.Clear();
@@ -85,14 +88,18 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var enemyListArray = AtkStage.Instance()->GetNumberArrayData(NumberArrayType.EnemyList);
         if (enemyListArray == null) return;
 
         var enemyCount = enemyListArray->IntArray[1];
         if (enemyCount < 1) return;
-        
+
         var director = EventFramework.Instance()->GetContentDirector();
         if (director == null) return;
 
@@ -101,6 +108,7 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
         if (todos[2].CurrentCount != 1) return;
 
         List<nint> bombs = [];
+
         for (var i = 0; i < enemyCount; i++)
         {
             var offset = 8 + (i * 6);
@@ -119,7 +127,7 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
                            chara->BaseId            == 3865;
                 }
             );
-            
+
             bombs.Add((nint)chara);
 
             if (DService.Instance().Condition[ConditionFlag.Mounted])

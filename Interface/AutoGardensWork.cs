@@ -31,7 +31,7 @@ public unsafe class AutoGardensWork : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private Config config = null!;
 
     private string searchSeed      = string.Empty;
@@ -40,14 +40,14 @@ public unsafe class AutoGardensWork : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 10_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 10_000 };
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingGardening", OnAddon);
 
         TargetManager.Instance().RegPostSetHardTarget(OnSetHardTarget);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
@@ -249,10 +249,14 @@ public unsafe class AutoGardensWork : ModuleBase
         if (ImGui.Button($"{FontAwesomeIcon.Stop.ToIconString()} {Lang.Get("Stop")}"))
             TaskHelper.Abort();
     }
-    
+
     #region 事件
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (config.SeedSelected == 0 || config.SoilSelected == 0) return;
 
@@ -288,7 +292,14 @@ public unsafe class AutoGardensWork : ModuleBase
         TaskHelper.Enqueue(() => AddonSelectYesnoEvent.ClickYes(), weight: 2);
     }
 
-    private void OnSetHardTarget(bool result, IGameObject? target, bool checkMode, bool a4, int a5)
+    private void OnSetHardTarget
+    (
+        bool         result,
+        IGameObject? target,
+        bool         checkMode,
+        bool         a4,
+        int          a5
+    )
     {
         var outdoorZone = HousingManager.Instance()->OutdoorTerritory;
         if (outdoorZone == null) return;
@@ -313,7 +324,11 @@ public unsafe class AutoGardensWork : ModuleBase
 
     #region 流程
 
-    private void StartAction(string entryKeyword, Action extraAction = null)
+    private void StartAction
+    (
+        string entryKeyword,
+        Action extraAction = null
+    )
     {
         if (!IsEnvironmentValid(out var objectIDs)) return;
 
@@ -353,7 +368,10 @@ public unsafe class AutoGardensWork : ModuleBase
 
     #region 工具
 
-    private static bool IsEnvironmentValid(out List<ulong> objectIDs)
+    private static bool IsEnvironmentValid
+    (
+        out List<ulong> objectIDs
+    )
     {
         objectIDs = [];
 
@@ -398,7 +416,10 @@ public unsafe class AutoGardensWork : ModuleBase
         return TryObtainGardensAround(out objectIDs);
     }
 
-    private static bool TryObtainGardensAround(out List<ulong> objectIDs)
+    private static bool TryObtainGardensAround
+    (
+        out List<ulong> objectIDs
+    )
     {
         objectIDs = [];
 
@@ -466,7 +487,10 @@ public unsafe class AutoGardensWork : ModuleBase
         return true;
     }
 
-    private static bool ClickGardenEntryByText(string text)
+    private static bool ClickGardenEntryByText
+    (
+        string text
+    )
     {
         if (!SelectString->IsAddonAndNodesReady())
             return false;
@@ -478,7 +502,7 @@ public unsafe class AutoGardensWork : ModuleBase
     }
 
     #endregion
-    
+
     private class Config : ModuleConfig
     {
         public uint FertilizerSelected;

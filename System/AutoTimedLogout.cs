@@ -114,17 +114,25 @@ public class AutoTimedLogout : ModuleBase
             StartWithMinutes(customMinutes, currentOperation);
     }
 
-    private void StartWithMinutes(int minutes, OperationMode operation)
+    private void StartWithMinutes
+    (
+        int           minutes,
+        OperationMode operation
+    )
     {
         Abort();
         currentOperation = operation;
-        scheduledTime    = Framework.GetServerTime() + minutes * 60;
+        scheduledTime    = Framework.GetServerTime() + (minutes * 60);
 
         cancelSource = new();
         _            = WaitForTimer(minutes * 60 * 1000, cancelSource.Token);
     }
 
-    private async Task WaitForTimer(int delayMs, CancellationToken token)
+    private async Task WaitForTimer
+    (
+        int               delayMs,
+        CancellationToken token
+    )
     {
         try
         {
@@ -188,7 +196,7 @@ public class AutoTimedLogout : ModuleBase
             cancelSource = null;
         }
     }
-    
+
     private enum OperationMode
     {
         Logout,
@@ -198,7 +206,7 @@ public class AutoTimedLogout : ModuleBase
 
     #region 常量
 
-    private static readonly FrozenDictionary<OperationMode, string> ModeLoc = new Dictionary<OperationMode, string>()
+    private static readonly FrozenDictionary<OperationMode, string> ModeLoc = new Dictionary<OperationMode, string>
     {
         [OperationMode.Logout]       = Lang.Get("AutoTimedLogout-Mode-Logout"),
         [OperationMode.ShutdownGame] = Lang.Get("AutoTimedLogout-Mode-ShutdownGame"),

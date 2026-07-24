@@ -23,11 +23,15 @@ public class AutoNotifyDutyConfirm : ModuleBase
 
     protected override void Init() =>
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinderConfirm", OnAddonSetup);
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSetup);
 
-    private static unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
+    private static unsafe void OnAddonSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AtkUnitBase*)args.Addon.Address;
         if (addon == null) return;

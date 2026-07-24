@@ -26,17 +26,17 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private Config config = null!;
-    
+
     private string itemSearchInput = string.Empty;
-    
+
     private TextButtonNode? operateButtonNode;
 
     protected override void Init()
     {
-        TaskHelper   ??= new() { TimeoutMS = 15_000 };
-        config =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 15_000 };
+        config     =   Config.Load(this) ?? new();
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "TradeMultiple", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "TradeMultiple", OnAddon);
@@ -45,7 +45,7 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         operateButtonNode?.Dispose();
         operateButtonNode = null;
     }
@@ -98,7 +98,11 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
             config.Save(this);
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -199,7 +203,12 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
                     operateButtonNode.AttachNode(addon->RootNode);
                 }
 
-                operateButtonNode.String = Lang.Get(TaskHelper.IsBusy ? "Stop" : "AutoMateriaTransmutation-BatchTransmutate");
+                operateButtonNode.String = Lang.Get
+                (
+                    TaskHelper.IsBusy ?
+                        "Stop" :
+                        "AutoMateriaTransmutation-BatchTransmutate"
+                );
 
                 break;
             case AddonEvent.PreFinalize:
@@ -231,7 +240,14 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
                 var item      = InventoryManager.Instance()->GetInventorySlot(type, slot);
                 if (item == null) return false;
 
-                agent->AddMateria(type, slot, item->Quantity >= leftCount ? leftCount : (uint)item->Quantity);
+                agent->AddMateria
+                (
+                    type,
+                    slot,
+                    item->Quantity >= leftCount ?
+                        leftCount :
+                        (uint)item->Quantity
+                );
                 return agent->IsAllMateriaSelected();
             }
         );
@@ -262,7 +278,11 @@ public unsafe class AutoMateriaTransmutation : ModuleBase
         TaskHelper.Enqueue(Enqueue);
     }
 
-    private bool TryFindFirstMateriaSlot(out InventoryType inventoryType, out ushort inventorySlot)
+    private bool TryFindFirstMateriaSlot
+    (
+        out InventoryType inventoryType,
+        out ushort        inventorySlot
+    )
     {
         inventoryType = InventoryType.Inventory1;
         inventorySlot = 0;

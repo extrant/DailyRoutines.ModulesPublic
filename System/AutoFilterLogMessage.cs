@@ -16,14 +16,15 @@ public class AutoFilterLogMessage : ModuleBase
         Description = Lang.Get("AutoFilterLogMessageDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private          Config          config = null!;
-    private readonly LogMessageCombo combo  = new("LogMessage");
+
+    private Config          config = null!;
+    private LogMessageCombo combo  = null!;
 
     private readonly HashSet<uint> seenLogMessages = [];
 
     protected override void Init()
     {
+        combo             = new("LogMessage");
         config            = Config.Load(this) ?? new();
         combo.SelectedIDs = config.FilteredLogMessages;
 
@@ -60,7 +61,12 @@ public class AutoFilterLogMessage : ModuleBase
         }
     }
 
-    private void OnLogMessage(ref bool isPrevented, ref uint logMessageID, ref LogMessageQueueItem item)
+    private void OnLogMessage
+    (
+        ref bool                isPrevented,
+        ref uint                logMessageID,
+        ref LogMessageQueueItem item
+    )
     {
         if (!config.FilteredLogMessages.Contains(logMessageID)) return;
 

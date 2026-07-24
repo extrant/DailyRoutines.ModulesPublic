@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
@@ -26,24 +25,40 @@ public unsafe class RealQueuePosition : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private static readonly CompSig                              AgentWorldTravelUpdaterSig = new("E8 ?? ?? ?? ?? 40 0A F8 B9 ?? ?? ?? ??");
-    private delegate        bool                                 AgentWorldTravelUpdateDelegate(nint a1, NumberArrayData* a2, StringArrayData* a3, bool a4);
-    private                 Hook<AgentWorldTravelUpdateDelegate> AgentWorldTravelUpdateHook;
 
-    private static readonly CompSig                             UpdateWorldTravelDataSig = new("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 8B FA 0F B6 4A 10");
-    private delegate        void                                UpdateWorldTravelDataDelegate(nint a1, nint a2);
-    private                 Hook<UpdateWorldTravelDataDelegate> UpdateWorldTravelDataHook;
+    private static readonly CompSig AgentWorldTravelUpdaterSig = new("E8 ?? ?? ?? ?? 40 0A F8 B9 ?? ?? ?? ??");
+
+    private delegate bool AgentWorldTravelUpdateDelegate
+    (
+        nint             a1,
+        NumberArrayData* a2,
+        StringArrayData* a3,
+        bool             a4
+    );
+
+    private Hook<AgentWorldTravelUpdateDelegate> AgentWorldTravelUpdateHook;
+
+    private static readonly CompSig UpdateWorldTravelDataSig = new("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 8B FA 0F B6 4A 10");
+
+    private delegate void UpdateWorldTravelDataDelegate
+    (
+        nint a1,
+        nint a2
+    );
+
+    private Hook<UpdateWorldTravelDataDelegate> UpdateWorldTravelDataHook;
 
     private static readonly CompSig ContentFinderQueuePositionDataSig = new("40 53 56 57 41 57 48 83 EC ?? 0F B6 41");
+
     private delegate void ContentFinderQueuePositionDataDelegate
     (
         ContentsFinderQueueInfo* info,
         ContentsFinderQueueState state,
         QueueInfoState*          infoState
     );
+
     private Hook<ContentFinderQueuePositionDataDelegate>? ContentFinderQueuePositionDataHook;
-    
+
     private DateTime eta = StandardTimeManager.Instance().Now;
 
     protected override void Init()
@@ -58,8 +73,12 @@ public unsafe class RealQueuePosition : ModuleBase
             (ContentFinderQueuePositionDataDetour);
         ContentFinderQueuePositionDataHook.Enable();
     }
-    
-    private void UpdateWorldTravelDataDetour(nint a1, nint a2)
+
+    private void UpdateWorldTravelDataDetour
+    (
+        nint a1,
+        nint a2
+    )
     {
         var type = *(byte*)(a2 + 16);
 
@@ -72,7 +91,13 @@ public unsafe class RealQueuePosition : ModuleBase
         UpdateWorldTravelDataHook.Original(a1, a2);
     }
 
-    private bool AgentWorldTravelUpdaterDetour(nint a1, NumberArrayData* a2, StringArrayData* a3, bool a4)
+    private bool AgentWorldTravelUpdaterDetour
+    (
+        nint             a1,
+        NumberArrayData* a2,
+        StringArrayData* a3,
+        bool             a4
+    )
     {
         var agentData = (nint)AgentWorldTravel.Instance();
         if (agentData == nint.Zero || !(*(bool*)(agentData + 0x120)))
@@ -115,8 +140,11 @@ public unsafe class RealQueuePosition : ModuleBase
 
         ContentFinderQueuePositionDataHook.Original(info, state, infoState);
     }
-    
-    private static double CalculateWaitTime(int position)
+
+    private static double CalculateWaitTime
+    (
+        int position
+    )
     {
         if (position <= 0) return 0;
 
@@ -126,7 +154,9 @@ public unsafe class RealQueuePosition : ModuleBase
 
         var remainingPeople = (position - 1) % 4;
 
-        var remainingTime = remainingPeople > 0 ? 10f : 0;
+        var remainingTime = remainingPeople > 0 ?
+                                10f :
+                                0;
         var totalWaitTime = fullGroupTime + remainingTime;
 
         return totalWaitTime;

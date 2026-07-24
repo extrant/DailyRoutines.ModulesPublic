@@ -27,7 +27,7 @@ public class AutoCuffACur : ModuleBase
 
         IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "PunchingMachine", OnAddonSetup);
     }
-    
+
     protected override unsafe void Uninit()
     {
         IAddonLifecycle.Instance().UnregisterListener(OnAddonSetup);
@@ -62,7 +62,11 @@ public class AutoCuffACur : ModuleBase
         }
     }
 
-    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddonSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
 
@@ -105,11 +109,14 @@ public class AutoCuffACur : ModuleBase
 
     private static void SendPlayGame() =>
         new EventActionPacket(EVENT_ID, PLAY_GAME_CATEGORY, 3).Send();
-    
+
     private static void SendRoundEnd() =>
         new EventCompletePackt(EVENT_ID, 14).Send();
 
-    private static unsafe void UpdateSelectStringInfo(string info)
+    private static unsafe void UpdateSelectStringInfo
+    (
+        string info
+    )
     {
         if (!SelectString->IsAddonAndNodesReady() ||
             !PunchingMachine->IsAddonAndNodesReady())
@@ -126,7 +133,7 @@ public class AutoCuffACur : ModuleBase
         text->AlignmentType = AlignmentType.Center;
 
         using var rented = new RentedSeStringBuilder();
-        
+
         var builder = rented.Builder;
         builder.PushColorType(28)
                .Append($"[{Lang.Get("AutoCuffACurTitle")}]")
@@ -141,9 +148,9 @@ public class AutoCuffACur : ModuleBase
     #region 常量
 
     private const uint EVENT_ID = 0x240004;
-    
+
     private const uint ROUND_START_CATEGORY = 0x107000E;
-    
+
     private const uint PLAY_GAME_CATEGORY = 0x108000E;
 
     #endregion

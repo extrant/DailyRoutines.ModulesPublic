@@ -15,7 +15,11 @@ public partial class AutoReplyChatBot
 
         public void Dispose() => globalSemaphore.Dispose();
 
-        public bool CanProceed(string key, int cooldownSeconds)
+        public bool CanProceed
+        (
+            string key,
+            int    cooldownSeconds
+        )
         {
             if (!lastReplyTimes.TryGetValue(key, out var lastTime))
                 return true;
@@ -24,10 +28,17 @@ public partial class AutoReplyChatBot
             return StandardTimeManager.Instance().UTCNow - lastTime >= cooldown;
         }
 
-        public void MarkUsed(string key) =>
+        public void MarkUsed
+        (
+            string key
+        ) =>
             lastReplyTimes[key] = StandardTimeManager.Instance().UTCNow;
 
-        public async Task<Ticket> AcquireAsync(string key, CancellationToken ct = default)
+        public async Task<Ticket> AcquireAsync
+        (
+            string            key,
+            CancellationToken ct = default
+        )
         {
             await globalSemaphore.WaitAsync(ct).ConfigureAwait(false);
             lastReplyTimes[key] = StandardTimeManager.Instance().UTCNow;
@@ -38,7 +49,10 @@ public partial class AutoReplyChatBot
         {
             private SemaphoreSlim? semaphore;
 
-            internal Ticket(SemaphoreSlim semaphore) => this.semaphore = semaphore;
+            internal Ticket
+            (
+                SemaphoreSlim semaphore
+            ) => this.semaphore = semaphore;
 
             public void Dispose()
             {

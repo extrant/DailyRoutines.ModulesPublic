@@ -8,7 +8,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Lumina.Excel.Sheets;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -25,10 +24,16 @@ public partial class AutoConvertMapLink : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["KirisameVanilla"]
     };
-    
-    private static readonly CompSig                     MessageParseSig = new("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4D D0 E8 ?? ?? ?? ?? 49 8B 07");
-    private delegate        nint                        MessageParseDelegate(nint a, nint b);
-    private                 Hook<MessageParseDelegate>? MessageParseHook;
+
+    private static readonly CompSig MessageParseSig = new("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4D D0 E8 ?? ?? ?? ?? 49 8B 07");
+
+    private delegate nint MessageParseDelegate
+    (
+        nint a,
+        nint b
+    );
+
+    private Hook<MessageParseDelegate>? MessageParseHook;
 
     protected override void Init()
     {
@@ -36,7 +41,11 @@ public partial class AutoConvertMapLink : ModuleBase
         MessageParseHook.Enable();
     }
 
-    private nint ParseMessageDetour(nint a, nint b)
+    private nint ParseMessageDetour
+    (
+        nint a,
+        nint b
+    )
     {
         var ret = MessageParseHook.Original(a, b);
 
@@ -77,7 +86,7 @@ public partial class AutoConvertMapLink : ModuleBase
                 var rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value, CultureInfo.InvariantCulture), map.OffsetX, map.SizeFactor);
                 var rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture), map.OffsetY, map.SizeFactor);
                 if (match.Groups["instance"].Value != "")
-                    mapId |= match.Groups["instance"].Value[0] - 0xe0b0u << 16;
+                    mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
 
                 var newPayloads = new List<Payload>();
                 if (match.Index > 0)
@@ -106,17 +115,22 @@ public partial class AutoConvertMapLink : ModuleBase
         return ret;
     }
 
-    private static int GenerateRawPosition(float visibleCoordinate, short offset, ushort factor)
+    private static int GenerateRawPosition
+    (
+        float  visibleCoordinate,
+        short  offset,
+        ushort factor
+    )
     {
         visibleCoordinate += (float)Random.Shared.NextDouble() * 0.07f;
-        var scale     = factor                                                           / 100.0f;
-        var scaledPos = ((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f - 1024.0f) / scale;
-        return (int)Math.Ceiling(scaledPos                                    - offset) * 1000;
+        var scale     = factor                                                             / 100.0f;
+        var scaledPos = (((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f) - 1024.0f) / scale;
+        return (int)Math.Ceiling(scaledPos                                      - offset) * 1000;
     }
 
     [GeneratedRegex(@"\uE0BB(?<map>.+?)(?<instance>[\ue0b1-\ue0b9])? \( (?<x>\d{1,2}\.\d)  , (?<y>\d{1,2}\.\d) \)", RegexOptions.Compiled)]
     private static partial Regex MapLinkRegex();
-    
+
     private class PreMapLinkPayload
     (
         uint zoneID,
@@ -155,6 +169,10 @@ public partial class AutoConvertMapLink : ModuleBase
             return bytes.ToArray();
         }
 
-        protected override void DecodeImpl(BinaryReader reader, long endOfStream) => throw new NotImplementedException();
+        protected override void DecodeImpl
+        (
+            BinaryReader reader,
+            long         endOfStream
+        ) => throw new NotImplementedException();
     }
 }

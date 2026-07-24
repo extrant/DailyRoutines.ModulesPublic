@@ -15,12 +15,15 @@ public class SameAethernetTeleport : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
-    
-    private readonly MemoryPatch patch0 = new("75 ?? 48 8B 49 ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? 48 83 C4 ?? 5E 5D", [0xEB]);
-    private readonly MemoryPatch patch1 = new("75 ?? 48 8B 4E ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 80 7D", [0xEB]);
+
+    private MemoryPatch patch0 = null!;
+    private MemoryPatch patch1 = null!;
 
     protected override void Init()
     {
+        patch0 = new("75 ?? 48 8B 49 ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? 48 83 C4 ?? 5E 5D", [0xEB]);
+        patch1 = new("75 ?? 48 8B 4E ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 80 7D", [0xEB]);
+
         patch0.Enable();
         patch1.Enable();
     }

@@ -23,7 +23,7 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config             config = null!;
     private OverlayController? controller;
 
@@ -81,7 +81,7 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
                 config.Save(this);
         }
     }
-    
+
     private static bool IsWeaponUnsheathed() =>
         UIState.Instance()->WeaponState.IsUnsheathed;
 
@@ -89,15 +89,18 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
     {
         public override OverlayLayer OverlayLayer     => OverlayLayer.Foreground;
         public override bool         HideWithNativeUi => false;
-        
+
         private readonly Config moduleConfig;
-            
+
         private readonly IconImageNode imageNode;
 
-        public PlayerDotImageNode(Config config)
+        public PlayerDotImageNode
+        (
+            Config config
+        )
         {
             moduleConfig = config;
-            
+
             imageNode = new IconImageNode
             {
                 IconId     = 60952,
@@ -105,7 +108,7 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
             };
             imageNode.AttachNode(this);
         }
-        
+
         protected override void OnSizeChanged()
         {
             base.OnSizeChanged();
@@ -141,10 +144,10 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
             var   angle  = -localPlayer.Rotation;
             float cos    = MathF.Cos(angle), sin = MathF.Sin(angle);
 
-            var rotatedOffset = new Vector3(cos * offset.X - sin * offset.Z, offset.Y, sin * offset.X + cos * offset.Z);
+            var rotatedOffset = new Vector3((cos * offset.X) - (sin * offset.Z), offset.Y, (sin * offset.X) + (cos * offset.Z));
             DService.Instance().GameGUI.WorldToScreen(localPlayer.Position + rotatedOffset, out var screenPos);
 
-            Position = screenPos - imageNode.Size / 2f;
+            Position = screenPos - (imageNode.Size / 2f);
         }
     }
 

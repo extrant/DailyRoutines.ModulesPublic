@@ -32,7 +32,7 @@ public unsafe class NeverreapHelper : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
-    
+
     private ZoneIndicatorHandle? handle;
 
     protected override void Init()
@@ -77,7 +77,10 @@ public unsafe class NeverreapHelper : ModuleBase
 
         return;
 
-        static bool FindFirstShadow(BattleChara* chara) =>
+        static bool FindFirstShadow
+        (
+            BattleChara* chara
+        ) =>
             chara             != null                 &&
             chara->ObjectKind == ObjectKind.BattleNpc &&
             chara->NameId     == SHADOW_MONSTER_BNPC_NAME_ID;
@@ -92,7 +95,10 @@ public unsafe class NeverreapHelper : ModuleBase
         handle = null;
     }
 
-    private static void OnZoneChanged(uint u)
+    private static void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
 
@@ -101,7 +107,10 @@ public unsafe class NeverreapHelper : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 100);
     }
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var director = EventFramework.Instance()->GetContentDirector();
         if (director == null) return;
@@ -118,7 +127,10 @@ public unsafe class NeverreapHelper : ModuleBase
 
         return;
 
-        static bool FindNPC(BattleChara* chara) =>
+        static bool FindNPC
+        (
+            BattleChara* chara
+        ) =>
             chara               != null                &&
             chara->ObjectKind   == ObjectKind.EventNpc &&
             chara->BaseId       == STONE_NPC_DATA_ID   &&

@@ -28,7 +28,7 @@ public unsafe class SastashaHelper : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private uint correctBookID;
-    
+
     private ZoneIndicatorHandle? handle;
 
     protected override void Init()
@@ -86,14 +86,17 @@ public unsafe class SastashaHelper : ModuleBase
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        
+
         handle?.Unreg();
         handle = null;
 
         correctBookID = 0;
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper?.Abort();
         correctBookID = 0;
@@ -106,7 +109,7 @@ public unsafe class SastashaHelper : ModuleBase
     private bool GetCorrectCoral()
     {
         if (!UIModule.IsScreenReady()) return false;
-        
+
         var director = EventFramework.Instance()->GetContentDirector();
         if (director == null) return false;
 
@@ -118,7 +121,7 @@ public unsafe class SastashaHelper : ModuleBase
         var book = DService.Instance().ObjectTable
                            .SearchObject
                            (
-                               x => x is { IsTargetable: true, ObjectKind: DObjectKind.EventObj } && 
+                               x => x is { IsTargetable: true, ObjectKind: DObjectKind.EventObj } &&
                                     BookToCoral.ContainsKey(x.DataID),
                                IObjectTable.EventRange
                            );

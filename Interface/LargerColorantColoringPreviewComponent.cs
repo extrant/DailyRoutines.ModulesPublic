@@ -28,7 +28,11 @@ public unsafe class LargerColorantColoringPreviewComponent : ModuleBase
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "ColorantColoring", OnAddon);
 
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = ColorantColoring;
         if (addon == null) return;
@@ -104,7 +108,7 @@ public unsafe class LargerColorantColoringPreviewComponent : ModuleBase
             var checkBoxNode = addon->GetComponentNodeById(i);
             if (checkBoxNode == null) continue;
 
-            checkBoxNode->SetXFloat(24 + 28 * (i - 72));
+            checkBoxNode->SetXFloat(24 + (28 * (i - 72)));
             checkBoxNode->SetYFloat(556);
         }
     }

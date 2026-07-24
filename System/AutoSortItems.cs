@@ -17,7 +17,7 @@ public class AutoSortItems : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["那年雪落"]
     };
-    
+
     private readonly string[] sortOptions = [Lang.Get("Descending"), Lang.Get("Ascending")];
     private readonly string[] tabOptions  = [Lang.Get("AutoSortItems-Splited"), Lang.Get("AutoSortItems-Merged")];
 
@@ -25,13 +25,13 @@ public class AutoSortItems : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 15_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 15_000 };
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
 
@@ -80,8 +80,15 @@ public class AutoSortItems : ModuleBase
         DrawTableRow("背包类型",  typeText,                          ref config.InventoryCategory,  sortOptions, Lang.Get("AutoSortItems-InventoryCategoryDesc"));
         DrawTableRow("背包分栏",  Lang.Get("AutoSortItems-Splited"), ref config.InventoryTab,       tabOptions,  Lang.Get("AutoSortItems-InventoryTabDesc"));
     }
-    
-    private void DrawTableRow(string id, string label, ref int value, string[] options, string note = "")
+
+    private void DrawTableRow
+    (
+        string   id,
+        string   label,
+        ref int  value,
+        string[] options,
+        string   note = ""
+    )
     {
         using var idPush = ImRaii.PushId($"{label}_{id}");
 
@@ -100,7 +107,10 @@ public class AutoSortItems : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
 
@@ -152,10 +162,13 @@ public class AutoSortItems : ModuleBase
 
         return true;
 
-        void SendSortCondition(string target, string condition, int setting)
-        {
+        void SendSortCondition
+        (
+            string target,
+            string condition,
+            int    setting
+        ) =>
             ChatManager.Instance().SendMessage($"/itemsort condition {target} {condition} {SortOptionsCommand[setting]}");
-        }
     }
 
     private class Config : ModuleConfig
@@ -172,10 +185,10 @@ public class AutoSortItems : ModuleBase
         public bool SendChat;
         public bool SendNotification = true;
     }
-    
+
     #region 常量
-    
+
     private static readonly string[] SortOptionsCommand = ["des", "asc"];
-    
+
     #endregion
 }

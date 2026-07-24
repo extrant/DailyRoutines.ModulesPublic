@@ -17,11 +17,11 @@ public partial class BetterCommandInput : ModuleBase
         Description = Lang.Get("BetterCommandInputDescription"),
         Category    = ModuleCategory.System
     };
-    
+
     private Config config = null!;
-    
+
     private DateTime lastChatTime = DateTime.MinValue;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -78,12 +78,18 @@ public partial class BetterCommandInput : ModuleBase
         }
     }
 
-    private void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
-        var messageDecode          = message.ToString();
-        var isMatchRegex           = CommandRegex().IsMatch(messageDecode);
-        var isStartWithSlash       = messageDecode.StartsWith('/') || messageDecode.StartsWith('／');
-        var shouldMessageBeHandled = config.IsAvoidingSpace ? isMatchRegex : isStartWithSlash;
+        var messageDecode    = message.ToString();
+        var isMatchRegex     = CommandRegex().IsMatch(messageDecode);
+        var isStartWithSlash = messageDecode.StartsWith('/') || messageDecode.StartsWith('／');
+        var shouldMessageBeHandled = config.IsAvoidingSpace ?
+                                         isMatchRegex :
+                                         isStartWithSlash;
 
         if (string.IsNullOrWhiteSpace(messageDecode) || !shouldMessageBeHandled)
             return;
@@ -92,7 +98,11 @@ public partial class BetterCommandInput : ModuleBase
             message = new(handledMessage);
     }
 
-    private bool HandleSlashCommand(string command, out string handledMessage)
+    private bool HandleSlashCommand
+    (
+        string     command,
+        out string handledMessage
+    )
     {
         handledMessage = string.Empty;
 
@@ -132,12 +142,18 @@ public partial class BetterCommandInput : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsValid(ReadOnlySpan<char> chars) =>
+    private bool IsValid
+    (
+        ReadOnlySpan<char> chars
+    ) =>
         (StandardTimeManager.Instance().Now - lastChatTime).TotalMilliseconds >= 500f &&
         (ContainsUppercase(chars) || ContainsFullWidth(chars) || ContainsSpace(chars));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ContainsUppercase(ReadOnlySpan<char> chars)
+    private static bool ContainsUppercase
+    (
+        ReadOnlySpan<char> chars
+    )
     {
         foreach (var c in chars)
         {
@@ -149,7 +165,10 @@ public partial class BetterCommandInput : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ContainsSpace(ReadOnlySpan<char> chars)
+    private static bool ContainsSpace
+    (
+        ReadOnlySpan<char> chars
+    )
     {
         foreach (var c in chars)
         {
@@ -161,7 +180,10 @@ public partial class BetterCommandInput : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ContainsFullWidth(ReadOnlySpan<char> chars)
+    private static bool ContainsFullWidth
+    (
+        ReadOnlySpan<char> chars
+    )
     {
         foreach (var c in chars)
         {

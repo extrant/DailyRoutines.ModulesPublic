@@ -15,7 +15,6 @@ using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Nodes;
 using Lumina.Excel.Sheets;
 using OmenTools.ImGuiOm.Widgets.Combos;
 using OmenTools.Interop.Game.AddonEvent;
@@ -35,8 +34,8 @@ public unsafe partial class AutoRetainerWork
     {
         private Hook<MoveToRetainerMarketDelegate>? MoveToRetainerMarketHook;
 
-        private          TaskHelper?     taskHelper;
-        private readonly ItemSelectCombo itemSelectCombo = new("AddNewItem");
+        private TaskHelper?     taskHelper;
+        private ItemSelectCombo itemSelectCombo = null!;
 
         private          ItemConfig?    selectedItemConfig;
         private readonly Vector2        childSizeLeft     = ScaledVector2(200, 400);
@@ -64,6 +63,7 @@ public unsafe partial class AutoRetainerWork
 
         public override void Init()
         {
+            itemSelectCombo = new("AddNewItem");
             MoveToRetainerMarketHook ??= DService.Instance().Hook.HookFromMemberFunction
             (
                 typeof(InventoryManager.MemberFunctionPointers),
@@ -95,7 +95,10 @@ public unsafe partial class AutoRetainerWork
             ItemConfigEditor();
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-PriceAdjust-Title"),
@@ -270,7 +273,9 @@ public unsafe partial class AutoRetainerWork
                         items = items.Where(x => !module.playerRetainers.Contains(retainerSelector(x)));
 
                     var enumerable = items as T[] ?? items.ToArray();
-                    var minPrice   = enumerable.Length != 0 ? enumerable.Min(priceSelector) : 0;
+                    var minPrice = enumerable.Length != 0 ?
+                                       enumerable.Min(priceSelector) :
+                                       0;
                     if (minPrice <= 0) continue;
 
                     var cacheKey = CacheKeys.Create(itemID, isHQ);
@@ -297,7 +302,9 @@ public unsafe partial class AutoRetainerWork
                 {
                     var items      = filteredListings[isHQ];
                     var enumerable = items as T[] ?? items.ToArray();
-                    var maxPrice   = enumerable.Length != 0 ? enumerable.Max(priceSelector) : 0;
+                    var maxPrice = enumerable.Length != 0 ?
+                                       enumerable.Max(priceSelector) :
+                                       0;
                     if (maxPrice <= 0) continue;
 
                     var cacheKey = CacheKeys.Create(itemID, isHQ);
@@ -306,7 +313,11 @@ public unsafe partial class AutoRetainerWork
                 }
             }
 
-            public static void OnOfferingReceived(AutoRetainerWork module, IMarketBoardCurrentOfferings data)
+            public static void OnOfferingReceived
+            (
+                AutoRetainerWork             module,
+                IMarketBoardCurrentOfferings data
+            )
             {
                 if (!data.ItemListings.Any()) return;
                 UpdateCache
@@ -322,7 +333,10 @@ public unsafe partial class AutoRetainerWork
                 );
             }
 
-            public static void OnHistoryReceived(IMarketBoardHistory history)
+            public static void OnHistoryReceived
+            (
+                IMarketBoardHistory history
+            )
             {
                 if (!history.HistoryListings.Any()) return;
                 UpdateHistoryCache
@@ -336,7 +350,12 @@ public unsafe partial class AutoRetainerWork
                 );
             }
 
-            public static bool TryGetPriceCache(uint itemID, bool isHQ, out uint price)
+            public static bool TryGetPriceCache
+            (
+                uint     itemID,
+                bool     isHQ,
+                out uint price
+            )
             {
                 price = 0;
                 var cacheKey         = CacheKeys.Create(itemID, isHQ);
@@ -357,7 +376,11 @@ public unsafe partial class AutoRetainerWork
             public static (DateTime Current, DateTime History) GetCacheTimes() =>
                 (CurrentPriceCache.LastUpdateTime, HistoryPriceCache.LastUpdateTime);
 
-            public static void ClearCache(bool clearCurrent = true, bool clearHistory = true)
+            public static void ClearCache
+            (
+                bool clearCurrent = true,
+                bool clearHistory = true
+            )
             {
                 if (clearCurrent)
                     CurrentPriceCache.Clear();
@@ -367,7 +390,11 @@ public unsafe partial class AutoRetainerWork
 
             private static class CacheKeys
             {
-                public static string Create(uint itemID, bool isHQ) => $"{itemID}_{(isHQ ? "HQ" : "NQ")}";
+                public static string Create
+                (
+                    uint itemID,
+                    bool isHQ
+                ) => $"{itemID}_{(isHQ ? "HQ" : "NQ")}";
             }
         }
 
@@ -377,7 +404,10 @@ public unsafe partial class AutoRetainerWork
 
             public DateTime LastUpdateTime { get; private set; } = DateTime.MinValue;
 
-            public void RemoveExpiredEntries(TimeSpan expirationTime)
+            public void RemoveExpiredEntries
+            (
+                TimeSpan expirationTime
+            )
             {
                 var now = StandardTimeManager.Instance().Now;
                 var expiredKeys = data
@@ -392,7 +422,11 @@ public unsafe partial class AutoRetainerWork
                     LastUpdateTime = DateTime.MinValue;
             }
 
-            public bool TryGetPrice(string key, out uint price)
+            public bool TryGetPrice
+            (
+                string   key,
+                out uint price
+            )
             {
                 price = 0;
 
@@ -405,7 +439,11 @@ public unsafe partial class AutoRetainerWork
                 return false;
             }
 
-            public void SetPrice(string key, uint price)
+            public void SetPrice
+            (
+                string key,
+                uint   price
+            )
             {
                 data[key] = new CacheEntry
                 {
@@ -554,7 +592,10 @@ public unsafe partial class AutoRetainerWork
             }
         }
 
-        private void AddNewConfigItemPopup(Action confirmAction)
+        private void AddNewConfigItemPopup
+        (
+            Action confirmAction
+        )
         {
             ImGui.SetNextItemWidth(200f * GlobalUIScale);
             itemSelectCombo.DrawRadio();
@@ -577,16 +618,27 @@ public unsafe partial class AutoRetainerWork
             // 基本信息获取
             if (!LuminaGetter.TryGetRow<Item>(selectedItemConfig.ItemID, out var item)) return;
 
-            var itemName = selectedItemConfig.ItemID == 0
-                               ? Lang.Get("AutoRetainerWork-PriceAdjust-CommonItemPreset")
-                               : item.Name.ToString() ?? string.Empty;
+            var itemName = selectedItemConfig.ItemID == 0 ?
+                               Lang.Get("AutoRetainerWork-PriceAdjust-CommonItemPreset") :
+                               item.Name.ToString() ?? string.Empty;
 
             var itemLogo = DService.Instance().Texture
-                                   .GetFromGameIcon(new(selectedItemConfig.ItemID == 0 ? 65002 : (uint)item.Icon, selectedItemConfig.IsHQ))
+                                   .GetFromGameIcon
+                                   (
+                                       new
+                                       (
+                                           selectedItemConfig.ItemID == 0 ?
+                                               65002 :
+                                               (uint)item.Icon,
+                                           selectedItemConfig.IsHQ
+                                       )
+                                   )
                                    .GetWrapOrDefault();
             if (itemLogo == null) return;
 
-            var itemBuyingPrice = selectedItemConfig.ItemID == 0 ? 1 : item.PriceLow;
+            var itemBuyingPrice = selectedItemConfig.ItemID == 0 ?
+                                      1 :
+                                      item.PriceLow;
 
             if (!child) return;
 
@@ -600,7 +652,12 @@ public unsafe partial class AutoRetainerWork
 
             ImGui.SameLine();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (6f * GlobalUIScale));
-            ImGui.TextUnformatted(selectedItemConfig.IsHQ ? $"({Lang.Get("HQ")})" : string.Empty);
+            ImGui.TextUnformatted
+            (
+                selectedItemConfig.IsHQ ?
+                    $"({Lang.Get("HQ")})" :
+                    string.Empty
+            );
 
             ImGui.Separator();
 
@@ -1071,7 +1128,10 @@ public unsafe partial class AutoRetainerWork
                 var itemIcon = DService.Instance().Texture.GetFromGameIcon(new(item.Data.Icon, isItemHQ)).GetWrapOrDefault();
                 if (itemIcon == null) continue;
 
-                var itemName = $"{item.Data.Name.ToString()}" + (isItemHQ ? "\ue03c" : string.Empty);
+                var itemName = $"{item.Data.Name.ToString()}" +
+                               (isItemHQ ?
+                                    "\ue03c" :
+                                    string.Empty);
 
                 ImGui.TableNextRow();
 
@@ -1104,7 +1164,15 @@ public unsafe partial class AutoRetainerWork
             }
         }
 
-        private void DrawItemColumn(ushort slot, uint itemID, string itemName, IDalamudTextureWrap itemIcon, ref bool isTooltip, ref uint tooltipItemID)
+        private void DrawItemColumn
+        (
+            ushort              slot,
+            uint                itemID,
+            string              itemName,
+            IDalamudTextureWrap itemIcon,
+            ref bool            isTooltip,
+            ref uint            tooltipItemID
+        )
         {
             using var id    = ImRaii.PushId(slot);
             using var group = ImRaii.Group();
@@ -1133,7 +1201,15 @@ public unsafe partial class AutoRetainerWork
                 ReturnRetainerMarketItemToInventory(slot, false);
         }
 
-        private void DrawUnitPriceColumn(ushort slot, uint itemID, uint price, uint quantity, IDalamudTextureWrap itemIcon, string itemName)
+        private void DrawUnitPriceColumn
+        (
+            ushort              slot,
+            uint                itemID,
+            uint                price,
+            uint                quantity,
+            IDalamudTextureWrap itemIcon,
+            string              itemName
+        )
         {
             using var id    = ImRaii.PushId(slot);
             using var group = ImRaii.Group();
@@ -1239,7 +1315,9 @@ public unsafe partial class AutoRetainerWork
                     if (ImGui.IsWindowAppearing())
                     {
                         itemModifyUnitPriceManual = price;
-                        itemModifyCountManual     = (uint)(TryGetSameItemSlots(itemID, out var slots) ? slots.Count : 0);
+                        itemModifyCountManual = (uint)(TryGetSameItemSlots(itemID, out var slots) ?
+                                                           slots.Count :
+                                                           0);
                     }
 
                     ImGui.Image(itemIcon.Handle, manualUnitPriceImageSize with { X = manualUnitPriceImageSize.Y });
@@ -1388,7 +1466,12 @@ public unsafe partial class AutoRetainerWork
                 if (isAnyHQ)
                 {
                     ImGui.TableNextColumn();
-                    ImGui.TextUnformatted(listing.IsHqItem ? "√" : string.Empty);
+                    ImGui.TextUnformatted
+                    (
+                        listing.IsHqItem ?
+                            "√" :
+                            string.Empty
+                    );
                 }
 
                 if (isAnyMateriaEquipped)
@@ -1400,7 +1483,12 @@ public unsafe partial class AutoRetainerWork
                 if (isAnyOnMannequin)
                 {
                     ImGui.TableNextColumn();
-                    ImGui.TextUnformatted(listing.IsMannequin ? "√" : string.Empty);
+                    ImGui.TextUnformatted
+                    (
+                        listing.IsMannequin ?
+                            "√" :
+                            string.Empty
+                    );
                 }
 
                 ImGui.TableNextColumn();
@@ -1479,7 +1567,12 @@ public unsafe partial class AutoRetainerWork
                 if (isAnyHQ)
                 {
                     ImGui.TableNextColumn();
-                    ImGui.TextUnformatted(listing.IsHq ? "√" : string.Empty);
+                    ImGui.TextUnformatted
+                    (
+                        listing.IsHq ?
+                            "√" :
+                            string.Empty
+                    );
                 }
 
                 ImGui.TableNextColumn();
@@ -1536,7 +1629,13 @@ public unsafe partial class AutoRetainerWork
 
             using (ImRaii.Group())
             using (FontManager.Instance().UIFont160.Push())
-                ImGui.TextUnformatted($"{itemData.Name.ToString()}" + (isItemHQ ? "\ue03c" : string.Empty));
+                ImGui.TextUnformatted
+                (
+                    $"{itemData.Name.ToString()}" +
+                    (isItemHQ ?
+                         "\ue03c" :
+                         string.Empty)
+                );
 
             manualUnitPriceImageSize = ImGui.GetItemRectSize();
 
@@ -1583,7 +1682,11 @@ public unsafe partial class AutoRetainerWork
         #region 事件
 
         // 出售品列表 (悬浮窗控制)
-        private void OnRetainerSellList(AddonEvent type, AddonArgs args)
+        private void OnRetainerSellList
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
             // 因为有模特存在
             if (!DService.Instance().Condition[ConditionFlag.OccupiedSummoningBell]) return;
@@ -1620,7 +1723,11 @@ public unsafe partial class AutoRetainerWork
         }
 
         // 出售界面
-        private static void OnRetainerSell(AddonEvent type, AddonArgs args)
+        private static void OnRetainerSell
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
             if (!DService.Instance().Condition[ConditionFlag.OccupiedSummoningBell]) return;
             if (!args.Addon.ToStruct()->IsAddonAndNodesReady()) return;
@@ -1628,11 +1735,17 @@ public unsafe partial class AutoRetainerWork
         }
 
         // 当前市场数据获取
-        private void OnOfferingReceived(IMarketBoardCurrentOfferings data) =>
+        private void OnOfferingReceived
+        (
+            IMarketBoardCurrentOfferings data
+        ) =>
             PriceCacheManager.OnOfferingReceived(Module, data);
 
         // 历史交易数据获取
-        private void OnHistoryReceived(IMarketBoardHistory history)
+        private void OnHistoryReceived
+        (
+            IMarketBoardHistory history
+        )
         {
             if (history.ItemId != historyListings.Key)
                 historyListings = new(history.ItemId, []);
@@ -1674,8 +1787,10 @@ public unsafe partial class AutoRetainerWork
             if (info->SearchItemId != slot->ItemId)
                 RequestMarketItemData(slot->ItemId);
 
-            upshelfUnitPriceInput = LuminaGetter.TryGetRow<Item>(slot->ItemId, out var itemRow) ? itemRow.PriceMid : 1;
-            upshelfQuantityInput  = upshelfQuantity;
+            upshelfUnitPriceInput = LuminaGetter.TryGetRow<Item>(slot->ItemId, out var itemRow) ?
+                                        itemRow.PriceMid :
+                                        1;
+            upshelfQuantityInput = upshelfQuantity;
 
             isNeedToDrawMarketUpshelfWindow = true;
         }
@@ -1770,7 +1885,11 @@ public unsafe partial class AutoRetainerWork
                 EnqueuePriceAdjustSingle(i);
         }
 
-        private void EnqueuePriceAdjustSingle(ushort slotIndex, uint forcePrice = 0)
+        private void EnqueuePriceAdjustSingle
+        (
+            ushort slotIndex,
+            uint   forcePrice = 0
+        )
         {
             if (taskHelper.AbortByConflictKey(Module)) return;
             if (Module.IsAnyOtherWorkerBusy(typeof(PriceAdjustWorker))) return;
@@ -1845,7 +1964,12 @@ public unsafe partial class AutoRetainerWork
             );
         }
 
-        private void EnqueuePriceAdjustSingleItem(ushort slot, uint marketPrice, uint forcePrice = 0)
+        private void EnqueuePriceAdjustSingleItem
+        (
+            ushort slot,
+            uint   marketPrice,
+            uint   forcePrice = 0
+        )
         {
             if (taskHelper.AbortByConflictKey(Module)) return;
             if (Module.IsAnyOtherWorkerBusy(typeof(PriceAdjustWorker))) return;
@@ -1853,8 +1977,10 @@ public unsafe partial class AutoRetainerWork
             var itemMarketData = GetRetainerMarketItem(slot);
             if (itemMarketData == null) return;
 
-            var itemConfig    = GetItemConfigByItemKey(itemMarketData.Value.Item);
-            var modifiedPrice = forcePrice > 0 ? forcePrice : GetModifiedPrice(itemConfig, marketPrice);
+            var itemConfig = GetItemConfigByItemKey(itemMarketData.Value.Item);
+            var modifiedPrice = forcePrice > 0 ?
+                                    forcePrice :
+                                    GetModifiedPrice(itemConfig, marketPrice);
 
             // 价格为 0
             if (modifiedPrice == 0) return;
@@ -1888,7 +2014,10 @@ public unsafe partial class AutoRetainerWork
             return;
 
             // 采取意外情况逻辑
-            void EnqueueAbortBehavior(AbortBehavior behavior)
+            void EnqueueAbortBehavior
+            (
+                AbortBehavior behavior
+            )
             {
                 if (Module.config.SendPriceAdjustProcessMessage)
                 {
@@ -1963,10 +2092,13 @@ public unsafe partial class AutoRetainerWork
             }
         }
 
-        private ItemConfig GetItemConfigByItemKey(ItemKey key) =>
-            Module.config.ItemConfigs.TryGetValue(key.ToString(), out var itemConfig)
-                ? itemConfig
-                : Module.config.ItemConfigs[new ItemKey(0, key.IsHQ).ToString()];
+        private ItemConfig GetItemConfigByItemKey
+        (
+            ItemKey key
+        ) =>
+            Module.config.ItemConfigs.TryGetValue(key.ToString(), out var itemConfig) ?
+                itemConfig :
+                Module.config.ItemConfigs[new ItemKey(0, key.IsHQ).ToString()];
 
         #endregion
 
@@ -1977,7 +2109,11 @@ public unsafe partial class AutoRetainerWork
         /// </summary>
         /// <param name="slot"></param>
         /// <param name="isInventory">若为 True 则为收回背包, 否则则为收回雇员背包</param>
-        private bool ReturnRetainerMarketItemToInventory(ushort slot, bool isInventory)
+        private bool ReturnRetainerMarketItemToInventory
+        (
+            ushort slot,
+            bool   isInventory
+        )
         {
             if (!Module.retainerThrottler.Throttle("ReturnMarketItemToInventory", 100)) return false;
 
@@ -2000,7 +2136,11 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     设定当前雇员市场售卖物品价格
         /// </summary>
-        private static bool SetRetainerMarketItemPrice(ushort slot, uint price)
+        private static bool SetRetainerMarketItemPrice
+        (
+            ushort slot,
+            uint   price
+        )
         {
             if (slot >= 20) return false;
 
@@ -2014,7 +2154,14 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     上架物品至市场
         /// </summary>
-        private void UpshelfMarketItem(InventoryType srcType, ushort srcSlot, uint quantity, uint unitPrice, short targetSlot = -1)
+        private void UpshelfMarketItem
+        (
+            InventoryType srcType,
+            ushort        srcSlot,
+            uint          quantity,
+            uint          unitPrice,
+            short         targetSlot = -1
+        )
         {
             if (targetSlot >= 20) return;
             ushort slot;
@@ -2035,7 +2182,10 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     获取当前雇员市场售卖物品数据
         /// </summary>
-        private static (ItemKey Item, uint Price)? GetRetainerMarketItem(ushort slot)
+        private static (ItemKey Item, uint Price)? GetRetainerMarketItem
+        (
+            ushort slot
+        )
         {
             if (slot >= 20) return null;
 
@@ -2055,7 +2205,10 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     获取当前雇员市场售卖物品价格
         /// </summary>
-        private static uint GetRetainerMarketPrice(ushort slot)
+        private static uint GetRetainerMarketPrice
+        (
+            ushort slot
+        )
         {
             if (slot >= 20) return 0;
 
@@ -2068,7 +2221,10 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     获取当前市场物品数据
         /// </summary>
-        private static void RequestMarketItemData(uint itemID)
+        private static void RequestMarketItemData
+        (
+            uint itemID
+        )
         {
             var proxy = InfoProxyItemSearch.Instance();
             if (proxy == null) return;
@@ -2084,7 +2240,10 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     当前市场物品数据是否已就绪
         /// </summary>
-        private static bool IsMarketItemDataReady(uint itemID)
+        private static bool IsMarketItemDataReady
+        (
+            uint itemID
+        )
         {
             var proxy = InfoProxyItemSearch.Instance();
             if (proxy == null) return false;
@@ -2115,7 +2274,10 @@ public unsafe partial class AutoRetainerWork
         ///     尝试获取雇员市场售卖列表中首个为空的槽位
         /// </summary>
         /// <returns></returns>
-        private static bool TryGetFirstEmptyRetainerMarketSlot(out ushort slot)
+        private static bool TryGetFirstEmptyRetainerMarketSlot
+        (
+            out ushort slot
+        )
         {
             slot = 0;
             var manager = InventoryManager.Instance();
@@ -2171,7 +2333,11 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     获取修改后价格结果
         /// </summary>
-        private static uint GetModifiedPrice(ItemConfig config, uint marketPrice) =>
+        private static uint GetModifiedPrice
+        (
+            ItemConfig config,
+            uint       marketPrice
+        ) =>
             (uint)(config.AdjustBehavior switch
                       {
                           AdjustBehavior.固定值 => Math.Max
@@ -2190,7 +2356,13 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     发送改价成功通知信息
         /// </summary>
-        private void NotifyPriceAdjustSuccessfully(uint itemID, bool isHQ, uint origPrice, uint modifiedPrice)
+        private void NotifyPriceAdjustSuccessfully
+        (
+            uint itemID,
+            bool isHQ,
+            uint origPrice,
+            uint modifiedPrice
+        )
         {
             if (!Module.config.SendPriceAdjustProcessMessage) return;
 
@@ -2202,7 +2374,9 @@ public unsafe partial class AutoRetainerWork
             if (!priceChangeText.StartsWith('-'))
                 priceChangeText = $"+{priceChangeText}";
 
-            var priceChangeRate     = origPrice == 0 ? 0 : (double)priceChangedValue / origPrice * 100;
+            var priceChangeRate = origPrice == 0 ?
+                                      0 :
+                                      (double)priceChangedValue / origPrice * 100;
             var priceChangeRateText = priceChangeRate.ToString("+0.##;-0.##") + "%";
 
             NotifyHelper.Instance().Chat
@@ -2223,7 +2397,12 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     发送意外情况检测通知信息
         /// </summary>
-        private void NotifyAbortCondition(uint itemID, bool isHQ, AbortCondition condition)
+        private void NotifyAbortCondition
+        (
+            uint           itemID,
+            bool           isHQ,
+            AbortCondition condition
+        )
         {
             if (!Module.config.SendPriceAdjustProcessMessage) return;
 
@@ -2243,7 +2422,11 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     获取当前雇员市场为同一物品的全部槽位
         /// </summary>
-        private static bool TryGetSameItemSlots(uint itemID, out List<ushort> slots)
+        private static bool TryGetSameItemSlots
+        (
+            uint             itemID,
+            out List<ushort> slots
+        )
         {
             slots = [];
 
@@ -2267,7 +2450,11 @@ public unsafe partial class AutoRetainerWork
         /// <summary>
         ///     尝试获取物品最大可上架数量
         /// </summary>
-        private bool TryGetItemUpshelfCountLimit(InventoryItem item, out uint count)
+        private bool TryGetItemUpshelfCountLimit
+        (
+            InventoryItem item,
+            out uint      count
+        )
         {
             count = 0;
             if (item.ItemId == 0) return false;
@@ -2277,9 +2464,13 @@ public unsafe partial class AutoRetainerWork
             var itemKey    = new ItemKey(item.ItemId, item.Flags.HasFlag(InventoryItem.ItemFlags.HighQuality));
             var itemConfig = GetItemConfigByItemKey(itemKey);
 
-            var itemStackSize     = itemData.StackSize;
-            var defaultStackLimit = itemStackSize           == 9999 ? 9999U : 99U;
-            var upshelfLimit      = itemConfig.UpshelfCount > 0 ? (uint)itemConfig.UpshelfCount : defaultStackLimit;
+            var itemStackSize = itemData.StackSize;
+            var defaultStackLimit = itemStackSize == 9999 ?
+                                        9999U :
+                                        99U;
+            var upshelfLimit = itemConfig.UpshelfCount > 0 ?
+                                   (uint)itemConfig.UpshelfCount :
+                                   defaultStackLimit;
 
             count = (uint)Math.Min(item.Quantity, upshelfLimit);
             return true;

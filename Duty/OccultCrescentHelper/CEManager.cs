@@ -15,7 +15,6 @@ using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Interop.Game.Helpers;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 using OmenTools.OmenService.ZoneIndicator;
 using OmenTools.Threading;
@@ -51,7 +50,7 @@ public partial class OccultCrescentHelper
 
             DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
             OnZoneChanged(0);
-            
+
             ExecuteCommandManager.Instance().RegPost(OnPostReceivedCommand);
             LogMessageManager.Instance().RegPost(OnPostReceivedMessage);
             GameState.Instance().Logout += OnLogout;
@@ -206,9 +205,9 @@ public partial class OccultCrescentHelper
                     MainModule.config.Save(MainModule);
                 ImGuiOm.HelpMarker($"{Lang.Get("OccultCrescentHelper-CEManager-PrioritizeMoveTo-LeftTime-Help")}", 20f * GlobalUIScale);
             }
-            
+
             ImGui.NewLine();
-            
+
             if (ImGui.Checkbox
                 (
                     $"{Lang.Get("OccultCrescentHelper-Highlight")} ({LuminaWrapper.GetAddonText(13988)})",
@@ -294,7 +293,10 @@ public partial class OccultCrescentHelper
         private void OnLogout() =>
             ceTaskHelper.Abort();
 
-        private void OnZoneChanged(uint u)
+        private void OnZoneChanged
+        (
+            uint u
+        )
         {
             fateHandle?.Unreg();
             fateHandle = null;
@@ -314,7 +316,7 @@ public partial class OccultCrescentHelper
                 {
                     if (!MainModule.config.IsEnabledHighlightFATE || DService.Instance().Condition[ConditionFlag.InCombat])
                         return [];
-                    
+
                     return allIslandEvents
                            .Where(x => x.Event.Type is CrescentEventType.FATE or CrescentEventType.MagicPot)
                            .ToList();
@@ -354,7 +356,7 @@ public partial class OccultCrescentHelper
                 {
                     if (!MainModule.config.IsEnabledHighlightCE || DService.Instance().Condition[ConditionFlag.InCombat])
                         return [];
-                    
+
                     return allIslandEvents
                            .Where(x => x.Event.Type is CrescentEventType.CE)
                            .ToList();
@@ -455,7 +457,14 @@ public partial class OccultCrescentHelper
                 MainModule.config.Save(MainModule);
         }
 
-        private void OnPostReceivedCommand(ExecuteCommandFlag command, uint param1, uint param2, uint param3, uint param4)
+        private void OnPostReceivedCommand
+        (
+            ExecuteCommandFlag command,
+            uint               param1,
+            uint               param2,
+            uint               param3,
+            uint               param4
+        )
         {
             if (command                        != ExecuteCommandFlag.LoadFate ||
                 GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
@@ -465,7 +474,11 @@ public partial class OccultCrescentHelper
         }
 
         // CE 开始
-        private void OnPostReceivedMessage(uint logMessageID, LogMessageQueueItem values)
+        private void OnPostReceivedMessage
+        (
+            uint                logMessageID,
+            LogMessageQueueItem values
+        )
         {
             if (logMessageID                   != 11002 ||
                 GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
@@ -483,13 +496,21 @@ public partial class OccultCrescentHelper
                 NotifyHelper.SystemInformation();
         }
 
-        private void OnClickTeleport(uint id, SeString message)
+        private void OnClickTeleport
+        (
+            uint     id,
+            SeString message
+        )
         {
             if (allIslandEvents.FirstOrDefault(x => x.LinkPayloadID == id) is not { } ce) return;
             TeleportToCE(ce);
         }
 
-        private void OnCommandFate(string command, string args)
+        private void OnCommandFate
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
@@ -508,7 +529,11 @@ public partial class OccultCrescentHelper
             TeleportToCE(fate);
         }
 
-        private void OnCommandCE(string command, string args)
+        private void OnCommandCE
+        (
+            string command,
+            string args
+        )
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
@@ -527,7 +552,10 @@ public partial class OccultCrescentHelper
             TeleportToCE(ce);
         }
 
-        private void TeleportToCE(IslandEventData data)
+        private void TeleportToCE
+        (
+            IslandEventData data
+        )
         {
             if (DService.Instance().ObjectTable.LocalPlayer is null) return;
 
@@ -662,7 +690,10 @@ public partial class OccultCrescentHelper
             }
         }
 
-        private void NotifyNewCE(IslandEventData ce)
+        private void NotifyNewCE
+        (
+            IslandEventData ce
+        )
         {
             if (!MainModule.config.IsEnabledNotifyEvents ||
                 !MainModule.config.IsEnabledNotifyEventsCategoried.GetValueOrDefault(ce.Event.Type, false))
@@ -765,7 +796,10 @@ public partial class OccultCrescentHelper
 
             public float FateTimeRemaining { get; set; }
 
-            public bool Equals(IslandEventData? other)
+            public bool Equals
+            (
+                IslandEventData? other
+            )
             {
                 if (other is null) return false;
                 if (ReferenceEquals(this, other)) return true;
@@ -773,7 +807,10 @@ public partial class OccultCrescentHelper
                 return Event == other.Event;
             }
 
-            public static IslandEventData? Parse(IFate fate)
+            public static IslandEventData? Parse
+            (
+                IFate fate
+            )
             {
                 if (fate.MapIconId == 0                                                   ||
                     fate.State is FateState.Ended or FateState.Ending or FateState.Failed ||
@@ -791,7 +828,10 @@ public partial class OccultCrescentHelper
                 return data;
             }
 
-            public static IslandEventData? Parse(DynamicEvent ce)
+            public static IslandEventData? Parse
+            (
+                DynamicEvent ce
+            )
             {
                 if (!LuminaGetter.TryGetRow(ce.DynamicEventId, out Lumina.Excel.Sheets.DynamicEvent data)) return null;
                 if (ce.State is DynamicEventState.Inactive) return null;
@@ -822,21 +862,29 @@ public partial class OccultCrescentHelper
                     name,
                     ce.Progress,
                     ce.State,
-                    ce.State == DynamicEventState.Register ? ce.StartTimestamp : ce.StartTimestamp - 1200,
+                    ce.State == DynamicEventState.Register ?
+                        ce.StartTimestamp :
+                        ce.StartTimestamp - 1200,
                     leftTime
                 );
                 returnValue.Event.UpdatePositionAndRadius(ce.MapMarker.Position, 0);
                 return returnValue;
             }
 
-            public void Update(IFate fate)
+            public void Update
+            (
+                IFate fate
+            )
             {
                 var name = $"{fate.Name} ({fate.Progress}%)";
                 Event.UpdateTempDataFATE(name, fate.Progress, fate.State);
                 FateTimeRemaining = fate.TimeRemaining;
             }
 
-            public void Update(DynamicEvent ce)
+            public void Update
+            (
+                DynamicEvent ce
+            )
             {
                 if (!LuminaGetter.TryGetRow(ce.DynamicEventId, out Lumina.Excel.Sheets.DynamicEvent data))
                     return;
@@ -863,7 +911,9 @@ public partial class OccultCrescentHelper
                     name,
                     ce.Progress,
                     ce.State,
-                    ce.State == DynamicEventState.Register ? ce.StartTimestamp : ce.StartTimestamp - 1200,
+                    ce.State == DynamicEventState.Register ?
+                        ce.StartTimestamp :
+                        ce.StartTimestamp - 1200,
                     leftTime
                 );
             }
@@ -877,7 +927,10 @@ public partial class OccultCrescentHelper
                 _                           => Lang.Get("OccultCrescentHelper-CEManager-Notification-FATE")
             };
 
-            public DalamudLinkPayload GetOrAddLinkPayload(CEManager manager)
+            public DalamudLinkPayload GetOrAddLinkPayload
+            (
+                CEManager manager
+            )
             {
                 if (LinkPayloadID != -1) return LinkPayload;
 
@@ -887,13 +940,24 @@ public partial class OccultCrescentHelper
                 return LinkPayload;
             }
 
-            public override bool Equals(object? obj) => Equals(obj as IslandEventData);
+            public override bool Equals
+            (
+                object? obj
+            ) => Equals(obj as IslandEventData);
 
             public override int GetHashCode() => HashCode.Combine(Event);
 
-            public static bool operator ==(IslandEventData? left, IslandEventData? right) => Equals(left, right);
+            public static bool operator ==
+            (
+                IslandEventData? left,
+                IslandEventData? right
+            ) => Equals(left, right);
 
-            public static bool operator !=(IslandEventData? left, IslandEventData? right) => !Equals(left, right);
+            public static bool operator !=
+            (
+                IslandEventData? left,
+                IslandEventData? right
+            ) => !Equals(left, right);
         }
     }
 }

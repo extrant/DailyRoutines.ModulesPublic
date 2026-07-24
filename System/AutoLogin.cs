@@ -39,7 +39,7 @@ public unsafe class AutoLogin : ModuleBase
 
     private Config config = null!;
 
-    private readonly WorldSelectCombo worldSelectCombo = new("World");
+    private WorldSelectCombo worldSelectCombo = null!;
 
     // 界面
     private string selectedCharaName;
@@ -52,14 +52,15 @@ public unsafe class AutoLogin : ModuleBase
 
     protected override void Init()
     {
-        config     =   Config.Load(this) ?? new();
-        TaskHelper ??= new() { TimeoutMS = 180_000, ShowDebug = true };
+        worldSelectCombo =   new("World");
+        config           =   Config.Load(this) ?? new();
+        TaskHelper       ??= new() { TimeoutMS = 180_000, ShowDebug = true };
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "_TitleMenu", OnTitleMenu);
         OnTitleMenu(AddonEvent.PostSetup, null);
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "Dialogue", OnDialogue);
-        
+
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoLogin-CommandHelp") });
         GameState.Instance().Login += OnLogin;
     }
@@ -160,7 +161,13 @@ public unsafe class AutoLogin : ModuleBase
                 var text =
                     $"{i + 1}. {Lang.Get("AutoLogin-LoginInfoDisplayText", LuminaWrapper.GetWorldName(info.WorldID), LuminaWrapper.GetWorldDCName(info.WorldID), info.CharacterName)}";
 
-                using (ImRaii.PushColor(ImGuiCol.Text, i % 2 == 0 ? ImGuiColors.TankBlue : ImGuiColors.DalamudWhite))
+                using (ImRaii.PushColor
+                       (
+                           ImGuiCol.Text,
+                           i % 2 == 0 ?
+                               ImGuiColors.TankBlue :
+                               ImGuiColors.DalamudWhite
+                       ))
                     ImGui.Selectable(text);
 
                 using (var source = ImRaii.DragDropSource())
@@ -205,8 +212,12 @@ public unsafe class AutoLogin : ModuleBase
     }
 
     #region 事件
-    
-    private static void OnDialogue(AddonEvent type, AddonArgs args)
+
+    private static void OnDialogue
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = Dialogue;
         if (!addon->IsAddonAndNodesReady()) return;
@@ -220,7 +231,7 @@ public unsafe class AutoLogin : ModuleBase
     private void OnLogin()
     {
         TaskHelper.Abort();
-        
+
         manualLoginInfo        = null;
         isNextAutoLoginHandled = false;
 
@@ -228,7 +239,11 @@ public unsafe class AutoLogin : ModuleBase
         config.Save(this);
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
 
@@ -243,7 +258,7 @@ public unsafe class AutoLogin : ModuleBase
             return;
 
         manualLoginInfo = null;
-        
+
         string? characterName  = null;
         var     characterIndex = -1;
         var     worldID        = (uint)AgentLobby.Instance()->WorldId;
@@ -275,7 +290,11 @@ public unsafe class AutoLogin : ModuleBase
         TaskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/logout"));
     }
 
-    private void OnTitleMenu(AddonEvent eventType, AddonArgs? args)
+    private void OnTitleMenu
+    (
+        AddonEvent eventType,
+        AddonArgs? args
+    )
     {
         if (isNextAutoLoginHandled)
             return;
@@ -329,9 +348,9 @@ public unsafe class AutoLogin : ModuleBase
                 // 手动登录优先
                 if (manualLoginInfo is var (charName, charIndex, worldID))
                 {
-                    var target = charIndex >= 0
-                                     ? client.CurrentDataCenterCharacters.FirstOrDefault(x => x.Index      == charIndex && x.CurrentWorldId == worldID)
-                                     : client.CurrentDataCenterCharacters.FirstOrDefault(x => x.NameString == charName  && x.CurrentWorldId == worldID);
+                    var target = charIndex >= 0 ?
+                                     client.CurrentDataCenterCharacters.FirstOrDefault(x => x.Index      == charIndex && x.CurrentWorldId == worldID) :
+                                     client.CurrentDataCenterCharacters.FirstOrDefault(x => x.NameString == charName  && x.CurrentWorldId == worldID);
 
                     // 角色不存在, 回退到配置列表
                     if (target.HomeWorldId == 0)
@@ -381,17 +400,26 @@ public unsafe class AutoLogin : ModuleBase
 
     #endregion
 
-    private void EnqueueLogin(ulong contentID, uint world, int weight)
+    private void EnqueueLogin
+    (
+        ulong contentID,
+        uint  world,
+        int   weight
+    )
     {
         var agent = AgentLobby.Instance();
         if (agent == null) return;
-        
-        TaskHelper.Enqueue(() => AgentLobbyEvent.SelectWorldByID(world),                              weight: weight);
-        TaskHelper.Enqueue(() => agent->WorldId == world,                                             weight: weight);
+
+        TaskHelper.Enqueue(() => AgentLobbyEvent.SelectWorldByID(world),                         weight: weight);
+        TaskHelper.Enqueue(() => agent->WorldId == world,                                        weight: weight);
         TaskHelper.Enqueue(() => AgentLobbyEvent.SelectCharacter(x => x.ContentId == contentID), weight: weight);
     }
 
-    private void Swap(int index1, int index2)
+    private void Swap
+    (
+        int index1,
+        int index2
+    )
     {
         if (index1 < 0                      ||
             index1 > config.LoginData.Count ||
@@ -424,7 +452,10 @@ public unsafe class AutoLogin : ModuleBase
         public uint   WorldID       { get; set; } = worldID;
         public string CharacterName { get; set; } = characterName;
 
-        public bool Equals(LoginInfo? other)
+        public bool Equals
+        (
+            LoginInfo? other
+        )
         {
             if (other is null || GetType() != other.GetType())
                 return false;
@@ -432,19 +463,30 @@ public unsafe class AutoLogin : ModuleBase
             return WorldID == other.WorldID && CharacterName == other.CharacterName;
         }
 
-        public override bool Equals(object? obj) =>
+        public override bool Equals
+        (
+            object? obj
+        ) =>
             Equals(obj as LoginInfo);
 
         public override int GetHashCode() =>
             HashCode.Combine(WorldID, CharacterName);
 
-        public static bool operator ==(LoginInfo? lhs, LoginInfo? rhs)
+        public static bool operator ==
+        (
+            LoginInfo? lhs,
+            LoginInfo? rhs
+        )
         {
             if (lhs is null) return rhs is null;
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(LoginInfo lhs, LoginInfo rhs) =>
+        public static bool operator !=
+        (
+            LoginInfo lhs,
+            LoginInfo rhs
+        ) =>
             !(lhs == rhs);
     }
 
@@ -457,11 +499,11 @@ public unsafe class AutoLogin : ModuleBase
     #region IPC
 
     [IPCProvider("AutoLogin.MarkNextAutoLoginHandled")]
-    private void MarkNextAutoLoginHandled() => 
+    private void MarkNextAutoLoginHandled() =>
         isNextAutoLoginHandled = true;
 
     #endregion
-    
+
     #region 常量
 
     private const string COMMAND = "/pdrlogin";

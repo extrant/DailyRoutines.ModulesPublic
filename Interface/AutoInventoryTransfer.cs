@@ -25,13 +25,16 @@ public unsafe class AutoInventoryTransfer : ModuleBase
 
         DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
 
     protected override void ConfigUI() => ImGuiOm.ConflictKeyText();
 
-    private void OnContextMenuOpened(IMenuOpenedArgs args)
+    private void OnContextMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!PluginConfig.Instance().ConflictKeyBinding.IsPressed() || !IsInventoryOpen()) return;
 
@@ -40,16 +43,14 @@ public unsafe class AutoInventoryTransfer : ModuleBase
 
         return;
 
-        bool IsInventoryOpen()
-        {
-            return Inventory->IsAddonAndNodesReady()          ||
-                   InventoryLarge->IsAddonAndNodesReady()     ||
-                   InventoryExpansion->IsAddonAndNodesReady() ||
-                   InventoryRetainer->IsAddonAndNodesReady()  ||
-                   InventoryRetainerLarge->IsAddonAndNodesReady();
-        }
+        bool IsInventoryOpen() =>
+            Inventory->IsAddonAndNodesReady()          ||
+            InventoryLarge->IsAddonAndNodesReady()     ||
+            InventoryExpansion->IsAddonAndNodesReady() ||
+            InventoryRetainer->IsAddonAndNodesReady()  ||
+            InventoryRetainerLarge->IsAddonAndNodesReady();
     }
-    
+
     #region 常量
 
     private static readonly List<string> MenuTexts =

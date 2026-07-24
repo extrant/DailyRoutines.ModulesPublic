@@ -20,10 +20,12 @@ public class AutoEnableAttack : ModuleBase
         Category    = ModuleCategory.Combat
     };
 
-    private MemoryPatch autoAttackPatch = new("41 0F B6 46 ?? FF C8", [0xB8, 0x02, 0x00, 0x00, 0x00]);
+    private MemoryPatch autoAttackPatch = null!;
 
     protected override void Init()
     {
+        autoAttackPatch = new("41 0F B6 46 ?? FF C8", [0xB8, 0x02, 0x00, 0x00, 0x00]);
+
         UseActionManager.Instance().RegPreUseActionLocation(OnPreUseAction);
         UseActionManager.Instance().RegPostUseActionLocation(OnPostUseAction);
     }
@@ -54,7 +56,7 @@ public class AutoEnableAttack : ModuleBase
 
         autoAttackPatch.Set(BehavioursToModify.Contains(row.AutoAttackBehaviour));
     }
-    
+
     private void OnPostUseAction
     (
         bool       result,
@@ -66,7 +68,7 @@ public class AutoEnableAttack : ModuleBase
         byte       a7
     ) =>
         autoAttackPatch.Disable();
-    
+
     private static readonly FrozenSet<byte> BehavioursToModify =
     [
         1, // 咏唱

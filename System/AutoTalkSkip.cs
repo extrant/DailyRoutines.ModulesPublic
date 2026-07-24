@@ -20,9 +20,12 @@ public unsafe class AutoTalkSkip : ModuleBase
         Description = Lang.Get("AutoTalkSkipDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private delegate nint TalkDelegate(EventSceneModuleImplBase* scene);
-    
+
+    private delegate nint TalkDelegate
+    (
+        EventSceneModuleImplBase* scene
+    );
+
     private static readonly CompSig TalkBaseSig0 = new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA 48 8B 49 ?? E8");
 
     private Hook<TalkDelegate>? TalkHook;
@@ -97,7 +100,11 @@ public unsafe class AutoTalkSkip : ModuleBase
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = Talk;
         if (addon == null) return;
@@ -121,7 +128,10 @@ public unsafe class AutoTalkSkip : ModuleBase
         addon->ReceiveEvent(AtkEventType.MouseUp, 0, evt, data);
     }
 
-    private static ulong LuaStateTalkDetour(lua_State* state)
+    private static ulong LuaStateTalkDetour
+    (
+        lua_State* state
+    )
     {
         var value = state->top;
         value->tt      =  2;
@@ -131,5 +141,8 @@ public unsafe class AutoTalkSkip : ModuleBase
         return 1;
     }
 
-    private static nint TalkDetour(EventSceneModuleImplBase* scene) => 1;
+    private static nint TalkDetour
+    (
+        EventSceneModuleImplBase* scene
+    ) => 1;
 }

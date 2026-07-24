@@ -33,7 +33,7 @@ public class AutoUmbralSoul : ModuleBase
         DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
         DService.Instance().Condition.ConditionChange    += OnConditionChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
@@ -64,7 +64,7 @@ public class AutoUmbralSoul : ModuleBase
             TaskHelper.Abort();
             return true;
         }
-        
+
         var gauge = DService.Instance().JobGauges.Get<BLMGauge>();
 
         var localPlayer = Control.GetLocalPlayer();
@@ -76,9 +76,9 @@ public class AutoUmbralSoul : ModuleBase
             TaskHelper.Abort();
             return true;
         }
-        
+
         var action = 0U;
-        
+
         // 星极火状态 → 星灵移位转冰
         if (ActionManager.IsActionUnlocked(TRANSPOSE) &&
             gauge.InAstralFire)
@@ -87,7 +87,7 @@ public class AutoUmbralSoul : ModuleBase
         else if (ActionManager.IsActionUnlocked(UMBRAL_SOUL) &&
                  (gauge.UmbralHearts != 3 || gauge.UmbralIceStacks != 3))
             action = UMBRAL_SOUL;
-        
+
         if (action == 0)
         {
             TaskHelper.Abort();
@@ -101,7 +101,11 @@ public class AutoUmbralSoul : ModuleBase
     }
 
     // 脱战
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
 
@@ -111,14 +115,20 @@ public class AutoUmbralSoul : ModuleBase
     }
 
     // 重新挑战
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 进入副本
-    private void OnZoneChanged(uint zone)
+    private void OnZoneChanged
+    (
+        uint zone
+    )
     {
         if (GameState.ContentFinderCondition == 0) return;
 
@@ -129,9 +139,9 @@ public class AutoUmbralSoul : ModuleBase
     #region 常量
 
     private const uint CLASS_JOB = 25;
-    
+
     private const uint UMBRAL_SOUL = 16506;
     private const uint TRANSPOSE   = 149;
-    
+
     #endregion
 }

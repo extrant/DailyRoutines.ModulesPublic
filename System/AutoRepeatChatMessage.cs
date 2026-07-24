@@ -26,18 +26,18 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private Config config = null!;
-    
+
     private readonly Dictionary<uint, (int Channel, byte[] Message, string Sender)> savedPayload = [];
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
 
         DService.Instance().Chat.ChatMessage += OnChat;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().Chat.ChatMessage -= OnChat;
@@ -76,7 +76,10 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
             config.Save(this);
     }
 
-    private void OnChat(IHandleableChatMessage message)
+    private void OnChat
+    (
+        IHandleableChatMessage message
+    )
     {
         if (message.IsHandled) return;
         if (!ChatTypesToChannel.TryGetValue(message.LogKind, out var channel)) return;
@@ -97,7 +100,15 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
                .Append(new UIForegroundPayload(0))
                .Append(RawPayload.LinkTerminator)
                .Append(linkPayload)
-               .Append(new UIForegroundPayload((ushort)(channel != -1 ? 34 : 32)))
+               .Append
+               (
+                   new UIForegroundPayload
+                   (
+                       (ushort)(channel != -1 ?
+                                    34 :
+                                    32)
+                   )
+               )
                .Append(new TextPayload("\ue04e \ue090"))
                .Append(new UIForegroundPayload(0))
                .Append(RawPayload.LinkTerminator)
@@ -106,7 +117,11 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
                .Append(new UIForegroundPayload(0));
     }
 
-    private void OnClickRepeat(uint id, SeString message)
+    private void OnClickRepeat
+    (
+        uint     id,
+        SeString message
+    )
     {
         var triggerCheck = !config.UseTrigger || PluginConfig.Instance().ConflictKeyBinding.IsPressed();
         if (!triggerCheck) return;
@@ -143,23 +158,26 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
             instance->ChangeChatChannel(origChannel, origShellIndex, Utf8String.FromString(string.Empty), false);
     }
 
-    private static uint ChatChannelToLinkshellIndex(uint channel) =>
+    private static uint ChatChannelToLinkshellIndex
+    (
+        uint channel
+    ) =>
         channel switch
         {
             >= 9 and <= 16  => channel - 9,
             >= 19 and <= 26 => channel - 19,
             _               => 0
         };
-    
+
     private class Config : ModuleConfig
     {
         public bool AutoSwitchChannel     = true;
         public bool AutoSwitchOrigChannel = true;
         public bool UseTrigger;
     }
-    
+
     #region 常量
-    
+
     private static FrozenDictionary<XivChatType, int> ChatTypesToChannel { get; } = new Dictionary<XivChatType, int>
     {
         [XivChatType.TellIncoming]    = 0,
@@ -190,6 +208,6 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
         [XivChatType.Ls7]             = 25,
         [XivChatType.Ls8]             = 26
     }.ToFrozenDictionary();
-    
+
     #endregion
 }

@@ -49,22 +49,22 @@ public partial class OptimizedRecipeNote : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private static readonly CompSig SimpleCraftGetAmountUpperLimitSig = new("4C 8B DC 48 83 EC ?? 48 8B 81 ?? ?? ?? ?? 44 0F B6 CA");
+    private CompSig simpleCraftGetAmountUpperLimitSig = null!;
 
-    private delegate int SimpleCraftGetAmountUpperLimitDelegate(nint agent, bool eventCase);
+    private delegate int SimpleCraftGetAmountUpperLimitDelegate
+    (
+        nint agent,
+        bool eventCase
+    );
 
     private Hook<SimpleCraftGetAmountUpperLimitDelegate>? SimpleCraftGetAmountUpperLimitHook;
 
-    private static readonly CompSig SimpleCraftAmountJudgeSig = new("0F 87 ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0");
+    private CompSig simpleCraftAmountJudgeSig = null!;
 
     // ja → nop
-    private readonly MemoryPatch simpleCraftAmountJudgePatch =
-        new(SimpleCraftAmountJudgeSig.Get(), [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]);
+    private MemoryPatch simpleCraftAmountJudgePatch = null!;
 
-    private static readonly CompSig RecipeNotePraticeSettingSetupSig = new
-    (
-        "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? BA ?? ?? ?? ?? 49 8B F0 48 8B E9 E8 ?? ?? ?? ?? 48 8D 4E ?? 48 8B D8 E8 ?? ?? ?? ?? 48 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8D 4E"
-    );
+    private CompSig recipeNotePraticeSettingSetupSig = null!;
 
     private unsafe delegate AtkValue* RecipeNotePraticeSettingSetupDelegate
     (
@@ -104,15 +104,23 @@ public partial class OptimizedRecipeNote : ModuleBase
 
     protected override unsafe void Init()
     {
+        simpleCraftGetAmountUpperLimitSig = new("4C 8B DC 48 83 EC ?? 48 8B 81 ?? ?? ?? ?? 44 0F B6 CA");
+        simpleCraftAmountJudgeSig         = new("0F 87 ?? ?? ?? ?? 48 8B 81 ?? ?? ?? ?? 48 85 C0");
+        recipeNotePraticeSettingSetupSig = new
+        (
+            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? BA ?? ?? ?? ?? 49 8B F0 48 8B E9 E8 ?? ?? ?? ?? 48 8D 4E ?? 48 8B D8 E8 ?? ?? ?? ?? 48 8B D0 48 8B CB E8 ?? ?? ?? ?? 48 8D 4E"
+        );
+        simpleCraftAmountJudgePatch = new(simpleCraftAmountJudgeSig.Get(), [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]);
+
         TaskHelper ??= new() { TimeoutMS = 15_000 };
 
         config = Config.Load(this) ?? new();
 
         SimpleCraftGetAmountUpperLimitHook =
-            SimpleCraftGetAmountUpperLimitSig.GetHook<SimpleCraftGetAmountUpperLimitDelegate>(SimpleCraftGetAmountUpperLimitDetour);
+            simpleCraftGetAmountUpperLimitSig.GetHook<SimpleCraftGetAmountUpperLimitDelegate>(SimpleCraftGetAmountUpperLimitDetour);
 
         RecipeNotePraticeSettingSetupHook =
-            RecipeNotePraticeSettingSetupSig.GetHook<RecipeNotePraticeSettingSetupDelegate>(RecipeNotePraticeSettingSetupDetour);
+            recipeNotePraticeSettingSetupSig.GetHook<RecipeNotePraticeSettingSetupDelegate>(RecipeNotePraticeSettingSetupDetour);
 
         if (config.IsQuickSynthesisMore)
         {
@@ -136,7 +144,7 @@ public partial class OptimizedRecipeNote : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
         DService.Instance().AddonLifecycle.UnregisterListener(OnSynthesisSimple);
         DService.Instance().AgentLifecycle.UnregisterListener(OnAgentRecipeNote);
-        
+
         RemoveAllNodes();
 
         AddonActionsPreview.Addon?.Dispose();
@@ -223,14 +231,18 @@ public partial class OptimizedRecipeNote : ModuleBase
         }
 
         ImGuiOm.HelpMarker(Lang.Get("OptimizedRecipeNote-Config-MorePraticeQuality-Help"));
-        
+
         if (ImGui.Checkbox(Lang.Get("OptimizedRecipeNote-Config-NotifyQuickSynthesisFinish"), ref config.IsSwitchJobButton))
             config.Save(this);
 
         ImGuiOm.HelpMarker(Lang.Get("OptimizedRecipeNote-Config-NotifyQuickSynthesisFinish-Help"));
     }
 
-    public static unsafe int SimpleCraftGetAmountUpperLimitDetour(nint agentRecipeNote, bool isHQ)
+    public static unsafe int SimpleCraftGetAmountUpperLimitDetour
+    (
+        nint agentRecipeNote,
+        bool isHQ
+    )
     {
         var selectedRecipe = RecipeNote.Instance()->RecipeList->SelectedRecipe;
         if (selectedRecipe == null) return 0;
@@ -244,7 +256,9 @@ public partial class OptimizedRecipeNote : ModuleBase
             var itemCountNQ = InventoryManager.Instance()->GetInventoryItemCount(ingredient.ItemId);
             var itemCountHQ = InventoryManager.Instance()->GetInventoryItemCount(ingredient.ItemId, true);
 
-            var itemCount = isHQ ? itemCountNQ + itemCountHQ : itemCountNQ;
+            var itemCount = isHQ ?
+                                itemCountNQ + itemCountHQ :
+                                itemCountNQ;
             if (itemCount == 0) return 0;
 
             var portion = itemCount / ingredient.Amount;
@@ -256,7 +270,12 @@ public partial class OptimizedRecipeNote : ModuleBase
         return maxPortion;
     }
 
-    private unsafe AtkValue* RecipeNotePraticeSettingSetupDetour(AtkEventListener* listener, AtkValue* returnValue, AtkValue* values)
+    private unsafe AtkValue* RecipeNotePraticeSettingSetupDetour
+    (
+        AtkEventListener* listener,
+        AtkValue*         returnValue,
+        AtkValue*         values
+    )
     {
         // 初始品质
         values[1].SetUInt(values[1].UInt * 2);
@@ -270,7 +289,11 @@ public partial class OptimizedRecipeNote : ModuleBase
         return RecipeNotePraticeSettingSetupHook.Original(listener, returnValue, values);
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -283,7 +306,7 @@ public partial class OptimizedRecipeNote : ModuleBase
                 levelRecipeButton       = null;
                 specialRecipeButton     = null;
                 masterRecipeButton      = null;
-                
+
                 materialSourceButtons.Clear();
                 displayOthersJobButtons.Clear();
                 break;
@@ -351,10 +374,10 @@ public partial class OptimizedRecipeNote : ModuleBase
     {
         caculateRecipeButton?.Dispose();
         caculateRecipeButton = null;
-        
+
         clearSearchButton?.Dispose();
         clearSearchButton = null;
-        
+
         levelRecipeButton?.Dispose();
         levelRecipeButton = null;
 
@@ -363,7 +386,7 @@ public partial class OptimizedRecipeNote : ModuleBase
 
         masterRecipeButton?.Dispose();
         masterRecipeButton = null;
-        
+
         displayOthersButton?.Dispose();
         displayOthersButton = null;
 
@@ -371,7 +394,7 @@ public partial class OptimizedRecipeNote : ModuleBase
 
         displayOthersJobsLayout?.Dispose(); // 把子节点都一并清除掉了
         displayOthersJobsLayout = null;
-        
+
         foreach (var x in materialSourceButtons)
             x.Dispose();
         materialSourceButtons.Clear();
@@ -390,10 +413,10 @@ public partial class OptimizedRecipeNote : ModuleBase
             if (resNode2 != null)
                 resNode2->SetXFloat(0);
         }
-        
+
         switchJobButton?.Dispose();
         switchJobButton = null;
-        
+
         caculateRecipeButton?.Dispose();
         caculateRecipeButton = null;
     }
@@ -735,8 +758,10 @@ public partial class OptimizedRecipeNote : ModuleBase
                 maxIngredientAmount = amount;
         }
 
-        var appendOffset = maxIngredientAmount >= 10 ? 30 : 10;
-        var resNode0     = RecipeNoteAddon->GetNodeById(95);
+        var appendOffset = maxIngredientAmount >= 10 ?
+                               30 :
+                               10;
+        var resNode0 = RecipeNoteAddon->GetNodeById(95);
         if (resNode0 != null)
             resNode0->SetXFloat(46 + appendOffset);
 
@@ -763,7 +788,10 @@ public partial class OptimizedRecipeNote : ModuleBase
             var button     = materialSourceButtons[d];
             var sourceText = string.Empty;
 
-            button.X = -6 + (maxIngredientAmount >= 10 ? -20 : 0);
+            button.X = -6 +
+                       (maxIngredientAmount >= 10 ?
+                            -20 :
+                            0);
 
             // 既能 NPC 买到又能市场布告板
             if (item.ItemSearchCategory.RowId > 0 && hasNPCShop)
@@ -983,7 +1011,11 @@ public partial class OptimizedRecipeNote : ModuleBase
 
     #region 消息事件
 
-    private void OnClickInstallRaphaelPayload(uint id, SeString _)
+    private void OnClickInstallRaphaelPayload
+    (
+        uint     id,
+        SeString _
+    )
     {
         if (DService.Instance().PI.InstalledPlugins.Any(x => x.InternalName == "Raphael.Dalamud"))
         {
@@ -1004,14 +1036,22 @@ public partial class OptimizedRecipeNote : ModuleBase
                                      .ContinueWith(_ => installRaphaelTask = null);
     }
 
-    private void OnClickPreviewPayload(uint id, SeString _)
+    private void OnClickPreviewPayload
+    (
+        uint     id,
+        SeString _
+    )
     {
         if (caculationResults.FirstOrDefault(x => x.Value.PreviewLinkPayload.CommandId == id) is not { Value.RecipeID: > 0 } result) return;
 
         AddonActionsPreview.OpenWithActions(TaskHelper, result.Value);
     }
 
-    private void OnClickCopyPayload(uint id, SeString _)
+    private void OnClickCopyPayload
+    (
+        uint     id,
+        SeString _
+    )
     {
         if (caculationResults.FirstOrDefault(x => x.Value.CopyLinkPayload.CommandId == id) is not { Value.RecipeID: > 0 } result) return;
 
@@ -1027,7 +1067,10 @@ public partial class OptimizedRecipeNote : ModuleBase
 
     #region 消息发送
 
-    private static void PrintActionsMessage(CaculationResult result)
+    private static void PrintActionsMessage
+    (
+        CaculationResult result
+    )
     {
         var builder = new SeStringBuilder();
         builder.AddText($"{Lang.Get("OptimizedRecipeNote-Message-CaculationResult")}")
@@ -1088,16 +1131,20 @@ public partial class OptimizedRecipeNote : ModuleBase
     }
 
     #endregion
-    
+
     #region 简易制作分批
-    
-    private unsafe void OnAgentRecipeNote(AgentEvent type, AgentArgs args)
+
+    private unsafe void OnAgentRecipeNote
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         if (pendingQuickSynthRemaining != 0) return;
-        
+
         var formatted = args as AgentReceiveEventArgs;
         if (formatted.EventKind != 1) return;
-            
+
         var atkValues = (AtkValue*)formatted.AtkValues;
         if (atkValues == null) return;
 
@@ -1114,7 +1161,11 @@ public partial class OptimizedRecipeNote : ModuleBase
         NotifyHelper.Instance().Chat(message);
     }
 
-    private unsafe void OnSynthesisSimple(AddonEvent type, AddonArgs args)
+    private unsafe void OnSynthesisSimple
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (SynthesisSimple == null) return;
 
@@ -1124,7 +1175,7 @@ public partial class OptimizedRecipeNote : ModuleBase
         var currentCount = SynthesisSimple->AtkValues[3].UInt;
         var maxCount     = SynthesisSimple->AtkValues[4].UInt;
         if (currentCount != maxCount) return;
-        
+
         if (pendingQuickSynthRemaining == 0)
         {
             pendingQuickSynthRemaining = 0;
@@ -1139,10 +1190,10 @@ public partial class OptimizedRecipeNote : ModuleBase
                 NotifyHelper.SystemInformation();
                 NotifyHelper.Speak(message);
             }
-            
+
             return;
         }
-        
+
         var batchSize = Math.Min(pendingQuickSynthRemaining, MAX_QUICK_SYNTHESIS_COUNT);
         pendingQuickSynthRemaining -= batchSize;
 
@@ -1154,10 +1205,14 @@ public partial class OptimizedRecipeNote : ModuleBase
     }
 
     #endregion
-    
+
     #region 工具
 
-    private static unsafe bool TryGetCurrentRecipe(out uint recipeID, out Recipe recipe)
+    private static unsafe bool TryGetCurrentRecipe
+    (
+        out uint   recipeID,
+        out Recipe recipe
+    )
     {
         recipeID = 0;
         recipe   = default;
@@ -1177,13 +1232,19 @@ public partial class OptimizedRecipeNote : ModuleBase
         return true;
     }
 
-    private static int GetRecipeMaxQuality(Recipe recipe) =>
+    private static int GetRecipeMaxQuality
+    (
+        Recipe recipe
+    ) =>
         (int)(GetRecipeLevelTable(recipe).Quality * (float)recipe.QualityFactor / 100f);
 
-    private static RecipeLevelTable GetRecipeLevelTable(Recipe recipe) =>
-        recipe.Number == 0 && LocalPlayerState.CurrentLevel < 100
-            ? LuminaGetter.Get<RecipeLevelTable>().First(x => x.ClassJobLevel == LocalPlayerState.CurrentLevel)
-            : recipe.RecipeLevelTable.Value;
+    private static RecipeLevelTable GetRecipeLevelTable
+    (
+        Recipe recipe
+    ) =>
+        recipe.Number == 0 && LocalPlayerState.CurrentLevel < 100 ?
+            LuminaGetter.Get<RecipeLevelTable>().First(x => x.ClassJobLevel == LocalPlayerState.CurrentLevel) :
+            recipe.RecipeLevelTable.Value;
 
     #endregion
 
@@ -1230,7 +1291,7 @@ public partial class OptimizedRecipeNote : ModuleBase
 
         // 突破制作练习初期品质上限
         public bool IsMorePraticeQuality = true;
-        
+
         // 简易制作完成提醒
         public bool IsNotifyQuickSynthesisFinish = true;
     }

@@ -101,7 +101,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
     private void SaveConfig() =>
         config.Save(this);
 
-    private void OnMenuOpened(IMenuOpenedArgs args)
+    private void OnMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         targetChara = null;
 
@@ -117,7 +120,11 @@ public class ExpandPlayerMenuSearch : ModuleBase
             args.AddMenuItem(menu.Get());
     }
 
-    private static unsafe bool TryResolveTargetChara(IMenuArgs args, out CharacterSearchInfo? resolvedTarget)
+    private static unsafe bool TryResolveTargetChara
+    (
+        IMenuArgs                args,
+        out CharacterSearchInfo? resolvedTarget
+    )
     {
         resolvedTarget = null;
 
@@ -147,9 +154,9 @@ public class ExpandPlayerMenuSearch : ModuleBase
 
                 var playerName       = agentBlackList->SelectedPlayerName.ToString();
                 var selectedFullName = agentBlackList->SelectedPlayerFullName.ToString();
-                var serverName = selectedFullName.StartsWith(playerName, StringComparison.Ordinal)
-                                     ? selectedFullName[playerName.Length..]
-                                     : string.Empty;
+                var serverName = selectedFullName.StartsWith(playerName, StringComparison.Ordinal) ?
+                                     selectedFullName[playerName.Length..] :
+                                     string.Empty;
 
                 resolvedTarget = new()
                 {
@@ -214,7 +221,7 @@ public class ExpandPlayerMenuSearch : ModuleBase
         {
             resolvedTarget = new()
             {
-                Name    = chara.Name.ToString(),
+                Name    = chara.Name,
                 World   = LuminaGetter.GetRow<World>(((Character*)chara.Address)->HomeWorld)?.Name.ToString() ?? string.Empty,
                 WorldID = ((Character*)chara.Address)->HomeWorld
             };
@@ -248,7 +255,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
     {
         protected readonly ExpandPlayerMenuSearch module;
 
-        protected SearchMenuItemBase(ExpandPlayerMenuSearch module)
+        protected SearchMenuItemBase
+        (
+            ExpandPlayerMenuSearch module
+        )
         {
             this.module = module;
             Name        = Lang.Get(LocKey);
@@ -267,7 +277,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         protected static void NotifyPlayerNotFound() =>
             NotifyHelper.Instance().NotificationError(Lang.Get("ExpandPlayerMenuSearch-PlayerInfoNotFound"));
 
-        protected void RunOnTick(Func<CharacterSearchInfo, Task> action)
+        protected void RunOnTick
+        (
+            Func<CharacterSearchInfo, Task> action
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;
@@ -279,7 +292,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
             );
         }
 
-        protected void RunOnTickImmediately(Func<CharacterSearchInfo, Task> action)
+        protected void RunOnTickImmediately
+        (
+            Func<CharacterSearchInfo, Task> action
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;
@@ -305,7 +321,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         protected override bool WithDRPrefix { get; set; } = true;
         protected override bool IsSubmenu    { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             args.OpenSubmenu(Name, ProcessMenuItems());
 
         private List<MenuItem> ProcessMenuItems()
@@ -333,7 +352,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override string Name       { get; protected set; } = Lang.Get("ExpandPlayerMenuSearch-SearchInAllPlatforms");
         public override string Identifier { get; protected set; } = nameof(ExpandPlayerMenuSearch);
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             foreach (var searchMenuItem in module.SearchMenuItems)
             {
@@ -361,7 +383,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsCN;
         public override int    Order          => 10;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             RunOnTick
             (async targetChara =>
                 {
@@ -411,7 +436,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsCN;
         public override int    Order          => 20;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;
@@ -432,7 +460,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => true;
         public override int    Order          => 30;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;
@@ -441,7 +472,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
             Util.OpenLink(string.Format(URL, RegionToFFLogsAbbvr(region), targetChara.World, targetChara.Name));
         }
 
-        private static string RegionToFFLogsAbbvr(uint region) =>
+        private static string RegionToFFLogsAbbvr
+        (
+            uint region
+        ) =>
             region switch
             {
                 1 => "JP",
@@ -467,7 +501,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 40;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;
@@ -490,7 +527,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 50;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             RunOnTickImmediately
             (async targetChara =>
                 {
@@ -528,7 +568,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => GameState.IsGL;
         public override int    Order          => 60;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             RunOnTickImmediately
             (async targetChara =>
                 {
@@ -576,7 +619,10 @@ public class ExpandPlayerMenuSearch : ModuleBase
         public override bool   DefaultEnabled => true;
         public override int    Order          => 70;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var targetChara = TargetChara;
             if (targetChara == null) return;

@@ -27,7 +27,11 @@ public class UseItemCommand : ModuleBase
     protected override void Uninit() =>
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-    private static unsafe void OnCommand(string command, string args)
+    private static unsafe void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
         if (string.IsNullOrEmpty(args)) return;
@@ -45,6 +49,7 @@ public class UseItemCommand : ModuleBase
         }
 
         args = args.ToLowerInvariant();
+
         foreach (var item in items)
         {
             if (!LuminaGetter.TryGetRow<Item>(item.GetBaseItemId(), out var itemRow)) continue;
@@ -62,7 +67,10 @@ public class UseItemCommand : ModuleBase
         NotifyHelper.Instance().ChatError(Lang.Get("UseItemCommand-Notice-NotFound", args));
     }
 
-    private static unsafe void UseItemByID(uint itemID)
+    private static unsafe void UseItemByID
+    (
+        uint itemID
+    )
     {
         if (!LuminaGetter.TryGetRow<Item>(itemID, out var itemRow))
         {

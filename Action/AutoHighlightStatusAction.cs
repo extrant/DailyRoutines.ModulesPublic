@@ -13,7 +13,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using OmenTools.ImGuiOm.Widgets.Combos;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 using LuminaAction = Lumina.Excel.Sheets.Action;
 using Status = Lumina.Excel.Sheets.Status;
@@ -34,8 +33,8 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
 
     private Config config = null!;
 
-    private readonly StatusSelectCombo statusCombo = new("Status");
-    private readonly ActionSelectCombo actionCombo = new("Action");
+    private StatusSelectCombo statusCombo = null!;
+    private ActionSelectCombo actionCombo = null!;
 
     private readonly List<uint> actionsToHighlight = new(8);
 
@@ -53,6 +52,9 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
 
     protected override void Init()
     {
+        statusCombo = new("Status");
+        actionCombo = new("Action");
+
         config = Config.Load(this) ?? new();
 
         if (config.MonitoredStatus.Count == 0)
@@ -275,7 +277,11 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
         }
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
         if (value && !GameState.IsInPVPArea)
@@ -313,7 +319,10 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [SkipLocalsInit]
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (GameState.IsInPVPArea || !DService.Instance().Condition[ConditionFlag.InCombat])
         {
@@ -408,8 +417,10 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
                 continue;
             }
 
-            var effectiveRemaining = entry.State.Active ? entry.State.RemainingTime : 0f;
-            var countdown          = statusConfig.Countdown;
+            var effectiveRemaining = entry.State.Active ?
+                                         entry.State.RemainingTime :
+                                         0f;
+            var countdown = statusConfig.Countdown;
 
             foreach (var actionID in statusConfig.BindActions)
             {
@@ -417,7 +428,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
                 if (chainIdx < 0) continue;
 
                 ref var chain = ref CollectionsMarshal.AsSpan(comboChainsCache)[chainIdx];
-                var     score = effectiveRemaining - countdown * chain.Chain.Length;
+                var     score = effectiveRemaining - (countdown * chain.Chain.Length);
 
                 var found = false;
 
@@ -492,7 +503,12 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [return: MarshalAs(UnmanagedType.U1)]
-    private bool IsActionHighlightedDetour(ActionManager* actionManager, ActionType actionType, uint actionID)
+    private bool IsActionHighlightedDetour
+    (
+        ActionManager* actionManager,
+        ActionType     actionType,
+        uint           actionID
+    )
     {
         foreach (var action in actionsToHighlight)
         {
@@ -582,7 +598,10 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int FindComboChainIndex(uint actionID)
+    private int FindComboChainIndex
+    (
+        uint actionID
+    )
     {
         for (var i = 0; i < comboChainsCache.Count; i++)
             if (comboChainsCache[i].ActionID == actionID)
@@ -592,7 +611,11 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TryGetStatusResyncCutoff(ushort statusID, out float cutoff)
+    private bool TryGetStatusResyncCutoff
+    (
+        ushort    statusID,
+        out float cutoff
+    )
     {
         ref var statusConfig = ref CollectionsMarshal.GetValueRefOrNullRef(config.MonitoredStatus, statusID);
 
@@ -625,7 +648,12 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryResyncStatus(uint entityID, ushort statusID, out float remaining)
+    private static bool TryResyncStatus
+    (
+        uint      entityID,
+        ushort    statusID,
+        out float remaining
+    )
     {
         var target = CharacterManager.Instance()->LookupBattleCharaByEntityId(entityID);
 
@@ -652,7 +680,13 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AddOrUpdateTrackedStatus(uint entityID, ushort statusID, bool active, float remainingTime)
+    private void AddOrUpdateTrackedStatus
+    (
+        uint   entityID,
+        ushort statusID,
+        bool   active,
+        float  remainingTime
+    )
     {
         var span = CollectionsMarshal.AsSpan(trackedStatuses);
 
@@ -677,7 +711,11 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RemoveTrackedStatus(uint entityID, ushort statusID)
+    private void RemoveTrackedStatus
+    (
+        uint   entityID,
+        ushort statusID
+    )
     {
         for (var i = 0; i < trackedStatuses.Count; i++)
         {
@@ -716,7 +754,10 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
 
         return;
 
-        static uint[] FetchComboChain(uint actionID)
+        static uint[] FetchComboChain
+        (
+            uint actionID
+        )
         {
             var chain = new List<uint>();
             var cur   = actionID;

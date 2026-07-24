@@ -29,7 +29,7 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private DalamudLinkPayload? achievementLinkPayload;
 
     protected override void Init()
@@ -48,7 +48,10 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
             LinkPayloadManager.Instance().Unreg(achievementLinkPayload.CommandId);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         if (GameState.TerritoryType == 0) return;
 
@@ -91,7 +94,7 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
 
                 if (achievementLinkPayload != null)
                     LinkPayloadManager.Instance().Unreg(achievementLinkPayload.CommandId);
-                
+
                 achievementLinkPayload = LinkPayloadManager.Instance().Reg((_, _) => AgentAchievement.Instance()->OpenById(firstIncomplete.ID), out _);
                 var builder = new SeStringBuilder();
                 builder.AddText(Lang.Get("AutoNotifyMentorRouletteProgres-Notification-Title"))
@@ -142,7 +145,7 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
             }
         );
     }
-    
+
     #region 常量
 
     private const byte MENTOR_ROULETTE_ID = 9;

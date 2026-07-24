@@ -29,7 +29,7 @@ public unsafe class AutoAdjustNamePlateIcon : ModuleBase
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "NamePlate", OnAddon);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
@@ -42,7 +42,11 @@ public unsafe class AutoAdjustNamePlateIcon : ModuleBase
             config.Save(this);
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         var addon = (AddonNamePlate*)NamePlate;
         if (!NamePlate->IsAddonAndNodesReady()) return;
@@ -52,15 +56,15 @@ public unsafe class AutoAdjustNamePlateIcon : ModuleBase
             var obj = addon->NamePlateObjectArray[i];
             if (!obj.IsVisible || !obj.MarkerIcon->IsVisible())
                 continue;
-            
+
             var imageNode = obj.MarkerIcon;
             if (imageNode == null) return;
 
-            var scale  = config.Scale;
-            var iconW  = imageNode->Width;
-            var iconH  = imageNode->Height;
-            var compX  = iconW * (1f - scale) / 2f;
-            var compY  = iconH * (1f - scale) / 2f;
+            var scale = config.Scale;
+            var iconW = imageNode->Width;
+            var iconH = imageNode->Height;
+            var compX = iconW * (1f - scale) / 2f;
+            var compY = iconH * (1f - scale) / 2f;
             imageNode->SetScale(scale, scale);
             imageNode->SetPositionFloat(96f + config.Offset.X + compX, 4f + config.Offset.Y + compY);
         }

@@ -42,7 +42,7 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", UpdateFocusTargetInfo);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(UpdateTargetInfo);
@@ -95,7 +95,11 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
 
         return;
 
-        void DrawInputAndPreviewText(string categoryTitle, ref string configField)
+        void DrawInputAndPreviewText
+        (
+            string     categoryTitle,
+            ref string configField
+        )
         {
             using (var categoryTable = ImRaii.Table(categoryTitle, 2, ImGuiTableFlags.BordersOuter, tableSize))
             {
@@ -113,7 +117,7 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
                     ImGui.TableNextColumn();
                     ImGui.SetNextItemWidth(-1f);
                     if (ImGui.InputText($"###{categoryTitle}", ref configField, 64))
-                        this.config.Save(this);
+                        config.Save(this);
 
                     if (DService.Instance().ObjectTable.LocalPlayer is ICharacter chara)
                     {
@@ -133,7 +137,11 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
         }
     }
 
-    private void UpdateTargetInfo(AddonEvent type, AddonArgs args)
+    private void UpdateTargetInfo
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AtkUnitBase*)args.Addon.Address;
         if (addon == null || !addon->IsVisible) return;
@@ -151,7 +159,11 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
             node1->SetText(ReplacePatterns(config.TargetsTargetPattern, Payloads, chara1));
     }
 
-    private void UpdateTargetInfoMainTarget(AddonEvent type, AddonArgs args)
+    private void UpdateTargetInfoMainTarget
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AtkUnitBase*)args.Addon.Address;
         if (addon == null || !addon->IsVisible) return;
@@ -169,7 +181,11 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
             node1->SetText(ReplacePatterns(config.TargetsTargetPattern, Payloads, chara1));
     }
 
-    private void UpdateFocusTargetInfo(AddonEvent type, AddonArgs args)
+    private void UpdateFocusTargetInfo
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AtkUnitBase*)args.Addon.Address;
         if (addon == null || !addon->IsVisible) return;
@@ -181,14 +197,19 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
             node0->SetText(ReplacePatterns(config.FocusTargetPattern, Payloads, chara0));
     }
 
-    private static string ReplacePatterns(string input, IEnumerable<Payload> payloads, ICharacter chara)
+    private static string ReplacePatterns
+    (
+        string               input,
+        IEnumerable<Payload> payloads,
+        ICharacter           chara
+    )
     {
         foreach (var payload in payloads)
             input = input.Replace(payload.Placeholder, payload.ValueFunc(chara));
 
         return input;
     }
-    
+
     private class Payload
     (
         string                   placeholder,
@@ -209,7 +230,7 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
         public string TargetPattern        = "/Name/ [/Job/] «/FCTag/»";
         public string TargetsTargetPattern = "/Name/";
     }
-    
+
     private static readonly FrozenSet<Payload> Payloads =
     [
         new("/Name/", LuminaWrapper.GetAddonText(6382), c => c.Name.ToString()),
@@ -226,16 +247,18 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
                 var titleID   = character->CharacterData.TitleId;
                 if (titleID == 0 || !LuminaGetter.TryGetRow<Title>(titleID, out var title)) return string.Empty;
 
-                return (character->DrawData.CustomizeData.Sex == 0 ? title.Masculine : title.Feminine).ToString();
+                return (character->DrawData.CustomizeData.Sex == 0 ?
+                            title.Masculine :
+                            title.Feminine).ToString();
             }
         ),
         new
         (
             "/OnlineStatus/",
             Lang.Get("OnlineStatus"),
-            c => string.IsNullOrEmpty(c.OnlineStatus.ValueNullable?.Name.ToString())
-                     ? LuminaGetter.GetRowOrDefault<OnlineStatus>(47).Name.ToString()
-                     : c.OnlineStatus.ValueNullable?.Name.ToString()
+            c => string.IsNullOrEmpty(c.OnlineStatus.ValueNullable?.Name.ToString()) ?
+                     LuminaGetter.GetRowOrDefault<OnlineStatus>(47).Name.ToString() :
+                     c.OnlineStatus.ValueNullable?.Name.ToString()
         ),
         new("/Mount/", LuminaWrapper.GetAddonText(4964), c => LuminaGetter.GetRowOrDefault<Mount>(c.ToStruct()->Mount.MountId).Singular.ToString()),
         new("/HomeWorld/", LuminaWrapper.GetAddonText(4728), c => LuminaGetter.GetRowOrDefault<World>(c.ToStruct()->HomeWorld).Name.ToString()),

@@ -26,7 +26,7 @@ public unsafe class AutoSellCards : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private HorizontalListNode? layoutNode;
     private TextNode?           titleNode;
     private TextButtonNode?     startButton;
@@ -43,13 +43,13 @@ public unsafe class AutoSellCards : ModuleBase
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoSellCards-CommandHelp") });
     }
-    
+
     protected override void Uninit()
     {
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         layoutNode?.Dispose();
         layoutNode = null;
 
@@ -73,7 +73,11 @@ public unsafe class AutoSellCards : ModuleBase
         ImGui.TextUnformatted($"/pdr {COMMAND} → {Lang.Get("AutoSellCards-CommandHelp")}");
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -158,13 +162,17 @@ public unsafe class AutoSellCards : ModuleBase
                 startButton = null;
                 stopButton  = null;
                 titleNode   = null;
-                
+
                 TaskHelper?.Abort();
                 break;
         }
     }
 
-    private static void OnAddonDialog(AddonEvent type, AddonArgs args)
+    private static void OnAddonDialog
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (ShopCardDialog == null) return;
 
@@ -173,7 +181,11 @@ public unsafe class AutoSellCards : ModuleBase
         ShopCardDialog->Close(true);
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         // 交换界面已经打开了
         if (TripleTriadCoinExchange->IsAddonAndNodesReady())
@@ -242,7 +254,7 @@ public unsafe class AutoSellCards : ModuleBase
         TaskHelper.Enqueue(StartHandOver, "开始新一轮检测交换", weight: 2);
         return true;
     }
-    
+
     #region 常量
 
     private const string COMMAND = "scards";

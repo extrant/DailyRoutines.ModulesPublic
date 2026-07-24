@@ -26,12 +26,11 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
     private Hook<InfoProxyItemSearch.Delegates.ProcessRequestResult>? ProcessRequestResultHook;
 
     private static readonly CompSig     WaitMessageSig   = new("BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 4C 8B C0 BA ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 45 33 C9");
-    private readonly        MemoryPatch waitMessagePatch = new(WaitMessageSig.Get(), [0xBA, 0xB9, 0x1A, 0x00, 0x00]);
-
-    private bool isMarketStuck;
+    private                 MemoryPatch waitMessagePatch = null!;
 
     protected override void Init()
     {
+        waitMessagePatch = new(WaitMessageSig.Get(), [0xBA, 0xB9, 0x1A, 0x00, 0x00]);
         ProcessRequestResultHook = DService.Instance().Hook.HookFromMemberFunction
         (
             typeof(InfoProxyItemSearch.MemberFunctionPointers),
@@ -43,7 +42,12 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
         waitMessagePatch.Set(true);
     }
 
-    private void ProcessRequestResultDetour(InfoProxyItemSearch* info, byte a2, int a3)
+    private void ProcessRequestResultDetour
+    (
+        InfoProxyItemSearch* info,
+        byte                 a2,
+        int                  a3
+    )
     {
         if (a2                               == 0                              &&
             a3                               > 0                               &&
@@ -52,20 +56,20 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
             LuminaGetter.TryGetRow<Item>(info->SearchItemId, out var itemData) &&
             itemData.ItemSearchCategory.RowId > 0)
         {
-            isMarketStuck = true;
+            IsCurrentMarketStuck = true;
 
             info->RequestData();
             return;
         }
 
-        isMarketStuck = false;
+        IsCurrentMarketStuck = false;
         ProcessRequestResultHook.Original(info, a2, a3);
     }
-    
+
     #region IPC
 
     [IPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
-    private bool IsCurrentMarketStuck => isMarketStuck;
+    private bool IsCurrentMarketStuck { get; set; }
 
     #endregion
 }

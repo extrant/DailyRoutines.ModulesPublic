@@ -88,7 +88,10 @@ public unsafe class StrikingTreeHelper : ModuleBase
         gameObjects.Add(player.Address);
     }
 
-    private void OnZoneChanged(uint obj)
+    private void OnZoneChanged
+    (
+        uint obj
+    )
     {
         CharacterStatusManager.Instance().Unreg(OnStatusGain);
         CharacterStatusManager.Instance().Unreg(OnStatusLose);

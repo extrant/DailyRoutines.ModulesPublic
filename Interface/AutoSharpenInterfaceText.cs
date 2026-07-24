@@ -18,12 +18,18 @@ public unsafe class AutoSharpenInterfaceText : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private static readonly CompSig                          AtkTextNodeSetTextSig = new("48 85 C9 0F 84 ?? ?? ?? ?? 4C 8B DC 53 56");
-    private delegate        void                             AtkTextNodeSetTextDelegate(AtkTextNode* node, CStringPointer text);
-    private                 Hook<AtkTextNodeSetTextDelegate> AtkTextNodeSetTextHook;
 
-    private static uint UIHighScaleMode => 
+    private static readonly CompSig AtkTextNodeSetTextSig = new("48 85 C9 0F 84 ?? ?? ?? ?? 4C 8B DC 53 56");
+
+    private delegate void AtkTextNodeSetTextDelegate
+    (
+        AtkTextNode*   node,
+        CStringPointer text
+    );
+
+    private Hook<AtkTextNodeSetTextDelegate> AtkTextNodeSetTextHook;
+
+    private static uint UIHighScaleMode =>
         DService.Instance().GameConfig.System.GetUInt("UiHighScale");
 
     protected override void Init()
@@ -32,10 +38,14 @@ public unsafe class AutoSharpenInterfaceText : ModuleBase
         AtkTextNodeSetTextHook.Enable();
     }
 
-    private void AtkTextNodeSetTextDetour(AtkTextNode* node, CStringPointer text)
+    private void AtkTextNodeSetTextDetour
+    (
+        AtkTextNode*   node,
+        CStringPointer text
+    )
     {
         AtkTextNodeSetTextHook.Original(node, text);
-        
+
         // 100% 缩放
         if (node == null || UIHighScaleMode == 0) return;
 
@@ -44,7 +54,7 @@ public unsafe class AutoSharpenInterfaceText : ModuleBase
 
         var flag = node->TextFlags;
         if (!flag.IsSet(FLAG_TO_REMOVE)) return;
-        
+
         flag            &= ~FLAG_TO_REMOVE;
         node->TextFlags =  flag;
     }

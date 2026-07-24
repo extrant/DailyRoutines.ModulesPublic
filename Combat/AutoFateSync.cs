@@ -4,7 +4,6 @@ using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using Lumina.Excel.Sheets;
@@ -22,7 +21,7 @@ public class AutoFateSync : ModuleBase
         Description = Lang.Get("AutoFateSyncDescription"),
         Category    = ModuleCategory.Combat
     };
-    
+
     private Config config = null!;
 
     private CancellationTokenSource? cancelSource;
@@ -74,7 +73,10 @@ public class AutoFateSync : ModuleBase
             config.Save(this);
     }
 
-    private void OnEnterFate(uint fateID) =>
+    private void OnEnterFate
+    (
+        uint fateID
+    ) =>
         HandleFateEnter();
 
     private unsafe void HandleFateEnter()
@@ -108,7 +110,10 @@ public class AutoFateSync : ModuleBase
         ExecuteFateLevelSync(manager->CurrentFate->FateId);
     }
 
-    private unsafe void OnFlying(IFramework _)
+    private unsafe void OnFlying
+    (
+        IFramework _
+    )
     {
         var currentFate = FateManager.Instance()->CurrentFate;
 
@@ -124,7 +129,10 @@ public class AutoFateSync : ModuleBase
         FrameworkManager.Instance().Unreg(OnFlying);
     }
 
-    private unsafe void ExecuteFateLevelSync(ushort fateID)
+    private unsafe void ExecuteFateLevelSync
+    (
+        ushort fateID
+    )
     {
         ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.SyncToFateLevel, fateID, 1);
 
@@ -165,10 +173,10 @@ public class AutoFateSync : ModuleBase
         public float Delay          = 3f;
         public bool  IgnoreMounting = true;
     }
-    
+
     #region 常量
 
-    private static readonly FrozenDictionary<uint, (uint ActionID, uint StatusID)> TankStanceActions = 
+    private static readonly FrozenDictionary<uint, (uint ActionID, uint StatusID)> TankStanceActions =
         new Dictionary<uint, (uint ActionID, uint StatusID)>
         {
             // 剑术师 / 骑士

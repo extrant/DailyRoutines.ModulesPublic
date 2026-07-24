@@ -8,7 +8,6 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
@@ -38,9 +37,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
 
     private DRAutoRetainerWork? addon;
 
-    private readonly RetainerWorkerBase[] workers;
+    private RetainerWorkerBase[] workers = null!;
 
-    public AutoRetainerWork() =>
+    protected override void Init()
+    {
         workers =
         [
             new CollectWorker(this),
@@ -52,8 +52,6 @@ public unsafe partial class AutoRetainerWork : ModuleBase
             new PriceAdjustWorker(this)
         ];
 
-    protected override void Init()
-    {
         config = Config.Load(this) ?? new();
 
         foreach (var worker in workers)
@@ -98,7 +96,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     /// <summary>
     ///     打开指定索引对应的雇员
     /// </summary>
-    private bool EnterRetainer(uint index)
+    private bool EnterRetainer
+    (
+        uint index
+    )
     {
         if (!retainerThrottler.Throttle("EnterRetainer", 100)) return false;
 
@@ -132,7 +133,11 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     /// <summary>
     ///     根据条件获取符合要求的雇员数量
     /// </summary>
-    private static uint GetValidRetainerCount(Func<RetainerManager.Retainer, bool> predicateFunc, out List<uint> validRetainers)
+    private static uint GetValidRetainerCount
+    (
+        Func<RetainerManager.Retainer, bool> predicateFunc,
+        out List<uint>                       validRetainers
+    )
     {
         validRetainers = [];
 
@@ -178,7 +183,12 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     /// <summary>
     ///     搜索背包物品
     /// </summary>
-    private static bool TrySearchItemInInventory(uint itemID, bool isHQ, out List<InventoryItem> foundItem)
+    private static bool TrySearchItemInInventory
+    (
+        uint                    itemID,
+        bool                    isHQ,
+        out List<InventoryItem> foundItem
+    )
     {
         foundItem = [];
         var inventoryManager = InventoryManager.Instance();
@@ -222,7 +232,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     /// <summary>
     ///     是否有其他 Worker 正在运行
     /// </summary>
-    private bool IsAnyOtherWorkerBusy(Type current)
+    private bool IsAnyOtherWorkerBusy
+    (
+        Type current
+    )
     {
         foreach (var worker in workers)
         {
@@ -303,13 +316,21 @@ public unsafe partial class AutoRetainerWork : ModuleBase
 
         public abstract void Init();
 
-        public virtual CollaspingCategoryNode? CreateOverlayCategory(float width) => null;
+        public virtual CollaspingCategoryNode? CreateOverlayCategory
+        (
+            float width
+        ) => null;
 
         public virtual void DrawConfig() { }
 
         public abstract void Uninit();
 
-        protected static CollaspingCategoryNode CreateOverlayCategory(string title, float width, params NodeBase[] nodes)
+        protected static CollaspingCategoryNode CreateOverlayCategory
+        (
+            string            title,
+            float             width,
+            params NodeBase[] nodes
+        )
         {
             var contentNode = new VerticalListNode
             {
@@ -334,14 +355,19 @@ public unsafe partial class AutoRetainerWork : ModuleBase
             return categoryNode;
         }
 
-        protected static HorizontalFlexNode CreateOverlayButtonRow(Action startAction, Action stopAction, float width)
+        protected static HorizontalFlexNode CreateOverlayButtonRow
+        (
+            Action startAction,
+            Action stopAction,
+            float  width
+        )
         {
             var row = new HorizontalFlexNode
             {
                 IsVisible      = true,
                 Size           = new(width, 28f),
                 AlignmentFlags = FlexFlags.FitContentHeight | FlexFlags.FitWidth,
-                ItemSpacing    = 4,
+                ItemSpacing    = 4
             };
             row.AddNode
             (
@@ -393,7 +419,11 @@ public unsafe partial class AutoRetainerWork : ModuleBase
             return node;
         }
 
-        protected static TextNode CreateOverlayText(string text, float width)
+        protected static TextNode CreateOverlayText
+        (
+            string text,
+            float  width
+        )
         {
             var node = new TextNode
             {
@@ -478,7 +508,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         /// <summary>
         ///     根据条件类型获取特定的检查条件
         /// </summary>
-        public static PriceCheckCondition Get(AbortCondition condition) =>
+        public static PriceCheckCondition Get
+        (
+            AbortCondition condition
+        ) =>
             Conditions.FirstOrDefault(x => x.Condition == condition);
     }
 
@@ -506,7 +539,11 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     {
         public ItemKey() { }
 
-        public ItemKey(uint itemID, bool isHQ)
+        public ItemKey
+        (
+            uint itemID,
+            bool isHQ
+        )
         {
             ItemID = itemID;
             IsHQ   = isHQ;
@@ -515,7 +552,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         public uint ItemID { get; set; }
         public bool IsHQ   { get; set; }
 
-        public bool Equals(ItemKey? other)
+        public bool Equals
+        (
+            ItemKey? other
+        )
         {
             if (other is null || GetType() != other.GetType())
                 return false;
@@ -525,30 +565,45 @@ public unsafe partial class AutoRetainerWork : ModuleBase
 
         public override string ToString() => $"{ItemID}_{(IsHQ ? "HQ" : "NQ")}";
 
-        public override bool Equals(object? obj) => Equals(obj as ItemKey);
+        public override bool Equals
+        (
+            object? obj
+        ) => Equals(obj as ItemKey);
 
         public override int GetHashCode() => HashCode.Combine(ItemID, IsHQ);
 
-        public static bool operator ==(ItemKey? lhs, ItemKey? rhs)
+        public static bool operator ==
+        (
+            ItemKey? lhs,
+            ItemKey? rhs
+        )
         {
             if (lhs is null) return rhs is null;
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(ItemKey lhs, ItemKey rhs) => !(lhs == rhs);
+        public static bool operator !=
+        (
+            ItemKey lhs,
+            ItemKey rhs
+        ) => !(lhs == rhs);
     }
 
     private class ItemConfig : IEquatable<ItemConfig>
     {
         public ItemConfig() { }
 
-        public ItemConfig(uint itemID, bool isHQ)
+        public ItemConfig
+        (
+            uint itemID,
+            bool isHQ
+        )
         {
             ItemID = itemID;
             IsHQ   = isHQ;
-            ItemName = itemID == 0
-                           ? Lang.Get("AutoRetainerWork-PriceAdjust-CommonItemPreset")
-                           : LuminaGetter.GetRow<Item>(ItemID)?.Name.ToString() ?? string.Empty;
+            ItemName = itemID == 0 ?
+                           Lang.Get("AutoRetainerWork-PriceAdjust-CommonItemPreset") :
+                           LuminaGetter.GetRow<Item>(ItemID)?.Name.ToString() ?? string.Empty;
         }
 
         public uint   ItemID   { get; set; }
@@ -599,7 +654,10 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         /// </summary>
         public Dictionary<AbortCondition, AbortBehavior> AbortLogic { get; set; } = [];
 
-        public bool Equals(ItemConfig? other)
+        public bool Equals
+        (
+            ItemConfig? other
+        )
         {
             if (other is null || GetType() != other.GetType())
                 return false;
@@ -607,17 +665,28 @@ public unsafe partial class AutoRetainerWork : ModuleBase
             return ItemID == other.ItemID && IsHQ == other.IsHQ;
         }
 
-        public override bool Equals(object? obj) => Equals(obj as ItemConfig);
+        public override bool Equals
+        (
+            object? obj
+        ) => Equals(obj as ItemConfig);
 
         public override int GetHashCode() => HashCode.Combine(ItemID, IsHQ);
 
-        public static bool operator ==(ItemConfig? lhs, ItemConfig? rhs)
+        public static bool operator ==
+        (
+            ItemConfig? lhs,
+            ItemConfig? rhs
+        )
         {
             if (lhs is null) return rhs is null;
             return lhs.Equals(rhs);
         }
 
-        public static bool operator !=(ItemConfig lhs, ItemConfig rhs) => !(lhs == rhs);
+        public static bool operator !=
+        (
+            ItemConfig lhs,
+            ItemConfig rhs
+        ) => !(lhs == rhs);
     }
 
     #endregion

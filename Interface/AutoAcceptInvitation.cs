@@ -26,7 +26,7 @@ public unsafe class AutoAcceptInvitation : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["Fragile"]
     };
-    
+
     private Config config = null!;
 
     private string playerNameInput = string.Empty;
@@ -36,10 +36,10 @@ public unsafe class AutoAcceptInvitation : ModuleBase
         config = Config.Load(this) ?? new();
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnSelectYesno);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnSelectYesno);
-    
+
     protected override void ConfigUI()
     {
         ImGui.AlignTextToFramePadding();
@@ -50,7 +50,15 @@ public unsafe class AutoAcceptInvitation : ModuleBase
             config.Save(this);
 
         ImGui.SameLine();
-        ImGui.TextUnformatted(Lang.Get(config.Mode ? "Whitelist" : "Blacklist"));
+        ImGui.TextUnformatted
+        (
+            Lang.Get
+            (
+                config.Mode ?
+                    "Whitelist" :
+                    "Blacklist"
+            )
+        );
 
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{LuminaWrapper.GetAddonText(9818)}:");
 
@@ -65,13 +73,17 @@ public unsafe class AutoAcceptInvitation : ModuleBase
         using (ImRaii.Disabled
                (
                    string.IsNullOrWhiteSpace(playerNameInput) ||
-                   (config.Mode ? config.Whitelist : config.Blacklist).Contains(playerNameInput)
+                   (config.Mode ?
+                        config.Whitelist :
+                        config.Blacklist).Contains(playerNameInput)
                ))
         {
             if (ImGuiOm.ButtonIconWithText(FontAwesomeIcon.Plus, Lang.Get("Add")))
             {
                 if (!string.IsNullOrWhiteSpace(playerNameInput) &&
-                    (config.Mode ? config.Whitelist : config.Blacklist).Add(playerNameInput))
+                    (config.Mode ?
+                         config.Whitelist :
+                         config.Blacklist).Add(playerNameInput))
                 {
                     config.Save(this);
                     playerNameInput = string.Empty;
@@ -81,7 +93,9 @@ public unsafe class AutoAcceptInvitation : ModuleBase
 
         var playersToRemove = new List<string>();
 
-        foreach (var player in config.Mode ? config.Whitelist : config.Blacklist)
+        foreach (var player in config.Mode ?
+                                   config.Whitelist :
+                                   config.Blacklist)
         {
             using var id = ImRaii.PushId($"{player}");
 
@@ -97,12 +111,20 @@ public unsafe class AutoAcceptInvitation : ModuleBase
 
         if (playersToRemove.Count > 0)
         {
-            playersToRemove.ForEach(x => (config.Mode ? config.Whitelist : config.Blacklist).Remove(x));
+            playersToRemove.ForEach
+            (x => (config.Mode ?
+                       config.Whitelist :
+                       config.Blacklist).Remove(x)
+            );
             config.Save(this);
         }
     }
 
-    private void OnSelectYesno(AddonEvent type, AddonArgs args)
+    private void OnSelectYesno
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = (AddonSelectYesno*)SelectYesno;
         if (addon == null || DService.Instance().PartyList.Length > 1) return;
@@ -112,17 +134,25 @@ public unsafe class AutoAcceptInvitation : ModuleBase
 
         var playerName = ExtractPlayerName(text);
         if (string.IsNullOrWhiteSpace(playerName)) return;
-        if (config.Mode  && !config.Whitelist.Contains(playerName) ||
-            !config.Mode && config.Blacklist.Contains(playerName))
+        if ((config.Mode  && !config.Whitelist.Contains(playerName)) ||
+            (!config.Mode && config.Blacklist.Contains(playerName)))
             return;
 
         AddonSelectYesnoEvent.ClickYes();
     }
 
-    private static string ExtractPlayerName(string inputText) =>
-        Regex.Match(inputText, Pattern) is { Success: true, Groups.Count: > 1 } match ? match.Groups[1].Value : string.Empty;
+    private static string ExtractPlayerName
+    (
+        string inputText
+    ) =>
+        Regex.Match(inputText, Pattern) is { Success: true, Groups.Count: > 1 } match ?
+            match.Groups[1].Value :
+            string.Empty;
 
-    private static string BuildPattern(List<Payload> payloads)
+    private static string BuildPattern
+    (
+        List<Payload> payloads
+    )
     {
         var pattern = new StringBuilder();
 
@@ -146,10 +176,10 @@ public unsafe class AutoAcceptInvitation : ModuleBase
 
         public HashSet<string> Whitelist = new(StringComparer.OrdinalIgnoreCase);
     }
-    
+
     #region 常量
 
-    private static string Pattern { get; } = 
+    private static string Pattern { get; } =
         BuildPattern(LuminaGetter.GetRow<Addon>(120).GetValueOrDefault().Text.ToDalamudString().Payloads);
 
     #endregion

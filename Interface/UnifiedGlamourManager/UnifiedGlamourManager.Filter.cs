@@ -29,7 +29,10 @@ public unsafe partial class UnifiedGlamourManager
     private PlatePreset? selectedPreset;
 
 
-    private bool PassFilter(UnifiedItem item)
+    private bool PassFilter
+    (
+        UnifiedItem item
+    )
     {
         if (filterByCurrentPlateSlot && !CanItemUseInCurrentPlateSlot(item)) return false;
         if (enableLevelFilter        && (item.LevelEquip < minEquipLevel || item.LevelEquip > maxEquipLevel)) return false;
@@ -58,7 +61,10 @@ public unsafe partial class UnifiedGlamourManager
                item.SetPartLabel.Contains(text, StringComparison.OrdinalIgnoreCase);
     }
 
-    private bool PassJobFilter(UnifiedItem item)
+    private bool PassJobFilter
+    (
+        UnifiedItem item
+    )
     {
         if (selectedJobFilterIndex <= 0 || selectedJobFilterIndex >= JobFilterClassJobIDs.Length) return true;
 
@@ -71,7 +77,10 @@ public unsafe partial class UnifiedGlamourManager
         return result;
     }
 
-    private bool CanItemUseInCurrentPlateSlot(UnifiedItem item)
+    private bool CanItemUseInCurrentPlateSlot
+    (
+        UnifiedItem item
+    )
     {
         if (!TryGetReadyPlateEditor(out var agent)) return true;
 
@@ -84,7 +93,10 @@ public unsafe partial class UnifiedGlamourManager
         return result;
     }
 
-    private IEnumerable<UnifiedItem> ApplySort(IEnumerable<UnifiedItem> source) =>
+    private IEnumerable<UnifiedItem> ApplySort
+    (
+        IEnumerable<UnifiedItem> source
+    ) =>
         sortMode switch
         {
             SortMode.NameAsc  => source.OrderBy(x => x.Name),
@@ -108,9 +120,9 @@ public unsafe partial class UnifiedGlamourManager
     {
         if (!filterByCurrentPlateSlot) return;
 
-        var slot = TryGetReadyPlateEditor(out var agent)
-                       ? agent->Data->SelectedItemIndex
-                       : uint.MaxValue;
+        var slot = TryGetReadyPlateEditor(out var agent) ?
+                       agent->Data->SelectedItemIndex :
+                       uint.MaxValue;
         if (slot == lastFilterPlateSlot) return;
 
         lastFilterPlateSlot = slot;
@@ -128,7 +140,11 @@ public unsafe partial class UnifiedGlamourManager
         filteredItemsDirty = false;
     }
 
-    private void MarkFilteredItemsDirty(bool clearJobCache = false, bool clearPlateSlotCache = false)
+    private void MarkFilteredItemsDirty
+    (
+        bool clearJobCache       = false,
+        bool clearPlateSlotCache = false
+    )
     {
         filteredItemsDirty = true;
         if (clearJobCache) jobFilterCache.Clear();

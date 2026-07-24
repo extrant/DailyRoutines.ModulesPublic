@@ -84,7 +84,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfoCastBar);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfoBuffDebuff);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonCastBarEnemy);
-        
+
         targetHPTextNode?.Dispose();
         targetHPTextNode = null;
 
@@ -93,7 +93,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
 
         mainTargetSplitHPTextNode?.Dispose();
         mainTargetSplitHPTextNode = null;
-        
+
         focusTargetHPTextNode?.Dispose();
         focusTargetHPTextNode = null;
 
@@ -102,7 +102,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
 
         clearFocusButtonNode?.Dispose();
         clearFocusButtonNode = null;
-        
+
         targetSplitCastBarTextNode?.Dispose();
         targetSplitCastBarTextNode = null;
     }
@@ -385,13 +385,21 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         if (ImGui.IsItemDeactivatedAfterEdit())
             config.Save(this);
     }
-    
+
     #region 事件
 
-    private static void OnAddonCastBarEnemy(AddonEvent type, AddonArgs args) =>
+    private static void OnAddonCastBarEnemy
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) =>
         HandleAddonEventCastBarEnemy(type);
 
-    private void OnAddonTargetInfo(AddonEvent type, AddonArgs args)
+    private void OnAddonTargetInfo
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         HandleAddonEventTargetInfo
         (
@@ -433,7 +441,11 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         HandleAddonEventTargetStatus(type, TargetInfo, 32);
     }
 
-    private void OnAddonTargetInfoSplitTarget(AddonEvent type, AddonArgs args) =>
+    private void OnAddonTargetInfoSplitTarget
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) =>
         HandleAddonEventTargetInfo
         (
             type,
@@ -453,7 +465,11 @@ public unsafe class OptimizedTargetInfo : ModuleBase
             (width, height) => new Vector2(width - 5, height + 2)
         );
 
-    private void OnAddonFocusTargetInfo(AddonEvent type, AddonArgs args)
+    private void OnAddonFocusTargetInfo
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         HandleAddonEventTargetInfo
         (
@@ -495,7 +511,11 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         HandleAddonEventFocusTargetControl(type);
     }
 
-    private void OnAddonTargetInfoCastBar(AddonEvent type, AddonArgs args) =>
+    private void OnAddonTargetInfoCastBar
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) =>
         HandleAddonEventCastBar
         (
             type,
@@ -514,12 +534,19 @@ public unsafe class OptimizedTargetInfo : ModuleBase
             (width, height) => new Vector2(width - 5, height)
         );
 
-    private void OnAddonTargetInfoBuffDebuff(AddonEvent type, AddonArgs args) =>
+    private void OnAddonTargetInfoBuffDebuff
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) =>
         HandleAddonEventTargetStatus(type, TargetInfoBuffDebuff, 31);
 
     #endregion
-    
-    private void HandleAddonEventFocusTargetControl(AddonEvent type)
+
+    private void HandleAddonEventFocusTargetControl
+    (
+        AddonEvent type
+    )
     {
         switch (type)
         {
@@ -552,7 +579,12 @@ public unsafe class OptimizedTargetInfo : ModuleBase
     }
 
     // 状态
-    private void HandleAddonEventTargetStatus(AddonEvent type, AtkUnitBase* addon, int statusNodeStartIndex)
+    private void HandleAddonEventTargetStatus
+    (
+        AddonEvent   type,
+        AtkUnitBase* addon,
+        int          statusNodeStartIndex
+    )
     {
         if (!addon->IsAddonAndNodesReady()) return;
 
@@ -609,7 +641,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                     var node = addon->UldManager.NodeList[statusNodeStartIndex - i];
                     if (!node->IsVisible()) return;
 
-                    node->X = i * 25 + growingOffsetX;
+                    node->X = (i * 25) + growingOffsetX;
 
                     if (i < playerStatusCount)
                     {
@@ -628,7 +660,9 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                     node->DrawFlags |= 0x1;
                 }
 
-                var newSecondRowOffset = playerStatusCount > 0 ? (int)(config.StatusScale * 41) : 41;
+                var newSecondRowOffset = playerStatusCount > 0 ?
+                                             (int)(config.StatusScale * 41) :
+                                             41;
 
                 if (newSecondRowOffset != currentSecondRowOffset)
                 {
@@ -648,7 +682,10 @@ public unsafe class OptimizedTargetInfo : ModuleBase
     }
 
     // 敌人头上的小咏唱条
-    private static void HandleAddonEventCastBarEnemy(AddonEvent type)
+    private static void HandleAddonEventCastBarEnemy
+    (
+        AddonEvent type
+    )
     {
         if (!CastBarEnemy->IsAddonAndNodesReady()) return;
 
@@ -691,7 +728,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                 {
                     var componentNode = (AtkComponentNode*)nodeInfo.CastBarNode;
                     if (!componentNode->IsVisible()) continue;
-                    
+
                     var chara = CharacterManager.Instance()->LookupBattleCharaByEntityId(nodeInfo.ObjectId.ObjectId);
                     if (chara == null)
                         continue;
@@ -781,13 +818,19 @@ public unsafe class OptimizedTargetInfo : ModuleBase
 
                     textNode = new()
                     {
-                        IsVisible        = isEnabled,
-                        Position         = position,
-                        AlignmentType    = alignLeft ? AlignmentType.BottomLeft : AlignmentType.BottomRight,
-                        FontSize         = fontSize,
-                        TextFlags        = TextFlags.Edge | TextFlags.Bold,
-                        TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
-                        TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor
+                        IsVisible = isEnabled,
+                        Position  = position,
+                        AlignmentType = alignLeft ?
+                                            AlignmentType.BottomLeft :
+                                            AlignmentType.BottomRight,
+                        FontSize  = fontSize,
+                        TextFlags = TextFlags.Edge | TextFlags.Bold,
+                        TextColor = customColor.W != 0 ?
+                                        customColor :
+                                        sourceTextNode->TextColor.ToVector4(),
+                        TextOutlineColor = outlineColor.W == 0 ?
+                                               sourceTextNode->EdgeColor.ToVector4() :
+                                               outlineColor
                     };
 
                     textNode.AttachNode(gauge->OwnerNode);
@@ -811,12 +854,18 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                     var gauge = addon->GetComponentByNodeId(gaugeNodeID);
                     if (gauge == null) return;
 
-                    textNode.Position         = position;
-                    textNode.Size             = getSizeFunc(gauge->OwnerNode->Width, gauge->OwnerNode->Height);
-                    textNode.AlignmentType    = alignLeft ? AlignmentType.BottomLeft : AlignmentType.BottomRight;
-                    textNode.FontSize         = fontSize;
-                    textNode.TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
-                    textNode.TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor;
+                    textNode.Position = position;
+                    textNode.Size     = getSizeFunc(gauge->OwnerNode->Width, gauge->OwnerNode->Height);
+                    textNode.AlignmentType = alignLeft ?
+                                                 AlignmentType.BottomLeft :
+                                                 AlignmentType.BottomRight;
+                    textNode.FontSize = fontSize;
+                    textNode.TextColor = customColor.W != 0 ?
+                                             customColor :
+                                             sourceTextNode->TextColor.ToVector4();
+                    textNode.TextOutlineColor = outlineColor.W == 0 ?
+                                                    sourceTextNode->EdgeColor.ToVector4() :
+                                                    outlineColor;
 
                     textNode.String = string.Format
                     (
@@ -890,14 +939,20 @@ public unsafe class OptimizedTargetInfo : ModuleBase
 
                     textNode = new()
                     {
-                        IsVisible        = isEnabled,
-                        Position         = position + new Vector2(4, -12),
-                        AlignmentType    = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight,
-                        FontSize         = fontSize,
-                        TextFlags        = TextFlags.Edge | TextFlags.Bold,
-                        TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4(),
-                        TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor,
-                        FontType         = FontType.Miedinger
+                        IsVisible = isEnabled,
+                        Position  = position + new Vector2(4, -12),
+                        AlignmentType = alignLeft ?
+                                            AlignmentType.TopLeft :
+                                            AlignmentType.TopRight,
+                        FontSize  = fontSize,
+                        TextFlags = TextFlags.Edge | TextFlags.Bold,
+                        TextColor = customColor.W != 0 ?
+                                        customColor :
+                                        sourceTextNode->TextColor.ToVector4(),
+                        TextOutlineColor = outlineColor.W == 0 ?
+                                               sourceTextNode->EdgeColor.ToVector4() :
+                                               outlineColor,
+                        FontType = FontType.Miedinger
                     };
 
                     textNode.AttachNode(addon->GetNodeById(nodeIDToAttach));
@@ -924,12 +979,18 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                     actionProgressBorderNode->ToggleVisibility(textNode.IsVisible);
                     if (!textNode.IsVisible) return;
 
-                    textNode.Position         = position + new Vector2(4, -12);
-                    textNode.Size             = getSizeFunc(sourceTextNode->Width, sourceTextNode->Height);
-                    textNode.AlignmentType    = alignLeft ? AlignmentType.TopLeft : AlignmentType.TopRight;
-                    textNode.FontSize         = fontSize;
-                    textNode.TextColor        = customColor.W  != 0 ? customColor : sourceTextNode->TextColor.ToVector4();
-                    textNode.TextOutlineColor = outlineColor.W == 0 ? sourceTextNode->EdgeColor.ToVector4() : outlineColor;
+                    textNode.Position = position + new Vector2(4, -12);
+                    textNode.Size     = getSizeFunc(sourceTextNode->Width, sourceTextNode->Height);
+                    textNode.AlignmentType = alignLeft ?
+                                                 AlignmentType.TopLeft :
+                                                 AlignmentType.TopRight;
+                    textNode.FontSize = fontSize;
+                    textNode.TextColor = customColor.W != 0 ?
+                                             customColor :
+                                             sourceTextNode->TextColor.ToVector4();
+                    textNode.TextOutlineColor = outlineColor.W == 0 ?
+                                                    sourceTextNode->EdgeColor.ToVector4() :
+                                                    outlineColor;
 
                     textNode.String = $"{leftCastTime:F2}";
                     if (target.CastActionType == ActionType.Action)
@@ -940,7 +1001,11 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         }
     }
 
-    private string FormatNumber(uint num, DisplayFormat? displayFormat = null)
+    private string FormatNumber
+    (
+        uint           num,
+        DisplayFormat? displayFormat = null
+    )
     {
         displayFormat ??= config.DisplayFormat;
 
@@ -958,9 +1023,13 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                 var (divisor, unit) = num switch
                 {
                     >= 1_0000_0000 => (1_0000_0000f,
-                                          GameState.ClientLanguge is Language.ChineseTraditional or Language.Japanese or Language.TraditionalChinese ? "億" : "亿"),
-                    >= 1_0000 => (1_0000f, GameState.ClientLanguge is Language.ChineseTraditional or Language.TraditionalChinese ? "萬" : "万"),
-                    _         => (1f, string.Empty)
+                                          GameState.ClientLanguge is Language.ChineseTraditional or Language.Japanese or Language.TraditionalChinese ?
+                                              "億" :
+                                              "亿"),
+                    >= 1_0000 => (1_0000f, GameState.ClientLanguge is Language.ChineseTraditional or Language.TraditionalChinese ?
+                                               "萬" :
+                                               "万"),
+                    _ => (1f, string.Empty)
                 };
 
                 var value = num / divisor;
@@ -1036,7 +1105,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
         public bool  StatusIsEnabled = true;
         public float StatusScale     = 1.4f;
     }
-    
+
     private enum DisplayFormat
     {
         FullNumber,

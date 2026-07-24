@@ -3,13 +3,11 @@ using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using Dalamud.Game.Gui;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
@@ -31,9 +29,16 @@ public unsafe class AutoTenChiJin : ModuleBase
         Category    = ModuleCategory.Action
     };
 
-    private static readonly CompSig                     IsSlotUsableSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 0F B6 F2 48 8B D9 41 8B F8");
-    private delegate        byte                        IsSlotUsableDelegate(RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint id);
-    private                 Hook<IsSlotUsableDelegate>? IsSlotUsableHook;
+    private static readonly CompSig IsSlotUsableSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 0F B6 F2 48 8B D9 41 8B F8");
+
+    private delegate byte IsSlotUsableDelegate
+    (
+        RaptureHotbarModule.HotbarSlot*    slot,
+        RaptureHotbarModule.HotbarSlotType type,
+        uint                               id
+    );
+
+    private Hook<IsSlotUsableDelegate>? IsSlotUsableHook;
 
     private Config                         cofig = null!;
     private AddonDRNinJutsuActionsPreview? addon;
@@ -42,8 +47,8 @@ public unsafe class AutoTenChiJin : ModuleBase
 
     protected override void Init()
     {
-        cofig =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 2_000 };
+        cofig      =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 2_000 };
 
         addon ??= new()
         {
@@ -58,7 +63,7 @@ public unsafe class AutoTenChiJin : ModuleBase
         IsSlotUsableHook ??= IsSlotUsableSig.GetHook<IsSlotUsableDelegate>(IsSlotUsableDetour);
         IsSlotUsableHook.Enable();
     }
-    
+
     protected override void Uninit()
     {
         ResetRuntimeState();
@@ -81,11 +86,11 @@ public unsafe class AutoTenChiJin : ModuleBase
             ImGui.SameLine();
             DrawModeOption(TenChiJinMode.Manual, Lang.Get("ManualMode"));
         }
-        
+
         if (cofig.Mode == TenChiJinMode.Auto)
         {
             ImGui.NewLine();
-            
+
             if (ImGui.Button(Lang.Get("AutoTenChiJin-OpenNijutsuActionsAddon")))
                 addon.Toggle();
 
@@ -99,7 +104,11 @@ public unsafe class AutoTenChiJin : ModuleBase
         }
     }
 
-    private void DrawModeOption(TenChiJinMode mode, string label)
+    private void DrawModeOption
+    (
+        TenChiJinMode mode,
+        string        label
+    )
     {
         if (!ImGui.RadioButton(label, cofig.Mode == mode))
             return;
@@ -112,7 +121,12 @@ public unsafe class AutoTenChiJin : ModuleBase
         cofig.Save(this);
     }
 
-    private byte IsSlotUsableDetour(RaptureHotbarModule.HotbarSlot* slot, RaptureHotbarModule.HotbarSlotType type, uint id)
+    private byte IsSlotUsableDetour
+    (
+        RaptureHotbarModule.HotbarSlot*    slot,
+        RaptureHotbarModule.HotbarSlotType type,
+        uint                               id
+    )
     {
         if (cofig.Mode != TenChiJinMode.Auto || type != RaptureHotbarModule.HotbarSlotType.Action || !NinjutsuActions.Contains(id))
             return IsSlotUsableHook!.Original(slot, type, id);
@@ -122,7 +136,9 @@ public unsafe class AutoTenChiJin : ModuleBase
             return 0;
 
         if (localPlayer->StatusManager.HasStatus(1186))
-            return (byte)(TenChiJinSequence.ContainsKey(id) ? 1 : 0);
+            return (byte)(TenChiJinSequence.ContainsKey(id) ?
+                              1 :
+                              0);
 
         var actionManager = ActionManager.Instance();
         var charges       = actionManager->GetCurrentCharges(2261);
@@ -132,7 +148,9 @@ public unsafe class AutoTenChiJin : ModuleBase
         slot->CostDisplayMode = 1;
         slot->CostValue       = (uint)(charges != 0 ? charges : cooldownLeft <= 1 ? 1 : cooldownLeft);
 
-        return (byte)(charges > 0 || localPlayer->StatusManager.HasStatus(497) ? 1 : 0);
+        return (byte)(charges > 0 || localPlayer->StatusManager.HasStatus(497) ?
+                          1 :
+                          0);
     }
 
     private void OnPreUseAction
@@ -187,7 +205,13 @@ public unsafe class AutoTenChiJin : ModuleBase
             EnqueueAutomaticSequence(actionID);
     }
 
-    private void OnPreSendActionPacket(ref bool isPrevented, int opcode, ref nint packet, ref bool isPrioritize)
+    private void OnPreSendActionPacket
+    (
+        ref bool isPrevented,
+        int      opcode,
+        ref nint packet,
+        ref bool isPrioritize
+    )
     {
         if (cofig.Mode != TenChiJinMode.Manual || opcode != UpstreamOpcode.UseActionOpcode)
             return;
@@ -200,7 +224,7 @@ public unsafe class AutoTenChiJin : ModuleBase
         if (MudraStartActions.Contains(data->ActionID))
         {
             usedMudraActions.Clear();
-            usedMudraActions.Add(data->ActionID % 2259 / 2 + 18805);
+            usedMudraActions.Add((data->ActionID % 2259 / 2) + 18805);
             return;
         }
 
@@ -215,7 +239,10 @@ public unsafe class AutoTenChiJin : ModuleBase
             usedMudraActions.Clear();
     }
 
-    private void EnqueueAutomaticSequence(uint actionID)
+    private void EnqueueAutomaticSequence
+    (
+        uint actionID
+    )
     {
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null)
@@ -262,8 +289,10 @@ public unsafe class AutoTenChiJin : ModuleBase
         {
             if (index == 0)
             {
-                var kassatsuMudraActionID = mudraActionID % 2259 / 2 + 18805;
-                var actualMudraActionID   = isKassatsuActive ? kassatsuMudraActionID : mudraActionID;
+                var kassatsuMudraActionID = (mudraActionID % 2259 / 2) + 18805;
+                var actualMudraActionID = isKassatsuActive ?
+                                              kassatsuMudraActionID :
+                                              mudraActionID;
 
                 TaskHelper.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, actualMudraActionID) == 0);
                 TaskHelper.Enqueue(() => SendMudraAction(localPlayer, actualMudraActionID));
@@ -279,7 +308,9 @@ public unsafe class AutoTenChiJin : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                var finalActionID = !isKassatsuActive || !hasKassatsuReplacement ? actionID : kassatsuActionID;
+                var finalActionID = !isKassatsuActive || !hasKassatsuReplacement ?
+                                        actionID :
+                                        kassatsuActionID;
                 return ActionManager.Instance()->GetAdjustedActionId(2260) == finalActionID;
             }
         );
@@ -287,26 +318,35 @@ public unsafe class AutoTenChiJin : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                var finalActionID = !isKassatsuActive || !hasKassatsuReplacement ? actionID : kassatsuActionID;
+                var finalActionID = !isKassatsuActive || !hasKassatsuReplacement ?
+                                        actionID :
+                                        kassatsuActionID;
                 return UseActionManager.Instance().UseActionLocation
                 (
                     ActionType.Action,
                     finalActionID,
-                    row.CanTargetHostile && TargetManager.Target is { } target
-                        ? target.EntityID
-                        : localPlayer->EntityId
+                    row.CanTargetHostile && TargetManager.Target is { } target ?
+                        target.EntityID :
+                        localPlayer->EntityId
                 );
             }
         );
     }
 
-    private void NotifyNinjutsu(uint actionID)
+    private void NotifyNinjutsu
+    (
+        uint actionID
+    )
     {
         if (cofig.SendNotification)
             NotifyHelper.Instance().NotificationInfo(Lang.Get("AutoTenChiJin-Notification", LuminaWrapper.GetActionName(actionID)));
     }
 
-    private static bool SendMudraAction(BattleChara* localPlayer, uint actionID)
+    private static bool SendMudraAction
+    (
+        BattleChara* localPlayer,
+        uint         actionID
+    )
     {
         new UseActionPacket(ActionType.Action, actionID, localPlayer->EntityId, localPlayer->Rotation).Send();
         ActionManager.Instance()->StartCooldown(ActionType.Action, actionID);
@@ -318,10 +358,14 @@ public unsafe class AutoTenChiJin : ModuleBase
         usedMudraActions.Clear();
         TaskHelper?.Abort();
     }
-    
+
     private sealed class AddonDRNinJutsuActionsPreview : NativeAddon
     {
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             var flexGrid = new HorizontalFlexNode
             {
@@ -375,7 +419,7 @@ public unsafe class AutoTenChiJin : ModuleBase
 
     #region 预设数据
 
-    private static readonly FrozenDictionary<uint, uint[]> NormalSequence = new Dictionary<uint, uint[]>()
+    private static readonly FrozenDictionary<uint, uint[]> NormalSequence = new Dictionary<uint, uint[]>
     {
         // 风魔手里剑 → 天
         [2265] = [2259],
@@ -393,7 +437,7 @@ public unsafe class AutoTenChiJin : ModuleBase
         [2271] = [2259, 18806, 18807]
     }.ToFrozenDictionary();
 
-    private static readonly FrozenDictionary<uint, uint> Kassatsu = new Dictionary<uint, uint>()
+    private static readonly FrozenDictionary<uint, uint> Kassatsu = new Dictionary<uint, uint>
     {
         // 火遁 → 劫火灭却之术
         [2266] = 16491,
@@ -401,7 +445,7 @@ public unsafe class AutoTenChiJin : ModuleBase
         [2268] = 16492
     }.ToFrozenDictionary();
 
-    private static readonly FrozenDictionary<uint, uint[]> TenChiJinSequence = new Dictionary<uint, uint[]>()
+    private static readonly FrozenDictionary<uint, uint[]> TenChiJinSequence = new Dictionary<uint, uint[]>
     {
         // 风遁 → 人地天
         [2269] = [18875, 18877, 18879],

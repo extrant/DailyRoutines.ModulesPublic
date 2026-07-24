@@ -24,7 +24,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     private bool       isDutyEnd;
@@ -66,7 +66,10 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         ClearResources();
 
@@ -92,7 +95,11 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         );
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag                             != ConditionFlag.InCombat ||
             GameState.ContentFinderCondition == 0                      ||
@@ -108,7 +115,11 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         // 不应该吧
         var agent = AgentHUD.Instance();
@@ -156,7 +167,10 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         }
     }
 
-    private void OnDutyComplete(IDutyStateEventArgs args) =>
+    private void OnDutyComplete
+    (
+        IDutyStateEventArgs args
+    ) =>
         isDutyEnd = true;
 
     private void CheckStopwatchAndRelay()
@@ -173,12 +187,16 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         if (config.SendChat)
             NotifyHelper.Instance().Chat($"{message} {Lang.Get("AutoNotifyCutsceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime.TotalSeconds:F0}")}");
         if (config.SendNotification)
-            NotifyHelper.Instance().NotificationInfo($"{message} {Lang.Get("AutoNotifyCutsceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime.TotalSeconds:F0}")}");
+            NotifyHelper.Instance().NotificationInfo
+                ($"{message} {Lang.Get("AutoNotifyCutsceneEnd-NotificationMessage-WaitSeconds", $"{elapsedTime.TotalSeconds:F0}")}");
         if (config.SendTTS)
             NotifyHelper.Speak(message);
     }
 
-    private static bool IsAnyPartyMemberWatchingCutscene(AgentHUD* agent)
+    private static bool IsAnyPartyMemberWatchingCutscene
+    (
+        AgentHUD* agent
+    )
     {
         if (agent == null) return false;
 

@@ -36,7 +36,11 @@ public unsafe partial class CustomizeMapMarker
         private int  totalPages;
         private bool isRebuilding;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             mapNameText = new()
             {
@@ -102,7 +106,10 @@ public unsafe partial class CustomizeMapMarker
             BuildList();
         }
 
-        protected override void OnUpdate(AtkUnitBase* addon)
+        protected override void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             var mapID = AgentMap.Instance()->SelectedMapId;
             if (mapID == currentMapID) return;
@@ -113,7 +120,10 @@ public unsafe partial class CustomizeMapMarker
             BuildList();
         }
 
-        protected override void OnFinalize(AtkUnitBase* addon)
+        protected override void OnFinalize
+        (
+            AtkUnitBase* addon
+        )
         {
             groupPages.Clear();
             scrollArea         = null;
@@ -218,14 +228,21 @@ public unsafe partial class CustomizeMapMarker
             }
         }
 
-        private MarkerListEntry CreateMarkerEntry(MarkerRecord marker) => new()
+        private MarkerListEntry CreateMarkerEntry
+        (
+            MarkerRecord marker
+        ) => new()
         {
             Marker      = marker,
             OpenMarker  = () => module.markerDetailsAddon?.OpenMarker(marker.ID),
             SetGameFlag = () => SetGameFlag(marker)
         };
 
-        private static TextButtonNode CreatePageButton(string text, Action? onClick = null) => new()
+        private static TextButtonNode CreatePageButton
+        (
+            string  text,
+            Action? onClick = null
+        ) => new()
         {
             String  = text,
             Size    = new(36, 24),
@@ -240,13 +257,20 @@ public unsafe partial class CustomizeMapMarker
             AlignmentType = AlignmentType.Left
         };
 
-        private void ShowPage(int page)
+        private void ShowPage
+        (
+            int page
+        )
         {
             currentPage = Math.Clamp(page, 0, totalPages - 1);
             BuildList();
         }
 
-        private void ShowGroupPage(string group, int page)
+        private void ShowGroupPage
+        (
+            string group,
+            int    page
+        )
         {
             groupPages[group] = page;
             BuildList();
@@ -264,13 +288,14 @@ public unsafe partial class CustomizeMapMarker
             pageIndicator.String         = $"{currentPage + 1} / {totalPages}";
         }
 
-        private void ExportGroup(string group)
-        {
+        private void ExportGroup
+        (
+            string group
+        ) =>
             ExportMarkers
             (
                 module.config.Markers.Where(marker => marker.MapID == currentMapID && marker.Group == group)
             );
-        }
 
         private sealed class MarkerListEntry
         {
@@ -355,7 +380,10 @@ public unsafe partial class CustomizeMapMarker
                 groupCountText.Size = new(Math.Max(0, Width - 34), Height);
             }
 
-            protected override void SetNodeData(MarkerListEntry itemData)
+            protected override void SetNodeData
+            (
+                MarkerListEntry itemData
+            )
             {
                 var isExport     = itemData.IsExport;
                 var isPagination = itemData.IsPagination;

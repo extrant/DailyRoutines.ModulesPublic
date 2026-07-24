@@ -16,15 +16,23 @@ public class SoundEffectThrottler : ModuleBase
         Description = Lang.Get("SoundEffectThrottlerDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private static readonly CompSig                        PlaySoundEffectSig = new("E9 ?? ?? ?? ?? C6 41 28 01");
-    private delegate        void                           PlaySoundEffectDelegate(uint sound, nint a2, nint a3, byte a4);
-    private                 Hook<PlaySoundEffectDelegate>? PlaySoundEffectHook;
+
+    private static readonly CompSig PlaySoundEffectSig = new("E9 ?? ?? ?? ?? C6 41 28 01");
+
+    private delegate void PlaySoundEffectDelegate
+    (
+        uint sound,
+        nint a2,
+        nint a3,
+        byte a4
+    );
+
+    private Hook<PlaySoundEffectDelegate>? PlaySoundEffectHook;
 
     private Config? config;
 
     private long lastPlayTick;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -43,10 +51,17 @@ public class SoundEffectThrottler : ModuleBase
             config.Throttle = Math.Max(100, config.Throttle);
             config.Save(this);
         }
+
         ImGuiOm.HelpMarker(Lang.Get("SoundEffectThrottler-ThrottleHelp", config.Throttle));
     }
 
-    private void PlaySoundEffectDetour(uint sound, nint a2, nint a3, byte a4)
+    private void PlaySoundEffectDetour
+    (
+        uint sound,
+        nint a2,
+        nint a3,
+        byte a4
+    )
     {
         var se = sound - 36;
 
@@ -59,7 +74,7 @@ public class SoundEffectThrottler : ModuleBase
                     PlaySoundEffectHook.Original(sound, a2, a3, a4);
                     return;
                 }
-                
+
                 if (Throttler.Shared.Throttle($"SoundEffectThrottler.SoundEffect{se}", config.Throttle))
                 {
                     PlaySoundEffectHook.Original(sound, a2, a3, a4);
@@ -72,7 +87,7 @@ public class SoundEffectThrottler : ModuleBase
                 break;
         }
     }
-    
+
     private class Config : ModuleConfig
     {
         public uint Throttle = 1000;

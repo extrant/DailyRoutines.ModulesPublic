@@ -21,7 +21,7 @@ public unsafe class AutoClaimPVPRewards : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private AtkEventWrapper? claimAllEvent;
 
     protected override void Init()
@@ -37,12 +37,16 @@ public unsafe class AutoClaimPVPRewards : ModuleBase
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         claimAllEvent?.Dispose();
         claimAllEvent = null;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -93,7 +97,7 @@ public unsafe class AutoClaimPVPRewards : ModuleBase
                 closeButton->SetEnabledState(!TaskHelper.IsBusy);
 
                 break;
-            
+
             case AddonEvent.PreFinalize:
                 claimAllEvent = null;
                 break;

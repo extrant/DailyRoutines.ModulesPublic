@@ -30,7 +30,7 @@ public partial class CustomizeMapMarker
 
     private sealed class MarkerPackage
     {
-        public int Version { get; set; } = 1;
+        public int                Version { get; set; } = 1;
         public List<MarkerRecord> Markers { get; set; } = [];
     }
 }

@@ -21,7 +21,7 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
         Description = Lang.Get("AutoDesynthesizeItemsDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     private Config config = null!;
 
     private HorizontalListNode? layoutNode;
@@ -53,8 +53,12 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
         layoutNode?.Dispose();
         layoutNode = null;
     }
-    
-    private void OnAddonList(AddonEvent type, AddonArgs? args)
+
+    private void OnAddonList
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -92,7 +96,7 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
                         Position  = new(-33, 8),
                         Alignment = HorizontalListAnchor.Right
                     };
-                    
+
                     layoutNode.AddNode([buttonNode, checkboxNode]);
                     layoutNode.AttachNode(SalvageItemSelector->RootNode);
                 }
@@ -123,7 +127,11 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
         }
     }
 
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!Throttler.Shared.Throttle("AutoDesynthesizeItems-Process", 100)) return;
         if (!SalvageDialog->IsAddonAndNodesReady()) return;
@@ -152,6 +160,7 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
         }
 
         var itemCount = SalvageItemSelector->AtkValues[9].Int;
+
         if (itemCount == 0)
         {
             TaskHelper.Abort();
@@ -160,7 +169,8 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
 
         for (var i = 0; i < itemCount; i++)
         {
-            var itemName = SalvageItemSelector->AtkValues[i * 8 + 14].String.ToString();
+            var itemName = SalvageItemSelector->AtkValues[(i * 8) + 14].String.ToString();
+
             if (config.SkipWhenHQ)
             {
                 if (itemName.Contains('\ue03c')) // HQ 符号
@@ -175,7 +185,7 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
         TaskHelper.Abort();
         return true;
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool SkipWhenHQ;

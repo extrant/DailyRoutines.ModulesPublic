@@ -20,11 +20,14 @@ public class AutoNotifyDutyStart : ModuleBase
 
     protected override void Init() =>
         DService.Instance().DutyState.DutyStarted += OnDutyStart;
-    
+
     protected override void Uninit() =>
         DService.Instance().DutyState.DutyStarted -= OnDutyStart;
 
-    private static void OnDutyStart(IDutyStateEventArgs args)
+    private static void OnDutyStart
+    (
+        IDutyStateEventArgs args
+    )
     {
         var message = Lang.Get("AutoNotifyDutyStart-NotificationMessage");
         NotifyHelper.Instance().NotificationInfo(message);

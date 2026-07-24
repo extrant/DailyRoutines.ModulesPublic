@@ -19,13 +19,13 @@ public unsafe class AutoPeloton : ModuleBase
         Category    = ModuleCategory.Action,
         Author      = ["yamiYori"]
     };
-    
+
     private Config config = null!;
 
     protected override void Init()
     {
-        TaskHelper   ??= new();
-        config =   Config.Load(this) ?? new();
+        TaskHelper ??= new();
+        config     =   Config.Load(this) ?? new();
 
         LocalPlayerState.Instance().PlayerMoveStateChanged += OnMoveStateChanged;
         CharacterStatusManager.Instance().RegLose(OnLoseStatus);
@@ -46,7 +46,14 @@ public unsafe class AutoPeloton : ModuleBase
             config.Save(this);
     }
 
-    private void OnLoseStatus(IBattleChara player, ushort id, ushort param, ushort stackCount, ulong sourceID)
+    private void OnLoseStatus
+    (
+        IBattleChara player,
+        ushort       id,
+        ushort       param,
+        ushort       stackCount,
+        ulong        sourceID
+    )
     {
         if (player.Address != LocalPlayerState.Object?.Address) return;
         if (id != 1199 && id != 50) return;
@@ -54,7 +61,10 @@ public unsafe class AutoPeloton : ModuleBase
         CheckAndUsePeloton();
     }
 
-    private void OnMoveStateChanged(bool isMoving)
+    private void OnMoveStateChanged
+    (
+        bool isMoving
+    )
     {
         if (!isMoving) return;
         CheckAndUsePeloton();
@@ -105,10 +115,10 @@ public unsafe class AutoPeloton : ModuleBase
         public bool DisableInWalk = true;
         public bool OnlyInDuty    = true;
     }
-    
+
     #region 常量
-    
+
     private const uint PELOTONING_ACTION_ID = 7557;
-    
+
     #endregion
 }

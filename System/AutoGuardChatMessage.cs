@@ -29,7 +29,11 @@ public class AutoGuardChatMessage : ModuleBase
     protected override void Uninit() =>
         ChatManager.Instance().Unreg(OnPreExecuteCommandInner);
 
-    private void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
         if (message.ExtractText().StartsWith('/')) return;
 
@@ -47,7 +51,7 @@ public class AutoGuardChatMessage : ModuleBase
                    .AddUiForegroundOff()
                    .Add(RawPayload.LinkTerminator)
                    .AddText("]");
-            
+
             // TODO: 改成 ReadOnlyString
             NotifyHelper.Instance().Chat(builder.Build().Encode());
         }

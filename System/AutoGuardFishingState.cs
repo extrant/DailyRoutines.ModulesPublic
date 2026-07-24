@@ -23,7 +23,7 @@ public class AutoGuardFishingState : ModuleBase
         ),
         Category = ModuleCategory.System
     };
-    
+
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init()
@@ -31,14 +31,14 @@ public class AutoGuardFishingState : ModuleBase
         ExecuteCommandManager.Instance().RegPre(OnPreCommand);
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
     }
-    
+
     protected override void Uninit()
     {
         ExecuteCommandManager.Instance().Unreg(OnPreCommand);
         UseActionManager.Instance().Unreg(OnPreUseAction);
     }
 
-    protected override void ConfigUI() => 
+    protected override void ConfigUI() =>
         ImGuiOm.ConflictKeyText();
 
     private static void OnPreUseAction

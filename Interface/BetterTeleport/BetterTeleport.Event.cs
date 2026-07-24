@@ -37,7 +37,11 @@ public unsafe partial class BetterTeleport
         ToggleDefaultPage();
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim();
 
@@ -74,7 +78,11 @@ public unsafe partial class BetterTeleport
 
         return;
 
-        static int CompareCommandResult(AetheryteRecord a, AetheryteRecord b)
+        static int CompareCommandResult
+        (
+            AetheryteRecord a,
+            AetheryteRecord b
+        )
         {
             var byAetheryte = b.IsAetheryte.CompareTo(a.IsAetheryte);
             if (byAetheryte != 0) return byAetheryte;
@@ -83,7 +91,11 @@ public unsafe partial class BetterTeleport
         }
     }
 
-    private void OnPreInputIDPressed(ref bool? overrideResult, ref InputId id)
+    private void OnPreInputIDPressed
+    (
+        ref bool?   overrideResult,
+        ref InputId id
+    )
     {
         if (!Overlay.IsOpen && !fullWindow.IsOpen)
             return;

@@ -33,6 +33,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         float     worldZ,
         uint      iconID = 60561
     );
+
     private Hook<SetFlagMarkerDelegate>? SetFlagMarkerHook;
 
     private Hook<AgentReceiveEventDelegate>? AgentMapReceiveEventHook;
@@ -74,7 +75,15 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
             config.Save(this);
     }
 
-    private void SetFlagMarkerDetour(AgentMap* agent, uint zoneID, uint mapID, float worldX, float worldZ, uint iconID = 60561)
+    private void SetFlagMarkerDetour
+    (
+        AgentMap* agent,
+        uint      zoneID,
+        uint      mapID,
+        float     worldX,
+        float     worldZ,
+        uint      iconID = 60561
+    )
     {
         SetFlagMarkerHook.Original(agent, zoneID, mapID, worldX, worldZ, iconID);
         if (mapID != DService.Instance().ClientState.MapId || iconID != 60561) return;
@@ -82,7 +91,14 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         OnZoneChanged(0);
     }
 
-    private AtkValue* AgentMapReceiveEventDetour(AgentInterface* agent, AtkValue* returnValues, AtkValue* values, uint valueCount, ulong eventKind)
+    private AtkValue* AgentMapReceiveEventDetour
+    (
+        AgentInterface* agent,
+        AtkValue*       returnValues,
+        AtkValue*       values,
+        uint            valueCount,
+        ulong           eventKind
+    )
     {
         var ret = AgentMapReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
 
@@ -92,7 +108,10 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         return ret;
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         if (!IsFlagMarkerValid()) return;
 
@@ -116,11 +135,11 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
 
                 foreach (var fieldMarkerPoint in Enum.GetValues<FieldMarkerPoint>())
                 {
-                    var targetPos  = flagPos.ToVector3(currentY - 2 + counter * 5);
+                    var targetPos  = flagPos.ToVector3(currentY - 2 + (counter * 5));
                     var currentPos = fieldMarkerPoint.GetPosition();
                     if (Vector3.DistanceSquared(targetPos, currentPos) <= 9) continue;
 
-                    MarkingController.Instance()->PlaceFieldMarkerLocal(fieldMarkerPoint, flagPos.ToVector3(currentY - 2 + counter * 5));
+                    MarkingController.Instance()->PlaceFieldMarkerLocal(fieldMarkerPoint, flagPos.ToVector3(currentY - 2 + (counter * 5)));
                     counter++;
                 }
             }
@@ -138,7 +157,10 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
             instance->FieldMarkers.Clear();
     }
 
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (!config.ConstantlyUpdate) return;
 
@@ -158,13 +180,13 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
             var flagPos  = new Vector2(agent->FlagMapMarkers[0].XFloat, agent->FlagMapMarkers[0].YFloat);
             var currentY = DService.Instance().ObjectTable.LocalPlayer?.Position.Y ?? 0;
 
-            var targetPos  = flagPos.ToVector3(currentY - 2 + counter * 5);
+            var targetPos  = flagPos.ToVector3(currentY - 2 + (counter * 5));
             var currentPos = fieldMarkerPoint.GetPosition();
 
             if (Vector3.DistanceSquared(targetPos, currentPos) <= 9 && MarkingController.Instance()->FieldMarkers[(int)fieldMarkerPoint].Active)
                 continue;
 
-            MarkingController.Instance()->PlaceFieldMarkerLocal(fieldMarkerPoint, flagPos.ToVector3(currentY - 2 + counter * 5));
+            MarkingController.Instance()->PlaceFieldMarkerLocal(fieldMarkerPoint, flagPos.ToVector3(currentY - 2 + (counter * 5)));
 
             counter++;
         }

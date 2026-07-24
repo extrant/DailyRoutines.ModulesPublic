@@ -25,11 +25,14 @@ public class AutoGathererRoleActions : ModuleBase
         DService.Instance().ClientState.ClassJobChanged += OnJobChanged;
         OnJobChanged(LocalPlayerState.ClassJob);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ClientState.ClassJobChanged -= OnJobChanged;
 
-    private unsafe void OnJobChanged(uint jobID)
+    private unsafe void OnJobChanged
+    (
+        uint jobID
+    )
     {
         TaskHelper.Abort();
         if (!ValidJobs.Contains(jobID)) return;
@@ -72,16 +75,16 @@ public class AutoGathererRoleActions : ModuleBase
     private static readonly FrozenSet<uint> ValidJobs = [16, 17, 18];
 
     // ActionID - StatusID
-    private static readonly FrozenDictionary<uint, uint> Actions = new Dictionary<uint, uint>()
+    private static readonly FrozenDictionary<uint, uint> Actions = new Dictionary<uint, uint>
     {
         // 矿脉勘探
-        [227] = 225,
+        [227]  = 225,
         // 三角测量
-        [210] = 217,
+        [210]  = 217,
         // 山岳之相
-        [238] = 222,
+        [238]  = 222,
         // 丛林之相
-        [221] = 221,
+        [221]  = 221,
         // 鱼群测定
         [7903] = 1166,
         // 海洋之相

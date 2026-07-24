@@ -1,16 +1,12 @@
 using System.Collections.Frozen;
-using System.Numerics;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using KamiToolKit.Classes;
 using OmenTools.Interop.Game.Lumina;
-using OmenTools.OmenService;
 using OmenTools.OmenService.ZoneIndicator;
 using ModuleBase = DailyRoutines.Common.Module.Abstractions.ModuleBase;
-using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace DailyRoutines.ModulesPublic.Duty;
 
@@ -28,7 +24,7 @@ public unsafe class HullbreakerIsleHelper : ModuleBase
         ),
         Category = ModuleCategory.Duty
     };
-    
+
     private ZoneIndicatorHandle? trapHandle;
     private ZoneIndicatorHandle? fakeTreasureHandle;
 
@@ -66,7 +62,7 @@ public unsafe class HullbreakerIsleHelper : ModuleBase
                 }
             }
         );
-        
+
         fakeTreasureHandle = ZoneIndicatorRenderer.Instance().RegPermanent
         (
             361,
@@ -93,15 +89,21 @@ public unsafe class HullbreakerIsleHelper : ModuleBase
                 }
             }
         );
-        
+
         return;
 
-        static bool FindTrap(BattleChara* chara) =>
+        static bool FindTrap
+        (
+            BattleChara* chara
+        ) =>
             chara                   != null &&
             chara->NameId           == 2891 &&
             chara->TargetableStatus == (ObjectTargetableFlags)248;
 
-        static bool FindFakeTreasure(GameObject* chara) =>
+        static bool FindFakeTreasure
+        (
+            GameObject* chara
+        ) =>
             chara != null                           &&
             FakeTreasuresID.Contains(chara->BaseId) &&
             chara->GetIsTargetable();
@@ -111,11 +113,11 @@ public unsafe class HullbreakerIsleHelper : ModuleBase
     {
         trapHandle?.Unreg();
         trapHandle = null;
-        
+
         fakeTreasureHandle?.Unreg();
         fakeTreasureHandle = null;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<uint> FakeTreasuresID = [2004074, 2004075, 2004076, 2004077, 2004078, 2004079];

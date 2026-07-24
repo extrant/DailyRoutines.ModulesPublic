@@ -17,10 +17,17 @@ public unsafe class AutoBlockShutdownFromLobbyError : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
-    private static readonly CompSig                                  AtkMessageBoxReceiveEventSig = new("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0");
-    private delegate        bool                                     AtkMessageBoxReceiveEventDelegate(AtkMessageBoxManager* manager, nint a2, AtkValue* values);
-    private                 Hook<AtkMessageBoxReceiveEventDelegate>? AtkMessageBoxReceiveEventHook;
+
+    private static readonly CompSig AtkMessageBoxReceiveEventSig = new("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0");
+
+    private delegate bool AtkMessageBoxReceiveEventDelegate
+    (
+        AtkMessageBoxManager* manager,
+        nint                  a2,
+        AtkValue*             values
+    );
+
+    private Hook<AtkMessageBoxReceiveEventDelegate>? AtkMessageBoxReceiveEventHook;
 
     protected override void Init()
     {
@@ -28,7 +35,12 @@ public unsafe class AutoBlockShutdownFromLobbyError : ModuleBase
         AtkMessageBoxReceiveEventHook.Enable();
     }
 
-    private bool AtkMessageBoxReceiveEventDetour(AtkMessageBoxManager* manager, nint a2, AtkValue* values)
+    private bool AtkMessageBoxReceiveEventDetour
+    (
+        AtkMessageBoxManager* manager,
+        nint                  a2,
+        AtkValue*             values
+    )
     {
         values->UInt = 16000;
         return AtkMessageBoxReceiveEventHook.Original(manager, a2, values);

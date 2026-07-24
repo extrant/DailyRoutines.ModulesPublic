@@ -232,7 +232,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
 
         return;
 
-        static Vector4 GetPingColor(float ping) =>
+        static Vector4 GetPingColor
+        (
+            float ping
+        ) =>
             ping switch
             {
                 < 0   => KnownColor.Gray.ToVector4(),
@@ -241,7 +244,12 @@ public class AutoDisplayNetworkLatency : ModuleBase
                 _     => KnownColor.Red.ToVector4()
             };
 
-        static void DrawStatColumn(string label, string value, Vector4 color)
+        static void DrawStatColumn
+        (
+            string  label,
+            string  value,
+            Vector4 color
+        )
         {
             ImGui.TableNextColumn();
             ImGui.Spacing();
@@ -257,7 +265,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
         try
         {
             var cancellationToken = cancelSource.Token;
-            var lastPing = -1L;
+            var lastPing          = -1L;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -279,7 +287,8 @@ public class AutoDisplayNetworkLatency : ModuleBase
                 var port        = currentMonitor.ServerPort;
 
                 await DService.Instance().Framework.RunOnTick
-                (() =>
+                (
+                    () =>
                     {
                         if (cancellationToken.IsCancellationRequested || entry != currentEntry) return;
 
@@ -288,7 +297,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
                         if (lastPing != currentPing)
                         {
                             currentEntry.Text = string.Format(config.Format, currentPing);
-                            lastPing   = currentPing;
+                            lastPing          = currentPing;
                         }
 
                         var builder = new SeStringBuilder().AddIcon(BitmapFontIcon.Meteor)
@@ -350,7 +359,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
             ipInfoCancelSource?.Dispose();
         }
 
-        public async Task UpdateAsync(CancellationToken cancellationToken)
+        public async Task UpdateAsync
+        (
+            CancellationToken cancellationToken
+        )
         {
             try
             {
@@ -382,7 +394,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
             if (FilledCount < History.Length) FilledCount++;
         }
 
-        private async Task<bool> UpdateServerEndpointAsync(CancellationToken cancellationToken)
+        private async Task<bool> UpdateServerEndpointAsync
+        (
+            CancellationToken cancellationToken
+        )
         {
             var nextEndpoint = await GetZoneEndpointAsync(cancellationToken);
             if (nextEndpoint == null || !IPAddress.TryParse(nextEndpoint.Value.Host, out var nextAddress))
@@ -419,7 +434,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
                        new(host, zoneClient->Port);
         }
 
-        private static async Task<ZoneEndpoint?> GetZoneEndpointAsync(CancellationToken cancellationToken)
+        private static async Task<ZoneEndpoint?> GetZoneEndpointAsync
+        (
+            CancellationToken cancellationToken
+        )
         {
             ZoneEndpoint? endpoint = null;
 
@@ -432,7 +450,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
             return endpoint;
         }
 
-        private async Task<long> MeasureLatencyAsync(CancellationToken cancellationToken)
+        private async Task<long> MeasureLatencyAsync
+        (
+            CancellationToken cancellationToken
+        )
         {
             using var socket        = new Socket(ServerAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -478,7 +499,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
             }
         }
 
-        private void RefreshIPInfo(IPAddress address)
+        private void RefreshIPInfo
+        (
+            IPAddress address
+        )
         {
             ResetAddressInfo();
 
@@ -583,7 +607,10 @@ public class AutoDisplayNetworkLatency : ModuleBase
             return CachedPhysicalNicIP;
         }
 
-        private static bool IsVirtualNic(string text)
+        private static bool IsVirtualNic
+        (
+            string text
+        )
         {
             if (string.IsNullOrWhiteSpace(text)) return false;
 

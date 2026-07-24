@@ -1,6 +1,5 @@
 ﻿using DailyRoutines.Common.KamiToolKit.Nodes;
 using DailyRoutines.Extensions;
-using KamiToolKit.Nodes;
 using OmenTools.Interop.Game.AddonEvent;
 using OmenTools.Threading.TaskHelper;
 
@@ -28,7 +27,10 @@ public unsafe partial class AutoRetainerWork
             TaskHelper = null;
         }
 
-        public override CollaspingCategoryNode CreateOverlayCategory(float width) =>
+        public override CollaspingCategoryNode CreateOverlayCategory
+        (
+            float width
+        ) =>
             CreateOverlayCategory
             (
                 Lang.Get("AutoRetainerWork-GilsWithdraw-Title"),
@@ -99,7 +101,7 @@ public unsafe partial class AutoRetainerWork
                 }
             );
         }
-        
+
         private static readonly string[] GilManageTexts =
         [
             "金币管理",

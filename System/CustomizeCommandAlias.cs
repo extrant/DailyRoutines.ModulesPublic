@@ -67,16 +67,17 @@ public class CustomizeCommandAlias : ModuleBase
 
 
         ImGui.SameLine();
+
         using (ImRaii.Group())
         {
             ImGui.InputText($"{Lang.Get("Alias")}##AliasInput", ref sourceCommandInput, 128);
-        
+
             ImGui.InputText($"{Lang.Get("Target")}##TargetCommandInput", ref targetCommandInput, 128);
         }
-        
+
         if (config.AliasEntries.Count == 0)
             return;
-        
+
         ImGui.NewLine();
 
         using var aliasTable = ImRaii.Table("##CustomizeCommandAliasTable", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp);
@@ -151,9 +152,13 @@ public class CustomizeCommandAlias : ModuleBase
         }
     }
 
-    private void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
-        var span = this.activeAliasEntries.AsSpan();
+        var span = activeAliasEntries.AsSpan();
         if (span.IsEmpty)
             return;
 
@@ -172,14 +177,17 @@ public class CustomizeCommandAlias : ModuleBase
                 !messageSpan.StartsWith(entry.Alias, StringComparison.Ordinal))
                 continue;
 
-            message = messageSpan.Length == entry.AliasLength
-                          ? new(entry.TargetCommand)
-                          : new(string.Concat(entry.TargetCommand, messageSpan[entry.AliasLength..]));
+            message = messageSpan.Length == entry.AliasLength ?
+                          new(entry.TargetCommand) :
+                          new(string.Concat(entry.TargetCommand, messageSpan[entry.AliasLength..]));
             return;
         }
     }
 
-    private void SaveAndRefresh(ModuleBase module)
+    private void SaveAndRefresh
+    (
+        ModuleBase module
+    )
     {
         config.Save(module);
         RefreshActiveAliasEntries();
@@ -216,7 +224,11 @@ public class CustomizeCommandAlias : ModuleBase
         activeAliasEntries = compiledEntries;
     }
 
-    private bool HasDuplicateAlias(ReadOnlySpan<char> alias, int excludedIndex = -1)
+    private bool HasDuplicateAlias
+    (
+        ReadOnlySpan<char> alias,
+        int                excludedIndex = -1
+    )
     {
         var aliasEntries = CollectionsMarshal.AsSpan(config.AliasEntries);
 
@@ -230,7 +242,7 @@ public class CustomizeCommandAlias : ModuleBase
 
         return false;
     }
-    
+
     private class Config : ModuleConfig
     {
         public List<AliasEntry> AliasEntries = [];

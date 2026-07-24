@@ -40,7 +40,10 @@ public unsafe class Alphascape3Helper : ModuleBase
         UseActionManager.Instance().Unreg(OnCompleteCast);
     }
 
-    private static void OnZoneChanged(uint u)
+    private static void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
         UseActionManager.Instance().Unreg(OnStartCast);
@@ -89,7 +92,10 @@ public unsafe class Alphascape3Helper : ModuleBase
         FrameworkManager.Instance().Reg(OnUpdate, 500);
     }
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         var chara = CharacterManager.Instance()->FindFirst(&FindPoint);
         if (chara == null) return;
@@ -97,7 +103,10 @@ public unsafe class Alphascape3Helper : ModuleBase
         UseActionManager.Instance().UseAction(ActionType.Action, QUEST_ACTION_ID, chara->EntityId);
         return;
 
-        static bool FindPoint(BattleChara* chara) =>
+        static bool FindPoint
+        (
+            BattleChara* chara
+        ) =>
             chara             != null                 &&
             chara->ObjectKind == ObjectKind.BattleNpc &&
             chara->BaseId     == POINT_DATA_ID;

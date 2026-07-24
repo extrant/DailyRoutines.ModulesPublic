@@ -20,7 +20,7 @@ public unsafe class AdventurerPlateThroughInspect : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private IconButtonNode? openButton;
 
     protected override void Init()
@@ -30,7 +30,7 @@ public unsafe class AdventurerPlateThroughInspect : ModuleBase
         if (CharacterInspect->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
@@ -39,7 +39,11 @@ public unsafe class AdventurerPlateThroughInspect : ModuleBase
         openButton = null;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {

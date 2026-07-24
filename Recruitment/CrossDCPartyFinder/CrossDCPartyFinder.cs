@@ -69,7 +69,11 @@ public partial class CrossDCPartyFinder : ModuleBase
         ClearNodes();
     }
 
-    private unsafe void OnAgent(AgentEvent type, AgentArgs args)
+    private unsafe void OnAgent
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         var agent = args.Agent.ToStruct<AgentLookingForGroup>();
         if (agent == null) return;
@@ -86,7 +90,7 @@ public partial class CrossDCPartyFinder : ModuleBase
             // 招募刷新
             if (formatted is { EventKind: 1, ValueCount: 1 } && atkValues[0].Type == AtkValueType.Int && atkValues[0].Int == 17)
                 SendRequestDynamic();
-            
+
             // 升序、降序变化
             if (formatted is { EventKind: 1, ValueCount: 3 } && atkValues[0].Type == AtkValueType.Int && atkValues[0].Int == 24)
                 SendRequestDynamic();

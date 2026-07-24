@@ -26,8 +26,8 @@ public class AutoShowDutyGuide : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new TaskHelper { TimeoutMS = 60_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new TaskHelper { TimeoutMS = 60_000 };
 
         Overlay                 ??= new Overlay(this);
         Overlay.Flags           &=  ~ImGuiWindowFlags.NoTitleBar;
@@ -38,7 +38,7 @@ public class AutoShowDutyGuide : ModuleBase
         DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
         OnZoneChange(0);
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
@@ -122,7 +122,10 @@ public class AutoShowDutyGuide : ModuleBase
         }
     }
 
-    private void OnZoneChange(uint u)
+    private void OnZoneChange
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
         guideData.Clear();
@@ -133,7 +136,10 @@ public class AutoShowDutyGuide : ModuleBase
         TaskHelper.EnqueueAsync(() => GetDutyGuide(GameState.ContentFinderCondition));
     }
 
-    private async Task GetDutyGuide(uint dutyID)
+    private async Task GetDutyGuide
+    (
+        uint dutyID
+    )
     {
         try
         {
@@ -152,16 +158,16 @@ public class AutoShowDutyGuide : ModuleBase
             // ignored
         }
     }
-    
+
     private class Config : ModuleConfig
     {
         public float FontScale = 1f;
     }
-    
+
     #region 常量
-    
+
     private const string FF14_ORG_LINK_BASE =
         "https://gh.atmoomen.top/raw.githubusercontent.com/thewakingsands/novice-network/refs/heads/master/docs/duty/{0}.md";
-    
+
     #endregion
 }

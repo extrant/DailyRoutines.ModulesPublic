@@ -62,7 +62,11 @@ public class AutoMonsterToss : ModuleBase
         }
     }
 
-    private unsafe void OnAddonSetup(AddonEvent type, AddonArgs args)
+    private unsafe void OnAddonSetup
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
 
@@ -88,7 +92,7 @@ public class AutoMonsterToss : ModuleBase
             var second = i;
             TaskHelper.DelayNext(1000);
             TaskHelper.Enqueue
-            (() => UpdateSelectStringInfo(Lang.Get("AutoMonsterToss-WaitingForResult", GAME_TIME_SECONDS - second)));
+                (() => UpdateSelectStringInfo(Lang.Get("AutoMonsterToss-WaitingForResult", GAME_TIME_SECONDS - second)));
         }
 
         TaskHelper.Enqueue(SendRoundEnd);
@@ -117,7 +121,10 @@ public class AutoMonsterToss : ModuleBase
     private static void SendRoundEnd() =>
         new EventCompletePackt(EVENT_ID, 14).Send();
 
-    private static unsafe void UpdateSelectStringInfo(string info)
+    private static unsafe void UpdateSelectStringInfo
+    (
+        string info
+    )
     {
         if (!SelectString->IsAddonAndNodesReady() ||
             !BasketBall->IsAddonAndNodesReady())

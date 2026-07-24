@@ -34,15 +34,24 @@ public class AutoRefocus : ModuleBase
         TargetManager.Instance().Unreg(OnSetFocusTarget);
     }
 
-    private unsafe void OnReceivePlayerAround(IReadOnlyList<IPlayerCharacter> characters)
+    private unsafe void OnReceivePlayerAround
+    (
+        IReadOnlyList<IPlayerCharacter> characters
+    )
     {
         if (GameState.ContentFinderCondition == 0 || focusTarget == 0xE000_0000 || TargetManager.FocusTarget != null) return;
         TargetManager.ToStruct()->SetFocusTargetByObjectId(focusTarget);
     }
 
-    private void OnSetFocusTarget(GameObjectId gameObjectID) =>
+    private void OnSetFocusTarget
+    (
+        GameObjectId gameObjectID
+    ) =>
         focusTarget = gameObjectID;
 
-    private void OnZoneChange(uint u) =>
+    private void OnZoneChange
+    (
+        uint u
+    ) =>
         focusTarget = 0xE000_0000;
 }

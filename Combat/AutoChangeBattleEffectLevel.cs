@@ -22,7 +22,7 @@ public class AutoChangeBattleEffectLevel : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config         config = null!;
     private EffectSetting? lastAppliedSettings;
 
@@ -75,7 +75,7 @@ public class AutoChangeBattleEffectLevel : ModuleBase
                 if (ImGui.CollapsingHeader
                     (
                         $"{DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdLow])}" +
-                        $" ≤ X ≤ "                                                                                                  +
+                        $" ≤ X ≤ "                                                                                            +
                         $"{DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdHigh])}",
                         ImGuiTreeNodeFlags.DefaultOpen
                     ))
@@ -123,7 +123,11 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         }
     }
 
-    private void DrawBattleEffectSetting(string id, EffectSetting setting)
+    private void DrawBattleEffectSetting
+    (
+        string        id,
+        EffectSetting setting
+    )
     {
         using var idPush = ImRaii.PushId(id);
 
@@ -183,7 +187,11 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         }
     }
 
-    private static bool DrawBattleEffectLevelCombo(string label, ref BattleEffectLevel value)
+    private static bool DrawBattleEffectLevelCombo
+    (
+        string                label,
+        ref BattleEffectLevel value
+    )
     {
         var returnValue = false;
 
@@ -209,7 +217,10 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         return returnValue;
     }
 
-    private void OnPlayerReceived(IReadOnlyList<IPlayerCharacter> characters)
+    private void OnPlayerReceived
+    (
+        IReadOnlyList<IPlayerCharacter> characters
+    )
     {
         EffectSetting? targetSetting = null;
 
@@ -238,7 +249,10 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         ApplySetting(targetSetting);
     }
 
-    private void ApplySetting(EffectSetting? settings)
+    private void ApplySetting
+    (
+        EffectSetting? settings
+    )
     {
         if (settings == null) return;
         if (lastAppliedSettings != null && settings == lastAppliedSettings)
@@ -323,7 +337,10 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         /// </summary>
         public BattleEffectLevel Enemy { get; set; }
 
-        public bool Equals(EffectSetting? other)
+        public bool Equals
+        (
+            EffectSetting? other
+        )
         {
             if (other is null) return false;
             return Self  == other.Self  &&
@@ -335,16 +352,27 @@ public class AutoChangeBattleEffectLevel : ModuleBase
         public EffectSetting Clone() =>
             (EffectSetting)MemberwiseClone();
 
-        public override bool Equals(object? obj) =>
+        public override bool Equals
+        (
+            object? obj
+        ) =>
             Equals(obj as EffectSetting);
 
         public override int GetHashCode() =>
             HashCode.Combine(Self, Party, Other, Enemy);
 
-        public static bool operator ==(EffectSetting? left, EffectSetting? right) =>
+        public static bool operator ==
+        (
+            EffectSetting? left,
+            EffectSetting? right
+        ) =>
             Equals(left, right);
 
-        public static bool operator !=(EffectSetting? left, EffectSetting? right) =>
+        public static bool operator !=
+        (
+            EffectSetting? left,
+            EffectSetting? right
+        ) =>
             !Equals(left, right);
     }
 

@@ -18,7 +18,7 @@ public class AutoNotifyCountdown : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     protected override void Init()
@@ -31,7 +31,11 @@ public class AutoNotifyCountdown : ModuleBase
     protected override void Uninit() =>
         LogMessageManager.Instance().Unreg(OnLogMessage);
 
-    private void OnLogMessage(uint logMessageID, LogMessageQueueItem item)
+    private void OnLogMessage
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (logMessageID != 5255) return;
         if (config.OnlyNotifyWhenBackground && GameState.IsForeground) return;

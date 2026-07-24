@@ -38,11 +38,11 @@ public unsafe class OptimizedQuickPanel : ModuleBase
     private Hook<AgentShowDelegate>? AgentQuickPanelShowHook;
 
     private Config config = null!;
-    
+
     private CheckboxNode? lockCheckBoxNode;
 
     private bool isLastQuickPanelEnabled;
-    
+
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
@@ -73,7 +73,7 @@ public unsafe class OptimizedQuickPanel : ModuleBase
     {
         ChatManager.Instance().Unreg(OnPreExecuteCommandInner);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         lockCheckBoxNode?.Dispose();
         lockCheckBoxNode = null;
     }
@@ -95,7 +95,11 @@ public unsafe class OptimizedQuickPanel : ModuleBase
         }
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -112,7 +116,7 @@ public unsafe class OptimizedQuickPanel : ModuleBase
                 config.LastPosition = new(QuickPanel->RootNode->GetXFloat(), QuickPanel->RootNode->GetYFloat());
 
                 // 正常比较高帧率状态下应该是没问题的
-                if (config.IsLock                                   &&
+                if (config.IsLock                                         &&
                     UIInputData.Instance()->IsInputIdPressed(InputId.ESC) &&
                     AtkStage.Instance()->GetFocus() == null               &&
                     SystemMenu                      == null)
@@ -122,10 +126,15 @@ public unsafe class OptimizedQuickPanel : ModuleBase
                 {
                     lockCheckBoxNode = new()
                     {
-                        Position    = new(8, 34),
-                        TextTooltip = LuminaWrapper.GetAddonText(config.IsLock ? 3061U : 3060),
-                        Size        = new(20, 24),
-                        IsChecked   = config.IsLock
+                        Position = new(8, 34),
+                        TextTooltip = LuminaWrapper.GetAddonText
+                        (
+                            config.IsLock ?
+                                3061U :
+                                3060
+                        ),
+                        Size      = new(20, 24),
+                        IsChecked = config.IsLock
                     };
 
                     lockCheckBoxNode.OnClick = x =>
@@ -133,7 +142,12 @@ public unsafe class OptimizedQuickPanel : ModuleBase
                         config.IsLock = x;
                         config.Save(this);
 
-                        lockCheckBoxNode.TextTooltip = LuminaWrapper.GetAddonText(config.IsLock ? 3061U : 3060);
+                        lockCheckBoxNode.TextTooltip = LuminaWrapper.GetAddonText
+                        (
+                            config.IsLock ?
+                                3061U :
+                                3060
+                        );
                         lockCheckBoxNode.ShowTooltip();
                         UpdateAddonFlags();
                     };
@@ -247,19 +261,26 @@ public unsafe class OptimizedQuickPanel : ModuleBase
     }
 
     // 给 Addon 上 Flag 处理锁定
-    private void AgentQuickPanelShowDetour(AgentInterface* agent)
+    private void AgentQuickPanelShowDetour
+    (
+        AgentInterface* agent
+    )
     {
         AgentQuickPanelShowHook.Original(agent);
         UpdateAddonFlags();
     }
 
     // 让快捷面板支持打开面板参数
-    private static void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private static void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
         var messageText = message.ToString();
         if (!messageText.StartsWith('/')) return;
         if (messageText.Split(' ') is not { Length: 2 } parsedCommand ||
-            parsedCommand[0] != QuickPanelLine.Command.ToString() && parsedCommand[0] != QuickPanelLine.Alias.ToString())
+            (parsedCommand[0] != QuickPanelLine.Command.ToString() && parsedCommand[0] != QuickPanelLine.Alias.ToString()))
             return;
 
         if (parsedCommand[1].Equals("close"))
@@ -277,7 +298,13 @@ public unsafe class OptimizedQuickPanel : ModuleBase
     }
 
     // 随着 ActionBar 隐藏一并隐藏, 和 ActionBar 逻辑保持一致
-    private void ToggleUIDetour(UIModule* module, UiFlags flags, bool enable, bool unknown)
+    private void ToggleUIDetour
+    (
+        UIModule* module,
+        UiFlags   flags,
+        bool      enable,
+        bool      unknown
+    )
     {
         ToggleUIHook.Original(module, flags, enable, unknown);
 
@@ -318,13 +345,13 @@ public unsafe class OptimizedQuickPanel : ModuleBase
         // 禁止交互
         FlagHelper.UpdateFlag(ref QuickPanel->Flags1A3, 0x40, !config.IsLock);
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool    IsLock = true;
         public Vector2 LastPosition;
     }
-    
+
     #region 常量
 
     private static readonly TextCommand QuickPanelLine = LuminaGetter.GetRowOrDefault<TextCommand>(50);

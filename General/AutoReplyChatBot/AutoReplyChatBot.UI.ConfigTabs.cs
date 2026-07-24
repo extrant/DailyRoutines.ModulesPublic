@@ -7,7 +7,10 @@ namespace DailyRoutines.ModulesPublic;
 
 public partial class AutoReplyChatBot
 {
-    private void DrawGeneralTab(float fieldW)
+    private void DrawGeneralTab
+    (
+        float fieldW
+    )
     {
         ImGui.SetNextItemWidth(fieldW);
 
@@ -41,7 +44,7 @@ public partial class AutoReplyChatBot
         ImGui.SetNextItemWidth(fieldW);
         if (ImGui.SliderInt(Lang.Get("AutoReplyChatBot-CooldownSeconds"), ref config.CooldownSeconds, 0, 120))
             RequestSaveConfig();
-        
+
         ImGui.SetNextItemWidth(fieldW);
         if (ImGui.SliderInt(Lang.Get("AutoReplyChatBot-MaxContextTokens"), ref config.MaxContextTokens, 4096, 1_000_000))
             RequestSaveConfig();
@@ -70,19 +73,22 @@ public partial class AutoReplyChatBot
             config.MaxContextTokens = 1_000_000;
             RequestSaveConfig();
         }
-        
+
         ImGui.SetNextItemWidth(fieldW);
         if (ImGui.SliderInt(Lang.Get("AutoReplyChatBot-MaxTokens"), ref config.MaxTokens, 256, 8192))
             RequestSaveConfig();
         ImGuiOm.HelpMarker(Lang.Get("AutoReplyChatBot-MaxTokens-Help"));
-        
+
         ImGui.SetNextItemWidth(fieldW);
         if (ImGui.SliderFloat(Lang.Get("AutoReplyChatBot-Temperature"), ref config.Temperature, 0.0f, 2.0f))
             RequestSaveConfig();
         ImGuiOm.HelpMarker(Lang.Get("AutoReplyChatBot-Temperature-Help"));
     }
 
-    private void DrawAPITab(float fieldW)
+    private void DrawAPITab
+    (
+        float fieldW
+    )
     {
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Type"));
 
@@ -114,7 +120,12 @@ public partial class AutoReplyChatBot
             RequestSaveConfig();
     }
 
-    private void DrawFilterTab(float fieldW, float promptW, float promptH)
+    private void DrawFilterTab
+    (
+        float fieldW,
+        float promptW,
+        float promptH
+    )
     {
         if (ImGui.Checkbox(Lang.Get("AutoReplyChatBot-EnableFilterModel"), ref config.EnableFilter))
             RequestSaveConfig();
@@ -191,7 +202,7 @@ public partial class AutoReplyChatBot
 
             if (ImGui.SmallButton($"{Lang.Get("Reset")}##ResetKeywords"))
             {
-                config.HardGuardKeywords = [..HardGuardDefaultKeywords];
+                config.HardGuardKeywords = [.. HardGuardDefaultKeywords];
                 RequestSaveConfig();
             }
 
@@ -239,7 +250,12 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private void DrawSystemPromptTab(float fieldW, float promptW, float promptH)
+    private void DrawSystemPromptTab
+    (
+        float fieldW,
+        float promptW,
+        float promptH
+    )
     {
         if (config.SelectedPromptIndex < 0 ||
             config.SelectedPromptIndex >= config.SystemPrompts.Count)
@@ -328,7 +344,11 @@ public partial class AutoReplyChatBot
             RequestSaveConfig();
     }
 
-    private void DrawWorldBookTab(float fieldW, float promptW)
+    private void DrawWorldBookTab
+    (
+        float fieldW,
+        float promptW
+    )
     {
         if (ImGui.Checkbox(Lang.Get("AutoReplyChatBot-EnableWorldBook"), ref config.EnableWorldBook))
             RequestSaveConfig();
@@ -421,7 +441,12 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private void DrawHistoryTab(float fieldW, float promptW, float promptH)
+    private void DrawHistoryTab
+    (
+        float fieldW,
+        float promptW,
+        float promptH
+    )
     {
         var keys = conversationStore!.GetKeys().ToArray();
 
@@ -432,7 +457,9 @@ public partial class AutoReplyChatBot
         if (config.HistoryKeyIndex < 0 || config.HistoryKeyIndex >= displayKeys.Count)
             config.HistoryKeyIndex = 0;
 
-        var currentLabel = config.HistoryKeyIndex == 0 ? noneLabel : displayKeys[config.HistoryKeyIndex];
+        var currentLabel = config.HistoryKeyIndex == 0 ?
+                               noneLabel :
+                               displayKeys[config.HistoryKeyIndex];
 
         ImGui.SetNextItemWidth(fieldW);
 
@@ -442,7 +469,9 @@ public partial class AutoReplyChatBot
             {
                 for (var i = 0; i < displayKeys.Count; i++)
                 {
-                    var label    = i == 0 ? noneLabel : displayKeys[i];
+                    var label = i == 0 ?
+                                    noneLabel :
+                                    displayKeys[i];
                     var selected = i == config.HistoryKeyIndex;
 
                     if (ImGui.Selectable(label, selected))
@@ -521,7 +550,10 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private static void DrawToolsTab(float promptW)
+    private static void DrawToolsTab
+    (
+        float promptW
+    )
     {
         if (ToolRegistry.Count == 0)
         {

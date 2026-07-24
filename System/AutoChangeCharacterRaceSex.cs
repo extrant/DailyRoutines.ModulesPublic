@@ -23,9 +23,14 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         Category    = ModuleCategory.System
     };
 
-    private static readonly CompSig                       UpdateDrawDataSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC 40 45 33 F6 48 8D 59 7A");
-    private delegate        byte                          UpdateDrawDataDelegate(DrawDataContainer* data);
-    private                 Hook<UpdateDrawDataDelegate>? UpdateDrawDataHook;
+    private static readonly CompSig UpdateDrawDataSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC 40 45 33 F6 48 8D 59 7A");
+
+    private delegate byte UpdateDrawDataDelegate
+    (
+        DrawDataContainer* data
+    );
+
+    private Hook<UpdateDrawDataDelegate>? UpdateDrawDataHook;
 
     private Config config = null!;
 
@@ -156,7 +161,10 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         }
     }
 
-    private byte UpdateDrawDataDetour(DrawDataContainer* data)
+    private byte UpdateDrawDataDetour
+    (
+        DrawDataContainer* data
+    )
     {
         if (data              == null ||
             data->OwnerObject == null)
@@ -170,7 +178,7 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         var sourceSex  = data->CustomizeData.Sex;
 
         if (!TryGetTarget(lookup, sourceRace, sourceSex, out var targetRace, out var targetSex) ||
-            targetRace == sourceRace && targetSex == sourceSex)
+            (targetRace == sourceRace && targetSex == sourceSex))
             return UpdateDrawDataHook.Original(data);
 
         var localPlayer               = Control.GetLocalPlayer();
@@ -221,7 +229,11 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         SaveConfigAndRefresh();
     }
 
-    private int FindRuleIndex(byte sourceRace, byte sourceSex)
+    private int FindRuleIndex
+    (
+        byte sourceRace,
+        byte sourceSex
+    )
     {
         var mappings = CollectionsMarshal.AsSpan(config.Mappings);
 
@@ -265,11 +277,18 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryGetTarget(RaceSexLookup lookup, byte sourceRace, byte sourceSex, out byte targetRace, out byte targetSex)
+    private static bool TryGetTarget
+    (
+        RaceSexLookup lookup,
+        byte          sourceRace,
+        byte          sourceSex,
+        out byte      targetRace,
+        out byte      targetSex
+    )
     {
         var index = TryGetLookupIndex(sourceRace, sourceSex);
 
-        if (index >= 0 && (lookup.ActiveMask & 1 << index) != 0)
+        if (index >= 0 && (lookup.ActiveMask & (1 << index)) != 0)
             return TryUnpackRaceSex(lookup.PackedTargets[index], out targetRace, out targetSex);
 
         targetRace = 0;
@@ -277,7 +296,12 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         return false;
     }
 
-    private static bool DrawRaceSexCombo(string id, ref byte race, ref byte sex)
+    private static bool DrawRaceSexCombo
+    (
+        string   id,
+        ref byte race,
+        ref byte sex
+    )
     {
         var changed = false;
 
@@ -302,26 +326,37 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
         return changed;
     }
 
-    private static string GetRaceSexDisplayName(byte race, byte sex)
+    private static string GetRaceSexDisplayName
+    (
+        byte race,
+        byte sex
+    )
     {
         var raceName = GetRaceName(race, sex);
         return $"{raceName} / {GetSexName(sex)}";
     }
 
-    private static string GetRaceName(byte race, byte sex)
+    private static string GetRaceName
+    (
+        byte race,
+        byte sex
+    )
     {
         if (!LuminaGetter.TryGetRow(race, out Race raceRow))
             return Lang.Get("Unknown");
 
-        return sex == FEMALE_SEX
-                   ? raceRow.Feminine.ToString()  ?? Lang.Get("Unknown")
-                   : raceRow.Masculine.ToString() ?? Lang.Get("Unknown");
+        return sex == FEMALE_SEX ?
+                   raceRow.Feminine.ToString()  ?? Lang.Get("Unknown") :
+                   raceRow.Masculine.ToString() ?? Lang.Get("Unknown");
     }
 
-    private static string GetSexName(byte sex) =>
-        sex == FEMALE_SEX
-            ? LuminaWrapper.GetAddonText(15609)
-            : LuminaWrapper.GetAddonText(15608);
+    private static string GetSexName
+    (
+        byte sex
+    ) =>
+        sex == FEMALE_SEX ?
+            LuminaWrapper.GetAddonText(15609) :
+            LuminaWrapper.GetAddonText(15608);
 
     private static void RerenderAllPlayers()
     {
@@ -336,28 +371,47 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int TryGetLookupIndex(byte race, byte sex)
+    private static int TryGetLookupIndex
+    (
+        byte race,
+        byte sex
+    )
     {
         var raceOffset = (uint)(race - MIN_RACE);
 
         if (raceOffset > MAX_RACE - MIN_RACE || sex > FEMALE_SEX)
             return -1;
 
-        return (int)(raceOffset << 1 | sex);
+        return (int)((raceOffset << 1) | sex);
     }
 
-    private static bool IsValidRace(byte race) =>
+    private static bool IsValidRace
+    (
+        byte race
+    ) =>
         race is >= MIN_RACE and <= MAX_RACE;
 
-    private static bool IsValidSex(byte sex) =>
+    private static bool IsValidSex
+    (
+        byte sex
+    ) =>
         sex is MALE_SEX or FEMALE_SEX;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte PackRaceSex(byte race, byte sex) =>
-        (byte)(race | sex << 4);
+    private static byte PackRaceSex
+    (
+        byte race,
+        byte sex
+    ) =>
+        (byte)(race | (sex << 4));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryUnpackRaceSex(byte packed, out byte race, out byte sex)
+    private static bool TryUnpackRaceSex
+    (
+        byte     packed,
+        out byte race,
+        out byte sex
+    )
     {
         if (packed == 0)
         {
@@ -410,7 +464,7 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
     {
         private byte element0;
     }
-    
+
     #region 常量
 
     private const byte MIN_RACE    = 1;

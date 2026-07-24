@@ -25,17 +25,20 @@ public unsafe class AutoUseItemStacks : ModuleBase
     protected override void Init()
     {
         TaskHelper ??= new() { TimeoutMS = 5_000 };
-        
-        DService.Instance().ContextMenu.OnMenuOpened +=  OnContextMenuOpened;
+
+        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
 
     protected override void ConfigUI() =>
         ImGuiOm.ConflictKeyText();
 
-    private void OnContextMenuOpened(IMenuOpenedArgs args)
+    private void OnContextMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (args.Target is not MenuTargetInventory targetInventory) return;
         if (DService.Instance().Condition.IsOccupiedInEvent) return;
@@ -47,7 +50,10 @@ public unsafe class AutoUseItemStacks : ModuleBase
             args.AddMenuItem(new OpenAllCoffersMenuItem(this, itemID).Get());
     }
 
-    public void EnqueueOpenAllCoffers(uint itemID)
+    public void EnqueueOpenAllCoffers
+    (
+        uint itemID
+    )
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
         if (!Inventories.Player.TryGetFirstItem(x => x.ItemId == itemID, out _)) return;
@@ -59,7 +65,10 @@ public unsafe class AutoUseItemStacks : ModuleBase
         TaskHelper.Enqueue(() => EnqueueOpenAllCoffers(itemID));
     }
 
-    private static bool IsCofferItem(uint itemID) =>
+    private static bool IsCofferItem
+    (
+        uint itemID
+    ) =>
         LuminaGetter.GetRow<Item>(itemID) is { StackSize: > 1, ItemAction.RowId: 367 or 388 or 2462 };
 
     private class OpenAllCoffersMenuItem
@@ -73,7 +82,10 @@ public unsafe class AutoUseItemStacks : ModuleBase
 
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             Module.EnqueueOpenAllCoffers(ItemID);
     }
 }

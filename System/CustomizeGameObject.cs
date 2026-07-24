@@ -29,8 +29,13 @@ public unsafe class CustomizeGameObject : ModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     private static readonly CompSig CharacterUpdateSig = new("4C 8B DC 53 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 80 89");
-    private delegate        void*   CharacterUpdateDelegate(Character* character);
-    private                 Hook<CharacterUpdateDelegate>? CharacterUpdateHook;
+
+    private delegate void* CharacterUpdateDelegate
+    (
+        Character* character
+    );
+
+    private Hook<CharacterUpdateDelegate>? CharacterUpdateHook;
 
     private Config config = null!;
 
@@ -79,10 +84,13 @@ public unsafe class CustomizeGameObject : ModuleBase
         failureCache.Clear();
         ClearLookupCache();
     }
-    
+
     #region 事件
 
-    private void* UpdateCharacterDetour(Character* character)
+    private void* UpdateCharacterDetour
+    (
+        Character* character
+    )
     {
         if (config.CustomizePresets.Count == 0)
             return CharacterUpdateHook.Original(character);
@@ -93,7 +101,10 @@ public unsafe class CustomizeGameObject : ModuleBase
         return ret;
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         customizeHistory.Clear();
         failureCache.Clear();
@@ -104,7 +115,10 @@ public unsafe class CustomizeGameObject : ModuleBase
     #region 工具
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ProcessCharacter(Character* character)
+    private void ProcessCharacter
+    (
+        Character* character
+    )
     {
         if (character == null) return;
 
@@ -203,13 +217,22 @@ public unsafe class CustomizeGameObject : ModuleBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsNameEqual(Span<byte> gameObjectName, byte[] presetNameBytes)
+    private static bool IsNameEqual
+    (
+        Span<byte> gameObjectName,
+        byte[]     presetNameBytes
+    )
     {
         if (gameObjectName[presetNameBytes.Length] != 0) return false;
         return gameObjectName.SequenceEqual(presetNameBytes);
     }
 
-    private void ApplyPreset(Character* chara, nint addr, CustomizePreset preset)
+    private void ApplyPreset
+    (
+        Character*      chara,
+        nint            addr,
+        CustomizePreset preset
+    )
     {
         var currentScale  = chara->GameObject.Scale;
         var modifiedScale = currentScale * preset.Scale;
@@ -234,7 +257,10 @@ public unsafe class CustomizeGameObject : ModuleBase
         }
     }
 
-    private void ResetCustomizeFromHistory(nint address)
+    private void ResetCustomizeFromHistory
+    (
+        nint address
+    )
     {
         if (customizeHistory.Count == 0) return;
         if (!customizeHistory.TryGetValue(address, out var data)) return;
@@ -272,7 +298,10 @@ public unsafe class CustomizeGameObject : ModuleBase
         }
     }
 
-    private void RemovePresetHistory(CustomizePreset? preset)
+    private void RemovePresetHistory
+    (
+        CustomizePreset? preset
+    )
     {
         var keysToRemove = customizeHistory
                            .Where(x => x.Value.Preset == preset)
@@ -310,9 +339,9 @@ public unsafe class CustomizeGameObject : ModuleBase
                         break;
                     case CustomizeType.ObjectID:
                         var valStr = preset.Value.Trim();
-                        var val = valStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-                                      ? ulong.Parse(valStr.AsSpan(2), NumberStyles.HexNumber)
-                                      : ulong.Parse(valStr);
+                        var val = valStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ?
+                                      ulong.Parse(valStr.AsSpan(2), NumberStyles.HexNumber) :
+                                      ulong.Parse(valStr);
                         lookupObjectID.TryAdd(val, preset);
                         break;
                     case CustomizeType.ModelCharaID:
@@ -426,7 +455,11 @@ public unsafe class CustomizeGameObject : ModuleBase
         }
     }
 
-    private void DrawPresetRow(int i, CustomizePreset preset)
+    private void DrawPresetRow
+    (
+        int             i,
+        CustomizePreset preset
+    )
     {
         ImGui.TableNextRow();
 
@@ -540,7 +573,13 @@ public unsafe class CustomizeGameObject : ModuleBase
     }
 
     private static bool CustomizePresetEditorUI
-        (ref CustomizeType typeInput, ref string valueInput, ref float scaleInput, ref bool scaleVFXInput, ref string noteInput)
+    (
+        ref CustomizeType typeInput,
+        ref string        valueInput,
+        ref float         scaleInput,
+        ref bool          scaleVFXInput,
+        ref string        noteInput
+    )
     {
         var       state = false;
         using var table = ImRaii.Table("CustomizeTable", 2, ImGuiTableFlags.None);
@@ -601,7 +640,10 @@ public unsafe class CustomizeGameObject : ModuleBase
         return state;
     }
 
-    private static void TargetInfoPreviewUI(IGameObject? gameObject)
+    private static void TargetInfoPreviewUI
+    (
+        IGameObject? gameObject
+    )
     {
         if (gameObject is not ICharacter chara)
         {
@@ -616,7 +658,11 @@ public unsafe class CustomizeGameObject : ModuleBase
         ImGui.TableSetupColumn("Lable", ImGuiTableColumnFlags.WidthFixed,   ImGui.CalcTextSize("--Model Skeleton ID--").X);
         ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthStretch, 50);
 
-        void DrawRow(string label, string value)
+        void DrawRow
+        (
+            string label,
+            string value
+        )
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -627,7 +673,7 @@ public unsafe class CustomizeGameObject : ModuleBase
             ImGui.InputText($"###{label}Preview", ref value, 128, ImGuiInputTextFlags.ReadOnly);
         }
 
-        DrawRow(Lang.Get("Name"),    chara.Name.ToString());
+        DrawRow(Lang.Get("Name"),    chara.Name);
         DrawRow("Data ID",           chara.DataID.ToString());
         DrawRow("Object ID",         chara.GameObjectID.ToString()); // Use hex for clarity? or keep decimal
         DrawRow("Model Chara ID",    chara.ModelCharaID.ToString());
@@ -644,7 +690,7 @@ public unsafe class CustomizeGameObject : ModuleBase
     }
 
     #endregion
-    
+
     private class CustomizePreset : IEquatable<CustomizePreset>
     {
         public string        Note     { get; set; } = string.Empty;
@@ -654,19 +700,33 @@ public unsafe class CustomizeGameObject : ModuleBase
         public bool          ScaleVFX { get; set; }
         public bool          Enabled  { get; set; }
 
-        public bool Equals(CustomizePreset? other)
+        public bool Equals
+        (
+            CustomizePreset? other
+        )
         {
             if (other == null) return false;
             return Type == other.Type && string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object? obj) => obj is CustomizePreset other && Equals(other);
+        public override bool Equals
+        (
+            object? obj
+        ) => obj is CustomizePreset other && Equals(other);
 
         public override int GetHashCode() => HashCode.Combine(Type, Value);
 
-        public static bool operator ==(CustomizePreset left, CustomizePreset right) => Equals(left, right);
+        public static bool operator ==
+        (
+            CustomizePreset left,
+            CustomizePreset right
+        ) => Equals(left, right);
 
-        public static bool operator !=(CustomizePreset left, CustomizePreset right) => !Equals(left, right);
+        public static bool operator !=
+        (
+            CustomizePreset left,
+            CustomizePreset right
+        ) => !Equals(left, right);
     }
 
     private sealed record CustomizeHistoryEntry
@@ -689,7 +749,7 @@ public unsafe class CustomizeGameObject : ModuleBase
     {
         public List<CustomizePreset> CustomizePresets = [];
     }
-    
+
     #region 常量
 
     private const int THROTTLE_INTERVAL_MS = 2_000;

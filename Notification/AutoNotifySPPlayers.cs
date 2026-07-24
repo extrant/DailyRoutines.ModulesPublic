@@ -23,15 +23,15 @@ public class AutoNotifySPPlayers : ModuleBase
         Description = Lang.Get("AutoNotifySPPlayersDescription"),
         Category    = ModuleCategory.Notification
     };
-    
+
     private Config config = null!;
 
     private readonly Throttler<ulong> objThrottler    = new();
-    private readonly ZoneSelectCombo  zoneSelectCombo = new("New");
+    private          ZoneSelectCombo  zoneSelectCombo = null!;
 
     private          HashSet<uint>           selectedOnlineStatus = [];
     private readonly Dictionary<ulong, long> noticeTimeInfo       = [];
-    
+
     private string onlineStatusSearchInput = string.Empty;
 
     private string selectName    = string.Empty;
@@ -39,7 +39,8 @@ public class AutoNotifySPPlayers : ModuleBase
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
+        zoneSelectCombo = new("New");
+        config          = Config.Load(this) ?? new();
 
         PlayersManager.Instance().ReceivePlayersAround += OnReceivePlayers;
     }
@@ -173,8 +174,8 @@ public class AutoNotifySPPlayers : ModuleBase
             var preset = new NotifiedPlayers
             {
                 Name         = selectName,
-                OnlineStatus = [..selectedOnlineStatus], // 不这样就有引用关系了
-                Zone         = [..zoneSelectCombo.SelectedIDs],
+                OnlineStatus = [.. selectedOnlineStatus], // 不这样就有引用关系了
+                Zone         = [.. zoneSelectCombo.SelectedIDs],
                 Command      = selectCommand
             };
 
@@ -188,7 +189,7 @@ public class AutoNotifySPPlayers : ModuleBase
 
     private void RenderTablePreset()
     {
-        var       tableSize = new Vector2(ImGui.GetContentRegionAvail().X - 20f * GlobalUIScale, 0);
+        var       tableSize = new Vector2(ImGui.GetContentRegionAvail().X - (20f * GlobalUIScale), 0);
         using var table     = ImRaii.Table("###PresetTable", 6, ImGuiTableFlags.Borders, tableSize);
         if (!table) return;
 
@@ -222,16 +223,16 @@ public class AutoNotifySPPlayers : ModuleBase
             ImGui.TableNextRow();
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalUIScale));
             ImGui.TextUnformatted($"{i + 1}");
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalUIScale));
             ImGui.TextUnformatted($"{preset.Name}");
             ImGuiOm.TooltipHover(preset.Name);
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalUIScale));
             RenderOnlineStatus(preset.OnlineStatus);
 
             if (ImGui.IsItemHovered())
@@ -241,7 +242,7 @@ public class AutoNotifySPPlayers : ModuleBase
             }
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalUIScale));
 
             using (ImRaii.Group())
             {
@@ -257,7 +258,7 @@ public class AutoNotifySPPlayers : ModuleBase
             }
 
             ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 2f * GlobalUIScale);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (2f * GlobalUIScale));
             ImGui.TextUnformatted($"{preset.Command}");
             ImGuiOm.TooltipHover(preset.Command);
 
@@ -287,7 +288,11 @@ public class AutoNotifySPPlayers : ModuleBase
 
         return;
 
-        void RenderOnlineStatus(HashSet<uint> onlineStatus, bool withText = false)
+        void RenderOnlineStatus
+        (
+            HashSet<uint> onlineStatus,
+            bool          withText = false
+        )
         {
             using var group = ImRaii.Group();
 
@@ -314,13 +319,19 @@ public class AutoNotifySPPlayers : ModuleBase
         }
     }
 
-    private void OnReceivePlayers(IReadOnlyList<IPlayerCharacter> characters)
+    private void OnReceivePlayers
+    (
+        IReadOnlyList<IPlayerCharacter> characters
+    )
     {
         foreach (var character in characters)
             CheckGameObject(character);
     }
 
-    private void CheckGameObject(IPlayerCharacter? obj)
+    private void CheckGameObject
+    (
+        IPlayerCharacter? obj
+    )
     {
         if (config.NotifiedPlayer.Count == 0)
             return;
@@ -355,15 +366,15 @@ public class AutoNotifySPPlayers : ModuleBase
         foreach (var notifiedPlayers in config.NotifiedPlayer)
         {
             bool[] checks     = [true, true, true];
-            var    playerName = obj.Name.ToString();
+            var    playerName = obj.Name;
 
             if (!string.IsNullOrWhiteSpace(notifiedPlayers.Name))
             {
                 try
                 {
-                    checks[0] = notifiedPlayers.Name.StartsWith('/')
-                                    ? new Regex(notifiedPlayers.Name).IsMatch(playerName)
-                                    : playerName == notifiedPlayers.Name;
+                    checks[0] = notifiedPlayers.Name.StartsWith('/') ?
+                                    new Regex(notifiedPlayers.Name).IsMatch(playerName) :
+                                    playerName == notifiedPlayers.Name;
                 }
                 catch (ArgumentException)
                 {
@@ -401,14 +412,20 @@ public class AutoNotifySPPlayers : ModuleBase
         public HashSet<uint> Zone         { get; set; } = [];
         public HashSet<uint> OnlineStatus { get; set; } = [];
 
-        public bool Equals(NotifiedPlayers? other)
+        public bool Equals
+        (
+            NotifiedPlayers? other
+        )
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Name == other.Name && Command == other.Command && Zone.Equals(other.Zone) && OnlineStatus.Equals(other.OnlineStatus);
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -427,7 +444,7 @@ public class AutoNotifySPPlayers : ModuleBase
     {
         public List<NotifiedPlayers> NotifiedPlayer = [];
     }
-    
+
     #region 常量
 
     private static readonly FrozenDictionary<uint, OnlineStatus> OnlineStatuses =

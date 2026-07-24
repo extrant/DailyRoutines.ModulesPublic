@@ -69,7 +69,12 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
         currentDye = null;
     }
 
-    private void OnItemTooltip(ItemKind itemKind, uint itemID, ref List<TooltipItemModification> modifications)
+    private void OnItemTooltip
+    (
+        ItemKind                          itemKind,
+        uint                              itemID,
+        ref List<TooltipItemModification> modifications
+    )
     {
         if (itemKind != ItemKind.Normal || !Dyes.TryGetValue(itemID, out var dye))
         {
@@ -83,21 +88,30 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
     private bool IsCurrentTooltipVisible() =>
         currentDye != null && ItemDetail->IsAddonAndNodesReady();
 
-    private void OpenPinnedAddon(DyeInfo dye)
+    private void OpenPinnedAddon
+    (
+        DyeInfo dye
+    )
     {
         pinnedAddon?.Dispose();
 
-        var count      = dye.StainIDs.Length;
-        var compact    = count > COMPACT_THRESHOLD;
-        var perRow     = compact ? COMPACT_PER_ROW : NORMAL_PER_ROW;
-        var cellWidth  = compact ? COMPACT_CELL_WIDTH : NORMAL_CELL_WIDTH;
-        var cellHeight = compact ? COMPACT_CELL_HEIGHT : NORMAL_CELL_HEIGHT;
-        var rows       = (int)MathF.Ceiling(count / (float)perRow);
+        var count   = dye.StainIDs.Length;
+        var compact = count > COMPACT_THRESHOLD;
+        var perRow = compact ?
+                         COMPACT_PER_ROW :
+                         NORMAL_PER_ROW;
+        var cellWidth = compact ?
+                            COMPACT_CELL_WIDTH :
+                            NORMAL_CELL_WIDTH;
+        var cellHeight = compact ?
+                             COMPACT_CELL_HEIGHT :
+                             NORMAL_CELL_HEIGHT;
+        var rows = (int)MathF.Ceiling(count / (float)perRow);
 
         var gridSize = new Vector2
         (
-            perRow * cellWidth + WINDOW_PADDING * 2f,
-            46f                + 28f + rows     * cellHeight + (rows - 1) * GRID_ROW_SPACING + WINDOW_PADDING
+            (perRow * cellWidth) + (WINDOW_PADDING * 2f),
+            46f                  + 28f + (rows     * cellHeight) + ((rows - 1) * GRID_ROW_SPACING) + WINDOW_PADDING
         );
 
         pinnedAddon = new DyePinnedAddon
@@ -240,7 +254,10 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             backgroundNode.Size     = Size + new Vector2(OVERLAY_BG_PADDING * 2f);
         }
 
-        private void RebuildNormal(DyeInfo dye)
+        private void RebuildNormal
+        (
+            DyeInfo dye
+        )
         {
             ClearDynamicNodes();
 
@@ -254,20 +271,30 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             countNode.String    = Lang.Get("AutoPreviewColorsInDye-AvailableColors", dye.StainIDs.Length);
             countNode.IsVisible = true;
 
-            var count      = dye.StainIDs.Length;
-            var compact    = count > COMPACT_THRESHOLD;
-            var perRow     = compact ? COMPACT_PER_ROW : NORMAL_PER_ROW;
-            var cellWidth  = compact ? COMPACT_CELL_WIDTH : NORMAL_CELL_WIDTH;
-            var cellHeight = compact ? COMPACT_CELL_HEIGHT : NORMAL_CELL_HEIGHT;
-            var squareSize = compact ? COMPACT_SQUARE_SIZE : NORMAL_SQUARE_SIZE;
-            var nameSize   = compact ? COMPACT_NAME_SIZE : NORMAL_NAME_SIZE;
+            var count   = dye.StainIDs.Length;
+            var compact = count > COMPACT_THRESHOLD;
+            var perRow = compact ?
+                             COMPACT_PER_ROW :
+                             NORMAL_PER_ROW;
+            var cellWidth = compact ?
+                                COMPACT_CELL_WIDTH :
+                                NORMAL_CELL_WIDTH;
+            var cellHeight = compact ?
+                                 COMPACT_CELL_HEIGHT :
+                                 NORMAL_CELL_HEIGHT;
+            var squareSize = compact ?
+                                 COMPACT_SQUARE_SIZE :
+                                 NORMAL_SQUARE_SIZE;
+            var nameSize = compact ?
+                               COMPACT_NAME_SIZE :
+                               NORMAL_NAME_SIZE;
 
             for (var i = 0; i < count; i++)
                 AddDisplayStainNode(dye.StainIDs[i], i, perRow, cellWidth, cellHeight, squareSize, nameSize);
 
             var rows          = (int)MathF.Ceiling(count / (float)perRow);
-            var contentHeight = OVERLAY_BASE_HEIGHT + rows * cellHeight;
-            var overlayWidth  = perRow                     * cellWidth + OVERLAY_PADDING_X * 2f;
+            var contentHeight = OVERLAY_BASE_HEIGHT + (rows * cellHeight);
+            var overlayWidth  = (perRow                     * cellWidth) + (OVERLAY_PADDING_X * 2f);
 
             var hintNode = new TextNode
             {
@@ -301,8 +328,8 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             if (!LuminaGetter.TryGetRow<Stain>(stainID, out var stain))
                 return;
 
-            var x     = OVERLAY_PADDING_X   + index % perRow * cellWidth;
-            var y     = OVERLAY_FIRST_ROW_Y + index / perRow * cellHeight;
+            var x     = OVERLAY_PADDING_X   + (index % perRow * cellWidth);
+            var y     = OVERLAY_FIRST_ROW_Y + (index / perRow * cellHeight);
             var color = stain.Color.ReverseToVector4();
 
             var squareNode = new TextNode
@@ -343,9 +370,9 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
 
     private sealed class DyePinnedAddon : NativeAddon
     {
-        private readonly DyeInfo        dye;
-        private readonly Func<bool>     isConflictKeyPressed;
-        private readonly Action         onClose;
+        private readonly DyeInfo    dye;
+        private readonly Func<bool> isConflictKeyPressed;
+        private readonly Action     onClose;
 
         private readonly List<NodeBase> dynamicNodes = [];
 
@@ -371,13 +398,23 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             RememberClosePosition = false;
         }
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues) =>
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        ) =>
             RebuildGrid();
 
-        protected override void OnShow(AtkUnitBase* addon) =>
+        protected override void OnShow
+        (
+            AtkUnitBase* addon
+        ) =>
             SetWindowPosition(OpenPosition);
 
-        protected override void OnUpdate(AtkUnitBase* addon)
+        protected override void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             frameCount++;
 
@@ -388,6 +425,7 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             }
 
             var conflictPressed = isConflictKeyPressed();
+
             if (conflictPressed && !wasConflictKeyPressed)
             {
                 Close();
@@ -414,7 +452,10 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             lastSelectedStainIndex = selectedStainIndex;
         }
 
-        protected override void OnHide(AtkUnitBase* addon)
+        protected override void OnHide
+        (
+            AtkUnitBase* addon
+        )
         {
             if (!isClosing)
             {
@@ -430,13 +471,23 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
 
             WindowNode?.SetTitle($"★ {LuminaWrapper.GetItemName(dye.ItemID)}");
 
-            var count      = dye.StainIDs.Length;
-            var compact    = count > COMPACT_THRESHOLD;
-            var perRow     = compact ? COMPACT_PER_ROW : NORMAL_PER_ROW;
-            var cellWidth  = compact ? COMPACT_CELL_WIDTH : NORMAL_CELL_WIDTH;
-            var cellHeight = compact ? COMPACT_CELL_HEIGHT : NORMAL_CELL_HEIGHT;
-            var squareSize = compact ? COMPACT_SQUARE_SIZE : NORMAL_SQUARE_SIZE;
-            var nameSize   = compact ? COMPACT_NAME_SIZE : NORMAL_NAME_SIZE;
+            var count   = dye.StainIDs.Length;
+            var compact = count > COMPACT_THRESHOLD;
+            var perRow = compact ?
+                             COMPACT_PER_ROW :
+                             NORMAL_PER_ROW;
+            var cellWidth = compact ?
+                                COMPACT_CELL_WIDTH :
+                                NORMAL_CELL_WIDTH;
+            var cellHeight = compact ?
+                                 COMPACT_CELL_HEIGHT :
+                                 NORMAL_CELL_HEIGHT;
+            var squareSize = compact ?
+                                 COMPACT_SQUARE_SIZE :
+                                 NORMAL_SQUARE_SIZE;
+            var nameSize = compact ?
+                               COMPACT_NAME_SIZE :
+                               NORMAL_NAME_SIZE;
 
             var contentStart = ContentStartPosition;
             var contentWidth = perRow * cellWidth;
@@ -475,9 +526,9 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
                     Size = new Vector2(contentWidth, cellHeight)
                 };
 
-                for (var col = 0; col < perRow && row * perRow + col < count; col++)
+                for (var col = 0; col < perRow && (row * perRow) + col < count; col++)
                 {
-                    var index = row * perRow + col;
+                    var index = (row * perRow) + col;
                     AddInteractiveStainNode(rowList, dye.StainIDs[index], index, cellWidth, cellHeight, squareSize, nameSize);
                 }
 
@@ -561,7 +612,7 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
             var previewBorder = new ColorImageNode
             {
                 Color    = new(0.85f, 0.85f, 0.85f, 1f),
-                Position = new(0,                y),
+                Position = new(0, y),
                 Size     = new(PREVIEW_SIZE + 6, PREVIEW_SIZE + 6)
             };
             previewBorder.AttachNode(container);
@@ -671,27 +722,27 @@ public unsafe class AutoPreviewColorsInDye : ModuleBase
 
             var labelNode = new TextNode
             {
-                Position         = new(10, 5),
-                Size             = new(90, height),
-                FontSize         = 14,
-                TextColor        = ColorHelper.GetColor(2),
-                AlignmentType    = AlignmentType.Left,
-                String           = label
+                Position      = new(10, 5),
+                Size          = new(90, height),
+                FontSize      = 14,
+                TextColor     = ColorHelper.GetColor(2),
+                AlignmentType = AlignmentType.Left,
+                String        = label
             };
             labelNode.AttachNode(row);
             dynamicNodes.Add(labelNode);
 
             var valueNode = new TextNode
             {
-                Position         = new(112, 5),
-                Size             = new(width - 122, height),
-                FontSize         = 14,
-                TextFlags        = TextFlags.Edge,
-                AlignmentType    = AlignmentType.Left,
-                String           = value
+                Position      = new(112, 5),
+                Size          = new(width - 122, height),
+                FontSize      = 14,
+                TextFlags     = TextFlags.Edge,
+                AlignmentType = AlignmentType.Left,
+                String        = value
             };
             AtkColors.Label.ApplyTo(ref valueNode);
-            
+
             valueNode.AttachNode(row);
             dynamicNodes.Add(valueNode);
 

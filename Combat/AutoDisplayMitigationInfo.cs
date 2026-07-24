@@ -4,13 +4,11 @@ using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
-using DailyRoutines.Manager;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface.Utility;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -199,7 +197,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
         }
     }
 
-    private static void DrawStatusRow(ActiveMitigation status)
+    private static void DrawStatusRow
+    (
+        ActiveMitigation status
+    )
     {
         if (!LuminaGetter.TryGetRow<LuminaStatus>(status.StatusID, out var row))
             return;
@@ -237,12 +238,12 @@ public class AutoDisplayMitigationInfo : ModuleBase
         WindowManager.Instance().PostDraw += Draw;
         FrameworkManager.Instance().Reg(OnUpdate, 500);
 
-        barEntry         ??= DService.Instance().DTRBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
-        barEntry.OnClick =   _ =>
+        barEntry ??= DService.Instance().DTRBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
+        barEntry.OnClick = _ =>
         {
             if (Overlay == null)
                 SetOverlay();
-            
+
             Overlay.IsOpen ^= true;
         };
 
@@ -331,7 +332,14 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
         return;
 
-        void AppendSummary(ref SeStringBuilder builder, ref bool first, BitmapFontIcon icon, float value, bool suffixPercent)
+        void AppendSummary
+        (
+            ref SeStringBuilder builder,
+            ref bool            first,
+            BitmapFontIcon      icon,
+            float               value,
+            bool                suffixPercent
+        )
         {
             if (value <= 0)
                 return;
@@ -340,14 +348,23 @@ public class AutoDisplayMitigationInfo : ModuleBase
                 builder.Append(" ");
 
             builder.AddIcon(icon);
-            builder.Append($"{value:0}" + (suffixPercent ? "%" : ""));
+            builder.Append
+            (
+                $"{value:0}" +
+                (suffixPercent ?
+                     "%" :
+                     "")
+            );
             first = false;
         }
     }
-    
+
     #region 事件
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         UnregCombatEvents();
 
@@ -356,7 +373,11 @@ public class AutoDisplayMitigationInfo : ModuleBase
         RegCombatEvents();
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag != ConditionFlag.InCombat) return;
 
@@ -366,7 +387,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
             UnregCombatEvents();
     }
 
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (GameState.IsInPVPArea)
         {
@@ -400,8 +424,8 @@ public class AutoDisplayMitigationInfo : ModuleBase
         var addon    = (AddonPartyList*)PartyList;
 
         var snapshot = state.PartySnapshot;
+
         for (var i = 0; i < MathF.Min(snapshot.Length, AgentHUD.Instance()->PartyMemberCount); i++)
-        {
             try
             {
                 ref var partyMember = ref addon->PartyMembers[i];
@@ -416,7 +440,6 @@ public class AutoDisplayMitigationInfo : ModuleBase
             {
                 // ignored
             }
-        }
     }
 
     private static unsafe void DrawMitigationNode
@@ -446,8 +469,8 @@ public class AutoDisplayMitigationInfo : ModuleBase
         var text     = $"{mitigationValue:N0}%";
         var textSize = ImGui.CalcTextSize(text);
 
-        var posX = nameNode->ScreenX + nameNode->GetWidth() * partyScale - textSize.X - 5 * partyScale;
-        var posY = nameNode->ScreenY                                     + 2              * partyScale;
+        var posX = nameNode->ScreenX + (nameNode->GetWidth() * partyScale) - textSize.X - (5 * partyScale);
+        var posY = nameNode->ScreenY                                       + (2              * partyScale);
 
         var pos = new Vector2(posX, posY);
 
@@ -500,8 +523,8 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
         var text = $"{shieldValue:F0}";
 
-        var posX = numNode->ScreenX                                                    + numNode->GetWidth() * partyListAddon->Scale + 3 * partyScale;
-        var posY = numNode->ScreenY + numNode->GetHeight() * partyListAddon->Scale / 2 - 3f                  * partyScale;
+        var posX = numNode->ScreenX                                                      + (numNode->GetWidth() * partyListAddon->Scale) + (3 * partyScale);
+        var posY = numNode->ScreenY + (numNode->GetHeight() * partyListAddon->Scale / 2) - (3f                  * partyScale);
 
         drawList.AddText(new Vector2(posX + 1, posY + 1), 0x9D00A2FF, text);
         drawList.AddText(new Vector2(posX,     posY),     0xFFFFFFFF, text);
@@ -509,52 +532,86 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
     #endregion
 
-    private readonly record struct MitigationDefinition(float Physical, float Magical, bool OnMember)
+    private readonly record struct MitigationDefinition
+    (
+        float Physical,
+        float Magical,
+        bool  OnMember
+    )
     {
         public MitigationValue Value => new(Physical, Magical);
     }
 
-    private readonly record struct MitigationValue(float Physical, float Magical)
+    private readonly record struct MitigationValue
+    (
+        float Physical,
+        float Magical
+    )
     {
         public static MitigationValue Empty { get; } = new(0, 0);
     }
 
-    private struct MitigationFactors(float physical, float magical)
+    private struct MitigationFactors
+    (
+        float physical,
+        float magical
+    )
     {
         private float physical = physical;
         private float magical  = magical;
-        
+
         public static MitigationFactors Full => new(1f, 1f);
 
-        public void Apply(ReadOnlySpan<ActiveMitigation> statuses)
+        public void Apply
+        (
+            ReadOnlySpan<ActiveMitigation> statuses
+        )
         {
             foreach (var status in statuses)
                 Apply(status.Value);
         }
 
-        public void Apply(MitigationValue value)
+        public void Apply
+        (
+            MitigationValue value
+        )
         {
             if (value.Physical > 0)
-                physical *= 1f - value.Physical / 100f;
+                physical *= 1f - (value.Physical / 100f);
             if (value.Magical > 0)
-                magical *= 1f - value.Magical / 100f;
+                magical *= 1f - (value.Magical / 100f);
         }
 
         public MitigationValue ToReduction() =>
             new(ReductionFromFactor(physical), ReductionFromFactor(magical));
 
-        private static float ReductionFromFactor(float factor) =>
-            factor >= 1f ? 0f : (1f - factor) * 100f;
+        private static float ReductionFromFactor
+        (
+            float factor
+        ) =>
+            factor >= 1f ?
+                0f :
+                (1f - factor) * 100f;
     }
 
-    private readonly record struct ActiveMitigation(uint StatusID, float RemainingTime, MitigationValue Value)
+    private readonly record struct ActiveMitigation
+    (
+        uint            StatusID,
+        float           RemainingTime,
+        MitigationValue Value
+    )
     {
         public float Physical => Value.Physical;
 
         public float Magical => Value.Magical;
     }
 
-    private readonly record struct PartyMitigationSnapshot(uint EntityID, MitigationValue Value, float Shield)
+    private readonly record struct PartyMitigationSnapshot
+    (
+        uint            EntityID,
+        MitigationValue Value,
+        float           Shield
+    )
     {
         public float Physical => Value.Physical;
 
@@ -563,11 +620,11 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
     private sealed record MitigationSnapshot
     (
-        ActiveMitigation[]       LocalStatuses,
-        ActiveMitigation[]       TargetStatuses,
+        ActiveMitigation[]        LocalStatuses,
+        ActiveMitigation[]        TargetStatuses,
         PartyMitigationSnapshot[] PartyMembers,
-        MitigationValue          LocalSummary,
-        float                    LocalShield
+        MitigationValue           LocalSummary,
+        float                     LocalShield
     )
     {
         public static MitigationSnapshot Empty { get; } =
@@ -643,7 +700,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
             return statuses.ToArray();
         }
 
-        private static ActiveMitigation[] CollectTargetStatuses(FrozenDictionary<uint, MitigationDefinition> definitions)
+        private static ActiveMitigation[] CollectTargetStatuses
+        (
+            FrozenDictionary<uint, MitigationDefinition> definitions
+        )
         {
             var statuses      = new List<ActiveMitigation>();
             var currentTarget = TargetManager.Target;
@@ -667,7 +727,11 @@ public class AutoDisplayMitigationInfo : ModuleBase
             return statuses.ToArray();
         }
 
-        private static MitigationValue CalculateSummary(ReadOnlySpan<ActiveMitigation> localStatuses, ReadOnlySpan<ActiveMitigation> targetStatuses)
+        private static MitigationValue CalculateSummary
+        (
+            ReadOnlySpan<ActiveMitigation> localStatuses,
+            ReadOnlySpan<ActiveMitigation> targetStatuses
+        )
         {
             var factors = MitigationFactors.Full;
             factors.Apply(localStatuses);
@@ -703,6 +767,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
                     maxIndex = member.Index + 1;
 
                 var entityID = member.EntityId;
+
                 if (entityID == 0 || member.Object == null)
                 {
                     partyMembers[member.Index] = new PartyMitigationSnapshot(entityID, MitigationValue.Empty, 0);
@@ -722,10 +787,12 @@ public class AutoDisplayMitigationInfo : ModuleBase
                     memberFactors.Apply(mitigation);
                 }
 
-                partyMembers[member.Index] = new PartyMitigationSnapshot(
+                partyMembers[member.Index] = new PartyMitigationSnapshot
+                (
                     entityID,
                     memberFactors.ToReduction(),
-                    CalculateShield(member.Object));
+                    CalculateShield(member.Object)
+                );
             }
 
             return partyMembers[..maxIndex];
@@ -745,7 +812,9 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
             if (statusID == 2675)
             {
-                var value = memberStatus.SourceID == targetID ? 15f : 10f;
+                var value = memberStatus.SourceID == targetID ?
+                                15f :
+                                10f;
                 mitigation = new MitigationValue(value, value);
                 return true;
             }
@@ -777,7 +846,13 @@ public class AutoDisplayMitigationInfo : ModuleBase
             return true;
         }
 
-        private static void AddOrUpdateActiveMitigation(List<ActiveMitigation> statuses, uint statusID, float remainingTime, MitigationValue value)
+        private static void AddOrUpdateActiveMitigation
+        (
+            List<ActiveMitigation> statuses,
+            uint                   statusID,
+            float                  remainingTime,
+            MitigationValue        value
+        )
         {
             for (var i = 0; i < statuses.Count; i++)
             {
@@ -794,7 +869,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
             statuses.Add(new ActiveMitigation(statusID, remainingTime, value));
         }
 
-        private static float CalculateShield(GameBattleChara* chara) =>
+        private static float CalculateShield
+        (
+            GameBattleChara* chara
+        ) =>
             (float)chara->ShieldValue / 100 * chara->Health;
 
         private readonly struct MemberStatus
@@ -806,7 +884,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
             public uint StatusID { get; } = statusID;
             public uint SourceID { get; } = sourceID;
 
-            public static MemberStatus From(Status s) =>
+            public static MemberStatus From
+            (
+                Status s
+            ) =>
                 new(s.StatusId, s.SourceObject.ObjectId);
         }
     }
@@ -820,7 +901,10 @@ public class AutoDisplayMitigationInfo : ModuleBase
         public static FrozenDictionary<uint, MitigationDefinition> GetStatusDefinitions() =>
             Volatile.Read(ref StatusDefinitions);
 
-        public static async Task FetchMitigationStatusesAsync(CancellationToken ct)
+        public static async Task FetchMitigationStatusesAsync
+        (
+            CancellationToken ct
+        )
         {
             try
             {

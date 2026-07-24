@@ -23,7 +23,7 @@ public unsafe class AutoAetherialReduction : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["YLCHEN"]
     };
-    
+
     private TextNode?       lableNode;
     private TextButtonNode? startButtonNode;
     private TextButtonNode? stopButtonNode;
@@ -92,7 +92,11 @@ public unsafe class AutoAetherialReduction : ModuleBase
         return true;
     }
 
-    private void OnAddonList(AddonEvent type, AddonArgs? args)
+    private void OnAddonList
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -162,7 +166,7 @@ public unsafe class AutoAetherialReduction : ModuleBase
 
         return false;
     }
-    
+
     private void ClearNodes()
     {
         lableNode?.Dispose();
@@ -174,12 +178,12 @@ public unsafe class AutoAetherialReduction : ModuleBase
         stopButtonNode?.Dispose();
         stopButtonNode = null;
     }
-    
+
     #region IPC
 
     [IPCProvider("DailyRoutines.Modules.AutoAetherialReduction.IsBusy")]
     private bool IsCurrentlyBusy => TaskHelper?.IsBusy ?? false;
-    
+
     [IPCProvider("DailyRoutines.Modules.AutoAetherialReduction.StartReduction")]
     private bool StartReductionIPC() => StartReduction();
 

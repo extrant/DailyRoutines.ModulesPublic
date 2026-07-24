@@ -94,15 +94,31 @@ public partial class BetterPartyFinderFilter : ModuleBase
         noNotifyWhenZero   ??= FlagStatusModule.Instance()->UIFlags[6] == 1;
         notifyRecruitment  ??= NotifyNewRecruitment                    == 1;
 
-        var flag0 = displayBlacklisted.Value ? 0 : 0x20000;
-        var flag1 = displayLocked.Value ? 0 : 0x10000;
-        var flag2 = noNotifyWhenZero.Value ? 0x10000 : 0;
-        var flag3 = notifyRecruitment.Value ? 0x1 : 0;
+        var flag0 = displayBlacklisted.Value ?
+                        0 :
+                        0x20000;
+        var flag1 = displayLocked.Value ?
+                        0 :
+                        0x10000;
+        var flag2 = noNotifyWhenZero.Value ?
+                        0x10000 :
+                        0;
+        var flag3 = notifyRecruitment.Value ?
+                        0x1 :
+                        0;
 
-        var targetValue0 = displayBlacklisted.Value ? 1 : 0;
-        var targetValue1 = displayLocked.Value ? 0 : 1;
-        var targetValue2 = noNotifyWhenZero.Value ? 1 : 0;
-        var targetValue3 = notifyRecruitment.Value ? 1 : 0;
+        var targetValue0 = displayBlacklisted.Value ?
+                               1 :
+                               0;
+        var targetValue1 = displayLocked.Value ?
+                               0 :
+                               1;
+        var targetValue2 = noNotifyWhenZero.Value ?
+                               1 :
+                               0;
+        var targetValue3 = notifyRecruitment.Value ?
+                               1 :
+                               0;
 
         if (FlagStatusModule.Instance()->UIFlags[12] == targetValue0         &&
             FlagStatusModule.Instance()->UIFlags[7]  == targetValue1         &&
@@ -115,7 +131,12 @@ public partial class BetterPartyFinderFilter : ModuleBase
         NotifyNewRecruitment = (uint)targetValue3;
     }
 
-    private void HandleRegexUpdate(int index, bool key, string value)
+    private void HandleRegexUpdate
+    (
+        int    index,
+        bool   key,
+        string value
+    )
     {
         try
         {
@@ -130,7 +151,11 @@ public partial class BetterPartyFinderFilter : ModuleBase
         }
     }
 
-    private void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
+    private void OnReceiveListing
+    (
+        IPartyFinderListing          listing,
+        IPartyFinderListingEventArgs args
+    )
     {
         if (batchIndex != args.BatchNumber)
         {
@@ -149,7 +174,10 @@ public partial class BetterPartyFinderFilter : ModuleBase
         args.Visible &= FilterByHighEndSameRole(listing);
     }
 
-    private bool FilterBySameDescription(IPartyFinderListing listing)
+    private bool FilterBySameDescription
+    (
+        IPartyFinderListing listing
+    )
     {
         if (!config.FilterSameDescription)
             return true;
@@ -161,7 +189,10 @@ public partial class BetterPartyFinderFilter : ModuleBase
         return descriptionSet.Add((listing.RawDuty, description));
     }
 
-    private bool FilterByRegexList(IPartyFinderListing listing)
+    private bool FilterByRegexList
+    (
+        IPartyFinderListing listing
+    )
     {
         var description = listing.Description.ToString();
         if (string.IsNullOrEmpty(description))
@@ -174,10 +205,15 @@ public partial class BetterPartyFinderFilter : ModuleBase
                                      Regex.IsMatch(description,             item.Value)
                             );
 
-        return config.IsWhiteList ? isMatch : !isMatch;
+        return config.IsWhiteList ?
+                   isMatch :
+                   !isMatch;
     }
 
-    private bool FilterByHighEndSameJob(IPartyFinderListing listing)
+    private bool FilterByHighEndSameJob
+    (
+        IPartyFinderListing listing
+    )
     {
         if (!config.HighEndFilterSameJob) return true;
         if (!isRaid) return true;
@@ -196,7 +232,10 @@ public partial class BetterPartyFinderFilter : ModuleBase
         return true;
     }
 
-    private bool FilterByHighEndSameRole(IPartyFinderListing listing)
+    private bool FilterByHighEndSameRole
+    (
+        IPartyFinderListing listing
+    )
     {
         if (!config.HighEndFilterRoleCount) return true;
         if (!isRaid) return true;
@@ -227,7 +266,12 @@ public partial class BetterPartyFinderFilter : ModuleBase
             _ => true
         };
 
-        bool JobTypeCounter(int jobType, int maxCount, ClassJob currentJob)
+        bool JobTypeCounter
+        (
+            int      jobType,
+            int      maxCount,
+            ClassJob currentJob
+        )
         {
             if (maxCount == -1)
                 return true;

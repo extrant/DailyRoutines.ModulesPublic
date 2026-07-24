@@ -26,7 +26,7 @@ public class AutoSoulsow : ModuleBase
         DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
         DService.Instance().Condition.ConditionChange    += OnConditionChanged;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
@@ -35,14 +35,20 @@ public class AutoSoulsow : ModuleBase
     }
 
     // 重新挑战
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 进入副本
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
 
@@ -52,7 +58,11 @@ public class AutoSoulsow : ModuleBase
     }
 
     // 战斗状态
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (flag is not ConditionFlag.InCombat) return;
 

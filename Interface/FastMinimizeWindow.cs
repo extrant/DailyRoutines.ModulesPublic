@@ -22,7 +22,7 @@ public unsafe class FastMinimizeWindow : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["Rorinnn"]
     };
-    
+
     private Config      config = null!;
     private NotifyIcon? trayIcon;
 
@@ -122,7 +122,11 @@ public unsafe class FastMinimizeWindow : ModuleBase
         }
     }
 
-    private void DrawBehaviorCombo(string label, ref ClickBehavior behavior)
+    private void DrawBehaviorCombo
+    (
+        string            label,
+        ref ClickBehavior behavior
+    )
     {
         using var combo = ImRaii.Combo(label, BehaviorNames.GetValueOrDefault(behavior, LuminaWrapper.GetAddonText(7)));
         if (!combo) return;
@@ -159,7 +163,9 @@ public unsafe class FastMinimizeWindow : ModuleBase
 
         if (ImGui.Begin("##DRMinimizeButton", BUTTON_WINDOW_FLAGS))
         {
-            using var color = config.IsTransparentWhenNotHovered ? ImRaii.PushColor(ImGuiCol.Button, 0u) : null;
+            using var color = config.IsTransparentWhenNotHovered ?
+                                  ImRaii.PushColor(ImGuiCol.Button, 0u) :
+                                  null;
             if (ImGui.Button("##MinimizeBtn", new Vector2(buttonSize, buttonSize)))
                 HandleClick(config.LeftClickBehavior);
 
@@ -170,7 +176,10 @@ public unsafe class FastMinimizeWindow : ModuleBase
         }
     }
 
-    private void HandleClick(ClickBehavior behavior)
+    private void HandleClick
+    (
+        ClickBehavior behavior
+    )
     {
         switch (behavior)
         {
@@ -183,9 +192,17 @@ public unsafe class FastMinimizeWindow : ModuleBase
         }
     }
 
-    private static void OnMinimizeCommand(string command, string args) => TryMinimize();
+    private static void OnMinimizeCommand
+    (
+        string command,
+        string args
+    ) => TryMinimize();
 
-    private void OnTrayCommand(string command, string args) => TryMinimizeToTray();
+    private void OnTrayCommand
+    (
+        string command,
+        string args
+    ) => TryMinimizeToTray();
 
     private static void TryMinimize()
     {
@@ -208,9 +225,9 @@ public unsafe class FastMinimizeWindow : ModuleBase
     private static Icon? TryExtractGameIcon()
     {
         var mainModule = Process.GetCurrentProcess().MainModule;
-        return mainModule?.FileName is { } fileName
-                   ? Icon.ExtractAssociatedIcon(fileName)
-                   : null;
+        return mainModule?.FileName is { } fileName ?
+                   Icon.ExtractAssociatedIcon(fileName) :
+                   null;
     }
 
     private bool CreateTrayIcon()
@@ -238,7 +255,11 @@ public unsafe class FastMinimizeWindow : ModuleBase
         }
     }
 
-    private void OnTrayIconClick(object? sender, EventArgs e)
+    private void OnTrayIconClick
+    (
+        object?   sender,
+        EventArgs e
+    )
     {
         var hwnd = Framework.Instance()->GameWindow->WindowHandle;
         if (hwnd == nint.Zero) return;
@@ -332,15 +353,25 @@ public unsafe class FastMinimizeWindow : ModuleBase
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+    private static extern bool ShowWindow
+    (
+        nint hWnd,
+        int  nCmdShow
+    );
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool IsWindowVisible(nint hWnd);
+    private static extern bool IsWindowVisible
+    (
+        nint hWnd
+    );
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetForegroundWindow(nint hWnd);
+    private static extern bool SetForegroundWindow
+    (
+        nint hWnd
+    );
 
     #endregion
 }

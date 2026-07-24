@@ -31,7 +31,11 @@ public class BaitSwitchCommand : ModuleBase
     protected override void ConfigUI() =>
         ImGui.TextWrapped(Lang.Get("BaitSwitchCommand-CommandHelpDetailed"));
 
-    private static void OnCommand(string command, string arguments)
+    private static void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         arguments = arguments.Trim();
         if (string.IsNullOrWhiteSpace(arguments)) return;
@@ -41,7 +45,10 @@ public class BaitSwitchCommand : ModuleBase
             SwitchBaitByID(itemID);
     }
 
-    private static void SwitchBaitByName(string itemName)
+    private static void SwitchBaitByName
+    (
+        string itemName
+    )
     {
         itemName = itemName.ToLower();
 
@@ -60,13 +67,21 @@ public class BaitSwitchCommand : ModuleBase
         SwitchBaitByID(itemID);
     }
 
-    private static void SwitchBaitByID(uint itemID)
+    private static void SwitchBaitByID
+    (
+        uint itemID
+    )
     {
         if (!IsAbleToSwitch(itemID, out var isBait, out var swimBaitIndex)) return;
         SwitchBait(itemID, isBait, swimBaitIndex);
     }
 
-    private static void SwitchBait(uint itemID, bool isBait, int swimBaitIndex = -1)
+    private static void SwitchBait
+    (
+        uint itemID,
+        bool isBait,
+        int  swimBaitIndex = -1
+    )
     {
         if (isBait)
             FishingCommand.ChangeBait(itemID);
@@ -92,8 +107,8 @@ public class BaitSwitchCommand : ModuleBase
             var matchingItems = source
                                 .Where
                                 (x => x.Value.NameLower.Contains(itemName, StringComparison.OrdinalIgnoreCase) ||
-                                      DService.Instance().ClientState.ClientLanguage == (ClientLanguage)4 &&
-                                      x.Value.NamePinyin.Contains(itemName, StringComparison.OrdinalIgnoreCase)
+                                      (DService.Instance().ClientState.ClientLanguage == (ClientLanguage)4 &&
+                                       x.Value.NamePinyin.Contains(itemName, StringComparison.OrdinalIgnoreCase))
                                 )
                                 .OrderBy(x => x.Value.NameLower)
                                 .ToList();
@@ -104,12 +119,17 @@ public class BaitSwitchCommand : ModuleBase
         return item != 0;
     }
 
-    private static unsafe bool IsAbleToSwitch(uint itemID, out bool isBait, out int swimBaitIndex)
+    private static unsafe bool IsAbleToSwitch
+    (
+        uint     itemID,
+        out bool isBait,
+        out int  swimBaitIndex
+    )
     {
         isBait        = true;
         swimBaitIndex = -1;
 
-        if (itemID == 0 || !Baits.ContainsKey(itemID) && !Fishes.ContainsKey(itemID))
+        if (itemID == 0 || (!Baits.ContainsKey(itemID) && !Fishes.ContainsKey(itemID)))
         {
             NotifyHelper.Instance().ChatError(Lang.Get("BaitSwitchCommand-Notice-NoMatchBait", itemID));
             return false;

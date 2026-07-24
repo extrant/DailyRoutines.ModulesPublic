@@ -22,7 +22,7 @@ public unsafe class FieldEntryCommand : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private readonly FrozenDictionary<string, (Action EnqueueAction, uint Content)> commandArgs = new Dictionary<string, (Action EnqueueAction, uint Content)>
     {
         ["bozja"]   = (EnqueueBozja, 735),
@@ -39,7 +39,7 @@ public unsafe class FieldEntryCommand : ModuleBase
         ["auxesia"] = (EnqueueAuxesia, 5),
         ["ocs"]     = (EnqueueSouthHorn, 1018)
     }.ToFrozenDictionary();
-    
+
     private uint redirectTargetZoneInMoon;
 
     protected override void Init()
@@ -50,7 +50,7 @@ public unsafe class FieldEntryCommand : ModuleBase
 
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("FieldEntryCommand-CommandHelp") });
     }
-    
+
     protected override void Uninit()
     {
         GamePacketManager.Instance().Unreg(OnPreSendPacket);
@@ -103,11 +103,20 @@ public unsafe class FieldEntryCommand : ModuleBase
             }
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(ContentToPlaceName.TryGetValue(command.Value.Content, out var placeName) ? placeName : data.Name.ToString());
+            ImGui.TextUnformatted
+            (
+                ContentToPlaceName.TryGetValue(command.Value.Content, out var placeName) ?
+                    placeName :
+                    data.Name.ToString()
+            );
         }
     }
 
-    private void OnCommand(string command, string args)
+    private void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         TaskHelper.Abort();
 
@@ -117,7 +126,9 @@ public unsafe class FieldEntryCommand : ModuleBase
         {
             if (!LuminaGetter.TryGetRow<ContentFinderCondition>(commandPair.Value.Content, out var data)) continue;
 
-            var contentName = ContentToPlaceName.TryGetValue(commandPair.Value.Content, out var placeName) ? placeName : data.Name.ToString();
+            var contentName = ContentToPlaceName.TryGetValue(commandPair.Value.Content, out var placeName) ?
+                                  placeName :
+                                  data.Name.ToString();
 
             if (args == commandPair.Key || contentName.Contains(args, StringComparison.OrdinalIgnoreCase))
             {
@@ -128,7 +139,13 @@ public unsafe class FieldEntryCommand : ModuleBase
         }
     }
 
-    public void OnPreSendPacket(ref bool isPrevented, int opcode, ref nint packet, ref bool isPrioritize)
+    public void OnPreSendPacket
+    (
+        ref bool isPrevented,
+        int      opcode,
+        ref nint packet,
+        ref bool isPrioritize
+    )
     {
         if (redirectTargetZoneInMoon == 0 || GameState.TerritoryType != 959) return;
 
@@ -171,7 +188,7 @@ public unsafe class FieldEntryCommand : ModuleBase
     // 丰水之地
     private static void EnqueueHydatos() =>
         MovementManager.Instance().TPSmart_BetweenZone(827);
-    
+
     // 博兹雅
     private static void EnqueueBozja() =>
         MovementManager.Instance().TPSmart_BetweenZone(920);
@@ -179,11 +196,11 @@ public unsafe class FieldEntryCommand : ModuleBase
     // 扎杜诺尔
     private static void EnqueueZadonor() =>
         MovementManager.Instance().TPSmart_BetweenZone(975);
-    
+
     // 蜃景幻界新月岛 南征之章
     private static void EnqueueSouthHorn() =>
         MovementManager.Instance().TPSmart_BetweenZone(1252);
-    
+
     // 憧憬湾
     private static void EnqueueArdorum() =>
         MovementManager.Instance().TPSmart_BetweenZone(1237);
@@ -195,15 +212,15 @@ public unsafe class FieldEntryCommand : ModuleBase
     // 俄匊斯
     private static void EnqueueOizys() =>
         MovementManager.Instance().TPSmart_BetweenZone(1310);
-    
+
     // 奥克塞西亚
     private static void EnqueueAuxesia() =>
         MovementManager.Instance().TPSmart_BetweenZone(1319);
-    
+
     #region 常量
 
     private const string COMMAND = "/pdrfe";
-    
+
     private static readonly FrozenDictionary<uint, string> ContentToPlaceName = new Dictionary<uint, string>
     {
         // 开拓无人岛
@@ -215,7 +232,7 @@ public unsafe class FieldEntryCommand : ModuleBase
         // 俄匊斯
         [4] = LuminaWrapper.GetPlaceName(5406),
         // 奥克塞西亚
-        [5] = LuminaWrapper.GetPlaceName(5551),
+        [5] = LuminaWrapper.GetPlaceName(5551)
     }.ToFrozenDictionary();
 
     #endregion

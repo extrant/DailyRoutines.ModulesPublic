@@ -39,7 +39,11 @@ public unsafe class JoinExitDutyCommand : ModuleBase
     protected override void Uninit() =>
         CommandManager.Instance().RemoveSubCommand("joinexitduty");
 
-    private void OnCommand(string command, string arguments)
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    )
     {
         if (DService.Instance().PartyList.Length > 0)
         {
@@ -65,7 +69,11 @@ public unsafe class JoinExitDutyCommand : ModuleBase
         EnqueueARound(TARGET_CONTENT, contentData.AllowExplorerMode);
     }
 
-    private void EnqueueARound(uint targetContent, bool isExplorerMode)
+    private void EnqueueARound
+    (
+        uint targetContent,
+        bool isExplorerMode
+    )
     {
         TaskHelper.Enqueue(CheckAndSwitchJob);
         TaskHelper.Enqueue
@@ -116,7 +124,10 @@ public unsafe class JoinExitDutyCommand : ModuleBase
         return true;
     }
 
-    private static bool ExitDuty(uint targetContent)
+    private static bool ExitDuty
+    (
+        uint targetContent
+    )
     {
         if (GameMain.Instance()->CurrentContentFinderConditionId != targetContent) return false;
 

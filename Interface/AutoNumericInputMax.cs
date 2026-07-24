@@ -23,23 +23,36 @@ public unsafe class AutoNumericInputMax : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
-    
+
     private static readonly CompSig UldUpdateSig =
         new("40 53 48 83 EC ?? 48 8B D9 48 83 C1 ?? E8 ?? ?? ?? ?? 80 BB ?? ?? ?? ?? ?? 74 ?? 48 8B CB");
-    private delegate nint UldUpdateDelegate(AtkComponentNumericInput* component);
+
+    private delegate nint UldUpdateDelegate
+    (
+        AtkComponentNumericInput* component
+    );
+
     private Hook<UldUpdateDelegate>? UldUpdateHook;
 
     private static readonly CompSig NumericSetValueSig = new
         ("E8 ?? ?? ?? ?? C7 83 ?? ?? ?? ?? ?? ?? ?? ?? 48 83 C4 ?? 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 8B 91");
-    private delegate void NumericSetValueDelegate(AtkComponentNumericInput* component, int value, bool a3, bool a4);
+
+    private delegate void NumericSetValueDelegate
+    (
+        AtkComponentNumericInput* component,
+        int                       value,
+        bool                      a3,
+        bool                      a4
+    );
+
     private NumericSetValueDelegate? NumericSetValue;
-    
+
     private          Config          config    = null!;
     private readonly Throttler<nint> throttler = new();
 
     private long lastInterruptTime;
     private bool isBlocked;
-    
+
     protected override void Init()
     {
         config ??= Config.Load(this) ?? new();
@@ -73,7 +86,10 @@ public unsafe class AutoNumericInputMax : ModuleBase
         }
     }
 
-    private nint UldUpdateDetour(AtkComponentNumericInput* component)
+    private nint UldUpdateDetour
+    (
+        AtkComponentNumericInput* component
+    )
     {
         var result = UldUpdateHook.Original(component);
 
@@ -118,13 +134,13 @@ public unsafe class AutoNumericInputMax : ModuleBase
         Out: ;
         return result;
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool AdjustMaximumValue = true;
         public int  MaxValue           = 999;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<string> BlacklistAddons =

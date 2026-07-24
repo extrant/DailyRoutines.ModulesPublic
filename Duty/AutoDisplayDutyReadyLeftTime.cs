@@ -24,20 +24,24 @@ public unsafe class AutoDisplayDutyReadyLeftTime : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     protected override void Init() =>
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "ContentsFinderReady", OnAddon);
 
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-    
-    private static void OnAddon(AddonEvent type, AddonArgs args)
+
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!ContentsFinderReady->IsAddonAndNodesReady()) return;
-        
+
         var textNode = ContentsFinderReady->GetTextNodeById(3);
         if (textNode == null) return;
-        
+
         var contentFinder = ContentsFinder.Instance();
         if (contentFinder == null) return;
 
@@ -48,10 +52,10 @@ public unsafe class AutoDisplayDutyReadyLeftTime : ModuleBase
         var dueTime   = readyTime + TimeSpan.FromSeconds(45);
         var leftTime  = dueTime   - StandardTimeManager.Instance().UTCNow;
         if (leftTime.TotalSeconds < 0) return;
-        
+
         using var rented  = new RentedSeStringBuilder();
         var       builder = rented.Builder;
-        
+
         builder.Append($"{LuminaWrapper.GetAddonText(2780)} ")
                .PushColorType(32)
                .Append($"[{DService.Instance().SeStringEvaluator.EvaluateFromAddon(9169, [(int)leftTime.TotalSeconds])}]")

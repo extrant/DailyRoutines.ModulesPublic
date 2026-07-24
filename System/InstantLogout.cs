@@ -33,15 +33,15 @@ public unsafe class InstantLogout : ModuleBase
     private Hook<AgentHUD.Delegates.HandleMainCommandOperation>? HandleMainCommandOperationHook;
 
     private Hook<AgentShowDelegate>? AgentCloseMessageShowHook;
-    
+
     private Hook<Framework.Delegates.ExitFromWindow>? ExitFromWindowHook;
-    
+
     private Hook<LogoutCallbackInterface.Delegates.OnLogout>? OnLogoutHook;
 
     protected override void Init()
     {
         TaskHelper = new();
-        
+
         OnLogoutHook = AgentLobby.Instance()->LogoutCallbackInterface.VirtualTable->HookVFuncFromName
         (
             "OnLogout",
@@ -63,7 +63,7 @@ public unsafe class InstantLogout : ModuleBase
             (AgentShowDelegate)AgentCloseMessageShowDetour
         );
         AgentCloseMessageShowHook.Enable();
-        
+
         DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PreReceiveEvent, Dalamud.Game.Agent.AgentId.Lobby, OnAgentLobby);
 
         ExitFromWindowHook = DService.Instance().Hook.HookFromMemberFunction
@@ -98,24 +98,35 @@ public unsafe class InstantLogout : ModuleBase
                 Shutdown(TaskHelper);
         }
     }
-    
-    private void OnLogoutDetour(LogoutCallbackInterface* thisPtr, LogoutCallbackInterface.LogoutParams* logoutParams)
+
+    private void OnLogoutDetour
+    (
+        LogoutCallbackInterface*              thisPtr,
+        LogoutCallbackInterface.LogoutParams* logoutParams
+    )
     {
         if (TaskHelper.IsBusy)
         {
             logoutParams->Type = 0;
             logoutParams->Code = 10000;
         }
-        
+
         OnLogoutHook.Original(thisPtr, logoutParams);
     }
 
     // 从窗口标题栏退出
-    private void ExitFromWindowDetour(Framework* framework) =>
+    private void ExitFromWindowDetour
+    (
+        Framework* framework
+    ) =>
         Shutdown(TaskHelper);
-    
+
     // 从标题界面退出游戏
-    private void OnAgentLobby(AgentEvent type, AgentArgs args)
+    private void OnAgentLobby
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         var eventArgs = args as AgentReceiveEventArgs;
         if (eventArgs.EventKind != 0 || eventArgs.ValueCount != 1) return;
@@ -126,7 +137,7 @@ public unsafe class InstantLogout : ModuleBase
         args.PreventOriginal();
         Shutdown(TaskHelper);
     }
-    
+
     // 从系统菜单退出
     private bool HandleMainCommandOperationDetour
     (
@@ -154,11 +165,18 @@ public unsafe class InstantLogout : ModuleBase
     }
 
     // 从关闭程序对话框退出
-    private void AgentCloseMessageShowDetour(AgentInterface* agent) =>
+    private void AgentCloseMessageShowDetour
+    (
+        AgentInterface* agent
+    ) =>
         Shutdown(TaskHelper);
 
     // 从文本指令退出
-    private void OnPreExecuteCommandInner(ref bool isPrevented, ref ReadOnlySeString message)
+    private void OnPreExecuteCommandInner
+    (
+        ref bool             isPrevented,
+        ref ReadOnlySeString message
+    )
     {
         var messageDecode = message.ToString();
 
@@ -169,16 +187,22 @@ public unsafe class InstantLogout : ModuleBase
             CheckCommand(messageDecode, ShutdownLine, TaskHelper, Shutdown))
             isPrevented = true;
     }
-    
+
     #region 实际操作
 
-    private static void Logout(TaskHelper taskHelper)
+    private static void Logout
+    (
+        TaskHelper taskHelper
+    )
     {
         taskHelper.Enqueue(() => ContentsFinderHelper.RequestDutyNormal(167, ContentsFinderHelper.DefaultOption));
         taskHelper.Enqueue(() => !GameState.IsLoggedIn);
     }
 
-    private static void Shutdown(TaskHelper taskHelper)
+    private static void Shutdown
+    (
+        TaskHelper taskHelper
+    )
     {
         Logout(taskHelper);
         taskHelper.Enqueue
@@ -193,8 +217,14 @@ public unsafe class InstantLogout : ModuleBase
     }
 
     #endregion
-    
-    private static bool CheckCommand(string message, TextCommand command, TaskHelper taskHelper, Action<TaskHelper> action)
+
+    private static bool CheckCommand
+    (
+        string             message,
+        TextCommand        command,
+        TaskHelper         taskHelper,
+        Action<TaskHelper> action
+    )
     {
         if (message == command.Command.ToString() || message == command.Alias.ToString())
         {

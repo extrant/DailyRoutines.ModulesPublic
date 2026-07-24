@@ -3,7 +3,6 @@ using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using Dalamud.Hooking;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -22,10 +21,15 @@ public unsafe class AutoHideGameObjects : ModuleBase
         Description = Lang.Get("AutoHideGameObjectsDescription"),
         Category    = ModuleCategory.System
     };
-    
-    private static readonly CompSig                          UpdateObjectArraysSig = new("40 57 48 83 EC ?? 48 89 5C 24 ?? 33 DB");
-    private delegate        void*                            UpdateObjectArraysDelegate(GameObjectManager* objectManager);
-    private                 Hook<UpdateObjectArraysDelegate> UpdateObjectArraysHook;
+
+    private static readonly CompSig UpdateObjectArraysSig = new("40 57 48 83 EC ?? 48 89 5C 24 ?? 33 DB");
+
+    private delegate void* UpdateObjectArraysDelegate
+    (
+        GameObjectManager* objectManager
+    );
+
+    private Hook<UpdateObjectArraysDelegate> UpdateObjectArraysHook;
 
     private Config config = null!;
 
@@ -35,8 +39,8 @@ public unsafe class AutoHideGameObjects : ModuleBase
 
     protected override void Init()
     {
-        TaskHelper   ??= new() { TimeoutMS = 30_000 };
-        config =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 30_000 };
+        config     =   Config.Load(this) ?? new();
 
         UpdateObjectArraysHook ??= UpdateObjectArraysSig.GetHook<UpdateObjectArraysDelegate>(UpdateObjectArraysDetour);
         UpdateObjectArraysHook.Enable();
@@ -80,14 +84,20 @@ public unsafe class AutoHideGameObjects : ModuleBase
         }
     }
 
-    private void* UpdateObjectArraysDetour(GameObjectManager* objectManager)
+    private void* UpdateObjectArraysDetour
+    (
+        GameObjectManager* objectManager
+    )
     {
         var orig = UpdateObjectArraysHook.Original(objectManager);
         UpdateAllObjects(objectManager);
         return orig;
     }
 
-    private void UpdateAllObjects(GameObjectManager* manager)
+    private void UpdateAllObjects
+    (
+        GameObjectManager* manager
+    )
     {
         if (manager == null) return;
         if (!GameState.IsLoggedIn) return;
@@ -142,7 +152,12 @@ public unsafe class AutoHideGameObjects : ModuleBase
         }
     }
 
-    private static bool ShouldFilter(FilterConfig config, GameObject* gameObject, uint index)
+    private static bool ShouldFilter
+    (
+        FilterConfig config,
+        GameObject*  gameObject,
+        uint         index
+    )
     {
         if (gameObject == null) return false;
 
@@ -177,7 +192,7 @@ public unsafe class AutoHideGameObjects : ModuleBase
             gameObject->ObjectKind != ObjectKind.Mount &&
             gameObject->OwnerId    != LocalPlayerState.EntityID)
             return true;
-        
+
         // 战斗召唤物
         if (config.HidePet                                                &&
             index                                 <= 200                  &&
@@ -188,11 +203,11 @@ public unsafe class AutoHideGameObjects : ModuleBase
             return true;
 
         // 陆行鸟
-        if (config.HideChocobo                                                &&
-            index                                 <= 200                      &&
-            index % 2                             == 0                        &&
-            gameObject->ObjectKind                == ObjectKind.BattleNpc     &&
-            (BattleNpcSubKind)gameObject->SubKind == BattleNpcSubKind.Buddy   &&
+        if (config.HideChocobo                                              &&
+            index                                 <= 200                    &&
+            index % 2                             == 0                      &&
+            gameObject->ObjectKind                == ObjectKind.BattleNpc   &&
+            (BattleNpcSubKind)gameObject->SubKind == BattleNpcSubKind.Buddy &&
             gameObject->OwnerId                   != LocalPlayerState.EntityID)
             return true;
 
@@ -206,7 +221,13 @@ public unsafe class AutoHideGameObjects : ModuleBase
         return false;
     }
 
-    private bool ShouldFilterOccultCrescent(GameObject* gameObject, nint targetAddress, ref int playerCount, uint index)
+    private bool ShouldFilterOccultCrescent
+    (
+        GameObject* gameObject,
+        nint        targetAddress,
+        ref int     playerCount,
+        uint        index
+    )
     {
         if (gameObject == null) return false;
 
@@ -280,13 +301,19 @@ public unsafe class AutoHideGameObjects : ModuleBase
         zoneUpdateCount = 0;
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         zoneUpdateCount = 0;
         processedObjects.Clear();
     }
 
-    private void OnUpdate(IFramework _)
+    private void OnUpdate
+    (
+        IFramework _
+    )
     {
         // 主要是小区域更新不及时
         if (zoneUpdateCount > 3 || DService.Instance().Condition.IsBetweenAreas) return;
@@ -294,7 +321,7 @@ public unsafe class AutoHideGameObjects : ModuleBase
         zoneUpdateCount++;
         UpdateAllObjects(GameObjectManager.Instance());
     }
-    
+
     private class Config : ModuleConfig
     {
         public FilterConfig DefaultConfig = new();

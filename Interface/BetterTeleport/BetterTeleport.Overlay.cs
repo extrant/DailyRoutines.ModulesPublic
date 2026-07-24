@@ -223,7 +223,12 @@ public unsafe partial class BetterTeleport
     protected override void OverlayOnClose() =>
         config.Save(this);
 
-    private void DrawSearchItem(int index, OverlayListItem item, bool isSelected)
+    private void DrawSearchItem
+    (
+        int             index,
+        OverlayListItem item,
+        bool            isSelected
+    )
     {
         if (item.DrawSeparatorBefore)
         {
@@ -262,7 +267,12 @@ public unsafe partial class BetterTeleport
 
         if (isSelected || isHovered)
         {
-            var bgCol = ImGui.GetColorU32(isSelected ? ImGuiCol.HeaderActive : ImGuiCol.HeaderHovered);
+            var bgCol = ImGui.GetColorU32
+            (
+                isSelected ?
+                    ImGuiCol.HeaderActive :
+                    ImGuiCol.HeaderHovered
+            );
             drawList.AddRectFilled(startPos, startPos + new Vector2(width, itemHeight), bgCol, 4f);
         }
 
@@ -288,7 +298,10 @@ public unsafe partial class BetterTeleport
         ImGui.SetCursorScreenPos(startPos + new Vector2(0, itemHeight + 2f));
     }
 
-    private void TriggerListItem(OverlayListItem item)
+    private void TriggerListItem
+    (
+        OverlayListItem item
+    )
     {
         if (item.IsShowMore)
         {
@@ -326,7 +339,10 @@ public unsafe partial class BetterTeleport
         return result;
     }
 
-    private List<AetheryteRecord> GetSortedSpecialRecords(List<AetheryteRecord> combinedHistory)
+    private List<AetheryteRecord> GetSortedSpecialRecords
+    (
+        List<AetheryteRecord> combinedHistory
+    )
     {
         var specialSeen  = new HashSet<(uint, byte, uint)>();
         var specialItems = new List<AetheryteRecord>();
@@ -464,5 +480,8 @@ public unsafe partial class BetterTeleport
     }
 
     [DllImport("user32.dll")]
-    private static extern short GetAsyncKeyState(int vKey);
+    private static extern short GetAsyncKeyState
+    (
+        int vKey
+    );
 }

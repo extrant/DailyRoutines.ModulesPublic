@@ -1,7 +1,6 @@
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using DailyRoutines.Manager;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
@@ -34,6 +33,9 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
 
     protected override void Init()
     {
+        sourceContextMenu      = new();
+        destinationContextMenu = new();
+
         DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpen;
         TooltipManager.Instance().RegItem(OnItemTooltipUpdate);
     }
@@ -50,7 +52,12 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         AddonNPCShopsDestination.Addon = null;
     }
 
-    private static void OnItemTooltipUpdate(ItemKind kind, uint itemID, ref List<TooltipItemModification> modifications)
+    private static void OnItemTooltipUpdate
+    (
+        ItemKind                          kind,
+        uint                              itemID,
+        ref List<TooltipItemModification> modifications
+    )
     {
         if (kind is not ItemKind.Normal)
             return;
@@ -61,15 +68,17 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
                .Append($"[{Lang.Get("AutoShowItemNPCShopInfo-TooltipTitle")}]");
 
         var isAnyValid = false;
-        
+
         var sourceResult = ItemSourceInfo.Query(itemID);
+
         if (sourceResult is { State: ItemSourceQueryState.Ready, Data: { } sourceInfo })
         {
             isAnyValid = true;
-            
+
             var shopInfo = sourceInfo.NPCInfos
-                                   .SelectMany(x => x.CostInfos)
-                                   .DistinctBy(x => x.ItemID);
+                                     .SelectMany(x => x.CostInfos)
+                                     .DistinctBy(x => x.ItemID);
+
             foreach (var costInfo in shopInfo)
             {
                 builder.Builder
@@ -89,7 +98,12 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
                 {
                     builder.Builder
                            .Append($"  ({Lang.Get("Current")}: ")
-                           .PushColorType(itemCount >= costInfo.Cost ? 67U : 17)
+                           .PushColorType
+                           (
+                               itemCount >= costInfo.Cost ?
+                                   67U :
+                                   17
+                           )
                            .Append($"{itemCount}")
                            .PopColorType()
                            .Append(")");
@@ -98,13 +112,14 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         }
 
         var destinationResult = ItemSourceInfo.QueryExchangeItems(itemID);
+
         if (destinationResult is { State: ItemSourceQueryState.Ready, Data: { } destinationInfo })
         {
             if (isAnyValid)
                 builder.Builder.AppendNewLine();
-            
+
             isAnyValid = true;
-            
+
             builder.Builder
                    .AppendNewLine()
                    .Append($"    {Lang.Get("AutoShowItemNPCShopInfo-ExchangeItemCount", destinationInfo.Items.Count)} ");
@@ -130,10 +145,18 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         }
     }
 
-    private static string GetLocationName(ShopNPCLocation location) =>
-        location.TerritoryID == 282 ? LuminaWrapper.GetAddonText(8495) : location.GetTerritory().ExtractPlaceName();
+    private static string GetLocationName
+    (
+        ShopNPCLocation location
+    ) =>
+        location.TerritoryID == 282 ?
+            LuminaWrapper.GetAddonText(8495) :
+            location.GetTerritory().ExtractPlaceName();
 
-    private static int GetOwnedItemCount(uint itemID)
+    private static int GetOwnedItemCount
+    (
+        uint itemID
+    )
     {
         if (CurrencyManager.Instance()->HasItem(itemID))
             return (int)CurrencyManager.Instance()->GetItemCount(itemID);
@@ -141,14 +164,21 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         return (int)LocalPlayerState.GetItemCount(itemID);
     }
 
-    private static void OpenMarket(uint itemID)
+    private static void OpenMarket
+    (
+        uint itemID
+    )
     {
         var item = LuminaGetter.GetRowOrDefault<Item>(itemID);
         if (!item.Name.IsEmpty)
             ChatManager.Instance().SendMessage($"/pdr market {item.Name}");
     }
 
-    private static void OpenMap(ShopNPCLocation location, string npcName)
+    private static void OpenMap
+    (
+        ShopNPCLocation location,
+        string          npcName
+    )
     {
         var pos = PositionHelper.MapToWorld(new(location.MapPosition.X, location.MapPosition.Y), location.GetMap()).ToVector3(0);
 
@@ -157,7 +187,10 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         instance->OpenMap(location.MapID, location.TerritoryID, npcName);
     }
 
-    private static void TeleportToLocation(ShopNPCLocation location)
+    private static void TeleportToLocation
+    (
+        ShopNPCLocation location
+    )
     {
         var pos = PositionHelper.MapToWorld(new(location.MapPosition.X, location.MapPosition.Y), location.GetMap()).ToVector3(0);
 

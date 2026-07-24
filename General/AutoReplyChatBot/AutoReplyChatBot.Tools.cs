@@ -45,7 +45,12 @@ public partial class AutoReplyChatBot
         return list;
     }
 
-    private static async Task<string> ExecuteToolAsync(string name, string argumentsJSON, ToolExecutionContext context)
+    private static async Task<string> ExecuteToolAsync
+    (
+        string               name,
+        string               argumentsJSON,
+        ToolExecutionContext context
+    )
     {
         DLog.Debug($"[ExecuteToolAsync] 准备执行工具: {name}, 参数: {argumentsJSON}");
 
@@ -57,9 +62,9 @@ public partial class AutoReplyChatBot
 
         try
         {
-            var args = string.IsNullOrWhiteSpace(argumentsJSON)
-                           ? new JObject()
-                           : JObject.Parse(argumentsJSON);
+            var args = string.IsNullOrWhiteSpace(argumentsJSON) ?
+                           new JObject() :
+                           JObject.Parse(argumentsJSON);
 
             DLog.Debug($"[ExecuteToolAsync] 调度到主线程执行: {name}");
             var result = await DService.Instance().Framework.RunOnTick
@@ -87,7 +92,11 @@ public partial class AutoReplyChatBot
         }
     }
 
-    private static ToolCall? ParseToolCallsFromResponse(JObject jObj, IChatBackend backend)
+    private static ToolCall? ParseToolCallsFromResponse
+    (
+        JObject      jObj,
+        IChatBackend backend
+    )
     {
         var toolCalls = backend.ParseToolCalls(jObj);
         if (toolCalls is not { Count: > 0 }) return null;
@@ -112,7 +121,11 @@ public partial class AutoReplyChatBot
         public string?                  FinishReason { get; private set; }
         public string                   Reasoning    => reasoningBuilder.ToString();
 
-        public string? ProcessChunk(string chunk, IChatBackend backend)
+        public string? ProcessChunk
+        (
+            string       chunk,
+            IChatBackend backend
+        )
         {
             var result = backend.ParseStreamChunkFull(chunk);
 
@@ -184,7 +197,11 @@ public partial class AutoReplyChatBot
         public abstract string   Description { get; }
         public abstract JObject? Parameters  { get; }
 
-        public abstract Task<string> ExecuteAsync(JObject args, ToolExecutionContext context);
+        public abstract Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        );
 
         public object ToAPIFormat() => new
         {
@@ -247,7 +264,11 @@ public partial class AutoReplyChatBot
             ["additionalProperties"] = false
         };
 
-        public override Task<string> ExecuteAsync(JObject args, ToolExecutionContext context)
+        public override Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        )
         {
             var action = args["action"]?.Value<string>()?.ToLowerInvariant();
 
@@ -259,14 +280,17 @@ public partial class AutoReplyChatBot
             };
         }
 
-        private static string DoSearch(string? query)
+        private static string DoSearch
+        (
+            string? query
+        )
         {
             if (SheetTypes.Count == 0)
                 return "无法访问游戏数据表列表";
 
-            var matches = string.IsNullOrWhiteSpace(query)
-                              ? SheetTypes.Keys.Take(50).ToList()
-                              : SheetTypes.Keys.Where(n => n.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            var matches = string.IsNullOrWhiteSpace(query) ?
+                              SheetTypes.Keys.Take(50).ToList() :
+                              SheetTypes.Keys.Where(n => n.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (matches.Count == 0)
                 return $"未找到包含 '{query}' 的表";
@@ -287,7 +311,10 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static string DoSchema(string? sheetName)
+        private static string DoSchema
+        (
+            string? sheetName
+        )
         {
             if (string.IsNullOrWhiteSpace(sheetName))
                 return "错误: 缺少 sheet 参数";
@@ -298,9 +325,9 @@ public partial class AutoReplyChatBot
                                         .Where(n => n.Contains(sheetName, StringComparison.OrdinalIgnoreCase))
                                         .Take(5)
                                         .ToList();
-                return similar.Count > 0
-                           ? $"未找到表 '{sheetName}', 你是否想找: {string.Join(", ", similar)}"
-                           : $"未找到表 '{sheetName}'";
+                return similar.Count > 0 ?
+                           $"未找到表 '{sheetName}', 你是否想找: {string.Join(", ", similar)}" :
+                           $"未找到表 '{sheetName}'";
             }
 
             var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -317,7 +344,10 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static string GetFriendlyTypeName(Type type)
+        private static string GetFriendlyTypeName
+        (
+            Type type
+        )
         {
             if (type.IsGenericType)
             {
@@ -409,7 +439,11 @@ public partial class AutoReplyChatBot
             ["additionalProperties"] = false
         };
 
-        public override Task<string> ExecuteAsync(JObject args, ToolExecutionContext context)
+        public override Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        )
         {
             var action = args["action"]?.Value<string>()?.ToLowerInvariant();
             var sheet  = args["sheet"]?.Value<string>();
@@ -425,9 +459,9 @@ public partial class AutoReplyChatBot
                                         .ToList();
                 return Task.FromResult
                 (
-                    similar.Count > 0
-                        ? $"未找到表 '{sheet}', 你是否想找: {string.Join(", ", similar)}"
-                        : $"未找到表 '{sheet}'"
+                    similar.Count > 0 ?
+                        $"未找到表 '{sheet}', 你是否想找: {string.Join(", ", similar)}" :
+                        $"未找到表 '{sheet}'"
                 );
             }
 
@@ -447,7 +481,11 @@ public partial class AutoReplyChatBot
             }
         }
 
-        private static string DoQuery(Type sheetType, JObject args)
+        private static string DoQuery
+        (
+            Type    sheetType,
+            JObject args
+        )
         {
             var query  = args["query"]?.Value<string>() ?? "";
             var limit  = args["limit"]?.Value<int>()    ?? 10;
@@ -480,7 +518,9 @@ public partial class AutoReplyChatBot
             var rows = results.Take(limit).ToList();
 
             if (rows.Count == 0)
-                return query != "" ? $"未找到匹配 '{query}' 的行" : "表为空";
+                return query != "" ?
+                           $"未找到匹配 '{query}' 的行" :
+                           "表为空";
 
             var sb = new StringBuilder();
             sb.AppendLine($"{sheetType.Name}: 返回 {rows.Count} 行 (共 {((IEnumerable)sheet).Cast<object>().Count()} 行)");
@@ -493,9 +533,9 @@ public partial class AutoReplyChatBot
                 var rowID = GetRowID(row);
                 sb.AppendLine
                 (
-                    isTruncated
-                        ? $"\n[#{rowID}]"
-                        : $"\n[#{rowID}] ---"
+                    isTruncated ?
+                        $"\n[#{rowID}]" :
+                        $"\n[#{rowID}] ---"
                 );
 
                 foreach (var prop in fieldSet)
@@ -508,7 +548,11 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static string DoGetRow(Type sheetType, JObject args)
+        private static string DoGetRow
+        (
+            Type    sheetType,
+            JObject args
+        )
         {
             var rowID = args["row_id"]?.Value<uint>();
             if (rowID == null)
@@ -548,7 +592,11 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static string DoFollow(Type sheetType, JObject args)
+        private static string DoFollow
+        (
+            Type    sheetType,
+            JObject args
+        )
         {
             var rowID = args["row_id"]?.Value<uint>();
             var field = args["field"]?.Value<string>();
@@ -584,9 +632,9 @@ public partial class AutoReplyChatBot
             {
                 var similar = sheetType.GetProperties().Select(p => p.Name)
                                        .Where(n => n.Contains(field, StringComparison.OrdinalIgnoreCase)).Take(5).ToList();
-                return similar.Count > 0
-                           ? $"字段 '{field}' 不存在, 你是否想找: {string.Join(", ", similar)}"
-                           : $"字段 '{field}' 不存在于 {sheetType.Name}";
+                return similar.Count > 0 ?
+                           $"字段 '{field}' 不存在, 你是否想找: {string.Join(", ", similar)}" :
+                           $"字段 '{field}' 不存在于 {sheetType.Name}";
             }
 
             var rawValue = prop.GetValue(row);
@@ -633,7 +681,10 @@ public partial class AutoReplyChatBot
 
         #region Reflection Helpers
 
-        private static object? GetSheet(Type sheetType)
+        private static object? GetSheet
+        (
+            Type sheetType
+        )
         {
             var method = typeof(LuminaGetter)
                          .GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -642,7 +693,10 @@ public partial class AutoReplyChatBot
             return typed.Invoke(null, null);
         }
 
-        private static PropertyInfo? FindDisplayProperty(PropertyInfo[] props)
+        private static PropertyInfo? FindDisplayProperty
+        (
+            PropertyInfo[] props
+        )
         {
             // 优先 Name, 其次 Command/Singular/DisplayField, 否则第一个 string 属性
             var preferred = new[] { "Name", "Command", "Singular", "DisplayField", "Title", "PlaceName", "Abbreviation" };
@@ -659,7 +713,11 @@ public partial class AutoReplyChatBot
             );
         }
 
-        private static List<PropertyInfo> ParseFieldSet(string? fields, PropertyInfo[] props)
+        private static List<PropertyInfo> ParseFieldSet
+        (
+            string?        fields,
+            PropertyInfo[] props
+        )
         {
             if (string.IsNullOrWhiteSpace(fields))
                 return [.. props];
@@ -676,16 +734,24 @@ public partial class AutoReplyChatBot
                 if (p != null) result.Add(p);
             }
 
-            return result.Count > 0 ? result : [.. props.Take(10)];
+            return result.Count > 0 ?
+                       result :
+                       [.. props.Take(10)];
         }
 
-        private static uint GetRowID(object row)
+        private static uint GetRowID
+        (
+            object row
+        )
         {
             var prop = row.GetType().GetProperty("RowId");
             return (uint)(prop?.GetValue(row) ?? 0);
         }
 
-        private static string FormatValue(object? value)
+        private static string FormatValue
+        (
+            object? value
+        )
         {
             if (value == null) return "(null)";
 
@@ -693,14 +759,19 @@ public partial class AutoReplyChatBot
 
             if (value is ReadOnlySeString ros) return ros.ToString();
             if (value is string s) return s;
-            if (value is bool b) return b ? "true" : "false";
+            if (value is bool b)
+                return b ?
+                           "true" :
+                           "false";
 
             // RowRef<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(RowRef<>))
             {
                 var rowID = (uint?)type.GetProperty("RowId")?.GetValue(value) ?? 0;
                 var name  = type.GetGenericArguments()[0].Name;
-                return rowID == 0 ? "(empty)" : $"{name}#{rowID}";
+                return rowID == 0 ?
+                           "(empty)" :
+                           $"{name}#{rowID}";
             }
 
             // 数组
@@ -721,7 +792,12 @@ public partial class AutoReplyChatBot
             return value.ToString() ?? "";
         }
 
-        private static IEnumerable<object> ApplySimpleFilter(IEnumerable<object> rows, PropertyInfo[] props, string filter)
+        private static IEnumerable<object> ApplySimpleFilter
+        (
+            IEnumerable<object> rows,
+            PropertyInfo[]      props,
+            string              filter
+        )
         {
             // 解析 "FieldName op Value"
             var parts = filter.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -757,13 +833,47 @@ public partial class AutoReplyChatBot
             );
         }
 
-        private static int CompareValues(object raw, string valueStr)
+        private static int CompareValues
+        (
+            object raw,
+            string valueStr
+        )
         {
-            if (raw is uint u) return u.CompareTo(uint.TryParse(valueStr, out var uv) ? uv : 0);
-            if (raw is int i) return i.CompareTo(int.TryParse(valueStr, out var iv) ? iv : 0);
-            if (raw is ushort us) return us.CompareTo(ushort.TryParse(valueStr, out var usv) ? usv : 0);
-            if (raw is byte b) return b.CompareTo(byte.TryParse(valueStr, out var bv) ? bv : 0);
-            if (raw is float f) return f.CompareTo(float.TryParse(valueStr, out var fv) ? fv : 0);
+            if (raw is uint u)
+                return u.CompareTo
+                (
+                    uint.TryParse(valueStr, out var uv) ?
+                        uv :
+                        0
+                );
+            if (raw is int i)
+                return i.CompareTo
+                (
+                    int.TryParse(valueStr, out var iv) ?
+                        iv :
+                        0
+                );
+            if (raw is ushort us)
+                return us.CompareTo
+                (
+                    ushort.TryParse(valueStr, out var usv) ?
+                        usv :
+                        0
+                );
+            if (raw is byte b)
+                return b.CompareTo
+                (
+                    byte.TryParse(valueStr, out var bv) ?
+                        bv :
+                        0
+                );
+            if (raw is float f)
+                return f.CompareTo
+                (
+                    float.TryParse(valueStr, out var fv) ?
+                        fv :
+                        0
+                );
             if (raw is bool bl) return bl.CompareTo(bool.TryParse(valueStr, out var blv) && blv);
             if (raw is ReadOnlySeString ros) return string.Compare(ros.ToString(), valueStr, StringComparison.OrdinalIgnoreCase);
             if (raw is string s) return string.Compare(s,                          valueStr, StringComparison.OrdinalIgnoreCase);
@@ -774,7 +884,12 @@ public partial class AutoReplyChatBot
             if (rowIDProp != null)
             {
                 var rowID = (uint?)rowIDProp.GetValue(raw) ?? 0;
-                return rowID.CompareTo(uint.TryParse(valueStr, out var rv) ? rv : 0);
+                return rowID.CompareTo
+                (
+                    uint.TryParse(valueStr, out var rv) ?
+                        rv :
+                        0
+                );
             }
 
             return 0;
@@ -818,7 +933,11 @@ public partial class AutoReplyChatBot
             ["additionalProperties"] = false
         };
 
-        public override Task<string> ExecuteAsync(JObject args, ToolExecutionContext context)
+        public override Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        )
         {
             var include = args["include"]?.ToObject<string[]>();
             if (include == null || include.Length == 0)
@@ -953,18 +1072,26 @@ public partial class AutoReplyChatBot
                 var member = list[i];
                 if (member == null) continue;
 
-                var name   = member.Name.TextValue;
-                var world  = LuminaWrapper.GetWorldName(member.World.RowId);
-                var job    = LuminaWrapper.GetJobName(member.ClassJob.RowId);
-                var prefix = member.EntityId == LocalPlayerState.EntityID ? " (你)" : "";
+                var name  = member.Name.TextValue;
+                var world = LuminaWrapper.GetWorldName(member.World.RowId);
+                var job   = LuminaWrapper.GetJobName(member.ClassJob.RowId);
+                var prefix = member.EntityId == LocalPlayerState.EntityID ?
+                                 " (你)" :
+                                 "";
 
                 sb.AppendLine($"- [{i + 1}] {name}@{world} {job}{prefix}");
             }
 
-            return sb.Length > 0 ? sb.ToString().TrimEnd() : "无法获取小队信息";
+            return sb.Length > 0 ?
+                       sb.ToString().TrimEnd() :
+                       "无法获取小队信息";
         }
 
-        private static string BuildNearby(int radius, int max)
+        private static string BuildNearby
+        (
+            int radius,
+            int max
+        )
         {
             var selfObj = LocalPlayerState.Object;
             if (selfObj == null)
@@ -1000,7 +1127,10 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static unsafe string BuildInventory(string[]? itemQueries)
+        private static unsafe string BuildInventory
+        (
+            string[]? itemQueries
+        )
         {
             var sb = new StringBuilder();
 
@@ -1060,7 +1190,10 @@ public partial class AutoReplyChatBot
             return sb.ToString().TrimEnd();
         }
 
-        private static Item? FindItemByName(string name)
+        private static Item? FindItemByName
+        (
+            string name
+        )
         {
             foreach (var item in LuminaGetter.Get<Item>())
             {
@@ -1107,15 +1240,19 @@ public partial class AutoReplyChatBot
             ["additionalProperties"] = false
         };
 
-        public override async Task<string> ExecuteAsync(JObject args, ToolExecutionContext context)
+        public override async Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        )
         {
             var command = args["command"]?.Value<string>();
             if (string.IsNullOrWhiteSpace(command))
                 return "错误: command 不能为空";
-            
+
             var trimmed = command.Trim();
-            
-            if (command.ContainsAny( '\"', '”', '“'))
+
+            if (command.ContainsAny('\"', '”', '“'))
                 return "错误: command 不能包含引号";
 
             // /tell 路径: 走回复追踪
@@ -1133,7 +1270,7 @@ public partial class AutoReplyChatBot
             if (!trimmed.StartsWith('/'))
                 return "错误: 命令应以 / 开头";
 
-            var errorIDs = new HashSet<uint> { 725, 726, 728, 729, 3802, 3803 };
+            var errorIDs       = new HashSet<uint> { 725, 726, 728, 729, 3802, 3803 };
             var receivedErrors = new List<(uint id, string formatted)>();
 
             LogMessageManager.PostLogMessageDelegate handler = (id, item) =>
@@ -1147,7 +1284,7 @@ public partial class AutoReplyChatBot
             try
             {
                 ChatManager.Instance().SendMessage(trimmed);
-                
+
                 await Task.Delay(1000).ConfigureAwait(false);
 
                 if (receivedErrors.Count > 0)
@@ -1164,7 +1301,12 @@ public partial class AutoReplyChatBot
             return $"已执行: {trimmed}";
         }
 
-        private static bool TryParseTell(string command, out string? target, out string? content)
+        private static bool TryParseTell
+        (
+            string      command,
+            out string? target,
+            out string? content
+        )
         {
             target  = null;
             content = null;
@@ -1173,7 +1315,9 @@ public partial class AutoReplyChatBot
                 !command.StartsWith("/t ",    StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            var rest = command[(command[1] == 't' && command.Length > 2 && command[3] == ' ' ? 3 : 6)..].Trim();
+            var rest = command[(command[1] == 't' && command.Length > 2 && command[3] == ' ' ?
+                                    3 :
+                                    6)..].Trim();
             if (string.IsNullOrWhiteSpace(rest)) return false;
 
             // 格式: /tell 玩家名@服务器 内容 或 /tell 玩家名 内容
@@ -1204,7 +1348,11 @@ public partial class AutoReplyChatBot
             ["additionalProperties"] = false
         };
 
-        public override Task<string> ExecuteAsync(JObject args, ToolExecutionContext context)
+        public override Task<string> ExecuteAsync
+        (
+            JObject              args,
+            ToolExecutionContext context
+        )
         {
             var userKey = args["user_key"]?.Value<string>();
             if (string.IsNullOrWhiteSpace(userKey))

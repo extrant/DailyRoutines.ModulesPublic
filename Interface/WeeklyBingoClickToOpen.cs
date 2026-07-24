@@ -24,7 +24,7 @@ public class WeeklyBingoClickToOpen : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["Due"]
     };
-    
+
     private readonly IAddonEventHandle?[] eventHandles = new IAddonEventHandle?[16];
 
     protected override unsafe void Init()
@@ -42,7 +42,11 @@ public class WeeklyBingoClickToOpen : ModuleBase
         OnAddon(AddonEvent.PreFinalize, null);
     }
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -55,8 +59,9 @@ public class WeeklyBingoClickToOpen : ModuleBase
                         eventHandles[index] = null;
                     }
                 }
+
                 break;
-            
+
             case AddonEvent.PostSetup:
                 var addon = (AddonWeeklyBingo*)WeeklyBingo;
                 if (addon == null) return;
@@ -64,14 +69,20 @@ public class WeeklyBingoClickToOpen : ModuleBase
                 foreach (var index in Enumerable.Range(0, 16))
                 {
                     var dutySlot = addon->DutySlotList[index];
-                    var handle   = DService.Instance().AddonEvent.AddEvent((nint)addon, (nint)dutySlot.DutyButton->OwnerNode, AddonEventType.ButtonClick, OnDutySlotClick);
+                    var handle = DService.Instance().AddonEvent.AddEvent
+                        ((nint)addon, (nint)dutySlot.DutyButton->OwnerNode, AddonEventType.ButtonClick, OnDutySlotClick);
                     eventHandles[index] = handle;
                 }
+
                 break;
         }
     }
 
-    private static unsafe void OnDutySlotClick(AddonEventType atkEventType, AddonEventData data)
+    private static unsafe void OnDutySlotClick
+    (
+        AddonEventType atkEventType,
+        AddonEventData data
+    )
     {
         var dutyButtonNode = (AtkResNode*)data.NodeTargetPointer;
         if (dutyButtonNode == null) return;
@@ -96,7 +107,11 @@ public class WeeklyBingoClickToOpen : ModuleBase
         }
     }
 
-    private static bool TryGetRouletteDutyByBingoData(uint bingoRowID, out byte rouletteRowID)
+    private static bool TryGetRouletteDutyByBingoData
+    (
+        uint     bingoRowID,
+        out byte rouletteRowID
+    )
     {
         rouletteRowID = bingoRowID switch
         {
@@ -110,7 +125,11 @@ public class WeeklyBingoClickToOpen : ModuleBase
         return rouletteRowID != 0;
     }
 
-    private static bool TryGetRegularDutyByBingoData(uint bingoRowID, out uint dutyRowID)
+    private static bool TryGetRegularDutyByBingoData
+    (
+        uint     bingoRowID,
+        out uint dutyRowID
+    )
     {
         dutyRowID = 0;
         if (!LuminaGetter.TryGetRow<WeeklyBingoOrderData>(bingoRowID, out var bingoDataRow)) return false;
@@ -131,18 +150,20 @@ public class WeeklyBingoClickToOpen : ModuleBase
                              .OrderBy(row => row.SortKey)
                              .FirstOrDefault().RowId,
             // 指定等级区间的副本
-            2 => bingoDataID == 49
-                     ? 56
-                     : LuminaGetter.Get<ContentFinderCondition>()
-                                   .Where(m => m.ContentType.RowId is 2)
-                                   .Where
-                                   (m => m.ClassJobLevelRequired >=
-                                         bingoDataID -
-                                         (bingoDataID > 50 ? 9 : 49) &&
-                                         m.ClassJobLevelRequired <= bingoDataID - 1
-                                   )
-                                   .OrderBy(row => row.SortKey)
-                                   .FirstOrDefault().RowId,
+            2 => bingoDataID == 49 ?
+                     56 :
+                     LuminaGetter.Get<ContentFinderCondition>()
+                                 .Where(m => m.ContentType.RowId is 2)
+                                 .Where
+                                 (m => m.ClassJobLevelRequired >=
+                                       bingoDataID -
+                                       (bingoDataID > 50 ?
+                                            9 :
+                                            49) &&
+                                       m.ClassJobLevelRequired <= bingoDataID - 1
+                                 )
+                                 .OrderBy(row => row.SortKey)
+                                 .FirstOrDefault().RowId,
             // 挖宝, PVP, 深宫
             3 => bingoRowID switch
             {
@@ -160,21 +181,21 @@ public class WeeklyBingoClickToOpen : ModuleBase
             4 => bingoDataID switch
             {
                 // 巴哈邂逅
-                2 => 93,
+                2  => 93,
                 // 巴哈入侵
-                3 => 98,
+                3  => 98,
                 // 巴哈真源
-                4 => 107,
+                4  => 107,
                 // 亚历山大启动
-                5 => 112,
+                5  => 112,
                 // 亚历山大律动
-                6 => 136,
+                6  => 136,
                 // 亚历山大天动
-                7 => 186,
+                7  => 186,
                 // 欧米茄德尔塔
-                8 => 252,
+                8  => 252,
                 // 欧米茄西格玛
-                9 => 286,
+                9  => 286,
                 // 欧米茄阿尔法
                 10 => 587,
                 // 伊甸觉醒 1-2

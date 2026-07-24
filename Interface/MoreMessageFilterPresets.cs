@@ -26,10 +26,15 @@ public class MoreMessageFilterPresets : ModuleBase
         Category    = ModuleCategory.Interface,
         Author      = ["Ponta"]
     };
-    
+
     private static readonly CompSig ApplyMessageFilterSig = new("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 4C 24 ?? 56 57 41 54 41 56 41 57 48 83 EC ?? 45 33 E4");
-    private delegate        int     ApplyMessageFilterDelegate(nint filters);
-    private readonly        ApplyMessageFilterDelegate ApplyMessageFilter = ApplyMessageFilterSig.GetDelegate<ApplyMessageFilterDelegate>();
+
+    private delegate int ApplyMessageFilterDelegate
+    (
+        nint filters
+    );
+
+    private ApplyMessageFilterDelegate ApplyMessageFilter = null!;
 
     private static readonly        CompSig MessageFilterSizeSig = new("FF C5 81 FD ?? ?? ?? ?? 0F 82 ?? ?? ?? ?? 48 8B 0D");
     private static readonly unsafe int     MessageFilterSize    = ReadCMPImmediateValue((nint)((byte*)MessageFilterSizeSig.ScanText() + 2));
@@ -39,13 +44,14 @@ public class MoreMessageFilterPresets : ModuleBase
 
     private int    selectedFilter;
     private string inputPresetName = string.Empty;
-    
+
     public MoreMessageFilterPresets() =>
         menuItem = new(this);
-    
+
     protected override void Init()
     {
-        config                                 =  Config.Load(this) ?? new();
+        ApplyMessageFilter                           =  ApplyMessageFilterSig.GetDelegate<ApplyMessageFilterDelegate>();
+        config                                       =  Config.Load(this) ?? new();
         DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
     }
 
@@ -62,7 +68,7 @@ public class MoreMessageFilterPresets : ModuleBase
         using var table     = ImRaii.Table("MessageFilterPreset", 4, ImGuiTableFlags.Borders, tableSize);
         if (!table) return;
 
-        ImGui.TableSetupColumn("添加", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() + style.FramePadding.X * 2f);
+        ImGui.TableSetupColumn("添加", ImGuiTableColumnFlags.WidthFixed, ImGui.GetTextLineHeightWithSpacing() + (style.FramePadding.X * 2f));
         ImGui.TableSetupColumn("名称", ImGuiTableColumnFlags.None,       30);
         ImGui.TableSetupColumn("目标", ImGuiTableColumnFlags.None,       30);
         ImGui.TableSetupColumn("操作", ImGuiTableColumnFlags.None,       15);
@@ -92,7 +98,9 @@ public class MoreMessageFilterPresets : ModuleBase
                 ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Name"));
 
                 var defaultName = $"{Lang.Get("Preset")} {config.Presets.Count + 1}";
-                var name        = inputPresetName.IsNullOrEmpty() ? defaultName : inputPresetName;
+                var name = inputPresetName.IsNullOrEmpty() ?
+                               defaultName :
+                               inputPresetName;
 
                 using (ImRaii.PushIndent())
                 {
@@ -182,7 +190,10 @@ public class MoreMessageFilterPresets : ModuleBase
         }
     }
 
-    private void OnMenuOpened(IMenuOpenedArgs args)
+    private void OnMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!menuItem.IsDisplay(args)) return;
         args.AddMenuItem(menuItem.Get());
@@ -199,19 +210,29 @@ public class MoreMessageFilterPresets : ModuleBase
             var name = RaptureLogModule.Instance()->GetTabName(i)->ToString();
             addonText.Payloads[1] = new TextPayload($"{i + 1}");
 
-            names[i] = name.IsNullOrEmpty() ? addonText.ToString() : name;
+            names[i] = name.IsNullOrEmpty() ?
+                           addonText.ToString() :
+                           name;
         }
 
         return names;
     }
 
-    private static nint GetMessageFilter(nint filters, int index)
+    private static nint GetMessageFilter
+    (
+        nint filters,
+        int  index
+    )
     {
-        nint offset = MessageFilterSize * index + 72;
+        nint offset = (MessageFilterSize * index) + 72;
         return filters + offset;
     }
 
-    private unsafe void AddFilterPreset(int index, string name)
+    private unsafe void AddFilterPreset
+    (
+        int    index,
+        string name
+    )
     {
         var          filters = LogFilterConfig.Instance();
         var          filter  = GetMessageFilter((nint)filters, index);
@@ -223,7 +244,11 @@ public class MoreMessageFilterPresets : ModuleBase
         config.Presets.Add(preset);
     }
 
-    private unsafe void ApplyFilterPreset(FilterPreset preset, int index)
+    private unsafe void ApplyFilterPreset
+    (
+        FilterPreset preset,
+        int          index
+    )
     {
         var filters = LogFilterConfig.Instance();
         var filter  = GetMessageFilter((nint)filters, index);
@@ -235,16 +260,26 @@ public class MoreMessageFilterPresets : ModuleBase
         ApplyMessageFilter((nint)filters);
     }
 
-    private void ApplyFilterPresetAndNotify(FilterPreset preset, int index)
+    private void ApplyFilterPresetAndNotify
+    (
+        FilterPreset preset,
+        int          index
+    )
     {
         ApplyFilterPreset(preset, index);
         NotifyHelper.Instance().NotificationSuccess(Lang.Get("MoreMessageFilterPresets-Notification-Applied", preset.Name, index + 1));
     }
 
-    private void ApplyFilterPresetAndNotify(FilterPreset preset) => 
+    private void ApplyFilterPresetAndNotify
+    (
+        FilterPreset preset
+    ) =>
         ApplyFilterPresetAndNotify(preset, preset.SelectedFilter);
 
-    private static int ReadCMPImmediateValue(nint instructionAddress)
+    private static int ReadCMPImmediateValue
+    (
+        nint instructionAddress
+    )
     {
         var instruction = MemoryHelper.ReadRaw(instructionAddress, 6);
 
@@ -266,8 +301,11 @@ public class MoreMessageFilterPresets : ModuleBase
                 throw new InvalidOperationException("未知的汇编指令");
         }
     }
-    
-    private class ApplyLogFilterMenuItem(MoreMessageFilterPresets module) : MenuItemBase
+
+    private class ApplyLogFilterMenuItem
+    (
+        MoreMessageFilterPresets module
+    ) : MenuItemBase
     {
         public override string Name       { get; protected set; } = Lang.Get("MoreMessageFilterPresetsTitle");
         public override string Identifier { get; protected set; } = nameof(MoreMessageFilterPresets);
@@ -275,18 +313,24 @@ public class MoreMessageFilterPresets : ModuleBase
         protected override bool IsSubmenu    { get; set; } = true;
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             if (GetSelectedTabIndex() > 3) return;
 
             args.OpenSubmenu(Name, ProcessMenuItems(module));
         }
 
-        public override unsafe bool IsDisplay(IMenuOpenedArgs args)
+        public override unsafe bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
             if (module.config.Presets.Count == 0) return false;
-            if (args.MenuType              != ContextMenuType.Default) return false;
-            if (args.AddonName             != "ChatLog") return false;
+            if (args.MenuType               != ContextMenuType.Default) return false;
+            if (args.AddonName              != "ChatLog") return false;
 
             var agent             = (AgentContext*)args.AgentPtr;
             var contextMenu       = agent->CurrentContextMenu;
@@ -308,7 +352,10 @@ public class MoreMessageFilterPresets : ModuleBase
             return selectedTabIndex;
         }
 
-        private static List<MenuItem> ProcessMenuItems(MoreMessageFilterPresets module)
+        private static List<MenuItem> ProcessMenuItems
+        (
+            MoreMessageFilterPresets module
+        )
         {
             var list = new List<MenuItem>();
 

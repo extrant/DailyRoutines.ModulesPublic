@@ -28,7 +28,7 @@ public class AutoSummonPet : ModuleBase
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
     }
-    
+
     protected override void Uninit()
     {
         DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
@@ -36,14 +36,20 @@ public class AutoSummonPet : ModuleBase
     }
 
     // 重新挑战
-    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    )
     {
         TaskHelper.Abort();
         TaskHelper.Enqueue(CheckCurrentJob);
     }
 
     // 进入副本
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         TaskHelper.Abort();
 
@@ -79,10 +85,10 @@ public class AutoSummonPet : ModuleBase
         TaskHelper.Enqueue(CheckCurrentJob);
         return true;
     }
-    
+
     #region 常量
 
-    private static readonly FrozenDictionary<uint, uint> SummonActions = new Dictionary<uint, uint>()
+    private static readonly FrozenDictionary<uint, uint> SummonActions = new Dictionary<uint, uint>
     {
         [28] = 17215, // 学者
         [26] = 25798, // 秘术师 / 召唤师

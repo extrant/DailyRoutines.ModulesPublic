@@ -9,7 +9,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Nodes;
 using OmenTools.Interop.Game.Lumina;
@@ -27,9 +26,9 @@ public class AutoTrackPlayers : ModuleBase
         Author          = ["KirisameVanilla"],
         ModulesConflict = ["AutoHighlightFlagMarker"]
     };
-    
+
     private readonly Dictionary<ulong, (FieldMarkerPoint? Marker, string Name, uint World)> trackedPlayers = [];
-    
+
     private readonly ContextMenuItem contextMenuItem;
 
     private AddonDRAutoTrackPlayers? trackAddon;
@@ -81,19 +80,32 @@ public class AutoTrackPlayers : ModuleBase
             ImGui.TextUnformatted($"{COMMAND} → {Lang.Get("AutoTrackPlayers-CommandHelp")}");
     }
 
-    private void OnCommand(string command, string arguments) =>
+    private void OnCommand
+    (
+        string command,
+        string arguments
+    ) =>
         trackAddon.Toggle();
 
-    private void OnMenuOpen(IMenuOpenedArgs args)
+    private void OnMenuOpen
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (!contextMenuItem.IsDisplay(args)) return;
         args.AddMenuItem(contextMenuItem.Get());
     }
 
-    private void OnZoneChanged(uint territoryType) =>
+    private void OnZoneChanged
+    (
+        uint territoryType
+    ) =>
         trackedPlayers.Clear();
 
-    private void OnReceivePlayers(IReadOnlyList<IPlayerCharacter> characters)
+    private void OnReceivePlayers
+    (
+        IReadOnlyList<IPlayerCharacter> characters
+    )
     {
         if (characters.Count == 0)
             FrameworkManager.Instance().Unreg(OnUpdate);
@@ -101,7 +113,10 @@ public class AutoTrackPlayers : ModuleBase
             FrameworkManager.Instance().Reg(OnUpdate);
     }
 
-    private unsafe void OnUpdate(IFramework framework)
+    private unsafe void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (trackedPlayers.Count == 0 || !GameState.IsLoggedIn)
         {
@@ -141,20 +156,26 @@ public class AutoTrackPlayers : ModuleBase
 
         public override string Identifier { get; protected set; } = nameof(AutoTrackPlayers);
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault target) return false;
-            
+
             var isTracked = module.trackedPlayers.ContainsKey(target.TargetContentId);
-            Name = isTracked
-                       ? $"{Lang.Get("AutoTrackPlayers-Track")}: {Lang.Get("Delete")}"
-                       : $"{Lang.Get("AutoTrackPlayers-Track")}: {Lang.Get("Add")}";
-            
-            return target.TargetContentId != 0 && 
+            Name = isTracked ?
+                       $"{Lang.Get("AutoTrackPlayers-Track")}: {Lang.Get("Delete")}" :
+                       $"{Lang.Get("AutoTrackPlayers-Track")}: {Lang.Get("Add")}";
+
+            return target.TargetContentId != 0 &&
                    target.TargetContentId != LocalPlayerState.ContentID;
         }
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault target) return;
 
@@ -168,7 +189,10 @@ public class AutoTrackPlayers : ModuleBase
         }
     }
 
-    private class AddonDRAutoTrackPlayers(AutoTrackPlayers module) : NativeAddon
+    private class AddonDRAutoTrackPlayers
+    (
+        AutoTrackPlayers module
+    ) : NativeAddon
     {
         private ScrollingNode<VerticalListNode> scrollArea    = null!;
         private TextNode                        emptyHintText = null!;
@@ -176,13 +200,17 @@ public class AutoTrackPlayers : ModuleBase
 
         private bool isRebuildingList;
 
-        protected override unsafe void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override unsafe void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             scrollArea = new()
             {
                 Position          = ContentStartPosition,
                 Size              = ContentSize,
-                AutoHideScrollBar = true,
+                AutoHideScrollBar = true
             };
             scrollArea.ContentNode.FitContents = true;
             scrollArea.AttachNode(this);
@@ -205,9 +233,9 @@ public class AutoTrackPlayers : ModuleBase
         {
             if (this is not { IsOpen: true }) return;
             if (isRebuildingList) return;
-            
+
             isRebuildingList = true;
-            
+
             try
             {
                 emptyHintText.IsVisible = module.trackedPlayers.Count == 0;
@@ -217,6 +245,7 @@ public class AutoTrackPlayers : ModuleBase
                     entry.DetachNode();
                     entry.Dispose();
                 }
+
                 playerEntries.Clear();
 
                 foreach (var (contentID, (marker, name, world)) in module.trackedPlayers)
@@ -247,7 +276,10 @@ public class AutoTrackPlayers : ModuleBase
             }
         }
 
-        private List<string> GetAvailableMarkers(ulong currentContentID)
+        private List<string> GetAvailableMarkers
+        (
+            ulong currentContentID
+        )
         {
             var usedMarkers = module.trackedPlayers
                                     .Where(kvp => kvp.Key != currentContentID && kvp.Value.Marker.HasValue)
@@ -255,6 +287,7 @@ public class AutoTrackPlayers : ModuleBase
                                     .ToHashSet();
 
             var options = new List<string> { Lang.Get("AutoTrackPlayers-NoMarker") };
+
             for (var i = 0; i < 8; i++)
             {
                 var marker = (FieldMarkerPoint)i;
@@ -297,14 +330,14 @@ public class AutoTrackPlayers : ModuleBase
                 };
 
                 using var rented = new RentedSeStringBuilder();
-                var displayName = string.IsNullOrEmpty(world)
-                                      ? contentID.ToString()
-                                      : rented.Builder
-                                              .Append(name)
-                                              .AppendIcon((uint)BitmapFontIcon.CrossWorld)
-                                              .Append(world)
-                                              .ToReadOnlySeString();
-                
+                var displayName = string.IsNullOrEmpty(world) ?
+                                      contentID.ToString() :
+                                      rented.Builder
+                                            .Append(name)
+                                            .AppendIcon((uint)BitmapFontIcon.CrossWorld)
+                                            .Append(world)
+                                            .ToReadOnlySeString();
+
                 var nameText = new TextNode
                 {
                     String        = displayName,
@@ -336,12 +369,12 @@ public class AutoTrackPlayers : ModuleBase
                 };
 
                 AddNode(markerDropdown);
-                
+
                 AddNode(nameText);
                 nameButton.AttachNode(nameText);
-                
+
                 AddNode(deleteButton);
-                
+
                 parent.ContentNode.AddNode(this);
             }
         }

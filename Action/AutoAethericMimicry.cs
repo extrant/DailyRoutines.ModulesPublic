@@ -6,7 +6,6 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Nodes;
 using OmenTools.Interop.Game.Lumina;
@@ -25,7 +24,7 @@ public class AutoAethericMimicry : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     protected override void Init() =>
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
 
@@ -59,7 +58,7 @@ public class AutoAethericMimicry : ModuleBase
     private class AddonDRAutoAethericMimicry : NativeAddon
     {
         public static AddonDRAutoAethericMimicry? Addon;
-        
+
         private IconButtonNode dpsButton;
         private IconButtonNode healerButton;
 
@@ -80,7 +79,11 @@ public class AutoAethericMimicry : ModuleBase
             Addon.Open();
         }
 
-        protected override unsafe void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override unsafe void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             ((WindowNode)WindowNode).CloseButtonNode.IsVisible = false;
 
@@ -152,7 +155,10 @@ public class AutoAethericMimicry : ModuleBase
             rowOneContainer.AttachNode(this);
         }
 
-        protected override unsafe void OnUpdate(AtkUnitBase* addon)
+        protected override unsafe void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (LocalPlayerState.ClassJob != 36 || DService.Instance().KeyState[VirtualKey.ESCAPE])
             {
@@ -170,7 +176,11 @@ public class AutoAethericMimicry : ModuleBase
             dpsButton.IsEnabled    = TryGetChara([2, 3], out _);
         }
 
-        private static bool TryGetChara(HashSet<byte> roles, out IPlayerCharacter? chara)
+        private static bool TryGetChara
+        (
+            HashSet<byte>         roles,
+            out IPlayerCharacter? chara
+        )
         {
             chara = null;
 
@@ -187,7 +197,10 @@ public class AutoAethericMimicry : ModuleBase
             return chara != null;
         }
 
-        private static void Notify(IPlayerCharacter? chara)
+        private static void Notify
+        (
+            IPlayerCharacter? chara
+        )
         {
             if (chara == null)
             {
@@ -206,10 +219,10 @@ public class AutoAethericMimicry : ModuleBase
             );
         }
     }
-    
+
     #region 常量
-    
+
     private static readonly FrozenSet<uint> Status = [2124, 2125, 2126];
-    
+
     #endregion
 }

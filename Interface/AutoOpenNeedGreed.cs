@@ -33,13 +33,22 @@ public class AutoOpenNeedGreed : ModuleBase
         TargetManager.Instance().Unreg(OnPostInteractWithObject);
     }
 
-    private static void OnPostInteractWithObject(ulong result, IGameObject? target, bool checkLoS)
+    private static void OnPostInteractWithObject
+    (
+        ulong        result,
+        IGameObject? target,
+        bool         checkLoS
+    )
     {
         if (result == 0 || target is not { ObjectKind: ObjectKind.Treasure }) return;
         Throttler.Shared.Throttle("AutoOpenNeedGreed-SelfOpen", 1_000, true);
     }
 
-    private static unsafe void OnPost(uint logMessageID, LogMessageQueueItem item)
+    private static unsafe void OnPost
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (logMessageID != 5194 || !Throttler.Shared.Check("AutoOpenNeedGreed-SelfOpen")) return;
         AgentId.Hud.SendEvent(0, 0, 2, " ");

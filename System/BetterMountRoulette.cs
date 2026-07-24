@@ -22,22 +22,23 @@ public class BetterMountRoulette : ModuleBase
         Category    = ModuleCategory.System,
         Author      = ["XSZYYS"]
     };
-    
+
     private Config config = null!;
 
-    private readonly ZoneSelectCombo zoneSelector = new("##BetterMountRouletteZoneSelector");
-    
+    private ZoneSelectCombo zoneSelector = null!;
+
     private LuminaSearcher<Mount>?             masterMountsSearcher;
     private MountListHandler?                  pvpMounts;
     private MountListHandler?                  normalMounts;
     private Dictionary<uint, MountListHandler> zoneMountListHandlers = [];
-    
+
     private HashSet<uint>? mountsListToUse;
 
     protected override void Init()
     {
-        config = Config.Load(this) ?? new();
-        
+        zoneSelector = new("##BetterMountRouletteZoneSelector");
+        config       = Config.Load(this) ?? new();
+
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
 
         DService.Instance().ClientState.Login += OnLogin;
@@ -78,7 +79,11 @@ public class BetterMountRoulette : ModuleBase
         HandleNewZoneTabAddition();
     }
 
-    private void DrawTab(string tabLabel, MountListHandler handler)
+    private void DrawTab
+    (
+        string           tabLabel,
+        MountListHandler handler
+    )
     {
         using var tab = ImRaii.TabItem(tabLabel);
         if (!tab) return;
@@ -139,7 +144,11 @@ public class BetterMountRoulette : ModuleBase
 
     }
 
-    private void DrawSearchAndMountsGrid(string tabLabel, MountListHandler handler)
+    private void DrawSearchAndMountsGrid
+    (
+        string           tabLabel,
+        MountListHandler handler
+    )
     {
         var searchText = handler.SearchText;
         ImGui.SetNextItemWidth(-1f);
@@ -154,14 +163,18 @@ public class BetterMountRoulette : ModuleBase
         using var child     = ImRaii.Child($"##MountsGrid{tabLabel}", childSize, true);
         if (!child) return;
 
-        var mountsToDraw = string.IsNullOrWhiteSpace(handler.SearchText)
-                               ? handler.Searcher.Data.Where(mount => handler.SelectedIDs.Contains(mount.RowId)).ToList()
-                               : handler.Searcher.SearchResult;
+        var mountsToDraw = string.IsNullOrWhiteSpace(handler.SearchText) ?
+                               handler.Searcher.Data.Where(mount => handler.SelectedIDs.Contains(mount.RowId)).ToList() :
+                               handler.Searcher.SearchResult;
 
         DrawMountsGrid(mountsToDraw, handler);
     }
 
-    private void DrawMountsGrid(List<Mount> mountsToDraw, MountListHandler handler)
+    private void DrawMountsGrid
+    (
+        List<Mount>      mountsToDraw,
+        MountListHandler handler
+    )
     {
         if (mountsToDraw.Count == 0) return;
 
@@ -184,11 +197,11 @@ public class BetterMountRoulette : ModuleBase
 
             using (ImRaii.Group())
             {
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (contentSize.X - iconSize) / 2);
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ((contentSize.X - iconSize) / 2));
                 ImGui.Image(texture.Handle, new(iconSize));
 
                 var mountName = mount.Singular.ToString();
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (contentSize.X - ImGui.CalcTextSize(mountName).X) / 2);
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ((contentSize.X - ImGui.CalcTextSize(mountName).X) / 2));
                 ImGui.TextUnformatted(mountName);
             }
 
@@ -212,7 +225,10 @@ public class BetterMountRoulette : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         OnLogin();
 
     private unsafe void OnLogin()
@@ -261,9 +277,9 @@ public class BetterMountRoulette : ModuleBase
                 mountsListToUse = zoneMounts;
             else
             {
-                mountsListToUse = GameState.IsInPVPArea
-                                      ? config.PVPRouletteMounts
-                                      : config.NormalRouletteMounts;
+                mountsListToUse = GameState.IsInPVPArea ?
+                                      config.PVPRouletteMounts :
+                                      config.NormalRouletteMounts;
             }
         }
 
@@ -305,7 +321,7 @@ public class BetterMountRoulette : ModuleBase
     }
 
     #region 数据
-    
+
     private static readonly HashSet<uint> MountRouletteActionIDs = [9, 24];
 
     private static readonly Vector4 ButtonNormalColor   = ImGuiCol.Button.ToVector4().WithAlpha(0f);

@@ -39,9 +39,14 @@ public unsafe class AutoHighlightSprint : ModuleBase
     }
 
     [return: MarshalAs(UnmanagedType.U1)]
-    private bool IsActionHighlightedDetour(ActionManager* manager, ActionType actionType, uint actionID)
+    private bool IsActionHighlightedDetour
+    (
+        ActionManager* manager,
+        ActionType     actionType,
+        uint           actionID
+    )
     {
-        if (GameState.ContentFinderCondition != 0 &&
+        if (GameState.ContentFinderCondition != 0          &&
             !ICondition.Instance()[ConditionFlag.InCombat] &&
             ((actionType == ActionType.GeneralAction && actionID == 4) ||
              (actionType == ActionType.Action        && actionID == 3)))

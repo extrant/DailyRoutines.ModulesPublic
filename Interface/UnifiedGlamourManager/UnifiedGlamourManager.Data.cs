@@ -18,13 +18,19 @@ public unsafe partial class UnifiedGlamourManager
     private readonly List<UnifiedItem> items = [];
     private          bool              isRefreshingItems;
 
-    private static bool TryGetLoadedMirageManager(out MirageManager* manager)
+    private static bool TryGetLoadedMirageManager
+    (
+        out MirageManager* manager
+    )
     {
         manager = MirageManager.Instance();
         return manager != null && manager->PrismBoxRequested && manager->PrismBoxLoaded;
     }
 
-    private static bool TryGetReadyPlateEditor(out AgentMiragePrismMiragePlate* agent)
+    private static bool TryGetReadyPlateEditor
+    (
+        out AgentMiragePrismMiragePlate* agent
+    )
     {
         agent = AgentMiragePrismMiragePlate.Instance();
         return agent != null                          &&
@@ -34,7 +40,10 @@ public unsafe partial class UnifiedGlamourManager
     }
 
     // 数据刷新
-    private void StartRefreshAll(UnifiedItem? reselectItem = null)
+    private void StartRefreshAll
+    (
+        UnifiedItem? reselectItem = null
+    )
     {
         var itemToReselect = reselectItem ?? selectedItem;
 
@@ -60,9 +69,9 @@ public unsafe partial class UnifiedGlamourManager
                 try
                 {
                     MergeItems();
-                    selectedItem = itemToReselect != null
-                                       ? items.FirstOrDefault(x => x == itemToReselect)
-                                       : null;
+                    selectedItem = itemToReselect != null ?
+                                       items.FirstOrDefault(x => x == itemToReselect) :
+                                       null;
                 }
                 catch (Exception ex)
                 {
@@ -79,7 +88,11 @@ public unsafe partial class UnifiedGlamourManager
         );
     }
 
-    private static void RunRefreshStep(Action action, string stepName)
+    private static void RunRefreshStep
+    (
+        Action action,
+        string stepName
+    )
     {
         try
         {
@@ -193,10 +206,16 @@ public unsafe partial class UnifiedGlamourManager
         if (uiState == null) return null;
 
         var cabinet = &uiState->Cabinet;
-        return cabinet->IsCabinetLoaded() ? cabinet : null;
+        return cabinet->IsCabinetLoaded() ?
+                   cabinet :
+                   null;
     }
 
-    private static bool TryGetItemName(ItemSheet item, out string name)
+    private static bool TryGetItemName
+    (
+        ItemSheet  item,
+        out string name
+    )
     {
         name = item.Name.ExtractText();
         return !string.IsNullOrWhiteSpace(name);
@@ -243,7 +262,9 @@ public unsafe partial class UnifiedGlamourManager
 
         foreach (var item in inspectItems)
         {
-            var itemID    = item.GlamourId != 0 ? item.GlamourId : item.ItemId;
+            var itemID = item.GlamourId != 0 ?
+                             item.GlamourId :
+                             item.ItemId;
             var plateSlot = (uint)Array.IndexOf(PlateSlots, item.Slot);
             if (itemID == 0) continue;
 
@@ -262,19 +283,27 @@ public unsafe partial class UnifiedGlamourManager
         return items;
     }
 
-    private static string GetRaceName(byte race, byte sex) =>
-        !LuminaGetter.TryGetRow(race, out Race raceRow)
-            ? Lang.Get("Unknown")
-            : sex == FEMALE_SEX
-                ? raceRow.Feminine.ToString()  ?? Lang.Get("Unknown")
-                : raceRow.Masculine.ToString() ?? Lang.Get("Unknown");
+    private static string GetRaceName
+    (
+        byte race,
+        byte sex
+    ) =>
+        !LuminaGetter.TryGetRow(race, out Race raceRow) ? Lang.Get("Unknown")
+        : sex == FEMALE_SEX                             ? raceRow.Feminine.ToString()    ?? Lang.Get("Unknown")
+                                                          : raceRow.Masculine.ToString() ?? Lang.Get("Unknown");
 
-    private static string GetSexName(byte sex) =>
-        sex == FEMALE_SEX
-            ? LuminaWrapper.GetAddonText(15609)
-            : LuminaWrapper.GetAddonText(15608);
+    private static string GetSexName
+    (
+        byte sex
+    ) =>
+        sex == FEMALE_SEX ?
+            LuminaWrapper.GetAddonText(15609) :
+            LuminaWrapper.GetAddonText(15608);
 
-    private static string GetDefaultPresetTitle(PresetSource source) =>
+    private static string GetDefaultPresetTitle
+    (
+        PresetSource source
+    ) =>
         source switch
         {
             PresetSource.Self        => $"{Lang.Get("UnifiedGlamourManager-Preset-UntitledPreset")}-{LuminaWrapper.GetAddonText(3991)}",

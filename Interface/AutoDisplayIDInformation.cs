@@ -32,10 +32,18 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         Author      = ["Middo"]
     };
 
-    private static readonly CompSig                             GetStatusTooltipTextSig = new("40 55 41 54 41 55 41 56 41 57 48 8D 6C 24 90 48 81 EC 70 01 00 00");
-    private delegate        CStringPointer                      GetStatusTooltipTextDelegate(AgentHUD* agent, Utf8String* output, uint statusID, uint param);
-    private                 Hook<GetStatusTooltipTextDelegate>? GetStatusTooltipTextHook;
-    
+    private static readonly CompSig GetStatusTooltipTextSig = new("40 55 41 54 41 55 41 56 41 57 48 8D 6C 24 90 48 81 EC 70 01 00 00");
+
+    private delegate CStringPointer GetStatusTooltipTextDelegate
+    (
+        AgentHUD*   agent,
+        Utf8String* output,
+        uint        statusID,
+        uint        param
+    );
+
+    private Hook<GetStatusTooltipTextDelegate>? GetStatusTooltipTextHook;
+
     private Config        config = null!;
     private IDtrBarEntry? zoneInfoEntry;
 
@@ -142,13 +150,23 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
             config.Save(this);
     }
 
-    private void OnMapChanged(uint obj) =>
+    private void OnMapChanged
+    (
+        uint obj
+    ) =>
         UpdateDTRInfo();
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         UpdateDTRInfo();
 
-    private void OnAddonNaviMap(AddonEvent type, AddonArgs args)
+    private void OnAddonNaviMap
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -197,7 +215,11 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         }
     }
 
-    private void OnAddonTarget(AddonEvent type, AddonArgs args)
+    private void OnAddonTarget
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         if (!config.ShowTargetID) return;
 
@@ -222,7 +244,12 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         stringArray->SetValue(0, $"{target.Name} [{target.DataID}]");
     }
 
-    private void OnItemTooltip(ItemKind itemKind, uint itemID, ref List<TooltipItemModification> modifications)
+    private void OnItemTooltip
+    (
+        ItemKind                          itemKind,
+        uint                              itemID,
+        ref List<TooltipItemModification> modifications
+    )
     {
         if (!config.ShowItemID) return;
 
@@ -246,15 +273,20 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         );
     }
 
-    private void OnActionTooltip(DetailKind actionKind, uint actionID, ref List<TooltipActionModification> modifications)
+    private void OnActionTooltip
+    (
+        DetailKind                          actionKind,
+        uint                                actionID,
+        ref List<TooltipActionModification> modifications
+    )
     {
         if (!config.ShowActionID) return;
 
         using var builder          = new RentedSeStringBuilder();
         var       originalActionID = AgentActionDetail.Instance()->OriginalId;
-        var id = config is { ShowActionIDResolved: true, ShowActionIDOriginal: false }
-                     ? actionID
-                     : originalActionID;
+        var id = config is { ShowActionIDResolved: true, ShowActionIDOriginal: false } ?
+                     actionID :
+                     originalActionID;
 
         builder.Builder
                .PushColorType(3)
@@ -279,7 +311,13 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         );
     }
 
-    private CStringPointer GetStatusTooltipTextDetour(AgentHUD* agent, Utf8String* output, uint statusID, uint param)
+    private CStringPointer GetStatusTooltipTextDetour
+    (
+        AgentHUD*   agent,
+        Utf8String* output,
+        uint        statusID,
+        uint        param
+    )
     {
         var orig = GetStatusTooltipTextHook.Original(agent, output, statusID, param);
 
@@ -291,7 +329,9 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
             return orig;
 
         var newlineIndex = originalText.IndexOf('\n');
-        var modifiedText = newlineIndex < 0 ? $"{originalText} [{statusID}]" : $"{originalText[..newlineIndex]} [{statusID}]{originalText[newlineIndex..]}";
+        var modifiedText = newlineIndex < 0 ?
+                               $"{originalText} [{statusID}]" :
+                               $"{originalText[..newlineIndex]} [{statusID}]{originalText[newlineIndex..]}";
 
         using var utf8String = new Utf8String(modifiedText);
         output->Copy(&utf8String);

@@ -54,7 +54,7 @@ public class AutoPreventFireBlizzard : ModuleBase
             (gauage.InUmbralIce  && actionID == ACITON_FIRE))
         {
             isPrevented = true;
-            
+
             if (Throttler.Shared.Throttle($"AutoPreventFireBlizzard.Notification.{actionID}", 2_500))
             {
                 using var rented = new RentedSeStringBuilder();
@@ -68,7 +68,7 @@ public class AutoPreventFireBlizzard : ModuleBase
                     Lang.GetSe("AutoPreventFireBlizzard-Notification", rented),
                     new()
                     {
-                        IconId = LuminaWrapper.GetActionIconID(actionID),
+                        IconId = LuminaWrapper.GetActionIconID(actionID)
                     }
                 );
             }

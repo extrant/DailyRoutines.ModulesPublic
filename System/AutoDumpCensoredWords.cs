@@ -36,13 +36,15 @@ public unsafe class AutoDumpCensoredWords : ModuleBase
     {
         if (ImGui.Button("Dump 全部屏蔽词"))
         {
-            Task.Run(() =>
-            {
-                var words = DumpAllWords();
-                var path  = Path.Combine(ConfigDirectoryPath, "CensoredWords.txt");
-                File.WriteAllLines(path, words.OrderBy(x => x));
-                NotifyHelper.Instance().Chat("导出成功");
-            });
+            Task.Run
+            (() =>
+                {
+                    var words = DumpAllWords();
+                    var path  = Path.Combine(ConfigDirectoryPath, "CensoredWords.txt");
+                    File.WriteAllLines(path, words.OrderBy(x => x));
+                    NotifyHelper.Instance().Chat("导出成功");
+                }
+            );
         }
 
         ImGuiOm.HelpMarker("遍历内存中的屏蔽词 trie / 哈希表");
@@ -74,22 +76,40 @@ public unsafe class AutoDumpCensoredWords : ModuleBase
         byte* basePtr
     )
     {
-        private uint ReadU32(int off) => *(uint*)(basePtr + off);
+        private uint ReadU32
+        (
+            int off
+        ) => *(uint*)(basePtr + off);
 
-        private ushort ReadU16(int off) => *(ushort*)(basePtr + off);
+        private ushort ReadU16
+        (
+            int off
+        ) => *(ushort*)(basePtr + off);
 
-        private byte ReadU8(int off) => *(basePtr + off);
+        private byte ReadU8
+        (
+            int off
+        ) => *(basePtr + off);
 
-        private int GetTrieOffset(int level) => (int)ReadU32(0x8110 + (4 * level));
+        private int GetTrieOffset
+        (
+            int level
+        ) => (int)ReadU32(0x8110 + (4 * level));
 
-        private bool IsCharClassified(int charCode)
+        private bool IsCharClassified
+        (
+            int charCode
+        )
         {
             var idx = charCode >> 5;
             var bit = 1        << (charCode & 0x1F);
             return (ReadU32(0x0C + (4 * idx)) & bit) != 0;
         }
 
-        private List<string> TraverseTrie(int level)
+        private List<string> TraverseTrie
+        (
+            int level
+        )
         {
             var words   = new List<string>();
             var trieOff = GetTrieOffset(level);
@@ -107,17 +127,36 @@ public unsafe class AutoDumpCensoredWords : ModuleBase
             var byteSeqs   = BASE + offset3;
             var nodeArray  = BASE + offset4;
 
-            int GetNode(int idx) => nodeArray + (16 * idx);
+            int GetNode
+            (
+                int idx
+            ) => nodeArray + (16 * idx);
 
-            byte GetNodeType(int node) => ReadU8(node);
+            byte GetNodeType
+            (
+                int node
+            ) => ReadU8(node);
 
-            byte GetNodeCount(int node) => ReadU8(node + 4);
+            byte GetNodeCount
+            (
+                int node
+            ) => ReadU8(node + 4);
 
-            ushort GetNodeCont(int node) => ReadU16(node + 8);
+            ushort GetNodeCont
+            (
+                int node
+            ) => ReadU16(node + 8);
 
-            uint GetNodeDataIdx(int node) => ReadU32(node + 0x0C);
+            uint GetNodeDataIdx
+            (
+                int node
+            ) => ReadU32(node + 0x0C);
 
-            void Traverse(int node, string prefix)
+            void Traverse
+            (
+                int    node,
+                string prefix
+            )
             {
                 var nodeType = GetNodeType(node);
                 var dataIdx  = (int)(GetNodeDataIdx(node) >> 1);

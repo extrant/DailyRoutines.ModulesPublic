@@ -17,14 +17,14 @@ public unsafe class AutoDance : ModuleBase
         Description = Lang.Get("AutoDanceDescription"),
         Category    = ModuleCategory.Action
     };
-    
+
     protected override void Init()
     {
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
         UseActionManager.Instance().RegPostUseActionLocation(OnPostUseAction);
     }
-    
+
     protected override void Uninit()
     {
         UseActionManager.Instance().Unreg(OnPostUseAction);
@@ -53,7 +53,10 @@ public unsafe class AutoDance : ModuleBase
         TaskHelper.Enqueue(() => DanceStep(actionID != 15997));
     }
 
-    private bool DanceStep(bool isTechnicalStep)
+    private bool DanceStep
+    (
+        bool isTechnicalStep
+    )
     {
         var gauge = DService.Instance().JobGauges.Get<DNCGauge>();
 
@@ -63,7 +66,10 @@ public unsafe class AutoDance : ModuleBase
             return true;
         }
 
-        if (gauge.CompletedSteps < (isTechnicalStep ? 4 : 2))
+        if (gauge.CompletedSteps <
+            (isTechnicalStep ?
+                 4 :
+                 2))
         {
             var nextStep = gauge.NextStep;
 
@@ -79,7 +85,7 @@ public unsafe class AutoDance : ModuleBase
 
         return false;
     }
-    
+
     #region 常量
 
     private static readonly FrozenSet<uint> DanceActions = [15997, 15998];

@@ -9,7 +9,6 @@ using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.Nodes;
 using Lumina.Text.ReadOnly;
 
 namespace DailyRoutines.ModulesPublic;
@@ -43,7 +42,11 @@ public unsafe class SelectableRecruitmentText : ModuleBase
         recruitmentTextNode = null;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {

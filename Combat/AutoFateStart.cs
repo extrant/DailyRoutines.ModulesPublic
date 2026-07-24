@@ -24,12 +24,15 @@ public unsafe class AutoFateStart : ModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     protected override void Init() =>
-        FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 2_000);
-    
+        FrameworkManager.Instance().Reg(OnUpdate, 2_000);
+
     protected override void Uninit() =>
         FrameworkManager.Instance().Unreg(OnUpdate);
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.Overworld ||
             GameState.IsInPVPArea                                            ||
@@ -44,7 +47,7 @@ public unsafe class AutoFateStart : ModuleBase
 
             var chara = CharacterManager.Instance()->LookupBattleCharaByEntityId(entityID);
             if (chara == null || chara->FateId == 0) continue;
-            
+
             ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.StartFate, chara->FateId, entityID);
             if (Throttler.Shared.Throttle($"AutoFateStart-Fate-{chara->FateId}", 60_000))
                 NotifyHelper.Instance().Chat(Lang.Get("AutoFateStart-StartNotice", LuminaWrapper.GetFateName(chara->FateId)));

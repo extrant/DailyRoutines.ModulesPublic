@@ -41,10 +41,19 @@ public unsafe class AutoUseEventItem : ModuleBase
         LogMessageManager.Instance().Unreg(OnPreReceiveMessage);
     }
 
-    private static void OnAddon(AddonEvent type, AddonArgs args) =>
+    private static void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    ) =>
         OnAddonInventoryEvent();
 
-    private static void OnPreReceiveMessage(ref bool isPrevented, ref uint logMessageID, ref LogMessageQueueItem values)
+    private static void OnPreReceiveMessage
+    (
+        ref bool                isPrevented,
+        ref uint                logMessageID,
+        ref LogMessageQueueItem values
+    )
     {
         if (InvalidLogMessageID.Contains(logMessageID))
             isPrevented = true;
@@ -87,7 +96,10 @@ public unsafe class AutoUseEventItem : ModuleBase
         }
     }
 
-    private static bool IsAnyQuestNearby(out uint questRowID)
+    private static bool IsAnyQuestNearby
+    (
+        out uint questRowID
+    )
     {
         questRowID = 0;
         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
@@ -103,7 +115,9 @@ public unsafe class AutoUseEventItem : ModuleBase
                                    if (string.IsNullOrWhiteSpace(markerName)) return false;
 
                                    var distance = Vector3.Distance(localPlayer.Position, marker.Position);
-                                   return marker.Radius <= 1 ? distance <= 5 : distance <= marker.Radius;
+                                   return marker.Radius <= 1 ?
+                                              distance  <= 5 :
+                                              distance  <= marker.Radius;
                                }
                            )
                            .Select(marker => marker.TooltipString->ToString())
@@ -132,7 +146,10 @@ public unsafe class AutoUseEventItem : ModuleBase
         return false;
     }
 
-    private static bool IsAnyMTQNearby(out IGameObject gameObj)
+    private static bool IsAnyMTQNearby
+    (
+        out IGameObject gameObj
+    )
     {
         var gameObjInternal = DService.Instance().ObjectTable.SearchObject(obj => obj.IsMTQ());
 
@@ -140,7 +157,10 @@ public unsafe class AutoUseEventItem : ModuleBase
         return gameObj != null;
     }
 
-    private static List<uint> FilterEItemsByInventory(HashSet<uint> validEItems)
+    private static List<uint> FilterEItemsByInventory
+    (
+        HashSet<uint> validEItems
+    )
     {
         var container = InventoryManager.Instance()->GetInventoryContainer(InventoryType.KeyItems);
         var result    = new List<uint>();
@@ -165,7 +185,7 @@ public unsafe class AutoUseEventItem : ModuleBase
     private void UseEventItem() => OnAddonInventoryEvent();
 
     #endregion
-    
+
     #region 常量
 
     private static readonly FrozenSet<string> InventoryEventAddons =

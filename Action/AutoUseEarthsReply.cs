@@ -22,12 +22,12 @@ public class AutoUseEarthsReply : ModuleBase
 
     protected override void Init()
     {
-        config =   Config.Load(this) ?? new();
-        TaskHelper   ??= new() { TimeoutMS = 8_000 };
+        config     =   Config.Load(this) ?? new();
+        TaskHelper ??= new() { TimeoutMS = 8_000 };
 
         UseActionManager.Instance().RegPostUseActionLocation(OnUseAction);
     }
-    
+
     protected override void Uninit() =>
         UseActionManager.Instance().Unreg(OnUseAction);
 
@@ -40,7 +40,16 @@ public class AutoUseEarthsReply : ModuleBase
             config.Save(this);
     }
 
-    private void OnUseAction(bool result, ActionType actionType, uint actionID, ulong targetID, Vector3 location, uint extraParam, byte a7)
+    private void OnUseAction
+    (
+        bool       result,
+        ActionType actionType,
+        uint       actionID,
+        ulong      targetID,
+        Vector3    location,
+        uint       extraParam,
+        byte       a7
+    )
     {
         if (actionType != ActionType.Action || actionID != RIDDLE_OF_EARTH_ACTION || !result) return;
 
@@ -62,19 +71,19 @@ public class AutoUseEarthsReply : ModuleBase
             weight: 1
         );
     }
-    
+
     private class Config : ModuleConfig
     {
         public bool UseWhenGuard;
         public bool UseWhenSprint;
     }
-    
+
     #region 常量
-    
+
     private const uint RIDDLE_OF_EARTH_ACTION = 29482; // 金刚极意
     private const uint EARTHS_REPLY_ACTION    = 29483; // 金刚转轮
     private const uint SPRINT_STATUS          = 1342;  // 冲刺
     private const uint GUARD_STATUS           = 3054;  // 防御
-    
+
     #endregion
 }

@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using DailyRoutines.Manager;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using OmenTools.OmenService;
 
@@ -34,10 +33,17 @@ public class AutoMaximiseWindow : ModuleBase
         ImGui.TextUnformatted($"/pdr {COMMAND} → {Lang.Get("AutoMaximiseWindow-CommandHelp")}");
     }
 
-    private static void OnCommand(string command, string args) =>
+    private static void OnCommand
+    (
+        string command,
+        string args
+    ) =>
         ControlGameWindow(SW_SHOWMAXIMIZED);
 
-    private static unsafe void ControlGameWindow(int nCmdShow)
+    private static unsafe void ControlGameWindow
+    (
+        int nCmdShow
+    )
     {
         try
         {
@@ -53,8 +59,12 @@ public class AutoMaximiseWindow : ModuleBase
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
     [DllImport("user32.dll")]
-    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
-    
+    private static extern bool ShowWindow
+    (
+        nint hWnd,
+        int  nCmdShow
+    );
+
     #region 常量
 
     private const string COMMAND = "maxwin";

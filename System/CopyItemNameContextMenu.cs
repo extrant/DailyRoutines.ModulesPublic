@@ -23,16 +23,26 @@ public class CopyItemNameContextMenu : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private readonly CopyItemNameMenuItem menuItem        = new(CopyItemNameString);
-    private readonly CopyItemNameMenuItem glamourMenuItem = new($"{CopyItemNameString} ({GlamoursString})");
+    private CopyItemNameMenuItem menuItem        = null!;
+    private CopyItemNameMenuItem glamourMenuItem = null!;
 
-    protected override void Init() =>
+    protected override void Init()
+    {
+        CopyItemNameString = LuminaWrapper.GetAddonText(159);
+        GlamoursString     = LuminaGetter.GetRowOrDefault<CircleActivity>(18).Name.ToString();
+        menuItem           = new(CopyItemNameString);
+        glamourMenuItem    = new($"{CopyItemNameString} ({GlamoursString})");
+
         DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+    }
 
     protected override void Uninit() =>
         DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
 
-    private unsafe void OnContextMenuOpened(IMenuOpenedArgs args)
+    private unsafe void OnContextMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
     {
         var type = args.MenuType;
 
@@ -101,7 +111,10 @@ public class CopyItemNameContextMenu : ModuleBase
 
         protected override bool WithDRPrefix { get; set; } = true;
 
-        protected override unsafe void OnClicked(IMenuItemClickedArgs args)
+        protected override unsafe void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             var itemName = string.Empty;
 
@@ -124,14 +137,17 @@ public class CopyItemNameContextMenu : ModuleBase
             itemID = 0;
         }
 
-        public void SetRawItemID(uint id) =>
+        public void SetRawItemID
+        (
+            uint id
+        ) =>
             itemID = id;
     }
-    
+
     #region 常量
 
-    private static readonly string CopyItemNameString = LuminaWrapper.GetAddonText(159);
-    private static readonly string GlamoursString     = LuminaGetter.GetRowOrDefault<CircleActivity>(18).Name.ToString();
+    private static string CopyItemNameString = null!;
+    private static string GlamoursString     = null!;
 
     #endregion
 }

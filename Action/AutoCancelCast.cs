@@ -4,9 +4,7 @@ using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Enums;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using OmenTools.Info.Game.Data;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Info.Lumina;
 using OmenTools.Interop.Game.Lumina;
@@ -36,7 +34,11 @@ public unsafe class AutoCancelCast : ModuleBase
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private static void OnConditionChanged(ConditionFlag flag, bool value)
+    private static void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (!ValidConditions.Contains(flag)) return;
 
@@ -46,7 +48,10 @@ public unsafe class AutoCancelCast : ModuleBase
             FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private static void OnUpdate(IFramework _)
+    private static void OnUpdate
+    (
+        IFramework _
+    )
     {
         if (!DService.Instance().Condition.IsCasting)
         {
@@ -97,9 +102,9 @@ public unsafe class AutoCancelCast : ModuleBase
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.CancelCast);
         }
     }
-    
+
     #region 常量
-    
+
     private static readonly FrozenSet<ObjectKind> ValidObjectKinds =
     [
         ObjectKind.Pc,
@@ -110,6 +115,6 @@ public unsafe class AutoCancelCast : ModuleBase
     [
         ConditionFlag.Casting
     ];
-    
+
     #endregion
 }

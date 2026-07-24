@@ -70,8 +70,12 @@ public unsafe class AutoNoviceNetwork : ModuleBase
         ImGui.SameLine();
         ImGui.TextColored
         (
-            isJoined ? ImGuiColors.HealerGreen : ImGuiColors.DPSRed,
-            isJoined ? "√" : "×"
+            isJoined ?
+                ImGuiColors.HealerGreen :
+                ImGuiColors.DPSRed,
+            isJoined ?
+                "√" :
+                "×"
         );
 
         ImGui.TextUnformatted($"{Lang.Get("AutoNoviceNetwork-AttemptedTimes")}:");
@@ -142,7 +146,11 @@ public unsafe class AutoNoviceNetwork : ModuleBase
         return ((int)infoProxy[1].VirtualTable & 1) != 0;
     }
 
-    private void OnAfkStateCheck(object? sender, ElapsedEventArgs e)
+    private void OnAfkStateCheck
+    (
+        object?          sender,
+        ElapsedEventArgs e
+    )
     {
         if (!(isMentor = PlayerState.Instance()->IsMentor())) return;
 

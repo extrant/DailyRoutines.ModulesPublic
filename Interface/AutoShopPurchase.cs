@@ -27,7 +27,7 @@ public class AutoShopPurchase : ModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     private Config config = null!;
-    
+
     private ShopPresetDisplayTable? presetDisplayTable;
     private List<AddonWithListInfo> scannedData = [];
 
@@ -36,7 +36,7 @@ public class AutoShopPurchase : ModuleBase
         config             =   Config.Load(this) ?? new();
         presetDisplayTable ??= new(this);
     }
-    
+
     protected override void Uninit()
     {
         config?.Save(this);
@@ -55,14 +55,14 @@ public class AutoShopPurchase : ModuleBase
 
             if (clipboard != null)
             {
-                this.config.Presets.Add(clipboard);
-                this.config.Save(this);
+                config.Presets.Add(clipboard);
+                config.Save(this);
             }
         }
 
         presetDisplayTable.Draw();
     }
-    
+
     private class Config : ModuleConfig
     {
         public List<ShopPurchasePreset> Presets = [];
@@ -77,7 +77,10 @@ public class AutoShopPurchase : ModuleBase
         public string        AddonName   { get; } = addonName;
         public HashSet<uint> ListNodeIDs { get; } = listNodeIDs;
 
-        public bool Equals(AddonWithListInfo? other)
+        public bool Equals
+        (
+            AddonWithListInfo? other
+        )
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -86,7 +89,10 @@ public class AutoShopPurchase : ModuleBase
 
         public AtkUnitBase* GetAddon() => AddonHelper.GetByName(AddonName);
 
-        public AtkComponentList* GetListByID(uint nodeID)
+        public AtkComponentList* GetListByID
+        (
+            uint nodeID
+        )
         {
             if (!ListNodeIDs.Contains(nodeID)) return null;
             var addon = GetAddon();
@@ -94,7 +100,10 @@ public class AutoShopPurchase : ModuleBase
             return addon->GetComponentListById(nodeID);
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -104,16 +113,27 @@ public class AutoShopPurchase : ModuleBase
 
         public override int GetHashCode() => AddonName.GetHashCode();
 
-        public static bool operator ==(AddonWithListInfo left, AddonWithListInfo right) => Equals(left, right);
+        public static bool operator ==
+        (
+            AddonWithListInfo left,
+            AddonWithListInfo right
+        ) => Equals(left, right);
 
-        public static bool operator !=(AddonWithListInfo left, AddonWithListInfo right) => !Equals(left, right);
+        public static bool operator !=
+        (
+            AddonWithListInfo left,
+            AddonWithListInfo right
+        ) => !Equals(left, right);
 
-        public static List<AddonWithListInfo> ScanAddons(AtkUnitList managerList)
+        public static List<AddonWithListInfo> ScanAddons
+        (
+            AtkUnitList managerList
+        )
         {
             var list = new HashSet<AddonWithListInfo>();
 
             var addons = managerList.Entries;
-            if (addons.Length == 0 || addons.IsEmpty || addons.Length == 0) return [..list];
+            if (addons.Length == 0 || addons.IsEmpty || addons.Length == 0) return [.. list];
 
             foreach (var entry in addons)
             {
@@ -131,7 +151,7 @@ public class AutoShopPurchase : ModuleBase
                     list.Add(info);
             }
 
-            return [..list];
+            return [.. list];
         }
     }
 
@@ -146,7 +166,10 @@ public class AutoShopPurchase : ModuleBase
         public KeyValuePair<uint, int> ClickRoute  { get; set; } // ListComponent Node ID - Index
         public KeyValuePair<bool, int> NumberRoute { get; set; } // IsNeedToSetNumber - Number
 
-        public bool Equals(ShopPurchasePreset? other)
+        public bool Equals
+        (
+            ShopPurchasePreset? other
+        )
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -161,7 +184,9 @@ public class AutoShopPurchase : ModuleBase
             GetAddon()->IsAddonAndNodesReady();
 
         public AtkComponentList* GetListNode() =>
-            !IsAddonValid() ? null : GetAddon()->GetComponentListById(ClickRoute.Key);
+            !IsAddonValid() ?
+                null :
+                GetAddon()->GetComponentListById(ClickRoute.Key);
 
         public AtkComponentNumericInput* GetNumberNode()
         {
@@ -178,12 +203,12 @@ public class AutoShopPurchase : ModuleBase
         }
 
         public bool IsNodeValid() =>
-            GetListNode() != null && (!NumberRoute.Key || NumberRoute.Key && GetNumberNode() != null);
+            GetListNode() != null && (!NumberRoute.Key || (NumberRoute.Key && GetNumberNode() != null));
 
         public bool IsTargetValid() =>
             string.IsNullOrWhiteSpace(TargetName) ||
             (!string.IsNullOrWhiteSpace(TargetName) &&
-             (TargetManager.Target?.Name.ToString() ?? string.Empty) == TargetName);
+             (TargetManager.Target?.Name ?? string.Empty) == TargetName);
 
         public List<Func<bool>> GetTasks()
         {
@@ -230,7 +255,10 @@ public class AutoShopPurchase : ModuleBase
             }
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals
+        (
+            object? obj
+        )
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -248,7 +276,7 @@ public class AutoShopPurchase : ModuleBase
     private class ShopPresetDisplayTable : IDisposable
     {
         private readonly AutoShopPurchase module;
-        
+
         private string nameInput       = string.Empty;
         private string targetNameInput = Lang.Get("AutoShopPurchase-UI-UnknownTarget");
         private string addonNameInput  = string.Empty;
@@ -258,7 +286,10 @@ public class AutoShopPurchase : ModuleBase
         private int    setNumberInput;
         private bool   isAddNewPresetWindowOpen;
 
-        public ShopPresetDisplayTable(AutoShopPurchase module)
+        public ShopPresetDisplayTable
+        (
+            AutoShopPurchase module
+        )
         {
             this.module                       =  module;
             WindowManager.Instance().PostDraw += WindowRenderAddNewPreset;
@@ -302,7 +333,7 @@ public class AutoShopPurchase : ModuleBase
 
             if (ImGuiOm.ButtonIconSelectable("OpenAddNewPresetWindow", FontAwesomeIcon.Plus))
             {
-                module.scannedData              =  AddonWithListInfo.ScanAddons(FocusedList);
+                module.scannedData       =  AddonWithListInfo.ScanAddons(FocusedList);
                 isAddNewPresetWindowOpen ^= true;
             }
 
@@ -324,7 +355,11 @@ public class AutoShopPurchase : ModuleBase
             ImGui.TableNextColumn();
         }
 
-        private void TableRenderRow(int counter, ShopPurchasePreset preset)
+        private void TableRenderRow
+        (
+            int                counter,
+            ShopPurchasePreset preset
+        )
         {
             using var id = ImRaii.PushId(preset.ToString());
             ImGui.TableNextRow();
@@ -345,7 +380,12 @@ public class AutoShopPurchase : ModuleBase
             ImGui.TextUnformatted($"{preset.ClickRoute.Key} -> {preset.ClickRoute.Value}");
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(preset.NumberRoute.Key ? $"{preset.NumberRoute.Value}" : $"({Lang.Get("None")})");
+            ImGui.TextUnformatted
+            (
+                preset.NumberRoute.Key ?
+                    $"{preset.NumberRoute.Value}" :
+                    $"({Lang.Get("None")})"
+            );
 
             ImGui.TableNextColumn();
             PresetRunTimesInputComponent.Using(preset).Draw();
@@ -407,7 +447,7 @@ public class AutoShopPurchase : ModuleBase
             );
 
             if (!string.IsNullOrWhiteSpace(targetNameInput) && TargetManager.Target is { } target)
-                targetNameInput = target.Name.ToString();
+                targetNameInput = target.Name;
         }
 
         private void WindowRenderPresetInfoInput()
@@ -493,7 +533,10 @@ public class AutoShopPurchase : ModuleBase
             }
         }
 
-        private unsafe void WindowRenderAddonInfo(AddonWithListInfo data)
+        private unsafe void WindowRenderAddonInfo
+        (
+            AddonWithListInfo data
+        )
         {
             var addon = data.GetAddon();
 
@@ -510,7 +553,11 @@ public class AutoShopPurchase : ModuleBase
             }
         }
 
-        private unsafe void WindowRenderListComponentNodeInfo(AddonWithListInfo data, uint nodeID)
+        private unsafe void WindowRenderListComponentNodeInfo
+        (
+            AddonWithListInfo data,
+            uint              nodeID
+        )
         {
             var node = data.GetListByID(nodeID);
             if (node == null) return;
@@ -569,7 +616,10 @@ public class AutoShopPurchase : ModuleBase
 
             private int timesInput = 1;
 
-            public static PresetRunTimesInputComponent Using(ShopPurchasePreset preset)
+            public static PresetRunTimesInputComponent Using
+            (
+                ShopPurchasePreset preset
+            )
             {
                 if (Cache.TryGetValue(preset, out var instance))
                     return instance;
@@ -606,7 +656,11 @@ public class AutoShopPurchase : ModuleBase
 
         private bool IsWaitingRefresh;
 
-        private ShopPresetExecutor(ShopPurchasePreset preset, int loopCount)
+        private ShopPresetExecutor
+        (
+            ShopPurchasePreset preset,
+            int                loopCount
+        )
         {
             Preset    = preset;
             LoopCount = loopCount;
@@ -633,7 +687,11 @@ public class AutoShopPurchase : ModuleBase
             CancelSource.Dispose();
         }
 
-        public static async Task<bool> TryExecuteAsync(ShopPurchasePreset preset, int loopCount)
+        public static async Task<bool> TryExecuteAsync
+        (
+            ShopPurchasePreset preset,
+            int                loopCount
+        )
         {
             lock (Lock)
             {
@@ -722,15 +780,26 @@ public class AutoShopPurchase : ModuleBase
             TaskHelper.Enqueue(() => OnReceiveCommand(ExecuteCommandFlag.RefreshInventory, 0, 0, 0, 0));
         }
 
-        private unsafe void OnAddonYesno(AddonEvent type, AddonArgs args)
+        private unsafe void OnAddonYesno
+        (
+            AddonEvent type,
+            AddonArgs  args
+        )
         {
-            if (!TaskHelper.IsBusy && !IsWaitingRefresh || args.Addon == nint.Zero) return;
+            if ((!TaskHelper.IsBusy && !IsWaitingRefresh) || args.Addon == nint.Zero) return;
 
             var addon = args.Addon.ToStruct();
             addon->Callback(0);
         }
 
-        private void OnReceiveCommand(ExecuteCommandFlag command, uint param1, uint param2, uint param3, uint param4)
+        private void OnReceiveCommand
+        (
+            ExecuteCommandFlag command,
+            uint               param1,
+            uint               param2,
+            uint               param3,
+            uint               param4
+        )
         {
             if (!IsWaitingRefresh || command != ExecuteCommandFlag.RefreshInventory) return;
 

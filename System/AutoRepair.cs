@@ -47,7 +47,7 @@ public unsafe class AutoRepair : ModuleBase
     protected override void Uninit()
     {
         ExecuteCommandManager.Instance().Unreg(OnExecuteCommand);
-        
+
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
         DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
         DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
@@ -119,7 +119,12 @@ public unsafe class AutoRepair : ModuleBase
             EnqueueNPCRepairTasks();
     }
 
-    private void EnqueueSelfRepairTasks(List<InventoryItem> items, List<uint> itemsUnableToRepair, bool isDMInsufficient)
+    private void EnqueueSelfRepairTasks
+    (
+        List<InventoryItem> items,
+        List<uint>          itemsUnableToRepair,
+        bool                isDMInsufficient
+    )
     {
         TaskHelper.Enqueue
         (
@@ -189,7 +194,10 @@ public unsafe class AutoRepair : ModuleBase
         );
     }
 
-    private static (List<uint> ItemsUnableToRepair, bool IsDMInsufficient) AnalyzeItems(List<InventoryItem> items)
+    private static (List<uint> ItemsUnableToRepair, bool IsDMInsufficient) AnalyzeItems
+    (
+        List<InventoryItem> items
+    )
     {
         var itemsUnableToRepair = new List<uint>();
         var isDMInsufficient    = false;
@@ -256,16 +264,26 @@ public unsafe class AutoRepair : ModuleBase
 
     #region 事件
 
-    private void OnDutyRecommenced(IDutyStateEventArgs args) =>
+    private void OnDutyRecommenced
+    (
+        IDutyStateEventArgs args
+    ) =>
         EnqueueRepair();
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (value || !ValidConditions.Contains(flag)) return;
         EnqueueRepair();
     }
 
-    private void OnZoneChanged(uint u) =>
+    private void OnZoneChanged
+    (
+        uint u
+    ) =>
         EnqueueRepair();
 
     private static void OnExecuteCommand

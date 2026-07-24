@@ -20,7 +20,6 @@ using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
@@ -45,13 +44,13 @@ public unsafe class OptimizedFriendList : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private Config config = null!;
 
     private readonly ModifyInfoMenuItem          modifyInfoItem;
     private readonly TeleportFriendZoneMenuItem  teleportZoneItem  = new();
     private readonly TeleportFriendWorldMenuItem teleportWorldItem = new();
-    
+
     private TextInputNode?     searchInputNode;
     private TextureButtonNode? searchSettingButtonNode;
 
@@ -60,7 +59,7 @@ public unsafe class OptimizedFriendList : ModuleBase
 
     private string searchString = string.Empty;
 
-    private readonly List<IDisposable> infoTokens  = [];
+    private readonly List<IDisposable> infoTokens = [];
 
     public OptimizedFriendList() =>
         modifyInfoItem = new(this, TaskHelper);
@@ -83,7 +82,7 @@ public unsafe class OptimizedFriendList : ModuleBase
             Title        = Lang.Get("OptimizedFriendList-Addon-SearchSetting"),
             Size         = new(230f, 350f)
         };
-        
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,          "FriendList", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "FriendList", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,        "FriendList", OnAddon);
@@ -98,7 +97,7 @@ public unsafe class OptimizedFriendList : ModuleBase
         DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenu;
 
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        
+
         searchInputNode?.Dispose();
         searchInputNode = null;
 
@@ -119,13 +118,20 @@ public unsafe class OptimizedFriendList : ModuleBase
             InfoProxyFriendList.Instance()->RequestData();
     }
 
-    private void ReplaceAtkString(int index, ReadOnlySeString str)
+    private void ReplaceAtkString
+    (
+        int              index,
+        ReadOnlySeString str
+    )
     {
         using var utf8String = new Utf8String(str);
         AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->SetValue(index, utf8String.StringPtr);
     }
 
-    private void ApplyDisplayModification(TaskHelper? taskHelper)
+    private void ApplyDisplayModification
+    (
+        TaskHelper? taskHelper
+    )
     {
         var addon = FriendList;
         if (!addon->IsAddonAndNodesReady()) return;
@@ -139,6 +145,7 @@ public unsafe class OptimizedFriendList : ModuleBase
             var data = info->CharDataSpan[i];
 
             var existedName = AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[0 + (5 * i)].ToString();
+
             if (existedName == LuminaWrapper.GetAddonText(964))
             {
                 isAnyUpdate = true;
@@ -156,22 +163,23 @@ public unsafe class OptimizedFriendList : ModuleBase
                                .PushColorType(37)
                                .Append($"{configInfo.Nickname}")
                                .PopColorType();
-                
+
                 // 名字
                 ReplaceAtkString(0 + (5 * i), nicknameBuilder.Builder.ToReadOnlySeString());
             }
 
             var existedRemark = AtkStage.Instance()->GetStringArrayData(StringArrayType.FriendList)->StringArray[3 + (5 * i)].ToString();
+
             if (!string.IsNullOrWhiteSpace(configInfo.Remark))
             {
                 var remarkText = $"{LuminaWrapper.GetAddonText(13294).TrimEnd(':')}: {configInfo.Remark}" +
-                                 (string.IsNullOrWhiteSpace(configInfo.Nickname)
-                                      ? string.Empty
-                                      : $"\n{LuminaWrapper.GetAddonText(9818)}: {data.NameString}");
+                                 (string.IsNullOrWhiteSpace(configInfo.Nickname) ?
+                                      string.Empty :
+                                      $"\n{LuminaWrapper.GetAddonText(9818)}: {data.NameString}");
 
                 if (remarkText == existedRemark) continue;
                 isAnyUpdate = true;
-                
+
                 // 在线状态
                 ReplaceAtkString(3 + (5 * i), remarkText);
             }
@@ -182,7 +190,10 @@ public unsafe class OptimizedFriendList : ModuleBase
         RequestInfoUpdate(taskHelper);
     }
 
-    private static void RequestInfoUpdate(TaskHelper taskHelper)
+    private static void RequestInfoUpdate
+    (
+        TaskHelper taskHelper
+    )
     {
         taskHelper.Abort();
 
@@ -205,7 +216,10 @@ public unsafe class OptimizedFriendList : ModuleBase
         );
     }
 
-    private bool MatchesSearch(string filter)
+    private bool MatchesSearch
+    (
+        string filter
+    )
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
@@ -222,7 +236,11 @@ public unsafe class OptimizedFriendList : ModuleBase
         return filter.Contains(searchString, StringComparison.InvariantCultureIgnoreCase);
     }
 
-    protected void ApplySearchFilter(string filter, TaskHelper? taskHelper)
+    protected void ApplySearchFilter
+    (
+        string      filter,
+        TaskHelper? taskHelper
+    )
     {
         var info = InfoProxyFriendList.Instance();
 
@@ -248,7 +266,7 @@ public unsafe class OptimizedFriendList : ModuleBase
 
             if (config.IgnoredGroup[(int)entry->Group])
             {
-                entry->ExtraFlags = entry->ExtraFlags & 0xFFFF | (uint)(1 & 0xFF) << 16; // 添加隐藏标记
+                entry->ExtraFlags = (entry->ExtraFlags & 0xFFFF) | ((uint)(1 & 0xFF) << 16); // 添加隐藏标记
                 continue;
             }
 
@@ -279,7 +297,7 @@ public unsafe class OptimizedFriendList : ModuleBase
             if ((resetFilterGroup == InfoProxyCommonList.DisplayGroup.All || entry->Group == resetFilterGroup) && matchResult)
                 entry->ExtraFlags &= 0xFFFF; // 去除隐藏标记
             else
-                entry->ExtraFlags = entry->ExtraFlags & 0xFFFF | (uint)(1 & 0xFF) << 16;
+                entry->ExtraFlags = (entry->ExtraFlags & 0xFFFF) | ((uint)(1 & 0xFF) << 16);
         }
 
         info->ApplyFilters();
@@ -292,7 +310,13 @@ public unsafe class OptimizedFriendList : ModuleBase
         }
     }
 
-    private void RestoreEntryData(int index, ulong contentID, TaskHelper? taskHelper, Action<string>? onNameResolved = null)
+    private void RestoreEntryData
+    (
+        int             index,
+        ulong           contentID,
+        TaskHelper?     taskHelper,
+        Action<string>? onNameResolved = null
+    )
     {
         var region = WorldRegionResolver.Resolve(GameState.HomeWorld);
         _ = RemotePlayerInfo.GetOrRequest(contentID, region);
@@ -313,7 +337,7 @@ public unsafe class OptimizedFriendList : ModuleBase
                            .PushColorType(32)
                            .Append(playerInfo.Name)
                            .PopColorType();
-                
+
                 ReplaceAtkString(0 + (5 * index), nameBuilder.Builder.ToReadOnlySeString());
 
                 using var worldBuilder = new RentedSeStringBuilder();
@@ -321,7 +345,7 @@ public unsafe class OptimizedFriendList : ModuleBase
                             .Append(LuminaWrapper.GetWorldName(playerInfo.WorldID))
                             .AppendIcon((uint)BitmapFontIcon.CrossWorld)
                             .Append(LuminaWrapper.GetWorldDCName(playerInfo.WorldID));
-                
+
                 ReplaceAtkString(1 + (5 * index), worldBuilder.Builder.ToReadOnlySeString());
 
                 ReplaceAtkString(3 + (5 * index), LuminaWrapper.GetAddonText(1351));
@@ -334,10 +358,13 @@ public unsafe class OptimizedFriendList : ModuleBase
         );
         infoTokens.Add(observer);
     }
-    
+
     #region 事件
 
-    private void OnContextMenu(IMenuOpenedArgs args)
+    private void OnContextMenu
+    (
+        IMenuOpenedArgs args
+    )
     {
         if (modifyInfoItem.IsDisplay(args))
             args.AddMenuItem(modifyInfoItem.Get());
@@ -349,7 +376,11 @@ public unsafe class OptimizedFriendList : ModuleBase
             args.AddMenuItem(teleportWorldItem.Get());
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         switch (type)
         {
@@ -442,14 +473,14 @@ public unsafe class OptimizedFriendList : ModuleBase
 
                 ApplyDisplayModification(TaskHelper);
                 break;
-            
+
             case AddonEvent.PreRequestedUpdate:
                 ApplySearchFilter(searchString, TaskHelper);
                 ApplyDisplayModification(TaskHelper);
                 break;
-            
+
             case AddonEvent.PreFinalize:
-                searchInputNode = null;
+                searchInputNode         = null;
                 searchSettingButtonNode = null;
                 infoTokens.Clear();
                 break;
@@ -492,7 +523,11 @@ public unsafe class OptimizedFriendList : ModuleBase
 
         private OptimizedFriendList Instance { get; init; } = instance;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             if (ContentID == 0 || string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(WorldName))
             {
@@ -571,9 +606,9 @@ public unsafe class OptimizedFriendList : ModuleBase
 
             confirmButtonNode = new()
             {
-                Position  = new(10, 264),
-                Size      = new(140, 28),
-                String    = Lang.Get("Confirm"),
+                Position = new(10, 264),
+                Size     = new(140, 28),
+                String   = Lang.Get("Confirm"),
                 OnClick = () =>
                 {
                     Instance.config.PlayerInfos[ContentID] = new()
@@ -593,9 +628,9 @@ public unsafe class OptimizedFriendList : ModuleBase
 
             clearButtonNode = new()
             {
-                Position  = new(160, 264),
-                Size      = new(140, 28),
-                String    = Lang.Get("Clear"),
+                Position = new(160, 264),
+                Size     = new(140, 28),
+                String   = Lang.Get("Clear"),
                 OnClick = () =>
                 {
                     Instance.config.PlayerInfos.TryRemove(ContentID, out _);
@@ -609,9 +644,9 @@ public unsafe class OptimizedFriendList : ModuleBase
 
             quertUsedNameButtonNode = new()
             {
-                Position  = new(310, 264),
-                Size      = new(140, 28),
-                String    = Lang.Get("OptimizedFriendList-ObtainUsedNames"),
+                Position = new(310, 264),
+                Size     = new(140, 28),
+                String   = Lang.Get("OptimizedFriendList-ObtainUsedNames"),
                 OnClick = () =>
                 {
                     var contentID = ContentID;
@@ -623,20 +658,31 @@ public unsafe class OptimizedFriendList : ModuleBase
             quertUsedNameButtonNode.AttachNode(this);
         }
 
-        protected override void OnUpdate(AtkUnitBase* addon)
+        protected override void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (!FriendList->IsAddonAndNodesReady())
                 Close();
         }
 
-        protected override void OnFinalize(AtkUnitBase* addon)
+        protected override void OnFinalize
+        (
+            AtkUnitBase* addon
+        )
         {
             ContentID = 0;
             Name      = string.Empty;
             WorldName = string.Empty;
         }
 
-        public void OpenWithData(ulong contentID, string name, string worldName)
+        public void OpenWithData
+        (
+            ulong  contentID,
+            string name,
+            string worldName
+        )
         {
             ContentID = contentID;
             Name      = name;
@@ -648,7 +694,12 @@ public unsafe class OptimizedFriendList : ModuleBase
 
     private static class OptimizedFriendListAsyncHelper
     {
-        public static Task QueryUsedNamesAsync(ulong contentID, string name, WorldRegion region) =>
+        public static Task QueryUsedNamesAsync
+        (
+            ulong       contentID,
+            string      name,
+            WorldRegion region
+        ) =>
             RemoteUsedNames.GetFreshAsync(contentID, region).AsTask().ContinueWith
             (
                 task =>
@@ -697,7 +748,11 @@ public unsafe class OptimizedFriendList : ModuleBase
         private OptimizedFriendList Instance   { get; init; } = instance;
         private TaskHelper          TaskHelper { get; init; } = taskHelper;
 
-        protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValues)
+        protected override void OnSetup
+        (
+            AtkUnitBase*   addon,
+            Span<AtkValue> atkValues
+        )
         {
             var searchTypeTitleNode = new TextNode
             {
@@ -808,7 +863,10 @@ public unsafe class OptimizedFriendList : ModuleBase
             searchGroupIgnoreLayoutNode.AttachNode(this);
         }
 
-        protected override void OnUpdate(AtkUnitBase* addon)
+        protected override void OnUpdate
+        (
+            AtkUnitBase* addon
+        )
         {
             if (FriendList == null)
                 Close();
@@ -824,12 +882,18 @@ public unsafe class OptimizedFriendList : ModuleBase
         public override string Name       { get; protected set; } = Lang.Get("OptimizedFriendList-ContextMenu-NicknameAndRemark");
         public override string Identifier { get; protected set; } = nameof(OptimizedFriendList);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) =>
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        ) =>
             args is { AddonName: "FriendList", Target: MenuTargetDefault target } &&
             target.TargetContentId != 0                                           &&
             !string.IsNullOrWhiteSpace(target.TargetName);
 
-        protected override void OnClicked(IMenuItemClickedArgs args)
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        )
         {
             if (args.Target is not MenuTargetDefault target) return;
 
@@ -839,7 +903,8 @@ public unsafe class OptimizedFriendList : ModuleBase
 
                 taskHelper.DelayNext(100);
                 taskHelper.Enqueue(() => !instance.remarkEditAddon.IsOpen);
-                taskHelper.Enqueue(() => instance.remarkEditAddon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ToString()));
+                taskHelper.Enqueue
+                    (() => instance.remarkEditAddon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ToString()));
             }
             else
                 instance.remarkEditAddon.OpenWithData(target.TargetContentId, target.TargetName, target.TargetHomeWorld.Value.Name.ToString());
@@ -854,14 +919,24 @@ public unsafe class OptimizedFriendList : ModuleBase
         public override string Name       { get; protected set; } = Lang.Get("OptimizedFriendList-ContextMenu-TeleportToFriendZone");
         public override string Identifier { get; protected set; } = nameof(OptimizedFriendList);
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             Telepo.Instance()->Teleport(aetheryteID, 0);
 
-        public override bool IsDisplay(IMenuOpenedArgs args) =>
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        ) =>
             args is { AddonName : "FriendList", Target: MenuTargetDefault { TargetCharacter: not null } target } &&
             GetAetheryteID(target.TargetCharacter.Location.RowId, out aetheryteID);
 
-        private static bool GetAetheryteID(uint zoneID, out uint aetheryteID)
+        private static bool GetAetheryteID
+        (
+            uint     zoneID,
+            out uint aetheryteID
+        )
         {
             aetheryteID = 0;
             if (zoneID == 0 || zoneID == GameState.TerritoryType) return false;
@@ -891,9 +966,12 @@ public unsafe class OptimizedFriendList : ModuleBase
         public override string Name       { get; protected set; } = Lang.Get("OptimizedFriendList-ContextMenu-TeleportToFriendWorld");
         public override string Identifier { get; protected set; } = nameof(OptimizedFriendList);
 
-        public override bool IsDisplay(IMenuOpenedArgs args)
+        public override bool IsDisplay
+        (
+            IMenuOpenedArgs args
+        )
         {
-            if ((ModuleManager.Instance().IsModuleEnabled("FastWorldTravel") ?? false)                                                              &&
+            if ((ModuleManager.Instance().IsModuleEnabled("FastWorldTravel") ?? false)                                                   &&
                 args is { AddonName: "FriendList", Target: MenuTargetDefault { TargetCharacter.CurrentWorld.RowId: var targetWorldID } } &&
                 targetWorldID != GameState.CurrentWorld)
             {
@@ -904,7 +982,10 @@ public unsafe class OptimizedFriendList : ModuleBase
             return false;
         }
 
-        protected override void OnClicked(IMenuItemClickedArgs args) =>
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
             ChatManager.Instance().SendMessage($"/pdr worldtravel {LuminaWrapper.GetWorldName(friendWorldID)}");
     }
 
@@ -915,16 +996,30 @@ public unsafe class OptimizedFriendList : ModuleBase
         public string Nickname  { get; set; } = string.Empty;
         public string Remark    { get; set; } = string.Empty;
     }
-    
+
     #region 常量
 
     [IPCProvider("DailyRoutines.Modules.OptimizedFriendlist.GetRemarkByContentID")]
-    private string GetRemarkByContentID(ulong contentID) =>
-        config.PlayerInfos.TryGetValue(contentID, out var info) ? !string.IsNullOrWhiteSpace(info.Remark) ? info.Remark : string.Empty : string.Empty;
+    private string GetRemarkByContentID
+    (
+        ulong contentID
+    ) =>
+        config.PlayerInfos.TryGetValue(contentID, out var info) ?
+            !string.IsNullOrWhiteSpace(info.Remark) ?
+                info.Remark :
+                string.Empty :
+            string.Empty;
 
     [IPCProvider("DailyRoutines.Modules.OptimizedFriendlist.GetNicknameByContentID")]
-    private string GetNicknameByContentID(ulong contentID) =>
-        config.PlayerInfos.TryGetValue(contentID, out var info) ? !string.IsNullOrWhiteSpace(info.Nickname) ? info.Nickname : string.Empty : string.Empty;
+    private string GetNicknameByContentID
+    (
+        ulong contentID
+    ) =>
+        config.PlayerInfos.TryGetValue(contentID, out var info) ?
+            !string.IsNullOrWhiteSpace(info.Nickname) ?
+                info.Nickname :
+                string.Empty :
+            string.Empty;
 
     #endregion
 }

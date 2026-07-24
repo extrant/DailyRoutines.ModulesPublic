@@ -13,7 +13,11 @@ public partial class CrossDCPartyFinder
     private Dictionary<string, CheckboxNode> checkboxNodes = [];
     private HorizontalListNode?              layoutNode;
 
-    private unsafe void OnAddon(AddonEvent type, AddonArgs? args)
+    private unsafe void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         ClearResources();
 

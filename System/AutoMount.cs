@@ -26,11 +26,14 @@ public unsafe class AutoMount : ModuleBase
 
     private Config config = null!;
 
-    private readonly MountSelectCombo mountSelectCombo = new("Mount");
-    private readonly ZoneSelectCombo  zoneSelectCombo  = new("Zone");
+    private MountSelectCombo mountSelectCombo = null!;
+    private ZoneSelectCombo  zoneSelectCombo  = null!;
 
     protected override void Init()
     {
+        mountSelectCombo = new("Mount");
+        zoneSelectCombo  = new("Zone");
+
         config = Config.Load(this) ?? new();
 
         mountSelectCombo.SelectedID = config.SelectedMount;
@@ -112,7 +115,10 @@ public unsafe class AutoMount : ModuleBase
             config.Save(this);
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         if (!config.MountWhenZoneChange                             ||
             GameState.TerritoryType == 0                            ||
@@ -124,7 +130,11 @@ public unsafe class AutoMount : ModuleBase
         TaskHelper.Enqueue(UseMount);
     }
 
-    private void OnConditionChanged(ConditionFlag flag, bool value)
+    private void OnConditionChanged
+    (
+        ConditionFlag flag,
+        bool          value
+    )
     {
         if (config.BlacklistZones.Contains(GameState.TerritoryType)) return;
 
@@ -164,21 +174,23 @@ public unsafe class AutoMount : ModuleBase
 
         TaskHelper.DelayNext(100);
         TaskHelper.Enqueue
-        (() => config.SelectedMount == 0
-                   ? UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9)
-                   : UseActionManager.Instance().UseAction(ActionType.Mount,         config.SelectedMount)
+        (() => config.SelectedMount == 0 ?
+                   UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9) :
+                   UseActionManager.Instance().UseAction(ActionType.Mount,         config.SelectedMount)
         );
 
         if (config.JumpAfterMount)
         {
-            TaskHelper.Enqueue(() =>
-            {
-                if (!PlayerState.Instance()->CanFly) return;
-                TaskHelper.Enqueue(() => ICondition.Instance().IsOnMount,                                    "WaitForMount", 5_000);
-                TaskHelper.Enqueue(() => UseActionManager.Instance().UseAction(ActionType.GeneralAction, 2), "使用跳跃");
-                TaskHelper.DelayNext(50);
-                TaskHelper.Enqueue(() => UseActionManager.Instance().UseAction(ActionType.GeneralAction, 2), "再次使用跳跃");
-            });
+            TaskHelper.Enqueue
+            (() =>
+                {
+                    if (!PlayerState.Instance()->CanFly) return;
+                    TaskHelper.Enqueue(() => ICondition.Instance().IsOnMount,                                    "WaitForMount", 5_000);
+                    TaskHelper.Enqueue(() => UseActionManager.Instance().UseAction(ActionType.GeneralAction, 2), "使用跳跃");
+                    TaskHelper.DelayNext(50);
+                    TaskHelper.Enqueue(() => UseActionManager.Instance().UseAction(ActionType.GeneralAction, 2), "再次使用跳跃");
+                }
+            );
         }
 
         return true;

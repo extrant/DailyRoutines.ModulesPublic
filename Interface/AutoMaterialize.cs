@@ -27,12 +27,19 @@ public unsafe class AutoMaterialize : ModuleBase
         Description = Lang.Get("AutoMaterializeDescription"),
         Category    = ModuleCategory.Interface
     };
-    
+
     // 0 - 成功; 3 - 获取 InventoryType 或 InventorySlot 失败; 4 - 物品为空或不符合条件; 9 - 当前 Condition 不满足; 34 - 当前状态无法使用; 
     private static readonly CompSig ExtractMateriaSig = new("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 41 0F BF F8 8B DA 48 8B F1 45 33 C0");
-    private delegate        int     ExtractMateriaDelegate(nint a1, InventoryType type, uint slot);
-    private                 Hook<ExtractMateriaDelegate>? ExtractMateriaHook;
-    
+
+    private delegate int ExtractMateriaDelegate
+    (
+        nint          a1,
+        InventoryType type,
+        uint          slot
+    );
+
+    private Hook<ExtractMateriaDelegate>? ExtractMateriaHook;
+
     private TextNode?       lableNode;
     private TextButtonNode? startButtonNode;
     private TextButtonNode? stopButtonNode;
@@ -45,10 +52,10 @@ public unsafe class AutoMaterialize : ModuleBase
             TaskIntervalMS  = 500,
             RetryIntervalMS = 500
         };
-        
+
         ExtractMateriaHook = ExtractMateriaSig.GetHook<ExtractMateriaDelegate>(ExtractMateriaDetour);
         ExtractMateriaHook.Enable();
-        
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "Materialize",       OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "Materialize",       OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "MaterializeDialog", OnDialogAddon);
@@ -67,7 +74,7 @@ public unsafe class AutoMaterialize : ModuleBase
         LogMessageManager.Instance().Unreg(OnLogMessage);
         UseActionManager.Instance().Unreg(OnPreUseAction);
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon, OnDialogAddon);
-        
+
         lableNode?.Dispose();
         lableNode = null;
 
@@ -78,7 +85,7 @@ public unsafe class AutoMaterialize : ModuleBase
         stopButtonNode = null;
     }
 
-    protected override void ConfigUI() => 
+    protected override void ConfigUI() =>
         ImGuiOm.ConflictKeyText();
 
     #region 事件
@@ -99,20 +106,33 @@ public unsafe class AutoMaterialize : ModuleBase
         TaskHelper.Abort();
     }
 
-    private void OnLogMessage(uint logMessageID, LogMessageQueueItem item)
+    private void OnLogMessage
+    (
+        uint                logMessageID,
+        LogMessageQueueItem item
+    )
     {
         if (logMessageID != 744) return;
         Enqueue();
     }
-    
-    private int ExtractMateriaDetour(nint a1, InventoryType type, uint slot)
+
+    private int ExtractMateriaDetour
+    (
+        nint          a1,
+        InventoryType type,
+        uint          slot
+    )
     {
         var original = ExtractMateriaHook.Original(a1, type, slot);
         Enqueue();
         return original;
     }
 
-    private void OnAddon(AddonEvent type, AddonArgs args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         switch (type)
         {
@@ -173,7 +193,11 @@ public unsafe class AutoMaterialize : ModuleBase
         }
     }
 
-    private static void OnDialogAddon(AddonEvent type, AddonArgs args)
+    private static void OnDialogAddon
+    (
+        AddonEvent type,
+        AddonArgs  args
+    )
     {
         var addon = MaterializeDialog;
         if (addon == null) return;
@@ -191,9 +215,9 @@ public unsafe class AutoMaterialize : ModuleBase
 
     private bool EnqueueExtractMateria()
     {
-        if (TaskHelper.AbortByConflictKey(this)) 
+        if (TaskHelper.AbortByConflictKey(this))
             return true;
-        
+
         if (Inventories.Player.IsFull() || ICondition.Instance()[ConditionFlag.InCombat])
         {
             TaskHelper.Abort();
@@ -202,7 +226,7 @@ public unsafe class AutoMaterialize : ModuleBase
 
         if (!Conditions.Instance()->HasPermission(133))
             return false;
-        
+
         if (!Inventories.PlayerWithArmory.TryGetFirstItem
             (
                 slot => slot.GetBaseItemId() is var itemID               &&
@@ -215,7 +239,7 @@ public unsafe class AutoMaterialize : ModuleBase
             var finishMessage = Lang.Get("AutoMaterialize-Notice-ExtractFinish");
             NotifyHelper.Instance().NotificationInfo(finishMessage);
             NotifyHelper.Instance().Chat(finishMessage);
-            
+
             TaskHelper.Abort();
             return true;
         }
@@ -245,21 +269,21 @@ public unsafe class AutoMaterialize : ModuleBase
 
                     return true;
                 }
-                
+
                 return false;
             },
             $"精炼魔晶石: {LuminaWrapper.GetItemName(inventorySlot->GetBaseItemId())} ({inventorySlot->GetBaseItemId()})"
         );
-        
+
         TaskHelper.Enqueue
         (
             EnqueueExtractMateria,
             "进行下一轮魔晶石精炼"
         );
-        
+
         return true;
     }
-    
+
     #region 常量
 
     private const string COMMAND = "materialize";

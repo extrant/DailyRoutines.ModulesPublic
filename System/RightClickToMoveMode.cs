@@ -28,11 +28,12 @@ public class RightClickToMoveMode : ModuleBase
 
     private Config moduleConfig = null!;
 
-    private readonly MovementInputController movementController = new() { Precision = 0.15f, IsAutoMove = true };
+    private MovementInputController movementController = null!;
 
     protected override void Init()
     {
-        moduleConfig = Config.Load(this) ?? new();
+        movementController = new() { Precision = 0.15f, IsAutoMove = true };
+        moduleConfig       = Config.Load(this) ?? new();
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
 
@@ -43,27 +44,31 @@ public class RightClickToMoveMode : ModuleBase
     protected override void Uninit()
     {
         InputIDManager.Instance().UnregPostPressed(OnPostPressed);
-        
+
         SessionManager.Stop(this);
         TargetIndicatorRenderer.Reset();
-        
+
         DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
         WindowManager.Instance().PostDraw                -= OnDraw;
-        
+
         movementController.Dispose();
     }
 
     #region 事件
 
-    private void OnPostPressed(bool result, InputId id)
+    private void OnPostPressed
+    (
+        bool    result,
+        InputId id
+    )
     {
         // 右键
         if (id != InputId.MOUSE_CANCEL) return;
         if (!result) return;
-        
+
         OnMouseClickCaptured(ImGui.GetMousePos());
     }
-    
+
     private void OnDraw()
     {
         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
@@ -91,14 +96,20 @@ public class RightClickToMoveMode : ModuleBase
 
         TargetIndicatorRenderer.Draw(this, SessionManager.Current);
     }
-    
-    private void OnZoneChanged(uint u) 
+
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         SessionManager.Stop(this);
         TargetIndicatorRenderer.Reset();
     }
-    
-    private void OnMouseClickCaptured(Vector2 clientPosition)
+
+    private void OnMouseClickCaptured
+    (
+        Vector2 clientPosition
+    )
     {
         if (DService.Instance().ObjectTable.LocalPlayer is null) return;
         if (!ClickTriggerEvaluator.ShouldHandle(moduleConfig)) return;
@@ -108,9 +119,9 @@ public class RightClickToMoveMode : ModuleBase
     }
 
     #endregion
-    
+
     #region 绘制
-    
+
     protected override void ConfigUI()
     {
         ImGuiOm.ConflictKeyText();
@@ -127,7 +138,7 @@ public class RightClickToMoveMode : ModuleBase
         if (ImGui.Checkbox($"{Lang.Get("RightClickToMoveMode-WASDToInterrupt")}###WASDToInterrupt", ref moduleConfig.WASDToInterrupt))
             moduleConfig.Save(this);
     }
-    
+
     private void DrawMoveModeSection()
     {
         var navmeshAvailable = IsNavmeshAvailable();
@@ -140,8 +151,8 @@ public class RightClickToMoveMode : ModuleBase
 
             foreach (var moveMode in Enum.GetValues<MoveMode>())
             {
-                var unavailable = moveMode is MoveMode.Navmesh or MoveMode.Smart && !navmeshAvailable;
-                using var disabled = ImRaii.Disabled(unavailable || moveMode == moduleConfig.MoveMode);
+                var       unavailable = moveMode is MoveMode.Navmesh or MoveMode.Smart && !navmeshAvailable;
+                using var disabled    = ImRaii.Disabled(unavailable || moveMode == moduleConfig.MoveMode);
 
                 ImGui.SameLine();
 
@@ -194,6 +205,7 @@ public class RightClickToMoveMode : ModuleBase
             if (!combo) return;
 
             var validKeys = DService.Instance().KeyState.GetValidVirtualKeys();
+
             foreach (var keyToSelect in validKeys)
             {
                 using var disabled = ImRaii.Disabled(PluginConfig.Instance().ConflictKeyBinding.Keyboard == keyToSelect);
@@ -236,27 +248,39 @@ public class RightClickToMoveMode : ModuleBase
 
     #region 辅助方法
 
-    private static bool ShouldUseGameMove(Vector3 localPlayerPosition, Vector3 targetPosition)
+    private static bool ShouldUseGameMove
+    (
+        Vector3 localPlayerPosition,
+        Vector3 targetPosition
+    )
     {
-        if (!IsNavmeshAvailable()) 
+        if (!IsNavmeshAvailable())
             return true;
-        
+
         if (MathF.Abs(localPlayerPosition.Y - targetPosition.Y) > SMART_GAME_HEIGHT_DELTA)
             return false;
-        
+
         var isBlocked = !RaycastHelper.HasLineOfSight(localPlayerPosition, targetPosition);
         return !isBlocked && Vector2.DistanceSquared(localPlayerPosition.ToVector2(), targetPosition.ToVector2()) <= SMART_GAME_DISTANCE_SQ;
     }
-    
-    private MoveDriver ResolveMoveDriver(Vector3 localPlayerPosition, Vector3 targetPosition) =>
+
+    private MoveDriver ResolveMoveDriver
+    (
+        Vector3 localPlayerPosition,
+        Vector3 targetPosition
+    ) =>
         moduleConfig.MoveMode switch
         {
-            MoveMode.Game    => MoveDriver.Game,
-            MoveMode.Navmesh => IsNavmeshAvailable() ? MoveDriver.Navmesh : MoveDriver.Game,
-            MoveMode.Smart   => ShouldUseGameMove(localPlayerPosition, targetPosition) ? MoveDriver.Game : MoveDriver.Navmesh,
-            _                => MoveDriver.Game
+            MoveMode.Game => MoveDriver.Game,
+            MoveMode.Navmesh => IsNavmeshAvailable() ?
+                                    MoveDriver.Navmesh :
+                                    MoveDriver.Game,
+            MoveMode.Smart => ShouldUseGameMove(localPlayerPosition, targetPosition) ?
+                                  MoveDriver.Game :
+                                  MoveDriver.Navmesh,
+            _ => MoveDriver.Game
         };
-    
+
     private bool IsInterruptKeysPressed()
     {
         if (PluginConfig.Instance().ConflictKeyBinding.IsPressed()) return true;
@@ -274,7 +298,10 @@ public class RightClickToMoveMode : ModuleBase
     #endregion
 
     [DllImport("user32.dll")]
-    private static extern short GetAsyncKeyState(int vKey);
+    private static extern short GetAsyncKeyState
+    (
+        int vKey
+    );
 
     private sealed class Config : ModuleConfig
     {
@@ -289,7 +316,11 @@ public class RightClickToMoveMode : ModuleBase
     {
         public static MoveSession? Current { get; private set; }
 
-        public static void Start(RightClickToMoveMode module, Vector3 targetPosition)
+        public static void Start
+        (
+            RightClickToMoveMode module,
+            Vector3              targetPosition
+        )
         {
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
 
@@ -299,6 +330,7 @@ public class RightClickToMoveMode : ModuleBase
                 ChatManager.Instance().SendMessage("/automove off");
 
             var driver = module.ResolveMoveDriver(localPlayer.Position, targetPosition);
+
             switch (driver)
             {
                 case MoveDriver.Game:
@@ -310,7 +342,10 @@ public class RightClickToMoveMode : ModuleBase
             }
         }
 
-        public static void Stop(RightClickToMoveMode module)
+        public static void Stop
+        (
+            RightClickToMoveMode module
+        )
         {
             var session = Current;
             Current = null;
@@ -325,13 +360,23 @@ public class RightClickToMoveMode : ModuleBase
                 MovementManager.Instance().SetCurrentControlMode(session.PreviousControlMode);
         }
 
-        public static void UpdateGame(RightClickToMoveMode module, MoveSession session, Vector3 localPlayerPosition)
+        public static void UpdateGame
+        (
+            RightClickToMoveMode module,
+            MoveSession          session,
+            Vector3              localPlayerPosition
+        )
         {
             if (Vector2.DistanceSquared(session.Target.ToVector2(), localPlayerPosition.ToVector2()) <= GAME_ARRIVAL_DISTANCE_SQ)
                 Stop(module);
         }
 
-        public static void UpdateNavmesh(RightClickToMoveMode module, MoveSession session, Vector3 localPlayerPosition)
+        public static void UpdateNavmesh
+        (
+            RightClickToMoveMode module,
+            MoveSession          session,
+            Vector3              localPlayerPosition
+        )
         {
             if (Vector2.DistanceSquared(session.Target.ToVector2(), localPlayerPosition.ToVector2()) <= NAVMESH_ARRIVAL_DISTANCE_SQ)
             {
@@ -344,7 +389,11 @@ public class RightClickToMoveMode : ModuleBase
                 Stop(module);
         }
 
-        private static void StartGame(RightClickToMoveMode module, Vector3 targetPosition)
+        private static void StartGame
+        (
+            RightClickToMoveMode module,
+            Vector3              targetPosition
+        )
         {
             var previousControlMode = MovementManager.Instance().CurrentControlMode;
             MovementManager.Instance().SetCurrentControlMode(MovementControlMode.Normal);
@@ -356,11 +405,15 @@ public class RightClickToMoveMode : ModuleBase
             TargetIndicatorRenderer.Trigger(module, targetPosition);
         }
 
-        private static void StartNavmesh(RightClickToMoveMode module, Vector3 targetPosition)
+        private static void StartNavmesh
+        (
+            RightClickToMoveMode module,
+            Vector3              targetPosition
+        )
         {
             module.movementController.Enabled         = false;
             module.movementController.DesiredPosition = default;
-            
+
             var fly = DService.Instance().Condition[ConditionFlag.InFlight] || DService.Instance().Condition[ConditionFlag.Diving];
             if (!vnavmeshIPC.PathfindAndMoveTo(targetPosition, fly)) return;
 
@@ -369,7 +422,12 @@ public class RightClickToMoveMode : ModuleBase
         }
     }
 
-    private sealed class MoveSession(Vector3 target, MoveDriver driver, MovementControlMode previousControlMode)
+    private sealed class MoveSession
+    (
+        Vector3             target,
+        MoveDriver          driver,
+        MovementControlMode previousControlMode
+    )
     {
         public Vector3             Target              { get; } = target;
         public MoveDriver          Driver              { get; } = driver;
@@ -381,19 +439,26 @@ public class RightClickToMoveMode : ModuleBase
 
     private static class ClickTriggerEvaluator
     {
-        public static bool ShouldHandle(Config config) =>
+        public static bool ShouldHandle
+        (
+            Config config
+        ) =>
             config.ControlMode switch
             {
-                ControlMode.RightClick => true,
+                ControlMode.RightClick     => true,
                 ControlMode.LeftRightClick => (GetAsyncKeyState(0x01) & 0x8000) != 0,
-                ControlMode.KeyRightClick => DService.Instance().KeyState[config.ComboKey],
-                _ => false
+                ControlMode.KeyRightClick  => DService.Instance().KeyState[config.ComboKey],
+                _                          => false
             };
     }
 
     private static class ClickPointResolver
     {
-        public static bool TryResolve(Vector2 clientPosition, out Vector3 targetPosition)
+        public static bool TryResolve
+        (
+            Vector2     clientPosition,
+            out Vector3 targetPosition
+        )
         {
             targetPosition = default;
 
@@ -422,7 +487,11 @@ public class RightClickToMoveMode : ModuleBase
         private static long    PulseStartedAtTicks;
         private static bool    IsPulseActive;
 
-        public static void Trigger(RightClickToMoveMode module, Vector3 targetPosition)
+        public static void Trigger
+        (
+            RightClickToMoveMode module,
+            Vector3              targetPosition
+        )
         {
             if (module.moduleConfig.IndicatorStyle != IndicatorStyle.Pulse)
             {
@@ -430,12 +499,16 @@ public class RightClickToMoveMode : ModuleBase
                 return;
             }
 
-            PulseTarget          = targetPosition;
-            PulseStartedAtTicks  = Environment.TickCount64;
-            IsPulseActive        = true;
+            PulseTarget         = targetPosition;
+            PulseStartedAtTicks = Environment.TickCount64;
+            IsPulseActive       = true;
         }
 
-        public static void Draw(RightClickToMoveMode module, MoveSession? session)
+        public static void Draw
+        (
+            RightClickToMoveMode module,
+            MoveSession?         session
+        )
         {
             if (module.moduleConfig.IndicatorStyle == IndicatorStyle.None) return;
 
@@ -450,14 +523,13 @@ public class RightClickToMoveMode : ModuleBase
             }
         }
 
-        public static void Reset()
-        {
+        public static void Reset() =>
             ResetPulse();
-        }
 
         private static void DrawPulse()
         {
             if (!IsPulseActive) return;
+
             if (!DService.Instance().GameGUI.WorldToScreen(PulseTarget, out var screenPosition))
             {
                 ResetPulse();
@@ -465,6 +537,7 @@ public class RightClickToMoveMode : ModuleBase
             }
 
             var elapsed = (Environment.TickCount64 - PulseStartedAtTicks) / 1000f;
+
             if (elapsed >= PULSE_DURATION_SECONDS)
             {
                 ResetPulse();
@@ -472,17 +545,25 @@ public class RightClickToMoveMode : ModuleBase
             }
 
             var progress  = Math.Clamp(elapsed / PULSE_DURATION_SECONDS, 0f, 1f);
-            var alpha     = 0.85f * (1f - progress);
-            var radius    = (PULSE_START_RADIUS + PULSE_EXPAND_RADIUS * progress) * GlobalUIScale;
-            var thickness = MathF.Max(1.75f * GlobalUIScale, 4f * GlobalUIScale * (1f - progress * 0.6f));
+            var alpha     = 0.85f * (1f         - progress);
+            var radius    = (PULSE_START_RADIUS + (PULSE_EXPAND_RADIUS * progress)) * GlobalUIScale;
+            var thickness = MathF.Max(1.75f * GlobalUIScale, 4f * GlobalUIScale * (1f - (progress * 0.6f)));
 
             var drawList = ImGui.GetForegroundDrawList();
             drawList.AddCircle(screenPosition, radius, IndicatorColor.WithAlpha(alpha).ToUInt(), 32, thickness);
-            drawList.AddCircleFilled(screenPosition, 4f * GlobalUIScale,
-                                     IndicatorInnerColor.WithAlpha(0.25f + alpha * 0.25f).ToUInt(), 16);
+            drawList.AddCircleFilled
+            (
+                screenPosition,
+                4f * GlobalUIScale,
+                IndicatorInnerColor.WithAlpha(0.25f + (alpha * 0.25f)).ToUInt(),
+                16
+            );
         }
 
-        private static void DrawMarker(Vector3 targetPosition)
+        private static void DrawMarker
+        (
+            Vector3 targetPosition
+        )
         {
             if (!DService.Instance().GameGUI.WorldToScreen(targetPosition, out var screenPosition))
                 return;
@@ -495,8 +576,8 @@ public class RightClickToMoveMode : ModuleBase
 
             drawList.AddCircle(screenPosition, radius, color, 24, 2.5f * GlobalUIScale);
             drawList.AddCircleFilled(screenPosition, 4f * GlobalUIScale, inner, 16);
-            drawList.AddLine(screenPosition + new Vector2(-crossSize, 0), screenPosition + new Vector2(crossSize, 0), color, 2f * GlobalUIScale);
-            drawList.AddLine(screenPosition + new Vector2(0, -crossSize), screenPosition + new Vector2(0, crossSize), color, 2f * GlobalUIScale);
+            drawList.AddLine(screenPosition + new Vector2(-crossSize, 0),          screenPosition + new Vector2(crossSize, 0),         color, 2f * GlobalUIScale);
+            drawList.AddLine(screenPosition + new Vector2(0,          -crossSize), screenPosition + new Vector2(0,         crossSize), color, 2f * GlobalUIScale);
         }
 
         private static void ResetPulse()
@@ -506,7 +587,7 @@ public class RightClickToMoveMode : ModuleBase
             IsPulseActive       = false;
         }
     }
-    
+
     private enum ControlMode
     {
         RightClick,
@@ -533,9 +614,9 @@ public class RightClickToMoveMode : ModuleBase
         Pulse,
         Marker
     }
-    
+
     #region 预置数据
-    
+
     private const float GAME_ARRIVAL_DISTANCE_SQ    = 2.25f;
     private const float NAVMESH_ARRIVAL_DISTANCE_SQ = 2.25f;
     private const float SMART_GAME_DISTANCE_SQ      = 144f;
@@ -544,7 +625,7 @@ public class RightClickToMoveMode : ModuleBase
     private const float MARKER_RADIUS               = 11f;
     private const float PULSE_START_RADIUS          = 14f;
     private const float PULSE_EXPAND_RADIUS         = 30f;
-    
+
     private static readonly Vector4 IndicatorColor      = KnownColor.DeepSkyBlue.ToVector4();
     private static readonly Vector4 IndicatorInnerColor = KnownColor.LightSkyBlue.ToVector4();
 
@@ -554,30 +635,35 @@ public class RightClickToMoveMode : ModuleBase
         [MoveMode.Navmesh] = Lang.Get("RightClickToMoveMode-MoveMode-Navmesh"),
         [MoveMode.Smart]   = Lang.Get("RightClickToMoveMode-MoveMode-Smart")
     }.ToFrozenDictionary();
+
     private static readonly FrozenDictionary<MoveMode, string> MoveModeDescriptions = new Dictionary<MoveMode, string>
     {
         [MoveMode.Game]    = Lang.Get("RightClickToMoveMode-MoveMode-Game-Desc"),
         [MoveMode.Navmesh] = Lang.Get("RightClickToMoveMode-MoveMode-Navmesh-Desc"),
         [MoveMode.Smart]   = Lang.Get("RightClickToMoveMode-MoveMode-Smart-Desc")
     }.ToFrozenDictionary();
+
     private static readonly FrozenDictionary<ControlMode, string> ControlModeTitles = new Dictionary<ControlMode, string>
     {
         [ControlMode.RightClick]     = Lang.Get("RightClickToMoveMode-RightClickMode-Title"),
         [ControlMode.LeftRightClick] = Lang.Get("RightClickToMoveMode-LeftRightClickMode-Title"),
         [ControlMode.KeyRightClick]  = Lang.Get("RightClickToMoveMode-KeyRightClickMode-Title")
     }.ToFrozenDictionary();
+
     private static readonly FrozenDictionary<ControlMode, string> ControlModeDescriptions = new Dictionary<ControlMode, string>
     {
         [ControlMode.RightClick]     = Lang.Get("RightClickToMoveMode-RightClickMode-Desc"),
         [ControlMode.LeftRightClick] = Lang.Get("RightClickToMoveMode-LeftRightClickMode-Desc"),
         [ControlMode.KeyRightClick]  = Lang.Get("RightClickToMoveMode-KeyRightClickMode-Desc")
     }.ToFrozenDictionary();
+
     private static readonly FrozenDictionary<IndicatorStyle, string> IndicatorStyleTitles = new Dictionary<IndicatorStyle, string>
     {
         [IndicatorStyle.None]   = Lang.Get("RightClickToMoveMode-IndicatorStyle-None"),
         [IndicatorStyle.Pulse]  = Lang.Get("RightClickToMoveMode-IndicatorStyle-Pulse"),
         [IndicatorStyle.Marker] = Lang.Get("RightClickToMoveMode-IndicatorStyle-Marker")
     }.ToFrozenDictionary();
+
     private static readonly FrozenDictionary<IndicatorStyle, string> IndicatorStyleDescriptions = new Dictionary<IndicatorStyle, string>
     {
         [IndicatorStyle.None]   = Lang.Get("RightClickToMoveMode-IndicatorStyle-None-Desc"),

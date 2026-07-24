@@ -1,5 +1,4 @@
-﻿using System.Collections.Frozen;
-using Dalamud.Game.Text.SeStringHandling;
+﻿using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
@@ -7,7 +6,13 @@ namespace DailyRoutines.ModulesPublic;
 
 public partial class AutoReplyChatBot
 {
-    private void AppendHistory(string key, string role, string text, string name = null)
+    private void AppendHistory
+    (
+        string key,
+        string role,
+        string text,
+        string name = null
+    )
     {
         if (string.IsNullOrWhiteSpace(text)) return;
 
@@ -26,13 +31,22 @@ public partial class AutoReplyChatBot
         conversationStore!.AppendTurn(key, new ChatMessage(role, text, displayName));
     }
 
-    private bool IsCooldownReady(string key) =>
+    private bool IsCooldownReady
+    (
+        string key
+    ) =>
         rateLimiter!.CanProceed(key, config.CooldownSeconds);
 
-    private void SetCooldown(string key) =>
+    private void SetCooldown
+    (
+        string key
+    ) =>
         rateLimiter!.MarkUsed(key);
 
-    private static (string Name, ushort WorldID, string? WorldName) ExtractNameWorld(SeString sender)
+    private static (string Name, ushort WorldID, string? WorldName) ExtractNameWorld
+    (
+        SeString sender
+    )
     {
         var p = sender.Payloads?.OfType<PlayerPayload>().FirstOrDefault();
 
@@ -47,12 +61,20 @@ public partial class AutoReplyChatBot
 
         var text = sender.TextValue?.Trim() ?? string.Empty;
         var idx  = text.IndexOf('@');
-        var nm   = idx < 0 ? text : text[..idx].Trim();
-        var wn   = idx < 0 ? null : text[(idx + 1)..].Trim();
+        var nm = idx < 0 ?
+                     text :
+                     text[..idx].Trim();
+        var wn = idx < 0 ?
+                     null :
+                     text[(idx + 1)..].Trim();
         return (nm, 0, wn);
     }
 
-    private static unsafe bool IsFriend(string name, ushort worldID)
+    private static unsafe bool IsFriend
+    (
+        string name,
+        ushort worldID
+    )
     {
         if (string.IsNullOrEmpty(name)) return false;
 

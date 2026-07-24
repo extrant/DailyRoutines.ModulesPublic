@@ -23,11 +23,15 @@ public class OrnamentActionCommand : ModuleBase
 
     protected override void Init() =>
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("OrnamentActionCommand-CommandHelp") });
-    
+
     protected override void Uninit() =>
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-    private static unsafe void OnCommand(string command, string args)
+    private static unsafe void OnCommand
+    (
+        string command,
+        string args
+    )
     {
         args = args.Trim().TrimQuotationMarks().Trim();
         if (string.IsNullOrEmpty(args)) return;
@@ -39,11 +43,11 @@ public class OrnamentActionCommand : ModuleBase
         if (!LuminaGetter.TryGetRow(ornament, out Ornament ornamentRow)) return;
 
         var isInputActionID = uint.TryParse(args, out var inputActionID);
-        
+
         foreach (var actionRef in ornamentRow.Action.Value.Actions)
         {
             if (actionRef.RowId == 0) continue;
-            
+
             var action = actionRef.Value;
 
             if (isInputActionID && inputActionID == action.RowId)
@@ -51,14 +55,14 @@ public class OrnamentActionCommand : ModuleBase
                 UseActionManager.Instance().UseAction(ActionType.Action, action.RowId);
                 break;
             }
-            
+
             var actionName   = action.Name.ToString();
             var actionPinyin = PinyinHelper.GetPinyin(actionName, string.Empty);
-            
+
             if (!actionName.Contains(args, StringComparison.OrdinalIgnoreCase) &&
                 !actionPinyin.Contains(args, StringComparison.OrdinalIgnoreCase))
                 continue;
-            
+
             UseActionManager.Instance().UseAction(ActionType.Action, action.RowId);
             break;
         }

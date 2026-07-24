@@ -35,21 +35,40 @@ public unsafe class AutoCutsceneSkip : ModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     private static readonly CompSig CutsceneHandleInputSig = new("E8 ?? ?? ?? ?? 44 0F B6 E0 48 8B 4E 08");
-    private delegate byte CutsceneHandleInputDelegate(nint a1, float a2);
+
+    private delegate byte CutsceneHandleInputDelegate
+    (
+        nint  a1,
+        float a2
+    );
+
     private Hook<CutsceneHandleInputDelegate>? CutsceneHandleInputHook;
-    
+
     private static readonly CompSig PlayCutsceneSig = new("40 53 55 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B 59");
-    private delegate nint PlayCutsceneDelegate(EventFramework* a1, lua_State* state);
+
+    private delegate nint PlayCutsceneDelegate
+    (
+        EventFramework* a1,
+        lua_State*      state
+    );
+
     private Hook<PlayCutsceneDelegate>? PlayCutsceneHook;
 
     private static readonly CompSig IsCutsceneSeenSig = new("E8 ?? ?? ?? ?? 33 D2 0F B6 CB 3A C3");
-    private delegate bool IsCutsceneSeenDelegate(UIState* state, uint cutsceneID);
+
+    private delegate bool IsCutsceneSeenDelegate
+    (
+        UIState* state,
+        uint     cutsceneID
+    );
+
     private Hook<IsCutsceneSeenDelegate>? IsCutsceneSeenHook;
 
     private static readonly CompSig LuaBaseSig01 = new
     (
         "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B B9 ?? ?? ?? ?? 48 8B D9 48 8B 4F ?? E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? 8B F0 E8 ?? ?? ?? ?? 48 8B 4F ?? 48 8B D0 E8 ?? ?? ?? ?? 48 8B 4F ?? BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 4F ?? BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 74 ?? 4C 8D 0D ?? ?? ?? ?? 48 8B CF 4C 8D 05 ?? ?? ?? ?? 8D 56 ?? E8 ?? ?? ?? ?? 4C 8D 0D ?? ?? ?? ?? 48 8B CF 4C 8D 05 ?? ?? ?? ?? 8D 56 ?? E8 ?? ?? ?? ?? 4C 8D 0D ?? ?? ?? ?? 48 8B CF 4C 8D 05 ?? ?? ?? ?? 8D 56 ?? E8 ?? ?? ?? ?? 48 8B 4F ?? BA ?? ?? ?? ?? 48 8B 5C 24 ?? 48 8B 74 24 ?? 48 83 C4 ?? 5F E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC 48 89 5C 24"
     );
+
     private Hook<LuaFunctionDelegate>? PlayCutsceneLuaHook;
 
 
@@ -59,20 +78,27 @@ public unsafe class AutoCutsceneSkip : ModuleBase
     private Hook<LuaFunctionDelegate>? PlayToBeContinuedHook;
     private Hook<LuaFunctionDelegate>? IsEnterTerritoryEventLoginHook;
 
-    private delegate void PushAgentResultToLuaDelegate(void* agent);
-    private readonly PushAgentResultToLuaDelegate PushAgentResultToLua =
-        new CompSig("40 53 48 83 EC ?? 0F B6 41 ?? 48 8B D9 A8 ?? 74 ?? 24 ?? 88 41 ?? 48 83 3D").GetDelegate<PushAgentResultToLuaDelegate>();
+    private delegate void PushAgentResultToLuaDelegate
+    (
+        void* agent
+    );
 
-    private readonly MemoryPatch cutsceneUnskippablePatch =
-        new("75 ?? 48 8B 4B ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 80 7B", [0xEB]);
+    private PushAgentResultToLuaDelegate PushAgentResultToLua = null!;
+
+    private MemoryPatch cutsceneUnskippablePatch = null!;
 
     private Config config = null!;
 
-    private readonly ZoneSelectCombo whitelistZoneCombo = new("Whitelist");
-    private readonly ZoneSelectCombo blacklistZoneCombo = new("Blacklist");
+    private ZoneSelectCombo whitelistZoneCombo = null!;
+    private ZoneSelectCombo blacklistZoneCombo = null!;
 
     protected override void Init()
     {
+        PushAgentResultToLua = new CompSig("40 53 48 83 EC ?? 0F B6 41 ?? 48 8B D9 A8 ?? 74 ?? 24 ?? 88 41 ?? 48 83 3D").GetDelegate<PushAgentResultToLuaDelegate>();
+        cutsceneUnskippablePatch = new("75 ?? 48 8B 4B ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 80 7B", [0xEB]);
+        whitelistZoneCombo = new("Whitelist");
+        blacklistZoneCombo = new("Blacklist");
+
         config = Config.Load(this) ?? new();
 
         whitelistZoneCombo.SelectedIDs = config.WhitelistZones;
@@ -128,7 +154,15 @@ public unsafe class AutoCutsceneSkip : ModuleBase
             config.Save(this);
 
         ImGui.SameLine();
-        ImGui.TextUnformatted(Lang.Get(config.WorkMode ? "Whitelist" : "Blacklist"));
+        ImGui.TextUnformatted
+        (
+            Lang.Get
+            (
+                config.WorkMode ?
+                    "Whitelist" :
+                    "Blacklist"
+            )
+        );
 
         ImGuiOm.HelpMarker(Lang.Get("AutoCutsceneSkip-WorkModeHelp"));
 
@@ -153,7 +187,10 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         }
     }
 
-    private void OnZoneChanged(uint u)
+    private void OnZoneChanged
+    (
+        uint u
+    )
     {
         var isValidCurrentZone = !IsProhibitToSkipInZone();
 
@@ -177,7 +214,11 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         }
     }
 
-    private void OnAgent(AgentEvent type, AgentArgs args)
+    private void OnAgent
+    (
+        AgentEvent type,
+        AgentArgs  args
+    )
     {
         var receiveEventArgs = args as AgentReceiveEventArgs;
         var agent            = (AgentPointMenu*)receiveEventArgs.Agent.Address;
@@ -203,7 +244,11 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         agent->PendingResultFlags &= ~AgentPointMenu.PendingResultFlag.HasPendingResult;
     }
 
-    private byte CutsceneHandleInputDetour(nint a1, float a2)
+    private byte CutsceneHandleInputDetour
+    (
+        nint  a1,
+        float a2
+    )
     {
         if (!DService.Instance().Condition[ConditionFlag.OccupiedInCutSceneEvent])
             return CutsceneHandleInputHook.Original(a1, a2);
@@ -218,9 +263,16 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         return CutsceneHandleInputHook.Original(a1, a2);
     }
 
-    private static nint PlayCutsceneDetour(EventFramework* framework, lua_State* state) => 1;
+    private static nint PlayCutsceneDetour
+    (
+        EventFramework* framework,
+        lua_State*      state
+    ) => 1;
 
-    private static ulong LuaFunctionDetour(lua_State* state)
+    private static ulong LuaFunctionDetour
+    (
+        lua_State* state
+    )
     {
         var value = state->top;
         value->tt      =  2;
@@ -229,9 +281,16 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         return 1;
     }
 
-    private static ulong LuaFunction2Detour(lua_State* _) => 1;
+    private static ulong LuaFunction2Detour
+    (
+        lua_State* _
+    ) => 1;
 
-    private static bool IsCutsceneSeenDetour(UIState* state, uint cutsceneID) => true;
+    private static bool IsCutsceneSeenDetour
+    (
+        UIState* state,
+        uint     cutsceneID
+    ) => true;
 
     private bool IsProhibitToSkipInZone()
     {

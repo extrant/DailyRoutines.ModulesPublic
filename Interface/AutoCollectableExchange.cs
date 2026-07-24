@@ -25,10 +25,15 @@ public unsafe class AutoCollectableExchange : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig HandInCollectablesSig =
         new("48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B F1 48 8B 49");
-    private delegate nint HandInCollectablesDelegate(AgentInterface* agentCollectablesShop);
+
+    private delegate nint HandInCollectablesDelegate
+    (
+        AgentInterface* agentCollectablesShop
+    );
+
     private HandInCollectablesDelegate? handInCollectables;
 
     protected override void Init()
@@ -43,7 +48,7 @@ public unsafe class AutoCollectableExchange : ModuleBase
         if (CollectablesShopAddon != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
-    
+
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
 
@@ -158,7 +163,10 @@ public unsafe class AutoCollectableExchange : ModuleBase
         TaskHelper.Enqueue(EnqueueExchange, "EnqueueNewRound");
     }
 
-    private static uint GetScriptEventID(uint zone)
+    private static uint GetScriptEventID
+    (
+        uint zone
+    )
         => zone switch
         {
             478  => 3539065, // 田园郡
@@ -169,7 +177,11 @@ public unsafe class AutoCollectableExchange : ModuleBase
             _    => 3539066  // 利姆萨·罗敏萨下层甲板、格里达尼亚旧街、乌尔达哈来生回廊
         };
 
-    private void OnAddon(AddonEvent type, AddonArgs? args)
+    private void OnAddon
+    (
+        AddonEvent type,
+        AddonArgs? args
+    )
     {
         var addon = args.Addon.ToStruct();
         if (addon == null) return;

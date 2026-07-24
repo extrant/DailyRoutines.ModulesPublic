@@ -1,7 +1,6 @@
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using OmenTools.OmenService;
@@ -32,7 +31,10 @@ public unsafe class AutoCancelStarContributor : ModuleBase
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
-    private static void OnZoneChanged(uint u)
+    private static void OnZoneChanged
+    (
+        uint u
+    )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
         DService.Instance().ClientState.ClassJobChanged -= OnClassJobChanged;
@@ -43,10 +45,16 @@ public unsafe class AutoCancelStarContributor : ModuleBase
         DService.Instance().ClientState.ClassJobChanged += OnClassJobChanged;
     }
 
-    private static void OnClassJobChanged(uint classJobID) =>
+    private static void OnClassJobChanged
+    (
+        uint classJobID
+    ) =>
         OnUpdate(DService.Instance().Framework);
 
-    private static void OnUpdate(IFramework framework)
+    private static void OnUpdate
+    (
+        IFramework framework
+    )
     {
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.CosmicExploration)
         {

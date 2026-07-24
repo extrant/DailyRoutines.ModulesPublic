@@ -21,10 +21,10 @@ public partial class AutoReplyChatBot : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
-    
+
     private RateLimiter?  rateLimiter;
     private ChatPipeline? pipeline;
-    
+
     private readonly ConcurrentDictionary<string, CancellationTokenSource> activePipelines = new(StringComparer.OrdinalIgnoreCase);
 
     protected override void Init()
@@ -74,7 +74,10 @@ public partial class AutoReplyChatBot : ModuleBase
         DisposeSaveConfigScheduler();
     }
 
-    private void OnChat(IHandleableChatMessage message)
+    private void OnChat
+    (
+        IHandleableChatMessage message
+    )
     {
         if (!config.ValidChatTypes.Contains(message.LogKind)) return;
 

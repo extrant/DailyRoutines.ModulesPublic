@@ -19,11 +19,17 @@ public class PFPageSizeCustomize : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-    
+
     private static readonly CompSig PartyFinderDisplayAmountSig =
         new("48 89 5C 24 ?? 55 56 57 48 ?? ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? 48 89 85 ?? ?? ?? ?? 48 ?? ?? 0F");
-    private delegate byte                                    PartyFinderDisplayAmountDelegate(nint a1, int a2);
-    private          Hook<PartyFinderDisplayAmountDelegate>? PartyFinderDisplayAmountHook;
+
+    private delegate byte PartyFinderDisplayAmountDelegate
+    (
+        nint a1,
+        int  a2
+    );
+
+    private Hook<PartyFinderDisplayAmountDelegate>? PartyFinderDisplayAmountHook;
 
     private Config config = null!;
 
@@ -44,12 +50,16 @@ public class PFPageSizeCustomize : ModuleBase
             config.Save(this);
     }
 
-    private byte PartyFinderDisplayAmountDetour(nint a1, int a2)
+    private byte PartyFinderDisplayAmountDetour
+    (
+        nint a1,
+        int  a2
+    )
     {
         Marshal.WriteInt16(a1 + 1152, config.PageSize);
         return PartyFinderDisplayAmountHook.Original(a1, a2);
     }
-    
+
     private class Config : ModuleConfig
     {
         public short PageSize = 100;
