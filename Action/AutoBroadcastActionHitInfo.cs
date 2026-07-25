@@ -101,7 +101,15 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("WorkMode")}:");
 
         ImGui.SameLine();
-        if (ImGuiComponents.ToggleButton("WorkModeButton", ref config.WorkMode))
+        var bgColor = ImGui.GetColorU32(ImGuiCol.FrameBg);
+        ImGui.SameLine();
+        if (ImGuiOm.ToggleButton
+            (
+                "WorkMode",
+                ref config.WorkMode,
+                bgActiveColor: bgColor,
+                bgColor: bgColor
+            ))
             config.Save(this);
 
         ImGui.SameLine();

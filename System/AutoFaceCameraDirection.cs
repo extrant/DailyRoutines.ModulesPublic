@@ -9,7 +9,6 @@ using DailyRoutines.Internal;
 using DailyRoutines.Manager;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
-using Dalamud.Interface.Components;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using OmenTools.Dalamud.Attributes;
@@ -35,32 +34,26 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
-    private CompSig cameraUpdateRotationSig = null!;
-
+    private static readonly CompSig cameraUpdateRotationSig = new("40 53 48 81 EC ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 48 8B D9 44 0F 29 54 24");
     private delegate void CameraUpdateRotationDelegate
     (
         Camera* camera
     );
-
     private Hook<CameraUpdateRotationDelegate> CameraUpdateRotationHook;
 
-    private CompSig updateVisualRotationSig = null!;
-
+    private static readonly CompSig updateVisualRotationSig = new("40 53 48 83 EC ?? 83 B9 ?? ?? ?? ?? ?? 48 8B D9 0F 85 ?? ?? ?? ?? F6 81");
     private delegate void* UpdateVisualRotationDelegate
     (
         GameObject* gameObject
     );
-
     private UpdateVisualRotationDelegate UpdateVisualRotation = null!;
 
-    private CompSig setRotationSig = null!;
-
+    private static readonly CompSig setRotationSig = new("40 53 48 83 EC ?? F3 0F 10 81 ?? ?? ?? ?? 48 8B D9 0F 2E C1");
     private delegate void SetRotationDelegate
     (
         GameObject* gameObject,
         float       rotation
     );
-
     private Hook<SetRotationDelegate>? SetRotationHook;
 
     private Config config = null!;
@@ -80,12 +73,10 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
     protected override void Init()
     {
-        cameraUpdateRotationSig = new("40 53 48 81 EC ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? 48 8B D9 44 0F 29 54 24");
-        updateVisualRotationSig = new("40 53 48 83 EC ?? 83 B9 ?? ?? ?? ?? ?? 48 8B D9 0F 85 ?? ?? ?? ?? F6 81");
-        setRotationSig          = new("40 53 48 83 EC ?? F3 0F 10 81 ?? ?? ?? ?? 48 8B D9 0F 2E C1");
-        UpdateVisualRotation    = updateVisualRotationSig.GetDelegate<UpdateVisualRotationDelegate>();
-        config                  = Config.Load(this) ?? new();
-
+        config = Config.Load(this) ?? new();
+        
+        UpdateVisualRotation = updateVisualRotationSig.GetDelegate<UpdateVisualRotationDelegate>();
+        
         CameraUpdateRotationHook ??= cameraUpdateRotationSig.GetHook<CameraUpdateRotationDelegate>(CameraUpdateRotationDetour);
         CameraUpdateRotationHook.Enable();
 
@@ -133,10 +124,18 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
         ImGui.NewLine();
 
+        ImGui.AlignTextToFramePadding();
         ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("WorkMode")}");
 
+        var bgColor = ImGui.GetColorU32(ImGuiCol.FrameBg);
         ImGui.SameLine();
-        if (ImGuiComponents.ToggleButton("WorkMode", ref config.WorkMode))
+        if (ImGuiOm.ToggleButton
+            (
+                "WorkMode",
+                ref config.WorkMode,
+                bgActiveColor: bgColor,
+                bgColor: bgColor
+            ))
             config.Save(this);
 
         using (ImRaii.PushIndent())

@@ -166,7 +166,7 @@ public partial class OccultCrescentHelper
                             ImGui.TableNextRow();
 
                             ImGui.TableNextColumn();
-                            ImGuiOm.TextOutlined(*ImGui.GetStyleColorVec4(ImGuiCol.Text), $"{name}", KnownColor.LightSkyBlue.ToVector4(), 0.1f);
+                            ImGuiOm.TextOutlined(ImGui.GetColorU32(ImGuiCol.Text), $"{name}", KnownColor.LightSkyBlue.ToUInt(), 0.1f);
 
                             ImGui.TableNextColumn();
 

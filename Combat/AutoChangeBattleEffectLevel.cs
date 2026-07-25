@@ -133,7 +133,7 @@ public class AutoChangeBattleEffectLevel : ModuleBase
 
         var isEnabled = setting.IsEnabled;
 
-        if (ImGuiComponents.ToggleButton("Enable", ref isEnabled))
+        if (ImGuiOm.ToggleButton("Enable", ref isEnabled))
         {
             setting.IsEnabled = isEnabled;
             config.Save(this);

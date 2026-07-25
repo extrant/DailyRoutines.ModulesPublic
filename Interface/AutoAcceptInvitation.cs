@@ -46,7 +46,15 @@ public unsafe class AutoAcceptInvitation : ModuleBase
         ImGui.TextUnformatted($"{Lang.Get("Mode")}:");
 
         ImGui.SameLine();
-        if (ImGuiComponents.ToggleButton("ModeSwitch", ref config.Mode))
+        var bgColor = ImGui.GetColorU32(ImGuiCol.FrameBg);
+        ImGui.SameLine();
+        if (ImGuiOm.ToggleButton
+            (
+                "WorkMode",
+                ref config.Mode,
+                bgActiveColor: bgColor,
+                bgColor: bgColor
+            ))
             config.Save(this);
 
         ImGui.SameLine();

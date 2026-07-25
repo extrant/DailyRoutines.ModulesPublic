@@ -278,7 +278,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                         ImGui.SameLine();
                         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - (1.2f * GlobalUIScale));
                         ImGuiOm.TextOutlined
-                            (KnownColor.Orange.ToVector4(), $"{PlayersManager.Instance().PlayersTargetingMe.Count}", KnownColor.SaddleBrown.ToVector4());
+                            (KnownColor.Orange.ToUInt(), $"{PlayersManager.Instance().PlayersTargetingMe.Count}", KnownColor.SaddleBrown.ToUInt());
 
                         if (GameState.ContentFinderCondition == 0)
                         {
@@ -288,9 +288,9 @@ public unsafe class AutoCountPlayers : ModuleBase
                                 ImGuiOm.TextOutlined
                                 (
                                     ImGui.GetCursorScreenPos() - new Vector2(ImGui.CalcTextSize(text).X * 0.3f, 0),
-                                    KnownColor.Orange.ToVector4().ToUInt(),
+                                    KnownColor.Orange.ToUInt(),
                                     $"({text})",
-                                    KnownColor.SaddleBrown.ToVector4().ToUInt()
+                                    KnownColor.SaddleBrown.ToUInt()
                                 );
                             }
                         }
@@ -558,7 +558,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                 ImGuiHelpers.SeStringWrapped(icon);
 
                 ImGui.SameLine();
-                ImGuiOm.TextOutlined(KnownColor.Orange.ToVector4(), $"{chara.Name}" + (extraInfo ?? string.Empty));
+                ImGuiOm.TextOutlined(KnownColor.Orange.ToUInt(), $"{chara.Name}" + (extraInfo ?? string.Empty));
             }
 
             ImGui.End();
