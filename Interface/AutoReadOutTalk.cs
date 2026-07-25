@@ -25,6 +25,8 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
     private Config config = null!;
 
+    private CancellationTokenSource? speechCancellationSource;
+
     private delegate void ShowBattleTalkDelegate
     (
         UIModule*      module,
@@ -104,8 +106,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
         if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(speaker) || duration < 3) return;
 
-        CancelBefore();
-        NotifyHelper.Speak(string.Format(config.Format, speaker, line));
+        SpeakText(string.Format(config.Format, speaker, line));
     }
 
     private void ShowBattleTalkImageDetour
@@ -133,8 +134,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
         if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(speaker) || duration < 3) return;
 
-        CancelBefore();
-        NotifyHelper.Speak(string.Format(config.Format, speaker, line));
+        SpeakText(string.Format(config.Format, speaker, line));
     }
 
     private void OnAddon
@@ -165,8 +165,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
                 if (string.IsNullOrEmpty(line)) return;
 
-                CancelBefore();
-                NotifyHelper.Speak(string.Format(config.Format, speaker, line));
+                SpeakText(string.Format(config.Format, speaker, line));
                 break;
 
             case AddonEvent.PreFinalize:
@@ -176,8 +175,19 @@ public unsafe class AutoReadOutTalk : ModuleBase
         }
     }
 
-    private static void CancelBefore() =>
-        NotifyHelper.StopSpeak();
+    private void SpeakText(string text)
+    {
+        CancelBefore();
+        speechCancellationSource = new();
+        _ = NotifyHelper.SpeakAsync(text, speechCancellationSource.Token);
+    }
+
+    private void CancelBefore()
+    {
+        speechCancellationSource?.Cancel();
+        speechCancellationSource?.Dispose();
+        speechCancellationSource = null;
+    }
 
     private class Config : ModuleConfig
     {
