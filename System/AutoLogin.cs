@@ -7,6 +7,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Colors;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Lumina.Excel.Sheets;
 using OmenTools.Dalamud.Attributes;
 using OmenTools.ImGuiOm.Widgets.Combos;
 using OmenTools.Info.Lumina;
@@ -376,7 +377,9 @@ public unsafe class AutoLogin : ModuleBase
                     counter--;
 
                     var found = client.CurrentDataCenterCharacters.FirstOrDefault
-                    (x => x.NameString  == loginInfo.CharacterName &&
+                    (x => LuminaWrapper.GetWorldDC(x.HomeWorldId) ==
+                          LuminaWrapper.GetWorldDC(x.CurrentWorldId) &&
+                          x.NameString  == loginInfo.CharacterName   &&
                           x.HomeWorldId == loginInfo.WorldID
                     );
                     if (found.HomeWorldId == 0)
