@@ -36,13 +36,17 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
 
     private readonly Dictionary<Guid, MarkerRecord> markerIndex = [];
 
+    private MarkerDetailsAddon? markerDetailsAddon;
+    private MarkerListAddon?    markerListAddon;
+    
     private AddonController<AddonAreaMap>? areaMapController;
     private MapOverlayController?          mapOverlayController;
-    private MarkerDetailsAddon?            markerDetailsAddon;
-    private MarkerListAddon?               markerListAddon;
-    private HorizontalListNode?            mapButtonContainer;
-    private CircleButtonNode?              mapAddButton;
-    private bool                           isPlacingMarker;
+
+    private HorizontalListNode? mapButtonContainer;
+    private CircleButtonNode?   mapAddButton;
+    private CircleButtonNode?   mapListButton;
+
+    private bool isPlacingMarker;
 
     protected override void Init()
     {
@@ -68,8 +72,9 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         areaMapController = new()
         {
             AddonName  = "AreaMap",
-            OnSetup    = AttachAreaMapButtons,
-            OnFinalize = DetachAreaMapButtons
+            OnSetup    = OnAreaMapSetup,
+            OnUpdate   = OnAreaMapUpdate,
+            OnFinalize = OnAreaMapFinalize
         };
         areaMapController.Enable();
 
@@ -88,6 +93,8 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
 
         areaMapController?.Dispose();
         areaMapController = null;
+        
+        OnAreaMapFinalize(null);
 
         mapOverlayController?.Dispose();
         mapOverlayController = null;
@@ -107,25 +114,23 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
         string arguments
     ) =>
         markerListAddon?.Open();
-
-    private void AttachAreaMapButtons
+    
+    private void OnAreaMapSetup
     (
         AddonAreaMap* addon
     )
     {
-        mapButtonContainer?.Dispose();
-
         mapButtonContainer = new()
         {
             Position    = new(250, 30),
-            Size        = new(170, 28),
+            Size        = new(70, 28),
             ItemSpacing = 4,
             Alignment   = HorizontalListAnchor.Right
         };
 
         mapButtonContainer.AddNode
         (
-            mapAddButton = new CircleButtonNode
+            mapAddButton = new()
             {
                 Icon        = CircleButtonIcon.Add,
                 TextTooltip = Lang.Get("CustomizeMapMarker-AddMarker"),
@@ -133,9 +138,10 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
                 OnClick     = TogglePlacementMode
             }
         );
+        
         mapButtonContainer.AddNode
         (
-            new CircleButtonNode
+            mapListButton = new()
             {
                 Icon        = CircleButtonIcon.Document,
                 TextTooltip = Lang.Get("CustomizeMapMarker-OpenList"),
@@ -143,19 +149,30 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
                 OnClick     = () => markerListAddon?.Toggle()
             }
         );
+        
+        mapButtonContainer.RecalculateLayout();
 
         mapButtonContainer.AttachNode(addon->LocationContainerNode);
     }
+    
+    private void OnAreaMapUpdate
+    (
+        AddonAreaMap* addon
+    ) =>
+        mapButtonContainer?.X = addon->RootNode->GetWidth() - 24;
 
-    private void DetachAreaMapButtons
+    private void OnAreaMapFinalize
     (
         AddonAreaMap* addon
     )
     {
         isPlacingMarker = false;
+
         mapButtonContainer?.Dispose();
         mapButtonContainer = null;
-        mapAddButton       = null;
+        
+        mapAddButton  = null;
+        mapListButton = null;
     }
 
     private void TogglePlacementMode()

@@ -202,9 +202,9 @@ public unsafe partial class CustomizeMapMarker
             (
                 new TextButtonNode
                 {
-                    String  = Lang.Get("Save"),
-                    Size    = new(140, 30),
-                    OnClick = SaveMarker
+                    String   = Lang.Get("Save"),
+                    Size     = new(140, 30),
+                    OnClick  = SaveMarker
                 }
             );
             deleteButton = new HoldButtonNode
@@ -215,8 +215,11 @@ public unsafe partial class CustomizeMapMarker
             };
             actionRow.AddNode(deleteButton);
 
+            actionRow.RecalculateLayout();
+            
             containerNode.AddNode(actionRow);
-
+            actionRow.X = ContentSize.X / 2;
+            
             containerNode.AttachNode(this);
 
             PopulateMarker();
