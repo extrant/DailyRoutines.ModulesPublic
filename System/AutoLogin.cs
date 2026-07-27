@@ -375,9 +375,9 @@ public unsafe class AutoLogin : ModuleBase
                 foreach (var loginInfo in config.LoginData)
                 {
                     counter--;
-
+                    
                     var found = client.CurrentDataCenterCharacters.FirstOrDefault
-                    (x => LuminaWrapper.GetWorldDC(x.HomeWorldId) ==
+                    (x => LuminaWrapper.GetWorldDC(client.CurrentDataCenterWorlds.First->Id) ==
                           LuminaWrapper.GetWorldDC(x.CurrentWorldId) &&
                           x.NameString  == loginInfo.CharacterName   &&
                           x.HomeWorldId == loginInfo.WorldID
