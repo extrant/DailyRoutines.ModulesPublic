@@ -21,10 +21,12 @@ public partial class CrossDCPartyFinder
     {
         ClearResources();
 
-        dataCenters = LuminaGetter.Get<WorldDCGroupType>()
-                                  .Where(x => x.Region.RowId == GameState.HomeDataCenterData.Region.RowId)
-                                  .Select(x => x.Name.ToString())
-                                  .ToList();
+        dataCenters =
+        [
+            .. LuminaGetter.Get<WorldDCGroupType>()
+                           .Where(x => x.Region.RowId == GameState.HomeDataCenterData.Region.RowId)
+                           .Select(x => x.Name.ToString())
+        ];
         selectedDataCenter = GameState.CurrentDataCenterData.Name.ToString();
 
         switch (type)

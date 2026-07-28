@@ -166,9 +166,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         onlyInactiveNode ??= new()
         {
             Size      = new(150f, 28f),
-            IsVisible = true,
             IsChecked = config.OnlyInactive,
-            IsEnabled = true,
             String    = Lang.Get("AutoRefreshPartyFinder-OnlyInactive"),
             OnClick = newState =>
             {
@@ -182,7 +180,6 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         {
             Size      = new(150f, 30f),
             Position  = new(0, 2),
-            IsVisible = true,
             Min       = 5,
             Max       = 10000,
             Step      = 5,
@@ -204,7 +201,6 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         {
             String           = $"({config.RefreshInterval})  ",
             FontSize         = 12,
-            IsVisible        = true,
             Size             = new(0, 28f),
             AlignmentType    = AlignmentType.Right,
             Position         = new(10, 2),
@@ -215,8 +211,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         layoutNode = new HorizontalListNode
         {
             Width     = 270,
-            IsVisible = true,
-            Position  = new(500, 630),
+            Position  = new(770, 630),
             Alignment = HorizontalListAnchor.Right
         };
         layoutNode.AddNode([onlyInactiveNode, refreshIntervalNode, leftTimeNode]);
