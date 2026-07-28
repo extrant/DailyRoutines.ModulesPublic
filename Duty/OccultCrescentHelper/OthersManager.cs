@@ -29,6 +29,7 @@ using Action = Lumina.Excel.Sheets.Action;
 using AgentShowDelegate = OmenTools.Interop.Game.Models.Native.AgentShowDelegate;
 using DetailKind = FFXIVClientStructs.FFXIV.Client.Enums.DetailKind;
 using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
+using TerritoryTypeRow = Lumina.Excel.Sheets.TerritoryType;
 
 namespace DailyRoutines.ModulesPublic.Duty;
 
@@ -240,7 +241,7 @@ public partial class OccultCrescentHelper
             ImGui.TextColored
             (
                 KnownColor.LightSkyBlue.ToVector4(),
-                $"{Lang.Get("OccultCrescentHelper-OthersManager-ModifyDefaultEnterZonePosition")} ({LuminaWrapper.GetAddonText(16586)})"
+                Lang.Get("OccultCrescentHelper-OthersManager-ModifyDefaultEnterZonePosition")
             );
             ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-ModifyDefaultEnterZonePosition-Help"), 20f * GlobalUIScale);
 
@@ -252,6 +253,8 @@ public partial class OccultCrescentHelper
             {
                 using (ImRaii.PushIndent())
                 {
+                    ImGui.TextUnformatted(LuminaGetter.GetRow<TerritoryTypeRow>(1252).GetValueOrDefault().ExtractPlaceName());
+
                     ImGui.SetNextItemWidth(200f * GlobalUIScale);
                     ImGui.InputFloat3("###DefaultPositionEnterZoneSouthHornInput", ref MainModule.config.DefaultPositionEnterZoneSouthHorn);
                     if (ImGui.IsItemDeactivatedAfterEdit())
@@ -276,6 +279,34 @@ public partial class OccultCrescentHelper
                         if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneSouthHorn"))
                         {
                             MainModule.config.DefaultPositionEnterZoneSouthHorn = aetheryte.Position;
+                            MainModule.config.Save(MainModule);
+                        }
+                    }
+
+                    ImGui.TextUnformatted(LuminaGetter.GetRow<TerritoryTypeRow>(1346).GetValueOrDefault().ExtractPlaceName());
+
+                    ImGui.SetNextItemWidth(200f * GlobalUIScale);
+                    ImGui.InputFloat3("###DefaultPositionEnterZoneNorthHornInput", ref MainModule.config.DefaultPositionEnterZoneNorthHorn);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                        MainModule.config.Save(MainModule);
+
+                    ImGui.SameLine();
+
+                    if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneNorthHorn"))
+                    {
+                        MainModule.config.DefaultPositionEnterZoneNorthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                        MainModule.config.Save(MainModule);
+                    }
+
+                    for (var i = 0; i < CrescentAetheryte.NorthHornAetherytes.Count; i++)
+                    {
+                        if (i != 0)
+                            ImGui.SameLine();
+
+                        var aetheryte = CrescentAetheryte.NorthHornAetherytes[i];
+                        if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneNorthHorn"))
+                        {
+                            MainModule.config.DefaultPositionEnterZoneNorthHorn = aetheryte.Position;
                             MainModule.config.Save(MainModule);
                         }
                     }
@@ -391,8 +422,13 @@ public partial class OccultCrescentHelper
 
             if (!isJustLogin                                                       &&
                 MainModule.config.IsEnabledModifyDefaultPositionEnterZoneSouthHorn &&
-                DService.Instance().Condition.IsBetweenAreas)
+                ICondition.Instance().IsBetweenAreas                               &&
+                GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
+                var destination = GameState.TerritoryType == 1346 ?
+                                      MainModule.config.DefaultPositionEnterZoneNorthHorn :
+                                      MainModule.config.DefaultPositionEnterZoneSouthHorn;
+
                 othersTaskHelper.Abort();
                 othersTaskHelper.Enqueue
                 (() =>
@@ -400,7 +436,7 @@ public partial class OccultCrescentHelper
                         if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
                         if (localPlayer.IsDead) return true;
 
-                        MovementManager.Instance().TPPlayerAddress(MainModule.config.DefaultPositionEnterZoneSouthHorn);
+                        MovementManager.Instance().TPPlayerAddress(destination);
                         return true;
                     }
                 );
@@ -554,7 +590,16 @@ public partial class OccultCrescentHelper
             OthersManager manager
         ) : NativeAddon
         {
-            private const float LERP_SPEED = 0.2f;
+            private const int   MAX_ITEMS_PER_ROW  = 5;
+            private const float WINDOW_WIDTH       = 500f;
+            private const float ACTION_PANEL_WIDTH = 200f;
+            private const float EXPANDED_WIDTH     = WINDOW_WIDTH + ACTION_PANEL_WIDTH + 50f;
+            private const float HEADER_HEIGHT      = 70f;
+            private const float ROW_HEIGHT         = 72f;
+            private const float ROW_SPACING        = 21f;
+            private const float MIN_HEIGHT         = 450f;
+            private const float BOTTOM_PADDING     = 30f;
+            private const float LERP_SPEED         = 0.2f;
 
             private readonly Dictionary<uint, TextureButtonNode> supportJobButtons = [];
 
@@ -584,12 +629,6 @@ public partial class OccultCrescentHelper
                 Span<AtkValue> atkValues
             )
             {
-                const int   MAX_ITEMS_PER_ROW = 5;
-                const float HEADER_HEIGHT     = 65f;
-                const float ROW_HEIGHT        = 53f;
-                const float ROW_SPACING       = 30f;
-                const float MIN_HEIGHT        = 450f;
-
                 var supportJobs = new List<(MKDSupportJob Data, CrescentSupportJob Job)>();
 
                 foreach (var data in CrescentSupportJob.AllJobs)
@@ -608,12 +647,16 @@ public partial class OccultCrescentHelper
                               .ThenBy(x => x.Data.RowId)
                               .ToList();
 
-                var rowCount     = Math.Max(1,          (supportJobs.Count + MAX_ITEMS_PER_ROW - 1) / MAX_ITEMS_PER_ROW);
-                var windowHeight = Math.Max(MIN_HEIGHT, HEADER_HEIGHT + (ROW_HEIGHT * rowCount) + (ROW_SPACING * Math.Max(0, rowCount - 1)) + 12f);
+                var rowCount     = Math.Max(1, (supportJobs.Count + MAX_ITEMS_PER_ROW - 1) / MAX_ITEMS_PER_ROW);
+                var contentHeight = HEADER_HEIGHT +
+                                    (ROW_HEIGHT * rowCount) +
+                                    (ROW_SPACING * Math.Max(0, rowCount - 1)) +
+                                    BOTTOM_PADDING;
+                var windowHeight = Math.Max(MIN_HEIGHT, contentHeight);
 
                 PressedButtonOnce = false;
-                SetWindowSize(500f, windowHeight);
-                RootNode.Size = Size + new Vector2(200, 0);
+                SetWindowSize(WINDOW_WIDTH, windowHeight);
+                RootNode.Size = Size + new Vector2(ACTION_PANEL_WIDTH, 0);
 
                 var windowNode = (WindowNode)WindowNode;
 
@@ -624,7 +667,7 @@ public partial class OccultCrescentHelper
 
                 CreateWindowStyle();
 
-                CreateJobContainer(supportJobs);
+                CreateJobContainer(supportJobs, rowCount);
 
                 CreateWindowControll();
             }
@@ -720,36 +763,29 @@ public partial class OccultCrescentHelper
 
             private void CreateJobContainer
             (
-                List<(MKDSupportJob Data, CrescentSupportJob Job)> supportJobs
+                List<(MKDSupportJob Data, CrescentSupportJob Job)> supportJobs,
+                int                                                 rowCount
             )
             {
-                const int   MAX_ITEMS_PER_ROW = 5;
-                const float ROW_HEIGHT        = 53f;
-                const float CONTAINER_WIDTH   = 500f;
-                const float ROW_SPACING       = 30f;
-
                 jobContainer = new VerticalListNode
                 {
-                    Position    = new(0, 0),
-                    Size        = new(CONTAINER_WIDTH, Size.Y - 12f),
-                    IsVisible   = true,
-                    ItemSpacing = 5
+                    Position         = new(0, 0),
+                    Size             = new(WINDOW_WIDTH, Size.Y - BOTTOM_PADDING),
+                    IsVisible        = true,
+                    FirstItemSpacing = HEADER_HEIGHT,
+                    ItemSpacing      = ROW_SPACING
                 };
 
-                jobContainer.AddDummy(65);
-
                 var rows = new List<HorizontalFlexNode>();
-
-                var rowCount = Math.Max(1, (supportJobs.Count + MAX_ITEMS_PER_ROW - 1) / MAX_ITEMS_PER_ROW);
 
                 for (var i = 0; i < rowCount; i++)
                 {
                     var row = new HorizontalFlexNode
                     {
                         Position       = new(0, 0),
-                        Size           = new(CONTAINER_WIDTH, ROW_HEIGHT),
+                        Size           = new(WINDOW_WIDTH, ROW_HEIGHT),
                         IsVisible      = true,
-                        AlignmentFlags = FlexFlags.CenterHorizontally | FlexFlags.FitContentHeight,
+                        AlignmentFlags = FlexFlags.CenterHorizontally,
                         ItemSpacing    = 10
                     };
                     rows.Add(row);
@@ -764,8 +800,8 @@ public partial class OccultCrescentHelper
                     // 预览用的
                     var jobActionContainer = new SupportJobActionListNode(this)
                     {
-                        Position = new(500, 0),
-                        Size     = new(200, backgroundNode.Height)
+                        Position = new(WINDOW_WIDTH, 0),
+                        Size     = new(ACTION_PANEL_WIDTH, backgroundNode.Height)
                     };
                     jobActionContainer.AttachNode(this);
                     jobActionNodes[data.RowId] = jobActionContainer;
@@ -1033,17 +1069,12 @@ public partial class OccultCrescentHelper
                                 node.LoadNodes(manager, presetJob, isFocused);
                         }
 
-                        WindowNode.CollisionNode.Size = WindowNode.CollisionNode.Size with { X = 750 };
-                        WindowNode.Size               = WindowNode.Size with { X = 750 };
+                        WindowNode.CollisionNode.Size = WindowNode.CollisionNode.Size with { X = EXPANDED_WIDTH };
+                        WindowNode.Size               = WindowNode.Size with { X = EXPANDED_WIDTH };
                     }
                 }
 
-                for (var i = 0; i < rows.Count; i++)
-                {
-                    jobContainer.AddNode(rows[i]);
-                    if (i < rows.Count - 1)
-                        jobContainer.AddDummy(ROW_SPACING);
-                }
+                jobContainer.AddNode(rows);
 
                 jobContainer.AttachNode(this);
             }
@@ -1056,7 +1087,7 @@ public partial class OccultCrescentHelper
                     TextureSize        = new(500, 490),
                     TexturePath        = "ui/uld/MKDWallPaper_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(502, Size.Y - 7f),
+                    Size               = new(WINDOW_WIDTH + 2f, Size.Y - 7f),
                     Position           = new(-2),
                     Alpha              = 0.9f
                 };
@@ -1068,7 +1099,7 @@ public partial class OccultCrescentHelper
                     TextureSize        = new(9, 41),
                     TexturePath        = "ui/uld/MKDWindow_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(505, 40),
+                    Size               = new(WINDOW_WIDTH + 5f, 40),
                     Position           = new(-2),
                     Alpha              = 1f
                 };
@@ -1080,7 +1111,7 @@ public partial class OccultCrescentHelper
                     TextureSize        = new(47, 6),
                     TexturePath        = "ui/uld/MKDWindow_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(520, 6),
+                    Size               = new(WINDOW_WIDTH + 20f, 6),
                     Position           = new(0, 36),
                     Alpha              = 1f,
                     AddColor           = new(-0.196078f)
@@ -1094,7 +1125,7 @@ public partial class OccultCrescentHelper
                     TexturePath        = "ui/uld/MKDWallMoon_hr1.tex",
                     IsVisible          = true,
                     Size               = new(190),
-                    Position           = new(310, Size.Y - 205f),
+                    Position           = new(WINDOW_WIDTH - 190f, Size.Y - 205f),
                     Alpha              = 0.9f
                 };
                 moonPatternNode.AttachNode(this);
@@ -1130,7 +1161,7 @@ public partial class OccultCrescentHelper
                     TexturePath        = "ui/uld/MKDWindowPattern_hr1.tex",
                     IsVisible          = true,
                     Size               = new(236, 125),
-                    Position           = new(260, 5),
+                    Position           = new(WINDOW_WIDTH - 240f, 5),
                     Alpha              = 0.3f
                 };
                 patternRightNode.AttachNode(this);
@@ -1157,7 +1188,7 @@ public partial class OccultCrescentHelper
                     TextureSize        = new(60, 70),
                     TexturePath        = "ui/uld/MKDWindow_hr1.tex",
                     IsVisible          = true,
-                    Size               = new(515f, Size.Y + 7f),
+                    Size               = new(WINDOW_WIDTH + 15f, Size.Y + 7f),
                     Position           = new(-8, -5),
                     Alpha              = 0.9f,
                     Offsets            = new(24),
@@ -1171,7 +1202,7 @@ public partial class OccultCrescentHelper
                 closeButtonNode = new TextureButtonNode
                 {
                     Size               = new(28f),
-                    Position           = new(458f, 8f),
+                    Position           = new(WINDOW_WIDTH - 42f, 8f),
                     IsVisible          = true,
                     TexturePath        = "ui/uld/WindowA_Button_hr1.tex",
                     TextureCoordinates = new(0),
