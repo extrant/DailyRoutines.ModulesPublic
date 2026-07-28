@@ -37,7 +37,8 @@ public unsafe class FieldEntryCommand : ModuleBase
         ["phaenna"] = (EnqueuePhaenna, 3),
         ["oizys"]   = (EnqueueOizys, 4),
         ["auxesia"] = (EnqueueAuxesia, 5),
-        ["ocs"]     = (EnqueueSouthHorn, 1018)
+        ["ocs"]     = (EnqueueSouthHorn, 1018),
+        ["ocn"]     = (EnqueueNorthHorn, 1093)
     }.ToFrozenDictionary();
 
     private uint redirectTargetZoneInMoon;
@@ -200,6 +201,10 @@ public unsafe class FieldEntryCommand : ModuleBase
     // 蜃景幻界新月岛 南征之章
     private static void EnqueueSouthHorn() =>
         MovementManager.Instance().TPSmart_BetweenZone(1252);
+    
+    // 蜃景幻界新月岛 北征之章
+    private static void EnqueueNorthHorn() =>
+        MovementManager.Instance().TPSmart_BetweenZone(1346);
 
     // 憧憬湾
     private static void EnqueueArdorum() =>
