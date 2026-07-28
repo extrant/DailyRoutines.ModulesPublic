@@ -76,7 +76,7 @@ public class AutoDisplayHiddenCast : ModuleBase
         );
         enemyCastInfoCastedPatch = new
         (
-            "F6 40 ?? ?? 75 ?? 41 B9 ?? ?? ?? ?? 89 AB",
+            "F6 40 ?? ?? 75 ?? 41 B9 ?? ?? ?? ?? 44 89 B3",
             [0xF6, 0x40, 0x3E, 0x00]
         );
 
