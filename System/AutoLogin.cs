@@ -25,7 +25,6 @@ public unsafe class AutoLogin : ModuleBase
         Title               = Lang.Get("AutoLoginTitle"),
         Description         = Lang.Get("AutoLoginDescription"),
         Category            = ModuleCategory.System,
-        ModulesRecommend    = ["AutoSkipLogo"],
         ModulesPrerequisite = ["InstantLogout"]
     };
 
