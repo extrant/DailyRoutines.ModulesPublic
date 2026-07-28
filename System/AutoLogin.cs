@@ -8,6 +8,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Colors;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
+using OmenTools.Dalamud;
 using OmenTools.Dalamud.Attributes;
 using OmenTools.ImGuiOm.Widgets.Combos;
 using OmenTools.Info.Lumina;
@@ -322,18 +323,21 @@ public unsafe class AutoLogin : ModuleBase
         TaskHelper.Abort();
 
         TaskHelper.Enqueue
-        (() =>
+        (
+            () =>
             {
                 if (CharaSelectListMenu->IsAddonAndNodesReady()) return true;
                 if (!TitleMenu->IsAddonAndNodesReady()) return false;
 
                 AgentId.Lobby.SendEvent(0, 4);
                 return true;
-            }
+            },
+            "点击登录"
         );
 
         TaskHelper.Enqueue
-        (() =>
+        (
+            () =>
             {
                 if (TaskHelper.AbortByConflictKey(this)) return true;
                 if (!Throttler.Shared.Throttle("AutoLogin-SelectCharacter", 100)) return false;
@@ -374,7 +378,7 @@ public unsafe class AutoLogin : ModuleBase
                 foreach (var loginInfo in config.LoginData)
                 {
                     counter--;
-                    
+
                     var found = client.CurrentDataCenterCharacters.FirstOrDefault
                     (x => LuminaWrapper.GetWorldDC(client.CurrentDataCenterWorlds.First->Id) ==
                           LuminaWrapper.GetWorldDC(x.CurrentWorldId) &&
@@ -396,7 +400,8 @@ public unsafe class AutoLogin : ModuleBase
                 }
 
                 return true;
-            }
+            },
+            "选择角色"
         );
     }
 
