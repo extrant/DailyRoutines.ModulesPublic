@@ -4,8 +4,10 @@ using DailyRoutines.Common.Module.Models;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using Lumina.Excel.Sheets;
 using OmenTools.Info.Algorithms;
 using OmenTools.Interop.Game.AddonEvent;
+using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
 
 namespace DailyRoutines.ModulesPublic.Duty;
@@ -21,14 +23,11 @@ public class AutoInDutySelectYes : ModuleBase
 
     protected override void Init()
     {
-        Blacklist = new
+        Whitelist = new
         (
-            [
-                "小队", "传送邀请", "救助", "复活", "无法战斗", "即将返回", "开始地点", "回归点", "准备确认", "倒计时", "封锁空间",
-                "小隊", "傳送邀請", "無法戰鬥", "即將返回", "開始地點", "回归點", "準備確認", "倒計時",
-                "Party", "Teleport Offer", "Raise", "Arise", "Incapacitated ", "Return", "Starting Point", "Ready Check", "Timer", "Countdown", "Sealed Area",
-                "パーティ", "テレポ勧誘", "テレポの勧誘", "蘇生", "アレイズ", "ホームポイント", "戦闘不能", "開始地点", "復帰地点", "レディチェック", "カウント", "封鎖空間"
-            ]
+            LuminaGetter.Get<GimmickYesNo>()
+                        .Select(x => x.Message.ToString())
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
         );
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
@@ -37,7 +36,7 @@ public class AutoInDutySelectYes : ModuleBase
     protected override void Uninit() =>
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
 
-    private static unsafe void OnAddonSelectYesno
+    private unsafe void OnAddonSelectYesno
     (
         AddonEvent type,
         AddonArgs  args
@@ -49,7 +48,7 @@ public class AutoInDutySelectYes : ModuleBase
         if (addon == null) return;
 
         var text = addon->PromptText->NodeText.ToString();
-        if (string.IsNullOrWhiteSpace(text) || Blacklist.ContainsAny(text))
+        if (string.IsNullOrWhiteSpace(text) || !Whitelist.ContainsAny(text))
             return;
 
         AddonSelectYesnoEvent.ClickYes();
@@ -57,7 +56,7 @@ public class AutoInDutySelectYes : ModuleBase
 
     #region 常量
 
-    private static AhoCorasick Blacklist = null!;
+    private AhoCorasick Whitelist = null!;
 
     #endregion
 }
