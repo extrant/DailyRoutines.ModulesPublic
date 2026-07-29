@@ -24,14 +24,14 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    private Config             config = null!;
-    private OverlayController? controller;
+    private Config            config     = null!;
+    private OverlayController controller = null!;
 
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
 
-        controller ??= new();
+        controller = new();
         controller.AddNode(new PlayerDotImageNode(config));
     }
 
