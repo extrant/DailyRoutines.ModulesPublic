@@ -91,17 +91,11 @@ public unsafe class AutoCountPlayers : ModuleBase
         InfoProxySearchEndRequestHook.Enable();
 
         LogMessageManager.Instance().RegPre(OnLogMessage);
-        
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        OnZoneChanged(0);
-        
         OnUpdate(DService.Instance().Framework);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-
         FrameworkManager.Instance().Unreg(OnUpdate);
         LogMessageManager.Instance().Unreg(OnLogMessage);
 
@@ -384,25 +378,14 @@ public unsafe class AutoCountPlayers : ModuleBase
         if (logMessageID != 81) return;
         isPrevented = true;
     }
-    
-    private static void OnZoneChanged
-    (
-        uint zone
-    )
-    {
-        FrameworkManager.Instance().Unreg(OnUpdate);
-
-        if (!IsPlayerSearchLocation)
-            return;
-
-        FrameworkManager.Instance().Reg(OnUpdate, 10_000);
-    }
 
     private static void OnUpdate
     (
         IFramework framework
     )
     {
+        if (!IsPlayerSearchLocation) return;
+        
         if (IsContentSearchZone)
         {
             if (InfoProxyContentMember.Instance() == null ||
