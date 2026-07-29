@@ -676,7 +676,7 @@ public partial class OccultCrescentHelper
                                 return true;
                             }
 
-                            if (!Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-DemiReturn-Aetheryte", 500) ||
+                            if (!Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-DemiReturn-Aetheryte") ||
                                 !MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
                                 return false;
 
