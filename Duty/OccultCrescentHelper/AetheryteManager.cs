@@ -141,7 +141,10 @@ public partial class OccultCrescentHelper
             CrescentAetheryte aetheryte
         )
         {
-            if (aetheryte == null || moveTaskHelper is not { } taskHelper) return false;
+            if (aetheryte == null                                            ||
+                moveTaskHelper is not { } taskHelper                         ||
+                DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+                return false;
 
             StopPathfinding();
             ChatManager.Instance().SendMessage("/automove off");
@@ -157,7 +160,7 @@ public partial class OccultCrescentHelper
                     x => x.EventId.ContentId == EventHandlerContent.CustomTalk,
                     x => x.NameString.Equals(LuminaWrapper.GetEObjName(2006473), StringComparison.OrdinalIgnoreCase) ||
                          x.NameString.Equals(LuminaWrapper.GetEObjName(2014664), StringComparison.OrdinalIgnoreCase),
-                    default,
+                    localPlayer.Position,
                     out var eventID,
                     out var eventObjectID
                 ) &&

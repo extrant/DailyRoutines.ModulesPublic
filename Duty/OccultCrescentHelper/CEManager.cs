@@ -39,6 +39,7 @@ public partial class OccultCrescentHelper
         private const byte  FATE_MAXIMUM_PROGRESS           = 80;
         private const long  CE_MINIMUM_REMAINING_SECONDS    = 20;
         private const uint  DEMI_RETURN_ACTION_ID           = 41343;
+        private const float MOUNT_MINIMUM_DISTANCE          = 50f;
         private const float PATHFINDING_COMPLETION_DISTANCE = 5f;
         private const float PATH_POINT_RADIUS               = 4f;
         private const float PATH_LINE_THICKNESS             = 2f;
@@ -602,8 +603,7 @@ public partial class OccultCrescentHelper
                 (x => Vector3.DistanceSquared(x.Position, session.Destination));
 
             if (nearestAetheryte != null &&
-                Vector3.Distance(localPlayer.Position, session.Destination) / 12f >
-                (Vector3.Distance(nearestAetheryte.Position, session.Destination) / 12f) + 10f)
+                IsAetheryteRouteFaster(localPlayer.Position, nearestAetheryte, session.Destination))
             {
                 if (MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
                 {
@@ -661,23 +661,34 @@ public partial class OccultCrescentHelper
                     );
 
                     taskHelper.Enqueue
-                    (() =>
+                    (
+                        () =>
                         {
                             if (pathfindingSession  != session ||
                                 session.TravelStage != PathfindingTravelStage.DemiReturn)
                                 return true;
 
-                            if (MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
+                            if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return false;
+
+                            if (!IsAetheryteRouteFaster(player.Position, nearestAetheryte, session.Destination))
                             {
-                                session.Aetheryte                = nearestAetheryte;
-                                session.TravelStage              = PathfindingTravelStage.Aetheryte;
-                                session.StopAetherytePathfinding = MainModule.aetheryteModule.StopPathfinding;
-                            }
-                            else
                                 session.TravelStage = PathfindingTravelStage.Pathfinding;
+                                return true;
+                            }
+
+                            if (!Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-DemiReturn-Aetheryte", 500) ||
+                                !MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
+                                return false;
+
+                            session.Aetheryte                = nearestAetheryte;
+                            session.TravelStage              = PathfindingTravelStage.Aetheryte;
+                            session.StopAetherytePathfinding = MainModule.aetheryteModule.StopPathfinding;
 
                             return true;
-                        }
+                        },
+                        timeoutMS: 10_000,
+                        timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
+                        timeoutAction: () => session.TravelStage = PathfindingTravelStage.Pathfinding
                     );
 
                     EnqueueAetheryteArrival(taskHelper, session);
@@ -690,6 +701,11 @@ public partial class OccultCrescentHelper
                     if (pathfindingSession != session) return true;
                     if (DService.Instance().Condition.IsOccupiedInEvent) return false;
                     if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return false;
+                    if (Vector3.DistanceSquared(player.Position, session.Destination) <=
+                        MOUNT_MINIMUM_DISTANCE * MOUNT_MINIMUM_DISTANCE)
+                        return true;
+
                     return UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9);
                 }
             );
@@ -761,6 +777,15 @@ public partial class OccultCrescentHelper
                     session.StopAetherytePathfinding = null;
                 }
             );
+
+        private static bool IsAetheryteRouteFaster
+        (
+            Vector3            origin,
+            CrescentAetheryte aetheryte,
+            Vector3            destination
+        ) =>
+            Vector3.Distance(origin, destination) / 12f >
+            (Vector3.Distance(aetheryte.Position, destination) / 12f) + 10f;
 
         private void OnPathfindingDraw()
         {
