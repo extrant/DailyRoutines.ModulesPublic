@@ -115,12 +115,17 @@ public class AutoSortItems : ModuleBase
         TaskHelper.Abort();
 
         if (GameState.TerritoryType == 0) return;
+        
+        TaskHelper.DelayNext(2000);
         TaskHelper.Enqueue(CheckCanSort);
     }
 
     private bool CheckCanSort()
     {
-        if (!GameState.IsLoggedIn || !UIModule.IsScreenReady() || DService.Instance().Condition.IsOccupiedInEvent) return false;
+        if (!GameState.IsLoggedIn     ||
+            !UIModule.IsScreenReady() ||
+            DService.Instance().Condition.IsOccupiedInEvent)
+            return false;
 
         if (!DService.Instance().Condition.IsIdle || !IsInValidZone())
         {
