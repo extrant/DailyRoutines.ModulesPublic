@@ -91,6 +91,7 @@ public unsafe class AutoCountPlayers : ModuleBase
         InfoProxySearchEndRequestHook.Enable();
 
         LogMessageManager.Instance().RegPre(OnLogMessage);
+        FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 10_000);
         OnUpdate(DService.Instance().Framework);
     }
 
@@ -258,7 +259,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                 for (var index = 0; index < info->EntryCount; index++)
                 {
                     var player = info->CharDataSpan[index];
-                    if (player.Location != GameState.TerritoryType) continue;
+                    if (IsPlayerSearchZone && player.Location != GameState.TerritoryType) continue;
 
                     using var id = ImRaii.PushId($"{player.ContentId}");
 
