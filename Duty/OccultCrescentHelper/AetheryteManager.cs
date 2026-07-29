@@ -1,5 +1,4 @@
 using System.Numerics;
-using DailyRoutines.Extensions;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -44,17 +43,15 @@ public partial class OccultCrescentHelper
             DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
             DService.Instance().ClientState.Logout           -= OnLogout;
 
-            moveTaskHelper?.Abort();
+            StopPathfinding();
             moveTaskHelper?.Dispose();
             moveTaskHelper = null;
-
-            vnavmeshIPC.StopPathfind();
         }
 
         public override void DrawConfig()
         {
             using var id = ImRaii.PushId("AetheryteManager");
-            
+
             if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
                 ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Teleport"));
@@ -79,13 +76,13 @@ public partial class OccultCrescentHelper
                     foreach (var aetheryte in aetherytes)
                     {
                         if (ImGui.Button(aetheryte.Name, buttonSize))
-                            UseAetheryte(aetheryte);
+                            TryUseAetheryte(aetheryte);
                     }
                 }
-                
+
                 ImGui.NewLine();
             }
-            
+
             ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Command"));
 
             using (ImRaii.PushIndent())
@@ -96,16 +93,16 @@ public partial class OccultCrescentHelper
         (
             int type,
             int code
-        )
-        {
-            moveTaskHelper?.Abort();
-            vnavmeshIPC.StopPathfind();
-        }
+        ) =>
+            StopPathfinding();
 
         private void OnZoneChanged
         (
             uint u
-        )
+        ) =>
+            StopPathfinding();
+
+        public void StopPathfinding()
         {
             moveTaskHelper?.Abort();
             vnavmeshIPC.StopPathfind();
@@ -136,22 +133,23 @@ public partial class OccultCrescentHelper
 
             if (aetheryte == null) return;
 
-            UseAetheryte(aetheryte);
+            TryUseAetheryte(aetheryte);
         }
 
-        public unsafe void UseAetheryte
+        public unsafe bool TryUseAetheryte
         (
             CrescentAetheryte aetheryte
         )
         {
-            if (aetheryte == null) return;
+            if (aetheryte == null || moveTaskHelper is not { } taskHelper) return false;
 
+            StopPathfinding();
             ChatManager.Instance().SendMessage("/automove off");
             if (DService.Instance().Condition[ConditionFlag.Mounted])
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
 
             // 以太之光传送走了
-            if (aetheryte.TeleportTo()) return;
+            if (aetheryte.TeleportTo()) return true;
 
             // 附近可以找到魔路
             if (EventFramework.Instance()->TryGetNearestEvent
@@ -170,9 +168,7 @@ public partial class OccultCrescentHelper
                 // 可以直接交互, 不管怎么样直接交互
                 if (distanceSQ <= 16f)
                 {
-                    moveTaskHelper.Abort();
-
-                    moveTaskHelper.Enqueue
+                    taskHelper.Enqueue
                     (() =>
                         {
                             if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
@@ -183,16 +179,14 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    return;
+                    return true;
                 }
 
                 // 启用了绿玩移动
                 if (DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
                     distanceSQ <= USE_AETHERYTE_DISTANCE_SQ)
                 {
-                    moveTaskHelper.Abort();
-
-                    moveTaskHelper.Enqueue
+                    taskHelper.Enqueue
                     (() =>
                         {
                             // 已经在坐骑上
@@ -201,7 +195,7 @@ public partial class OccultCrescentHelper
                             if (distanceSQ <= 30)
                             {
                                 // 用一下冲刺
-                                moveTaskHelper.Enqueue
+                                taskHelper.Enqueue
                                 (
                                     () =>
                                     {
@@ -220,7 +214,7 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    moveTaskHelper.Enqueue
+                    taskHelper.Enqueue
                     (() =>
                         {
                             if (!Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo")) return false;
@@ -231,7 +225,7 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    moveTaskHelper.Enqueue
+                    taskHelper.Enqueue
                     (() =>
                         {
                             // 可以稍微放宽一点
@@ -246,7 +240,7 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    moveTaskHelper.Enqueue
+                    taskHelper.Enqueue
                     (() =>
                         {
                             if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
@@ -257,11 +251,12 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    moveTaskHelper.Enqueue(() => LocalPlayerState.DistanceTo3D(aetheryte.Position) <= 30);
-                    return;
+                    taskHelper.Enqueue(() => LocalPlayerState.DistanceTo3D(aetheryte.Position) <= 30);
+                    return true;
                 }
             }
 
+            return false;
         }
     }
 }

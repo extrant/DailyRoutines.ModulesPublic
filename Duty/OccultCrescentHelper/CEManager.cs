@@ -19,6 +19,7 @@ using OmenTools.OmenService;
 using OmenTools.OmenService.ZoneIndicator;
 using OmenTools.Threading;
 using OmenTools.Threading.TaskHelper;
+using OmenTools.Threading.TaskHelper.Enums;
 using TimeAgo;
 using FateState = Dalamud.Game.ClientState.Fates.FateState;
 
@@ -34,9 +35,11 @@ public partial class OccultCrescentHelper
         private const string COMMAND_FATE = "pfate";
         private const string COMMAND_CE   = "pce";
 
-        private const float FATE_MINIMUM_REMAINING_SECONDS = 60f;
-        private const byte  FATE_MAXIMUM_PROGRESS          = 80;
-        private const long  CE_MINIMUM_REMAINING_SECONDS   = 20;
+        private const float FATE_MINIMUM_REMAINING_SECONDS  = 60f;
+        private const byte  FATE_MAXIMUM_PROGRESS           = 80;
+        private const long  CE_MINIMUM_REMAINING_SECONDS    = 20;
+        private const uint  DEMI_RETURN_ACTION_ID           = 41343;
+        private const float PATHFINDING_COMPLETION_DISTANCE = 5f;
         private const float PATH_POINT_RADIUS               = 4f;
         private const float PATH_LINE_THICKNESS             = 2f;
 
@@ -63,7 +66,7 @@ public partial class OccultCrescentHelper
 
             ExecuteCommandManager.Instance().RegPost(OnPostReceivedCommand);
             LogMessageManager.Instance().RegPost(OnPostReceivedMessage);
-            GameState.Instance().Logout += OnLogout;
+            GameState.Instance().Logout       += OnLogout;
             WindowManager.Instance().PostDraw += OnPathfindingDraw;
 
             var isAnyNewCategory = false;
@@ -99,7 +102,7 @@ public partial class OccultCrescentHelper
             ExecuteCommandManager.Instance().Unreg(OnPostReceivedCommand);
             LogMessageManager.Instance().Unreg(OnPostReceivedMessage);
             DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-            WindowManager.Instance().PostDraw -= OnPathfindingDraw;
+            WindowManager.Instance().PostDraw                -= OnPathfindingDraw;
 
             fateHandle?.Unreg();
             fateHandle = null;
@@ -199,7 +202,7 @@ public partial class OccultCrescentHelper
                 MainModule.config.Save(MainModule);
 
             ImGui.NewLine();
-            
+
             ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-CEManager-AutoDismount"));
 
             using (ImRaii.PushIndent())
@@ -218,9 +221,9 @@ public partial class OccultCrescentHelper
                     ))
                     MainModule.config.Save(MainModule);
             }
-            
+
             ImGui.NewLine();
-            
+
             ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
 
             using (ImRaii.PushIndent())
@@ -560,12 +563,12 @@ public partial class OccultCrescentHelper
             StartPathfinding(ce);
         }
 
-        private bool CanStartPathfinding
+        private static bool CanStartPathfinding
         (
             IslandEventData data
         ) =>
-            vnavmeshIPC.IsPluginEnabled()           &&
-            vnavmeshIPC.GetIsNavReady()             &&
+            vnavmeshIPC.IsPluginEnabled() &&
+            vnavmeshIPC.GetIsNavReady()   &&
             data.Event.Type switch
             {
                 CrescentEventType.FATE or CrescentEventType.MagicPot =>
@@ -580,14 +583,108 @@ public partial class OccultCrescentHelper
             IslandEventData data
         )
         {
-            if (!CanStartPathfinding(data) || DService.Instance().ObjectTable.LocalPlayer is null) return;
+            if (!CanStartPathfinding(data)                                         ||
+                DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer ||
+                ceTaskHelper is not { } taskHelper)
+                return;
 
             StopPathfinding();
+            MainModule.aetheryteModule.StopPathfinding();
 
             var session = new PathfindingSession(data, data.Event.GetRandomPointNearEdge());
             pathfindingSession = session;
 
-            ceTaskHelper.Enqueue
+            var aetherytes = GameState.TerritoryType == 1252 ?
+                                 CrescentAetheryte.SouthHornAetherytes :
+                                 CrescentAetheryte.NorthHornAetherytes;
+
+            var nearestAetheryte = aetherytes.MinBy
+                (x => Vector3.DistanceSquared(x.Position, session.Destination));
+
+            if (nearestAetheryte != null &&
+                Vector3.Distance(localPlayer.Position, session.Destination) / 12f >
+                (Vector3.Distance(nearestAetheryte.Position, session.Destination) / 12f) + 10f)
+            {
+                if (MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
+                {
+                    session.Aetheryte                = nearestAetheryte;
+                    session.TravelStage              = PathfindingTravelStage.Aetheryte;
+                    session.StopAetherytePathfinding = MainModule.aetheryteModule.StopPathfinding;
+                    EnqueueAetheryteArrival(taskHelper, session);
+                }
+                else
+                {
+                    var returnPosition = GameState.TerritoryType == 1252 ?
+                                             MainModule.config.DefaultPositionEnterZoneSouthHorn :
+                                             MainModule.config.DefaultPositionEnterZoneNorthHorn;
+
+                    session.TravelStage = PathfindingTravelStage.DemiReturn;
+
+                    taskHelper.Enqueue
+                    (
+                        () =>
+                        {
+                            if (pathfindingSession  != session ||
+                                session.TravelStage != PathfindingTravelStage.DemiReturn)
+                                return true;
+
+                            if (DService.Instance().Condition[ConditionFlag.Mounted])
+                            {
+                                ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
+                                return false;
+                            }
+
+                            if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
+                                return false;
+
+                            return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
+                        },
+                        timeoutMS: 5_000,
+                        timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
+                        timeoutAction: () => session.TravelStage = PathfindingTravelStage.Pathfinding
+                    );
+
+                    taskHelper.Enqueue
+                    (
+                        () =>
+                        {
+                            if (pathfindingSession  != session ||
+                                session.TravelStage != PathfindingTravelStage.DemiReturn)
+                                return true;
+
+                            return DService.Instance().ObjectTable.LocalPlayer is { } player &&
+                                   Vector3.DistanceSquared(player.Position, returnPosition) <= 30f * 30f;
+                        },
+                        timeoutMS: 30_000,
+                        timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
+                        timeoutAction: () => session.TravelStage = PathfindingTravelStage.Pathfinding
+                    );
+
+                    taskHelper.Enqueue
+                    (() =>
+                        {
+                            if (pathfindingSession  != session ||
+                                session.TravelStage != PathfindingTravelStage.DemiReturn)
+                                return true;
+
+                            if (MainModule.aetheryteModule.TryUseAetheryte(nearestAetheryte))
+                            {
+                                session.Aetheryte                = nearestAetheryte;
+                                session.TravelStage              = PathfindingTravelStage.Aetheryte;
+                                session.StopAetherytePathfinding = MainModule.aetheryteModule.StopPathfinding;
+                            }
+                            else
+                                session.TravelStage = PathfindingTravelStage.Pathfinding;
+
+                            return true;
+                        }
+                    );
+
+                    EnqueueAetheryteArrival(taskHelper, session);
+                }
+            }
+
+            taskHelper.Enqueue
             (() =>
                 {
                     if (pathfindingSession != session) return true;
@@ -597,13 +694,14 @@ public partial class OccultCrescentHelper
                 }
             );
 
-            ceTaskHelper.Enqueue
+            taskHelper.Enqueue
             (() =>
                 {
                     if (pathfindingSession != session) return true;
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+
+                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player)
                     {
-                        StopPathfinding();
+                        StopPathfinding(session);
                         return true;
                     }
 
@@ -611,7 +709,7 @@ public partial class OccultCrescentHelper
                     {
                         session.PathfindingTask = vnavmeshIPC.PathfindCancelable
                         (
-                            localPlayer.Position,
+                            player.Position,
                             session.Destination,
                             false,
                             session.CancellationTokenSource.Token
@@ -620,42 +718,87 @@ public partial class OccultCrescentHelper
                     catch (Exception exception)
                     {
                         DLog.Error("新月岛区域事件寻路请求失败", exception);
-                        StopPathfinding();
+                        StopPathfinding(session);
                         return true;
                     }
 
                     if (session.PathfindingTask != null) return true;
 
-                    StopPathfinding();
+                    StopPathfinding(session);
                     return true;
                 }
             );
         }
 
+        private void EnqueueAetheryteArrival
+        (
+            TaskHelper         taskHelper,
+            PathfindingSession session
+        ) =>
+            taskHelper.Enqueue
+            (
+                () =>
+                {
+                    if (pathfindingSession  != session                          ||
+                        session.TravelStage != PathfindingTravelStage.Aetheryte ||
+                        session.Aetheryte is not { } aetheryte)
+                        return true;
+
+                    if (LocalPlayerState.DistanceTo3D(aetheryte.Position) > 30f) return false;
+
+                    session.Aetheryte                = null;
+                    session.TravelStage              = PathfindingTravelStage.Pathfinding;
+                    session.StopAetherytePathfinding = null;
+                    return true;
+                },
+                timeoutMS: 30_000,
+                timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
+                timeoutAction: () =>
+                {
+                    session.Aetheryte   = null;
+                    session.TravelStage = PathfindingTravelStage.Pathfinding;
+                    session.StopAetherytePathfinding?.Invoke();
+                    session.StopAetherytePathfinding = null;
+                }
+            );
+
         private void OnPathfindingDraw()
         {
             if (pathfindingSession is not { } session) return;
+
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
             {
-                StopPathfinding();
+                StopPathfinding(session);
                 return;
             }
 
-            if (!allIslandEvents.Contains(session.Data) ||
-                session.Data.Event is { Type: CrescentEventType.CE, CEState: not DynamicEventState.Register })
+            if (!allIslandEvents.Contains(session.Data))
             {
-                StopPathfinding();
+                StopPathfinding(session);
                 return;
             }
 
-            var eventRadius = MathF.Max(session.Data.Event.Radius, 1f);
-            if (Vector2.DistanceSquared(localPlayer.Position.ToVector2(), session.Data.Event.Position.ToVector2()) <= eventRadius * eventRadius)
+            var playerPosition = localPlayer.Position.ToVector2();
+            var eventRadius = session.Data.Event.Type == CrescentEventType.CE ?
+                                  session.Data.Event.Radius * 2f :
+                                  session.Data.Event.Radius;
+
+            if ((eventRadius                                                                      > 0f &&
+                 Vector2.DistanceSquared(playerPosition, session.Data.Event.Position.ToVector2()) <= eventRadius * eventRadius) ||
+                Vector2.DistanceSquared(playerPosition, session.Destination.ToVector2()) <=
+                PATHFINDING_COMPLETION_DISTANCE * PATHFINDING_COMPLETION_DISTANCE)
             {
                 CompletePathfinding(session);
                 return;
             }
 
-            if (MainModule.config.InterruptPathfindingOnMovementInput &&
+            if (session.Data.Event is { Type: CrescentEventType.CE, CEState: not DynamicEventState.Register })
+            {
+                StopPathfinding(session);
+                return;
+            }
+
+            if (MainModule.config.InterruptPathfindingOnMovementInput       &&
                 !session.IsMovementInterrupted                              &&
                 (session.PathfindingTask != null || session.Path.Count > 0) &&
                 IsMovementInputPressed())
@@ -673,14 +816,15 @@ public partial class OccultCrescentHelper
                     if (pathfindingTask.Exception is { } exception)
                         DLog.Error("新月岛区域事件寻路失败", exception.GetBaseException());
 
-                    StopPathfinding();
+                    StopPathfinding(session);
                     return;
                 }
 
                 session.Path = pathfindingTask.Result;
+
                 if (session.Path.Count == 0)
                 {
-                    StopPathfinding();
+                    StopPathfinding(session);
                     return;
                 }
 
@@ -704,9 +848,9 @@ public partial class OccultCrescentHelper
         {
             if (path.Count == 0) return;
 
-            var drawList = ImGui.GetForegroundDrawList();
+            var drawList               = ImGui.GetForegroundDrawList();
             var hasPreviousScreenPoint = false;
-            var previousScreenPoint = default(Vector2);
+            var previousScreenPoint    = default(Vector2);
 
             foreach (var pathPoint in path)
             {
@@ -720,7 +864,7 @@ public partial class OccultCrescentHelper
                     drawList.AddLine(previousScreenPoint, screenPoint, PathLineColor, PATH_LINE_THICKNESS * GlobalUIScale);
 
                 drawList.AddCircleFilled(screenPoint, PATH_POINT_RADIUS * GlobalUIScale, PathPointColor);
-                previousScreenPoint = screenPoint;
+                previousScreenPoint    = screenPoint;
                 hasPreviousScreenPoint = true;
             }
         }
@@ -738,7 +882,7 @@ public partial class OccultCrescentHelper
                 _                                                    => false
             };
 
-            StopPathfinding();
+            if (!StopPathfinding(session)) return;
 
             if (shouldDismount)
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
@@ -747,7 +891,9 @@ public partial class OccultCrescentHelper
                 (DService.Instance().Condition[ConditionFlag.Mounted] && !shouldDismount))
                 return;
 
-            ceTaskHelper.Enqueue
+            if (ceTaskHelper is not { } taskHelper) return;
+
+            taskHelper.Enqueue
             (() =>
                 {
                     if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
@@ -756,22 +902,33 @@ public partial class OccultCrescentHelper
                     return true;
                 }
             );
-            ceTaskHelper.DelayNext(100);
-            ceTaskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/facetarget"));
-            ceTaskHelper.DelayNext(100);
-            ceTaskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/automove on"));
+            taskHelper.DelayNext(100);
+            taskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/facetarget"));
+            taskHelper.DelayNext(100);
+            taskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/automove on"));
         }
 
-        private void StopPathfinding()
+        private bool StopPathfinding
+        (
+            PathfindingSession? expectedSession = null
+        )
         {
+            var session = expectedSession == null ?
+                              Interlocked.Exchange(ref pathfindingSession, null) :
+                              Interlocked.CompareExchange(ref pathfindingSession, null, expectedSession);
+
+            if (expectedSession != null && !ReferenceEquals(session, expectedSession)) return false;
+
             ceTaskHelper?.Abort();
             vnavmeshIPC.StopPathfind();
 
-            if (pathfindingSession is not { } session) return;
+            if (session == null) return true;
 
-            pathfindingSession = null;
+            session.StopAetherytePathfinding?.Invoke();
+
             session.CancellationTokenSource.Cancel();
             session.CancellationTokenSource.Dispose();
+            return true;
         }
 
         private void NotifyNewCE
@@ -874,12 +1031,22 @@ public partial class OccultCrescentHelper
             Vector3         destination
         )
         {
-            public IslandEventData         Data                    { get; } = data;
-            public Vector3                 Destination             { get; } = destination;
-            public CancellationTokenSource CancellationTokenSource { get; } = new();
-            public Task<List<Vector3>>?     PathfindingTask         { get; set; }
-            public List<Vector3>            Path                    { get; set; } = [];
-            public bool                     IsMovementInterrupted   { get; set; }
+            public IslandEventData         Data                     { get; } = data;
+            public Vector3                 Destination              { get; } = destination;
+            public CrescentAetheryte?      Aetheryte                { get; set; }
+            public PathfindingTravelStage  TravelStage              { get; set; }
+            public Action?                 StopAetherytePathfinding { get; set; }
+            public CancellationTokenSource CancellationTokenSource  { get; } = new();
+            public Task<List<Vector3>>?    PathfindingTask          { get; set; }
+            public List<Vector3>           Path                     { get; set; } = [];
+            public bool                    IsMovementInterrupted    { get; set; }
+        }
+
+        private enum PathfindingTravelStage : byte
+        {
+            Pathfinding,
+            DemiReturn,
+            Aetheryte
         }
 
         public class IslandEventData
