@@ -24,8 +24,9 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private const string COMMAND_SWITCH_JOB = "pjob";
-        private const string COMMAND_BUFF       = "pbuff";
+        private const string COMMAND_SWITCH_JOB     = "pjob";
+        private const string COMMAND_BUFF           = "pbuff";
+        private const uint   ACTION_FREELANCER_BUFF = 46606;
 
         private static TaskHelper? SupportJobTaskHelper;
 
@@ -232,13 +233,12 @@ public partial class OccultCrescentHelper
             ExecuteBuffSequence();
         }
 
-        // TODO: 使用自由人的探求心技能
         private static void ExecuteBuffSequence()
         {
             if (!CrescentSupportJob.TryFindKnowledgeCrystal(out var gameObject) ||
                 LocalPlayerState.DistanceToObject2DSquared(gameObject) > 10)
             {
-                NotifyHelper.Instance().NotificationError(Lang.Get("OccultCrescentHelper-OthersManager-Notification-CrystalNotFound"));
+                NotifyHelper.ToastError(Lang.Get("OccultCrescentHelper-OthersManager-Notification-CrystalNotFound"));
                 return;
             }
 
@@ -259,6 +259,11 @@ public partial class OccultCrescentHelper
                                             .ToList();
             allJobs.ForEach(x => StatusManager.ExecuteStatusOff(x.LongTimeStatusID));
 
+            IReadOnlyList<CrescentSupportJob> buffJobs =
+                CrescentSupportJob.Freelancer.IsActionUnlocked(ACTION_FREELANCER_BUFF) ?
+                    [CrescentSupportJob.Freelancer] :
+                    allJobs;
+
             SupportJobTaskHelper.Abort();
             SupportJobTaskHelper.Enqueue
             (() =>
@@ -270,8 +275,11 @@ public partial class OccultCrescentHelper
                 }
             );
 
-            foreach (var sJob in allJobs)
+            foreach (var sJob in buffJobs)
             {
+                var actionID  = sJob == CrescentSupportJob.Freelancer ? ACTION_FREELANCER_BUFF : sJob.LongTimeStatusActionID;
+                var actionUsed = false;
+
                 SupportJobTaskHelper.Enqueue
                 (() =>
                     {
@@ -285,9 +293,14 @@ public partial class OccultCrescentHelper
                 SupportJobTaskHelper.Enqueue
                 (() =>
                     {
-                        if (sJob.IsWithLongTimeStatus()) return true;
+                        if (sJob == CrescentSupportJob.Freelancer)
+                        {
+                            if (actionUsed && allJobs.All(x => x.IsWithLongTimeStatus())) return true;
+                        }
+                        else if (sJob.IsWithLongTimeStatus())
+                            return true;
 
-                        UseActionManager.Instance().UseAction(ActionType.Action, sJob.LongTimeStatusActionID);
+                        actionUsed |= UseActionManager.Instance().UseAction(ActionType.Action, actionID);
                         return false;
                     }
                 );
