@@ -20,12 +20,8 @@ public partial class OccultCrescentHelper : ModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = Lang.Get("OccultCrescentHelperTitle"),
-        Description = Lang.Get
-        (
-            "OccultCrescentHelperDescription",
-            LuminaWrapper.GetContentTypeName(38) // 蜃景幻界新月岛
-        ),
+        Title           = Lang.Get("OccultCrescentHelperTitle"),
+        Description     = Lang.Get("OccultCrescentHelperDescription"),
         Category        = ModuleCategory.Duty,
         Author          = ["Fragile"],
         ModulesConflict = ["AutoFaceCameraDirection"]
