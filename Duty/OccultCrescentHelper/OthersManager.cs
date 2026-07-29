@@ -142,19 +142,21 @@ public partial class OccultCrescentHelper
 
             using (ImRaii.PushIndent())
             {
-                if (ImGui.Checkbox($"{Lang.Get("OccultCrescentHelper-OthersManager-IslandIDInChat")}", ref MainModule.config.IsEnabledIslandIDChat))
+                if (ImGui.Checkbox
+                    (
+                        $"{Lang.Get("SendChat")}##IslandIDChat",
+                        ref MainModule.config.IsEnabledIslandIDChat
+                    ))
                     MainModule.config.Save(MainModule);
             }
 
             ImGui.NewLine();
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-OthersManager-ModifyInfoHUD"));
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-ModifyInfoHUD-Help"), 20f * GlobalUIScale);
-
-            ImGui.SameLine(0, 8f * GlobalUIScale);
-
-            if (ImGui.Checkbox("###ModifyInfoHUD", ref MainModule.config.IsEnabledModifyInfoHUD))
+            if (ImGui.Checkbox
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-ModifyInfoHUD"),
+                    ref MainModule.config.IsEnabledModifyInfoHUD
+                ))
             {
                 MainModule.config.Save(MainModule);
 
@@ -173,61 +175,54 @@ public partial class OccultCrescentHelper
 
             if (MainModule.config.IsEnabledModifyInfoHUD)
             {
-                using (ImRaii.PushIndent())
-                {
-                    ImGui.TextColored(KnownColor.Orange.ToVector4(), Lang.Get("OccultCrescentHelper-OthersManager-ModifySupportJobOrder"));
-                    ImGuiOm.HelpMarker
-                    (
-                        Lang.Get("OccultCrescentHelper-OthersManager-ModifySupportJobOrder-Help", LuminaWrapper.GetAddonText(16658)),
-                        30f * GlobalUIScale
-                    );
+                using var indent = ImRaii.PushIndent();
 
-                    ImGui.SameLine();
+                if (ImGui.CollapsingHeader(Lang.Get("OccultCrescentHelper-OthersManager-ModifySupportJobOrder")))
+                {
                     if (ImGui.SmallButton(Lang.Get("Save")))
                         MainModule.config.Save(MainModule);
 
                     ImGui.SameLine();
-
                     if (ImGui.SmallButton(Lang.Get("Reset")))
                     {
                         MainModule.config.AddonSupportJobOrder = MainModule.config.AddonSupportJobOrder.Order().ToList();
                         MainModule.config.Save(MainModule);
                     }
-
-                    using (ImRaii.PushIndent())
+                    
+                    ImGui.NewLine();
+                    
+                    var longestJobName = MainModule.config.AddonSupportJobOrder
+                                                   .Select(LuminaWrapper.GetMKDSupportJobName)
+                                                   .MaxBy(x => x.Length);
+                    for (var i = 0; i < MainModule.config.AddonSupportJobOrder.Count; i++)
                     {
-                        var longestJobName = MainModule.config.AddonSupportJobOrder.Select(LuminaWrapper.GetMKDSupportJobName).MaxBy(x => x.Length);
+                        var supportJob = MainModule.config.AddonSupportJobOrder[i];
+                        var name       = LuminaWrapper.GetMKDSupportJobName(supportJob);
 
-                        for (var i = 0; i < MainModule.config.AddonSupportJobOrder.Count; i++)
+                        ImGui.Button(name, new(ImGui.CalcTextSize(longestJobName).X * 2, ImGui.GetTextLineHeightWithSpacing()));
+
+                        using (var source = ImRaii.DragDropSource())
                         {
-                            var supportJob = MainModule.config.AddonSupportJobOrder[i];
-                            var name       = LuminaWrapper.GetMKDSupportJobName(supportJob);
-
-                            ImGui.Button(name, new(ImGui.CalcTextSize(longestJobName).X * 2, ImGui.GetTextLineHeightWithSpacing()));
-
-                            using (var source = ImRaii.DragDropSource())
+                            if (source)
                             {
-                                if (source)
-                                {
-                                    if (ImGui.SetDragDropPayload("JobReorder", []))
-                                        dragDropJobIndex = i;
-                                    ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), name);
-                                }
+                                if (ImGui.SetDragDropPayload("JobReorder", []))
+                                    dragDropJobIndex = i;
+                                ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), name);
                             }
+                        }
 
-                            using (var target = ImRaii.DragDropTarget())
+                        using (var target = ImRaii.DragDropTarget())
+                        {
+                            if (target)
                             {
-                                if (target)
+                                ImGui.AcceptDragDropPayload("JobReorder");
+
+                                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && dragDropJobIndex >= 0)
                                 {
-                                    ImGui.AcceptDragDropPayload("JobReorder");
+                                    (MainModule.config.AddonSupportJobOrder[dragDropJobIndex], MainModule.config.AddonSupportJobOrder[i]) =
+                                        (MainModule.config.AddonSupportJobOrder[i], MainModule.config.AddonSupportJobOrder[dragDropJobIndex]);
 
-                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && dragDropJobIndex >= 0)
-                                    {
-                                        (MainModule.config.AddonSupportJobOrder[dragDropJobIndex], MainModule.config.AddonSupportJobOrder[i]) =
-                                            (MainModule.config.AddonSupportJobOrder[i], MainModule.config.AddonSupportJobOrder[dragDropJobIndex]);
-
-                                        dragDropJobIndex = -1;
-                                    }
+                                    dragDropJobIndex = -1;
                                 }
                             }
                         }
@@ -236,124 +231,114 @@ public partial class OccultCrescentHelper
             }
 
             ImGui.NewLine();
-
-            ImGui.AlignTextToFramePadding();
+            
             ImGui.TextColored
             (
                 KnownColor.LightSkyBlue.ToVector4(),
                 Lang.Get("OccultCrescentHelper-OthersManager-ModifyDefaultEnterZonePosition")
             );
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-ModifyDefaultEnterZonePosition-Help"), 20f * GlobalUIScale);
 
-            ImGui.SameLine(0, 8f * GlobalUIScale);
-            if (ImGui.Checkbox("###ModifyDefaultEnterZonePositionSouthHorn", ref MainModule.config.IsEnabledModifyDefaultPositionEnterZoneSouthHorn))
-                MainModule.config.Save(MainModule);
-
-            if (MainModule.config.IsEnabledModifyDefaultPositionEnterZoneSouthHorn)
+            using (ImRaii.PushIndent())
+            using (ImRaii.ItemWidth(250f * GlobalUIScale))
             {
-                using (ImRaii.PushIndent())
+                ImGui.TextUnformatted(LuminaWrapper.GetZonePlaceName(1252));
+
+                ImGui.InputFloat3("###DefaultPositionEnterZoneSouthHornInput", ref MainModule.config.DefaultPositionEnterZoneSouthHorn);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    MainModule.config.Save(MainModule);
+
+                ImGui.SameLine();
+
+                if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneSouthHorn"))
                 {
-                    ImGui.TextUnformatted(LuminaGetter.GetRow<TerritoryTypeRow>(1252).GetValueOrDefault().ExtractPlaceName());
+                    MainModule.config.DefaultPositionEnterZoneSouthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                    MainModule.config.Save(MainModule);
+                }
 
-                    ImGui.SetNextItemWidth(200f * GlobalUIScale);
-                    ImGui.InputFloat3("###DefaultPositionEnterZoneSouthHornInput", ref MainModule.config.DefaultPositionEnterZoneSouthHorn);
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                        MainModule.config.Save(MainModule);
+                var isFirst = true;
+                foreach (var aetheryte in CrescentAetheryte.SouthHornAetherytes)
+                {
+                    if (!isFirst)
+                        ImGui.SameLine();
+                    isFirst = false;
 
-                    ImGui.SameLine();
-
-                    if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneSouthHorn"))
+                    if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneSouthHorn"))
                     {
-                        MainModule.config.DefaultPositionEnterZoneSouthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
-                        MainModule.config.Save(MainModule);
-                    }
-
-                    var isFirst = true;
-
-                    foreach (var aetheryte in CrescentAetheryte.SouthHornAetherytes)
-                    {
-                        if (!isFirst)
-                            ImGui.SameLine();
-                        isFirst = false;
-
-                        if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneSouthHorn"))
-                        {
-                            MainModule.config.DefaultPositionEnterZoneSouthHorn = aetheryte.Position;
-                            MainModule.config.Save(MainModule);
-                        }
-                    }
-
-                    ImGui.TextUnformatted(LuminaGetter.GetRow<TerritoryTypeRow>(1346).GetValueOrDefault().ExtractPlaceName());
-
-                    ImGui.SetNextItemWidth(200f * GlobalUIScale);
-                    ImGui.InputFloat3("###DefaultPositionEnterZoneNorthHornInput", ref MainModule.config.DefaultPositionEnterZoneNorthHorn);
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                        MainModule.config.Save(MainModule);
-
-                    ImGui.SameLine();
-
-                    if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneNorthHorn"))
-                    {
-                        MainModule.config.DefaultPositionEnterZoneNorthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                        MainModule.config.DefaultPositionEnterZoneSouthHorn = aetheryte.Position;
                         MainModule.config.Save(MainModule);
                     }
+                }
+                
+                ImGui.Spacing();
 
-                    for (var i = 0; i < CrescentAetheryte.NorthHornAetherytes.Count; i++)
+                ImGui.TextUnformatted(LuminaWrapper.GetZonePlaceName(1346));
+
+                ImGui.InputFloat3("###DefaultPositionEnterZoneNorthHornInput", ref MainModule.config.DefaultPositionEnterZoneNorthHorn);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    MainModule.config.Save(MainModule);
+
+                ImGui.SameLine();
+                if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneNorthHorn"))
+                {
+                    MainModule.config.DefaultPositionEnterZoneNorthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                    MainModule.config.Save(MainModule);
+                }
+
+                for (var i = 0; i < CrescentAetheryte.NorthHornAetherytes.Count; i++)
+                {
+                    if (i != 0)
+                        ImGui.SameLine();
+
+                    var aetheryte = CrescentAetheryte.NorthHornAetherytes[i];
+                    if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneNorthHorn"))
                     {
-                        if (i != 0)
-                            ImGui.SameLine();
-
-                        var aetheryte = CrescentAetheryte.NorthHornAetherytes[i];
-                        if (ImGui.Button($"{aetheryte.Name}##SetDefaultPositionEnterZoneNorthHorn"))
-                        {
-                            MainModule.config.DefaultPositionEnterZoneNorthHorn = aetheryte.Position;
-                            MainModule.config.Save(MainModule);
-                        }
+                        MainModule.config.DefaultPositionEnterZoneNorthHorn = aetheryte.Position;
+                        MainModule.config.Save(MainModule);
                     }
                 }
             }
 
             ImGui.NewLine();
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("OccultCrescentHelper-OthersManager-AutoEnableDisablePlugins")}");
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-AutoEnableDisablePlugins-Help"), 20f * GlobalUIScale);
-
-            ImGui.SameLine(0, 8f * GlobalUIScale);
-            if (ImGui.Checkbox("###IsEnabledAutoEnableDisablePlugins", ref MainModule.config.IsEnabledAutoEnableDisablePlugins))
+            if (ImGui.Checkbox
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-AutoEnableDisablePlugins"),
+                    ref MainModule.config.IsEnabledAutoEnableDisablePlugins
+                ))
                 MainModule.config.Save(MainModule);
+            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-AutoEnableDisablePlugins-Help"), 20f * GlobalUIScale);
 
             if (MainModule.config.IsEnabledAutoEnableDisablePlugins)
             {
-                using (ImRaii.PushIndent())
-                {
-                    ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - (20f * GlobalUIScale));
-                    ImGui.InputText("###AutoEnableDisablePluginsInput", ref MainModule.config.AutoEnableDisablePlugins, 1024);
-                    if (ImGui.IsItemDeactivatedAfterEdit())
-                        MainModule.config.Save(MainModule);
-                    ImGuiOm.TooltipHover(MainModule.config.AutoEnableDisablePlugins);
-                }
+                using var indent = ImRaii.PushIndent();
+
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - (20f * GlobalUIScale));
+                ImGui.InputText("###AutoEnableDisablePluginsInput", ref MainModule.config.AutoEnableDisablePlugins, 1024);
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    MainModule.config.Save(MainModule);
+                ImGuiOm.TooltipHover(MainModule.config.AutoEnableDisablePlugins);
+
             }
 
             ImGui.NewLine();
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-OthersManager-HideDutyCommand"));
+            if (ImGui.Checkbox
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-HideDutyCommand"),
+                    ref MainModule.config.IsEnabledHideDutyCommand
+                ))
+                MainModule.config.Save(MainModule);
             ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-HideDutyCommand-Help"), 20f * GlobalUIScale);
 
-            ImGui.SameLine(0, 8f * GlobalUIScale);
-            if (ImGui.Checkbox("###HideDutyCommand", ref MainModule.config.IsEnabledHideDutyCommand))
-                MainModule.config.Save(MainModule);
-
             ImGui.NewLine();
-
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-OthersManager-FastUseKnowledgeCrystal"));
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-FastUseKnowledgeCrystal-Help"), 20f * GlobalUIScale);
-
-            ImGui.SameLine(0, 8f * GlobalUIScale);
-            if (ImGui.Checkbox("###FastUseKnowledgeCrystal", ref MainModule.config.IsEnabledKnowledgeCrystalFastUse))
+            
+            if (ImGui.Checkbox
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-FastUseKnowledgeCrystal"),
+                    ref MainModule.config.IsEnabledKnowledgeCrystalFastUse
+                ))
                 MainModule.config.Save(MainModule);
+            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-FastUseKnowledgeCrystal-Help"), 20f * GlobalUIScale);
         }
 
         private void AgentMKDSupportJobShowDetour
@@ -420,9 +405,8 @@ public partial class OccultCrescentHelper
                 NotifyHelper.Instance().Chat(message);
             }
 
-            if (!isJustLogin                                                       &&
-                MainModule.config.IsEnabledModifyDefaultPositionEnterZoneSouthHorn &&
-                ICondition.Instance().IsBetweenAreas                               &&
+            if (!isJustLogin                         &&
+                ICondition.Instance().IsBetweenAreas &&
                 GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
                 var destination = GameState.TerritoryType == 1346 ?

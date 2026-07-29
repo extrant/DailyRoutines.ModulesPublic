@@ -6,13 +6,11 @@ using DailyRoutines.Extensions;
 using DailyRoutines.Manager;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using OmenTools.Dalamud;
 using OmenTools.Info.Game;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
-using OmenTools.Threading.TaskHelper;
 
 namespace DailyRoutines.ModulesPublic.Duty;
 
@@ -108,6 +106,8 @@ public partial class OccultCrescentHelper : ModuleBase
 
     protected override void ConfigUI()
     {
+        using var fontPush = FontManager.Instance().UIFont.Push();
+        
         using var tab = ImRaii.TabBar("###Config", ImGuiTabBarFlags.Reorderable);
         if (!tab) return;
 
@@ -117,7 +117,7 @@ public partial class OccultCrescentHelper : ModuleBase
                 aetheryteModule.DrawConfig();
         }
 
-        using (var ceTab = ImRaii.TabItem("CE / FATE"))
+        using (var ceTab = ImRaii.TabItem(Lang.Get("DynamicEvent")))
         {
             if (ceTab)
                 ceModule.DrawConfig();
@@ -157,52 +157,6 @@ public partial class OccultCrescentHelper : ModuleBase
 
     protected override void OverlayPostDraw() => FontManager.Instance().UIFont80.Pop();
 
-    private static void TP
-    (
-        Vector3    pos,
-        TaskHelper taskHelper,
-        int        weight      = 0,
-        bool       abortBefore = true
-    )
-    {
-        if (abortBefore)
-            taskHelper.Abort();
-
-        taskHelper.Enqueue
-        (
-            () =>
-                UseActionManager.Instance().UseActionLocation(ActionType.Action, 41343),
-            weight: weight
-        );
-        taskHelper.Enqueue
-        (
-            () =>
-                !UIModule.IsScreenReady(),
-            weight: weight
-        );
-        taskHelper.Enqueue
-        (
-            () =>
-                DService.Instance().ObjectTable.LocalPlayer != null && UIModule.IsScreenReady(),
-            weight: weight
-        );
-        taskHelper.Enqueue
-        (
-            () => MovementManager.Instance().TPPlayerAddress(pos),
-            weight: weight
-        );
-        taskHelper.DelayNext
-        (
-            100,
-            weight: weight
-        );
-        taskHelper.Enqueue
-        (
-            () => MovementManager.Instance().TPGround(),
-            weight: weight
-        );
-    }
-
     private unsafe uint GetIslandID() =>
         (uint)*(ulong*)((byte*)GameMain.Instance() + islandIDInstanceOffset + 1488);
 
@@ -217,11 +171,12 @@ public partial class OccultCrescentHelper : ModuleBase
 
         // CE 历史记录
         // 岛 ID - CE ID - 刷新时间秒级时间戳
-        public Dictionary<uint, Dictionary<uint, long>> CEHistory                         = [];
-        public Vector3                                  DefaultPositionEnterZoneNorthHorn = new(882.2f, 258.5f, 882.0f);
-        public Vector3                                  DefaultPositionEnterZoneSouthHorn = new(834, 73, -694);
-        public float                                    DistanceToAutoOpenTreasure        = 20f;
-        public float                                    DistanceToMoveToAetheryte         = 100f;
+        public Dictionary<uint, Dictionary<uint, long>> CEHistory = [];
+
+        public Vector3 DefaultPositionEnterZoneNorthHorn = new(882.2f, 258.5f, 882.0f);
+        public Vector3 DefaultPositionEnterZoneSouthHorn = new(834, 73, -694);
+
+        public float DistanceToAutoOpenTreasure = 5f;
 
         // 自动启用/禁用插件
         public bool IsEnabledAutoEnableDisablePlugins = true;
@@ -249,23 +204,16 @@ public partial class OccultCrescentHelper : ModuleBase
         // 显示知见水晶
         public bool IsEnabledKnowledgeCrystalFastUse = true;
 
-        // 修改默认位置
-        public bool IsEnabledModifyDefaultPositionEnterZoneSouthHorn = true;
-
         // 修改 HUD
         public bool IsEnabledModifyInfoHUD = true;
 
         // 辅助武僧
         public bool IsEnabledMonkKickNoMove = true;
 
-        // 优先移动到 魔路 / 简易魔路
-        public bool IsEnabledMoveToAetheryte = true;
-
-        // 优先移动到 CE / FATE
-        public bool IsEnabledMoveToEvent = true;
-
-        // 到 CE / FATE 时自动下坐骑
-        public bool IsEnabledDismount = true;
+        // 寻路控制
+        public bool InterruptPathfindingOnMovementInput = true;
+        public bool IsEnabledDismountCE;
+        public bool IsEnabledDismountFATE;
 
         // 通知 CE 开始
         public bool IsEnabledNotifyCENotification = true;
@@ -273,9 +221,7 @@ public partial class OccultCrescentHelper : ModuleBase
         public bool IsEnabledNotifyCESystemSound  = true;
 
         // 通知任务出现
-        public bool                                IsEnabledNotifyEvents           = true;
         public Dictionary<CrescentEventType, bool> IsEnabledNotifyEventsCategoried = [];
-        public float                               LeftTimeMoveToEvent             = 90;
     }
 
     private abstract class BaseIslandModule

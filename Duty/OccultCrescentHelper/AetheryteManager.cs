@@ -4,7 +4,6 @@ using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using OmenTools.Dalamud;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
@@ -23,10 +22,10 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private const string COMMAND_TP = "ptp";
+        private const string COMMAND_TP                = "ptp";
+        private const float  USE_AETHERYTE_DISTANCE_SQ = 100f * 100f;
 
         private TaskHelper? moveTaskHelper;
-        public  bool        IsTaskHelperBusy => moveTaskHelper?.IsBusy ?? false;
 
         public override void Init()
         {
@@ -55,22 +54,18 @@ public partial class OccultCrescentHelper
         public override void DrawConfig()
         {
             using var id = ImRaii.PushId("AetheryteManager");
-
-            using (FontManager.Instance().UIFont.Push())
+            
+            if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
-                ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-FastTeleport"));
-
-                ImGui.SameLine(0, 8f * GlobalUIScale);
-
-                if (ImGui.SmallButton($"{Lang.Get("Stop")}##StopAetheryte"))
-                {
-                    moveTaskHelper.Abort();
-                    vnavmeshIPC.StopPathfind();
-                }
+                ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Teleport"));
 
                 var longestName = string.Empty;
 
-                foreach (var aetheryte in CrescentAetheryte.SouthHornAetherytes)
+                var aetherytes = GameState.TerritoryType == 1252 ?
+                                     CrescentAetheryte.SouthHornAetherytes :
+                                     CrescentAetheryte.NorthHornAetherytes;
+
+                foreach (var aetheryte in aetherytes)
                 {
                     if (aetheryte.Name.Length <= longestName.Length) continue;
                     longestName = aetheryte.Name;
@@ -81,35 +76,20 @@ public partial class OccultCrescentHelper
                 using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
                 using (ImRaii.PushIndent())
                 {
-                    foreach (var aetheryte in CrescentAetheryte.SouthHornAetherytes)
+                    foreach (var aetheryte in aetherytes)
                     {
                         if (ImGui.Button(aetheryte.Name, buttonSize))
                             UseAetheryte(aetheryte);
                     }
                 }
+                
+                ImGui.NewLine();
             }
-
-            ImGui.NewLine();
-
-            if (ImGui.Checkbox($"{Lang.Get("OccultCrescentHelper-PrioritizeMoveTo")}", ref MainModule.config.IsEnabledMoveToAetheryte))
-                MainModule.config.Save(MainModule);
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-AetheryteManager-PrioritizeMoveTo-Help"), 20f * GlobalUIScale);
-
-            if (MainModule.config.IsEnabledMoveToAetheryte)
-            {
-                ImGui.SetNextItemWidth(150f * GlobalUIScale);
-                ImGui.SliderFloat($"{Lang.Get("OccultCrescentHelper-DistanceTo")}", ref MainModule.config.DistanceToMoveToAetheryte, 1f, 100f, "%.1f");
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                    MainModule.config.Save(MainModule);
-                ImGuiOm.HelpMarker($"{Lang.Get("OccultCrescentHelper-AetheryteManager-PrioritizeMoveTo-DistanceTo-Help")}", 20f * GlobalUIScale);
-            }
-
-            ImGui.NewLine();
-
+            
             ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Command"));
 
             using (ImRaii.PushIndent())
-                ImGui.TextUnformatted($"/pdr {COMMAND_TP} {Lang.Get("OccultCrescentHelper-Command-PTP-Help")}");
+                ImGui.TextWrapped($"/pdr {COMMAND_TP} {Lang.Get("OccultCrescentHelper-Command-PTP-Help")}");
         }
 
         private void OnLogout
@@ -185,10 +165,10 @@ public partial class OccultCrescentHelper
                 ) &&
                 DService.Instance().ObjectTable.SearchByID(eventObjectID) is { } targetObj)
             {
-                var distance3D = LocalPlayerState.DistanceTo3D(targetObj.Position);
+                var distanceSQ = LocalPlayerState.DistanceTo3DSquared(targetObj.Position);
 
                 // 可以直接交互, 不管怎么样直接交互
-                if (distance3D <= 4f)
+                if (distanceSQ <= 16f)
                 {
                     moveTaskHelper.Abort();
 
@@ -207,9 +187,8 @@ public partial class OccultCrescentHelper
                 }
 
                 // 启用了绿玩移动
-                if (MainModule.config.IsEnabledMoveToAetheryte                        &&
-                    DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
-                    distance3D <= MainModule.config.DistanceToMoveToAetheryte)
+                if (DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
+                    distanceSQ <= USE_AETHERYTE_DISTANCE_SQ)
                 {
                     moveTaskHelper.Abort();
 
@@ -219,7 +198,7 @@ public partial class OccultCrescentHelper
                             // 已经在坐骑上
                             if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
 
-                            if (distance3D <= 30)
+                            if (distanceSQ <= 30)
                             {
                                 // 用一下冲刺
                                 moveTaskHelper.Enqueue
@@ -283,18 +262,6 @@ public partial class OccultCrescentHelper
                 }
             }
 
-            // 先回去 然后重复一次这个流程
-            if (MainModule.config.IsEnabledMoveToAetheryte &&
-                DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME))
-            {
-                moveTaskHelper.Enqueue(() => UseActionManager.Instance().UseActionLocation(ActionType.Action, 41343));
-                moveTaskHelper.Enqueue(() => UIModule.IsScreenReady() && LocalPlayerState.DistanceTo3D(CrescentAetheryte.ExpeditionBaseCamp.Position) <= 100);
-                moveTaskHelper.Enqueue(() => UseAetheryte(aetheryte));
-
-                return;
-            }
-
-            TP(aetheryte.Position, moveTaskHelper);
         }
     }
 }

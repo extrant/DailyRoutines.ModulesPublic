@@ -109,7 +109,7 @@ public partial class OccultCrescentHelper
 
             using (ImRaii.PushIndent())
             {
-                ImGui.TextUnformatted($"/pdr {COMMAND_SWITCH_JOB} {Lang.Get("OccultCrescentHelper-Command-PJob-Help")}");
+                ImGui.TextWrapped($"/pdr {COMMAND_SWITCH_JOB} {Lang.Get("OccultCrescentHelper-Command-PJob-Help")}");
 
                 var builder = new StringBuilder();
                 builder.Append("ID:\n");
@@ -117,7 +117,7 @@ public partial class OccultCrescentHelper
                     builder.Append($"\t{data.RowId} - {data.Name}\t{data.NameFemale}\t{data.NameEnglish}\n");
                 ImGuiOm.HelpMarker(builder.ToString().TrimEnd('\n'), 100f * GlobalUIScale);
 
-                ImGui.TextUnformatted($"/pdr {COMMAND_BUFF} {Lang.Get("OccultCrescentHelper-Command-PBuff-Help")}");
+                ImGui.TextWrapped($"/pdr {COMMAND_BUFF} {Lang.Get("OccultCrescentHelper-Command-PBuff-Help")}");
             }
         }
 

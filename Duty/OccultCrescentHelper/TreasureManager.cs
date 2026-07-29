@@ -139,34 +139,41 @@ public partial class OccultCrescentHelper
             }
 
             ImGui.NewLine();
+            
+            ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
 
-            if (ImGui.Checkbox
-                (
-                    $"{Lang.Get("OccultCrescentHelper-Highlight")} ({LuminaWrapper.GetAddonText(395)})",
-                    ref MainModule.config.IsEnabledHighlightTreasure
-                ))
-                MainModule.config.Save(MainModule);
+            using (ImRaii.PushIndent())
+            {
+                if (ImGui.Checkbox
+                    (
+                        $"{LuminaWrapper.GetAddonText(395)}",
+                        ref MainModule.config.IsEnabledHighlightTreasure
+                    ))
+                    MainModule.config.Save(MainModule);
 
-            if (ImGui.Checkbox
-                (
-                    $"{Lang.Get("OccultCrescentHelper-Highlight")} ({LuminaWrapper.GetEObjName(2014695)})",
-                    ref MainModule.config.IsEnabledHighlightSurveyPoint
-                ))
-                MainModule.config.Save(MainModule);
+                if (ImGui.Checkbox
+                    (
+                        $"{LuminaWrapper.GetEObjName(2014695)}",
+                        ref MainModule.config.IsEnabledHighlightSurveyPoint
+                    ))
+                    MainModule.config.Save(MainModule);
 
-            if (ImGui.Checkbox
-                (
-                    $"{Lang.Get("OccultCrescentHelper-Highlight")} ({LuminaWrapper.GetItemName(48096)})",
-                    ref MainModule.config.IsEnabledHighlightCarrot
-                ))
-                MainModule.config.Save(MainModule);
+                if (ImGui.Checkbox
+                    (
+                        $"{LuminaWrapper.GetItemName(48096)}",
+                        ref MainModule.config.IsEnabledHighlightCarrot
+                    ))
+                    MainModule.config.Save(MainModule);
+            }
 
             ImGui.NewLine();
 
-            var textSize = ImGui.CalcTextSize($"{LuminaWrapper.GetAddonText(395)} [999.99, 999.99, 999.99]");
-
-            using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
+            if (originalPosition != default || treasureObjects.Count > 0)
             {
+                using var disabled = ImRaii.Disabled(treasureTaskHelper.IsBusy);
+
+                var textSize = ImGui.CalcTextSize($"{LuminaWrapper.GetAddonText(395)} [999.99, 999.99, 999.99]");
+                
                 if (originalPosition != default)
                 {
                     if (ImGui.Button
@@ -258,15 +265,14 @@ public partial class OccultCrescentHelper
                         );
                     }
                 }
+                
+                ImGui.NewLine();
             }
-
-
-            ImGui.NewLine();
 
             ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Command"));
 
             using (ImRaii.PushIndent())
-                ImGui.TextUnformatted($"/pdr {COMMAND_TREASURE} {Lang.Get("OccultCrescentHelper-Command-PTreasure-Help")}");
+                ImGui.TextWrapped($"/pdr {COMMAND_TREASURE} {Lang.Get("OccultCrescentHelper-Command-PTreasure-Help")}");
         }
 
         #region 事件
@@ -442,9 +448,6 @@ public partial class OccultCrescentHelper
                 var message = Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-End");
                 NotifyHelper.Instance().NotificationInfo(message);
                 NotifyHelper.Speak(message);
-
-                // 亚返回
-                UseActionManager.Instance().UseActionLocation(ActionType.Action, 41343);
                 return;
             }
 
