@@ -259,11 +259,6 @@ public partial class OccultCrescentHelper
                                             .ToList();
             allJobs.ForEach(x => StatusManager.ExecuteStatusOff(x.LongTimeStatusID));
 
-            IReadOnlyList<CrescentSupportJob> buffJobs =
-                CrescentSupportJob.Freelancer.IsActionUnlocked(ACTION_FREELANCER_BUFF) ?
-                    [CrescentSupportJob.Freelancer] :
-                    allJobs;
-
             SupportJobTaskHelper.Abort();
             SupportJobTaskHelper.Enqueue
             (() =>
@@ -275,35 +270,45 @@ public partial class OccultCrescentHelper
                 }
             );
 
-            foreach (var sJob in buffJobs)
+            if (CrescentSupportJob.Freelancer.IsActionUnlocked(ACTION_FREELANCER_BUFF))
             {
-                var actionID  = sJob == CrescentSupportJob.Freelancer ? ACTION_FREELANCER_BUFF : sJob.LongTimeStatusActionID;
-                var actionUsed = false;
-
                 SupportJobTaskHelper.Enqueue
                 (() =>
                     {
-                        if (sJob.IsThisJob()) return true;
+                        if (CrescentSupportJob.Freelancer.IsThisJob()) return true;
                         if (!Throttler.Shared.Throttle("OthersManager-OthersManager-ChangeSupportJob", 750)) return false;
 
-                        sJob.ChangeTo();
+                        CrescentSupportJob.Freelancer.ChangeTo();
                         return false;
                     }
                 );
                 SupportJobTaskHelper.Enqueue
-                (() =>
-                    {
-                        if (sJob == CrescentSupportJob.Freelancer)
+                (() => UseActionManager.Instance().UseAction(ActionType.Action, ACTION_FREELANCER_BUFF));
+            }
+            else
+            {
+                foreach (var sJob in allJobs)
+                {
+                    SupportJobTaskHelper.Enqueue
+                    (() =>
                         {
-                            if (actionUsed && allJobs.All(x => x.IsWithLongTimeStatus())) return true;
-                        }
-                        else if (sJob.IsWithLongTimeStatus())
-                            return true;
+                            if (sJob.IsThisJob()) return true;
+                            if (!Throttler.Shared.Throttle("OthersManager-OthersManager-ChangeSupportJob", 750)) return false;
 
-                        actionUsed |= UseActionManager.Instance().UseAction(ActionType.Action, actionID);
-                        return false;
-                    }
-                );
+                            sJob.ChangeTo();
+                            return false;
+                        }
+                    );
+                    SupportJobTaskHelper.Enqueue
+                    (() =>
+                        {
+                            if (sJob.IsWithLongTimeStatus()) return true;
+
+                            UseActionManager.Instance().UseAction(ActionType.Action, sJob.LongTimeStatusActionID);
+                            return false;
+                        }
+                    );
+                }
             }
 
             SupportJobTaskHelper.Enqueue
