@@ -44,7 +44,9 @@ public unsafe class AutoCountPlayers : ModuleBase
         ContentMemberListValidZones.Contains(GameState.TerritoryIntendedUse);
 
     private static bool IsPlayerSearchZone =>
-        GameState.TerritoryType > 0 && Sheets.PlayerSearchPlaceNames.ContainsKey(GameState.TerritoryTypeData.PlaceNameZone.RowId);
+        GameState.TerritoryType > 0 && 
+        GameState.ContentFinderCondition == 0 &&
+        Sheets.PlayerSearchPlaceNames.ContainsKey(GameState.TerritoryTypeData.PlaceNameZone.RowId);
     
     private Hook<InfoProxyContentMember.Delegates.EndRequest>? InfoProxyContentMemberEndRequestHook;
     private Hook<InfoProxySearch.Delegates.EndRequest>?        InfoProxySearchEndRequestHook;
