@@ -8,6 +8,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Text.ReadOnly;
 using OmenTools.Dalamud;
@@ -611,9 +612,7 @@ public partial class OccultCrescentHelper
                 }
                 else
                 {
-                    var returnPosition = GameState.TerritoryType == 1252 ?
-                                             MainModule.config.DefaultPositionEnterZoneSouthHorn :
-                                             MainModule.config.DefaultPositionEnterZoneNorthHorn;
+                    var demiReturnStartPosition = localPlayer.Position;
 
                     session.TravelStage = PathfindingTravelStage.DemiReturn;
 
@@ -634,6 +633,9 @@ public partial class OccultCrescentHelper
                             if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
                                 return false;
 
+                            if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return false;
+
+                            demiReturnStartPosition = player.Position;
                             return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
                         },
                         timeoutMS: 5_000,
@@ -650,7 +652,22 @@ public partial class OccultCrescentHelper
                                 return true;
 
                             return DService.Instance().ObjectTable.LocalPlayer is { } player &&
-                                   Vector3.DistanceSquared(player.Position, returnPosition) <= 30f * 30f;
+                                   player.Position != demiReturnStartPosition;
+                        },
+                        timeoutMS: 30_000,
+                        timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
+                        timeoutAction: () => session.TravelStage = PathfindingTravelStage.Pathfinding
+                    );
+
+                    taskHelper.Enqueue
+                    (
+                        () =>
+                        {
+                            if (pathfindingSession  != session ||
+                                session.TravelStage != PathfindingTravelStage.DemiReturn)
+                                return true;
+
+                            return UIModule.IsScreenReady();
                         },
                         timeoutMS: 30_000,
                         timeoutBehaviour: TaskAbortBehaviour.AbortCurrent,
