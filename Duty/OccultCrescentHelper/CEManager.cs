@@ -569,14 +569,11 @@ public partial class OccultCrescentHelper
             IslandEventData data
         ) =>
             vnavmeshIPC.IsPluginEnabled() &&
-            vnavmeshIPC.GetIsNavReady()   &&
             data.Event.Type switch
             {
-                CrescentEventType.FATE or CrescentEventType.MagicPot =>
-                    data is { FateTimeRemaining: >= FATE_MINIMUM_REMAINING_SECONDS, Event.Progress: <= FATE_MAXIMUM_PROGRESS },
-                CrescentEventType.CE =>
-                    data.Event is { CEState: DynamicEventState.Register, CELeftTimeSecond: >= CE_MINIMUM_REMAINING_SECONDS },
-                _ => false
+                CrescentEventType.FATE or CrescentEventType.MagicPot => true,
+                CrescentEventType.CE                                 => data.Event is { CEState: DynamicEventState.Register },
+                _                                                    => false
             };
 
         private void StartPathfinding
