@@ -980,12 +980,12 @@ public partial class OccultCrescentHelper
                           .AddText($"{Lang.Get("Position")}: ")
                           .Append(SeString.CreateMapLink(GameState.TerritoryTypeData.ExtractPlaceName(), mapPos.X, mapPos.Y));
 
-            if (ce.Event.DemiatmaID != 0)
+            if (ce.Event.SpecialWeaponMaterialID != 0)
             {
                 message.Add(NewLinePayload.Payload)
                        .AddText($"{Lang.Get("Item")}: ")
-                       .AddItemLink(ce.Event.DemiatmaID, false)
-                       .AddText($" ({LuminaWrapper.GetAddonText(358)}: {LocalPlayerState.GetItemCount(ce.Event.DemiatmaID)})");
+                       .AddItemLink(ce.Event.SpecialWeaponMaterialID, false)
+                       .AddText($" ({LuminaWrapper.GetAddonText(358)}: {LocalPlayerState.GetItemCount(ce.Event.SpecialWeaponMaterialID)})");
             }
 
             if (ce.Event.SpecialRewards is { Count: > 0 } specialRewards)
