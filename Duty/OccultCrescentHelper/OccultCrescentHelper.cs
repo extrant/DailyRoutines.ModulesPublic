@@ -184,6 +184,9 @@ public partial class OccultCrescentHelper : ModuleBase
         // 自动开箱
         public bool IsEnabledAutoOpenTreasure;
 
+        // 辅助吟游诗人
+        public bool IsEnabledBardOffensiveAria = true;
+
         // 辅助狂战士
         public bool IsEnabledBerserkerRageAutoFace = true;
         public bool IsEnabledBerserkerRageReplace  = true;
