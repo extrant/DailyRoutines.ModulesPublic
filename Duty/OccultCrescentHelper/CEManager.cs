@@ -887,25 +887,97 @@ public partial class OccultCrescentHelper
         {
             if (path.Count == 0) return;
 
-            var drawList               = ImGui.GetForegroundDrawList();
-            var hasPreviousScreenPoint = false;
-            var previousScreenPoint    = default(Vector2);
+            var drawList           = ImGui.GetForegroundDrawList();
+            var gameGUI            = DService.Instance().GameGUI;
+            var previousWorldPoint = path[0];
+            var previousInFront    = gameGUI.WorldToScreen
+            (
+                previousWorldPoint,
+                out var previousScreenPoint,
+                out var previousInView
+            );
 
-            foreach (var pathPoint in path)
+            for (var i = 1; i < path.Count; i++)
             {
-                if (!DService.Instance().GameGUI.WorldToScreen(pathPoint, out var screenPoint))
-                {
-                    hasPreviousScreenPoint = false;
-                    continue;
-                }
+                var worldPoint = path[i];
+                var isInFront  = gameGUI.WorldToScreen(worldPoint, out var screenPoint, out var isInView);
 
-                if (hasPreviousScreenPoint)
-                    drawList.AddLine(previousScreenPoint, screenPoint, PathLineColor, PATH_LINE_THICKNESS * GlobalUIScale);
+                DrawPathSegment
+                (
+                    drawList,
+                    gameGUI,
+                    previousWorldPoint,
+                    worldPoint,
+                    previousInFront ? previousScreenPoint : null,
+                    isInFront ? screenPoint : null
+                );
 
-                drawList.AddCircleFilled(screenPoint, PATH_POINT_RADIUS * GlobalUIScale, PathPointColor);
-                previousScreenPoint    = screenPoint;
-                hasPreviousScreenPoint = true;
+                if (previousInView)
+                    drawList.AddCircleFilled(previousScreenPoint, PATH_POINT_RADIUS * GlobalUIScale, PathPointColor);
+
+                previousWorldPoint  = worldPoint;
+                previousScreenPoint = screenPoint;
+                previousInFront     = isInFront;
+                previousInView      = isInView;
             }
+
+            if (previousInView)
+                drawList.AddCircleFilled(previousScreenPoint, PATH_POINT_RADIUS * GlobalUIScale, PathPointColor);
+        }
+
+        private static void DrawPathSegment
+        (
+            ImDrawListPtr drawList,
+            IGameGui      gameGUI,
+            Vector3       worldStart,
+            Vector3       worldEnd,
+            Vector2?      screenStart,
+            Vector2?      screenEnd
+        )
+        {
+            if (screenStart is { } start && screenEnd is { } end)
+            {
+                drawList.AddLine(start, end, PathLineColor, PATH_LINE_THICKNESS * GlobalUIScale);
+                return;
+            }
+
+            if (screenStart is null && screenEnd is null) return;
+
+            var inFrontWorldPoint  = screenStart is not null ? worldStart : worldEnd;
+            var behindWorldPoint   = screenStart is null ? worldStart : worldEnd;
+            var inFrontScreenPoint = screenStart ?? screenEnd!.Value;
+
+            if (TryClipPathSegmentToNearPlane(gameGUI, inFrontWorldPoint, behindWorldPoint, out var clippedScreenPoint))
+                drawList.AddLine(inFrontScreenPoint, clippedScreenPoint, PathLineColor, PATH_LINE_THICKNESS * GlobalUIScale);
+        }
+
+        private static bool TryClipPathSegmentToNearPlane
+        (
+            IGameGui gameGUI,
+            Vector3  inFrontWorldPoint,
+            Vector3  behindWorldPoint,
+            out Vector2 clippedScreenPoint
+        )
+        {
+            var inFrontRatio = 0f;
+            var behindRatio  = 1f;
+
+            for (var i = 0; i < 8; i++)
+            {
+                var ratio = (inFrontRatio + behindRatio) * 0.5f;
+
+                if (gameGUI.WorldToScreen(Vector3.Lerp(inFrontWorldPoint, behindWorldPoint, ratio), out _, out _))
+                    inFrontRatio = ratio;
+                else
+                    behindRatio = ratio;
+            }
+
+            return gameGUI.WorldToScreen
+            (
+                Vector3.Lerp(inFrontWorldPoint, behindWorldPoint, inFrontRatio),
+                out clippedScreenPoint,
+                out _
+            );
         }
 
         private void CompletePathfinding
