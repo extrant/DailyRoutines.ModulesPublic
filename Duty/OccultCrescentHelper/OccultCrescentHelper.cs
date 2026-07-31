@@ -37,9 +37,6 @@ public partial class OccultCrescentHelper : ModuleBase
 
     private List<BaseIslandModule> modules = [];
 
-    private static readonly CompSig IslandIDInstanceOffsetSig = new("48 8D 8F ?? ?? ?? ?? 40 0F B6 D5 E8 ?? ?? ?? ?? 8B D3");
-    private                 nint    islandIDInstanceOffset;
-
     public OccultCrescentHelper()
     {
         aetheryteModule  = new(this);
@@ -52,11 +49,6 @@ public partial class OccultCrescentHelper : ModuleBase
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
-
-        // lea     rcx, [rdi+XXXX], 因为是四字节所以用 uint
-        if (islandIDInstanceOffset == nint.Zero)
-            islandIDInstanceOffset = IslandIDInstanceOffsetSig.GetStatic();
-        DLog.Debug($"[{nameof(OccultCrescentHelper)}] 岛 ID 存储实例偏移量: {islandIDInstanceOffset}");
 
         Overlay       ??= new(this);
         Overlay.Flags &=  ~ImGuiWindowFlags.AlwaysAutoResize;
@@ -156,9 +148,6 @@ public partial class OccultCrescentHelper : ModuleBase
     }
 
     protected override void OverlayPostDraw() => FontManager.Instance().UIFont80.Pop();
-
-    private unsafe uint GetIslandID() =>
-        (uint)*(ulong*)((byte*)GameMain.Instance() + islandIDInstanceOffset + 1488);
 
     private class Config : ModuleConfig
     {

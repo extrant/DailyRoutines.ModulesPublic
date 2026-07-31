@@ -158,7 +158,7 @@ public partial class OccultCrescentHelper
 
             if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
-                if (ImGui.CollapsingHeader($"{Lang.Get("OccultCrescentHelper-CEManager-CEHistory")} ({MainModule.GetIslandID()})###CEHistory"))
+                if (ImGui.CollapsingHeader($"{Lang.Get("OccultCrescentHelper-CEManager-CEHistory")} ({GameState.ZoneServerID})###CEHistory"))
                 {
                     using (var table = ImRaii.Table("###CEHistoryTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
                     {
@@ -182,7 +182,7 @@ public partial class OccultCrescentHelper
 
                                 ImGui.TableNextColumn();
 
-                                if (MainModule.config.CEHistory.TryGetValue(MainModule.GetIslandID(), out var history) &&
+                                if (MainModule.config.CEHistory.TryGetValue(GameState.ZoneServerID, out var history) &&
                                     history.TryGetValue(ceID, out var time))
                                 {
                                     var dateTime = localTimes.GetOrAdd(time, _ => time.ToUTCDateTimeFromUnixSeconds().ToLocalTime());
@@ -415,7 +415,7 @@ public partial class OccultCrescentHelper
             var publicInstance = PublicContentOccultCrescent.GetInstance();
             if (publicInstance == null) return;
 
-            var islandID = MainModule.GetIslandID();
+            var islandID = GameState.ZoneServerID;
             MainModule.config.CEHistory.TryAdd(islandID, []);
 
             var currentCENames = new HashSet<string>();
@@ -819,7 +819,7 @@ public partial class OccultCrescentHelper
 
             var playerPosition = localPlayer.Position.ToVector2();
             var eventRadius = session.Data.Event.Type == CrescentEventType.CE ?
-                                  30f :
+                                  25f :
                                   session.Data.Event.Radius;
 
             if ((eventRadius                                                                      > 0f &&

@@ -389,8 +389,7 @@ public partial class OccultCrescentHelper
             overlayController ??= new();
             overlayController.AddNode(new LongTimeBuffButton(this));
 
-            var islandID = MainModule.GetIslandID();
-
+            var islandID = GameState.ZoneServerID;
             if (MainModule.config.IsEnabledIslandIDChat)
             {
                 using var rented = new RentedSeStringBuilder();
@@ -488,7 +487,7 @@ public partial class OccultCrescentHelper
 
                         var textNode = MKDInfo->GetTextNodeById(19);
                         if (textNode != null)
-                            textNode->SetText($"{Lang.Get("OccultCrescentHelper-OthersManager-IslandID")}: {MainModule.GetIslandID()}");
+                            textNode->SetText($"{Lang.Get("OccultCrescentHelper-OthersManager-IslandID")}: {GameState.ZoneServerID}");
                     }
 
                     if (MainModule.config.IsEnabledModifyInfoHUD && settingButton == null)
