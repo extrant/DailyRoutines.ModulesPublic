@@ -26,9 +26,6 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private TextButtonNode? settingButton;
-        private IconButtonNode? mapButton;
-
         private OverlayController? overlayController;
 
         private TaskHelper? othersTaskHelper;
@@ -38,9 +35,6 @@ public partial class OccultCrescentHelper
         public override void Init()
         {
             othersTaskHelper ??= new() { TimeoutMS = 30_000 };
-
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "MKDInfo", OnAddon);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MKDInfo", OnAddon);
 
             DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_CharaSelectListMenu", OnLogin);
 
@@ -57,13 +51,6 @@ public partial class OccultCrescentHelper
             DService.Instance().AddonLifecycle.UnregisterListener(OnLogin);
 
             DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-            DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-
-            settingButton?.Dispose();
-            settingButton = null;
-
-            mapButton?.Dispose();
-            mapButton = null;
 
             othersTaskHelper?.Abort();
             othersTaskHelper?.Dispose();
@@ -78,41 +65,6 @@ public partial class OccultCrescentHelper
         public override void DrawConfig()
         {
             using var id = ImRaii.PushId("OthersManager");
-
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-OthersManager-IslandID"));
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-IslandID-Help"), 20f * GlobalUIScale);
-
-            using (ImRaii.PushIndent())
-            {
-                if (ImGui.Checkbox
-                    (
-                        $"{Lang.Get("SendChat")}##IslandIDChat",
-                        ref MainModule.config.IsEnabledIslandIDChat
-                    ))
-                    MainModule.config.Save(MainModule);
-            }
-
-            ImGui.NewLine();
-
-            if (ImGui.Checkbox
-                (
-                    Lang.Get("OccultCrescentHelper-OthersManager-ModifyInfoHUD"),
-                    ref MainModule.config.IsEnabledModifyInfoHUD
-                ))
-            {
-                MainModule.config.Save(MainModule);
-
-                if (!MainModule.config.IsEnabledModifyInfoHUD)
-                {
-                    settingButton?.Dispose();
-                    settingButton = null;
-
-                    mapButton?.Dispose();
-                    mapButton = null;
-                }
-            }
-
-            ImGui.NewLine();
 
             ImGui.TextColored
             (
@@ -257,22 +209,6 @@ public partial class OccultCrescentHelper
             overlayController ??= new();
             overlayController.AddNode(new LongTimeBuffButton(this));
 
-            var islandID = GameState.ZoneServerID;
-
-            if (MainModule.config.IsEnabledIslandIDChat)
-            {
-                using var rented = new RentedSeStringBuilder();
-
-                var message = rented.Builder
-                                    .Append($"{Lang.Get("OccultCrescentHelper-OthersManager-IslandID")}: ")
-                                    .PushColorType(45)
-                                    .Append(islandID.ToString())
-                                    .PopColorType()
-                                    .ToReadOnlySeString();
-
-                NotifyHelper.Instance().Chat(message);
-            }
-
             if (!isJustLogin                         &&
                 ICondition.Instance().IsBetweenAreas &&
                 GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
@@ -332,94 +268,6 @@ public partial class OccultCrescentHelper
             AddonArgs  args
         ) =>
             isJustLogin = true;
-
-        private void OnAddon
-        (
-            AddonEvent type,
-            AddonArgs  args
-        )
-        {
-            switch (type)
-            {
-                case AddonEvent.PostDraw:
-                    if (MKDInfo == null) return;
-
-                    if (MainModule.config.IsEnabledModifyInfoHUD && settingButton == null)
-                    {
-                        var textNode0 = MKDInfo->GetTextNodeById(18);
-                        if (textNode0 != null)
-                            textNode0->SetAlpha(0);
-
-                        var textNode1 = MKDInfo->GetTextNodeById(20);
-                        if (textNode1 != null)
-                            textNode1->SetAlpha(0);
-
-                        var textNode = MKDInfo->GetTextNodeById(19);
-                        if (textNode != null)
-                            textNode->SetText($"{Lang.Get("OccultCrescentHelper-OthersManager-IslandID")}: {GameState.ZoneServerID}");
-                    }
-
-                    if (MainModule.config.IsEnabledModifyInfoHUD && settingButton == null)
-                    {
-                        var newJobNotifyButton = MKDInfo->GetImageNodeById(24);
-
-                        if (newJobNotifyButton != null)
-                        {
-                            newJobNotifyButton->ToggleVisibility(false);
-                            newJobNotifyButton->SetAlpha(0);
-                        }
-
-                        settingButton = new()
-                        {
-                            Position    = new(58, 160),
-                            Size        = new(40f, 32f),
-                            IsVisible   = true,
-                            String      = new SeStringBuilder().AddIcon(BitmapFontIcon.ExclamationRectangle).Build().Encode(),
-                            TextTooltip = MainModule.Info.Title,
-                            OnClick     = () => MainModule.Overlay.IsOpen ^= true
-                        };
-
-                        settingButton.AddColor                 = new(0, 0.1254902f, 0.5019608f);
-                        settingButton.MultiplyColor            = new(0.39215687f);
-                        settingButton.BackgroundNode.IsVisible = false;
-
-                        settingButton.AttachNode(MKDInfo->GetNodeById(67));
-                    }
-
-                    if (MainModule.config.IsEnabledModifyInfoHUD && mapButton == null)
-                    {
-                        mapButton = new()
-                        {
-                            Position    = new(58, 128),
-                            Size        = new(35f, 32f),
-                            IsVisible   = true,
-                            IconId      = 60561,
-                            TextTooltip = LuminaWrapper.GetAddonText(8441),
-                            OnClick = () =>
-                            {
-                                var agent = AgentMap.Instance();
-                                if (agent == null) return;
-
-                                if (!agent->IsAgentActive())
-                                    agent->OpenMap(GameState.Map, GameState.TerritoryType);
-                                else
-                                    agent->Hide();
-                            }
-                        };
-                        mapButton.ImageNode.Scale          *= 1.2f;
-                        mapButton.ImageNode.Position       -= new Vector2(10, 0);
-                        mapButton.BackgroundNode.IsVisible =  false;
-
-                        mapButton.AttachNode(MKDInfo->GetNodeById(67));
-                    }
-
-                    break;
-                case AddonEvent.PreFinalize:
-                    settingButton = null;
-                    mapButton     = null;
-                    break;
-            }
-        }
 
         private class LongTimeBuffButton : OverlayNode
         {

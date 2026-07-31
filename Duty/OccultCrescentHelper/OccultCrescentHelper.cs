@@ -159,7 +159,7 @@ public partial class OccultCrescentHelper : ModuleBase
         public string     AutoEnableDisablePlugins = string.Empty;
 
         // CE 历史记录
-        // 岛 ID - CE ID - 刷新时间秒级时间戳
+        // 副本 ID - CE ID - 刷新时间秒级时间戳
         public Dictionary<uint, Dictionary<uint, long>> CEHistory = [];
 
         public Vector3 DefaultPositionEnterZoneNorthHorn = new(882.2f, 258.5f, 882.0f);
@@ -190,14 +190,8 @@ public partial class OccultCrescentHelper : ModuleBase
         // 隐藏任务指令
         public bool IsEnabledHideDutyCommand;
 
-        // 岛 ID
-        public bool IsEnabledIslandIDChat = true;
-
         // 显示知见水晶
         public bool IsEnabledKnowledgeCrystalFastUse = true;
-
-        // 修改 HUD
-        public bool IsEnabledModifyInfoHUD = true;
 
         // 辅助武僧
         public bool IsEnabledMonkKickNoMove = true;
