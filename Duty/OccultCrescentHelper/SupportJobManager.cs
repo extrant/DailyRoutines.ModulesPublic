@@ -1,12 +1,8 @@
 using System.Numerics;
-using System.Text;
 using DailyRoutines.Extensions;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel.Sheets;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Interop.Game.Lumina;
@@ -25,8 +21,7 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private const string COMMAND_SWITCH_JOB               = "pjob";
-        private const string COMMAND_BUFF                     = "pbuff";
+        private const string COMMAND_BUFF = "pbuff";
         private const uint   ACTION_FREELANCER_BUFF           = 46606;
         private const uint   ACTION_OFFENSIVE_ARIA            = 41608;
         private const uint   STATUS_OFFENSIVE_ARIA            = 4247;
@@ -57,12 +52,6 @@ public partial class OccultCrescentHelper
 
             CommandManager.Instance().AddSubCommand
             (
-                COMMAND_SWITCH_JOB,
-                new(OnCommandSwitchJob) { HelpMessage = $"{Lang.Get("OccultCrescentHelper-Command-PJob-Help")}" }
-            );
-
-            CommandManager.Instance().AddSubCommand
-            (
                 COMMAND_BUFF,
                 new(OnCommandBuff) { HelpMessage = $"{Lang.Get("OccultCrescentHelper-Command-PBuff-Help")}" }
             );
@@ -75,7 +64,6 @@ public partial class OccultCrescentHelper
 
         public override void Uninit()
         {
-            CommandManager.Instance().RemoveSubCommand(COMMAND_SWITCH_JOB);
             CommandManager.Instance().RemoveSubCommand(COMMAND_BUFF);
 
             SupportJobTaskHelper?.Abort();
@@ -154,14 +142,6 @@ public partial class OccultCrescentHelper
 
             using (ImRaii.PushIndent())
             {
-                ImGui.TextWrapped($"/pdr {COMMAND_SWITCH_JOB} {Lang.Get("OccultCrescentHelper-Command-PJob-Help")}");
-
-                var builder = new StringBuilder();
-                builder.Append("ID:\n");
-                foreach (var data in LuminaGetter.Get<MKDSupportJob>())
-                    builder.Append($"\t{data.RowId} - {data.Name}\t{data.NameFemale}\t{data.NameEnglish}\n");
-                ImGuiOm.HelpMarker(builder.ToString().TrimEnd('\n'), 100f * GlobalUIScale);
-
                 ImGui.TextWrapped($"/pdr {COMMAND_BUFF} {Lang.Get("OccultCrescentHelper-Command-PBuff-Help")}");
             }
         }
@@ -389,53 +369,6 @@ public partial class OccultCrescentHelper
                 if (actionType == ActionType.Action && actionID == 41593)
                     actionID = spellID = 3549;
             }
-        }
-
-        private unsafe void OnCommandSwitchJob
-        (
-            string command,
-            string args
-        )
-        {
-            if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent)
-            {
-                RaptureLogModule.Instance()->ShowLogMessage(10970);
-                return;
-            }
-
-            args = args.Trim().ToLowerInvariant();
-
-            if (string.IsNullOrWhiteSpace(args))
-            {
-                MainModule.othersModule.SupportJobChangeAddon.Toggle();
-                return;
-            }
-
-            if (byte.TryParse(args, out var parsedJobID))
-            {
-                AgentMKDSupportJobList.Instance()->ChangeSupportJob(parsedJobID);
-                return;
-            }
-
-            var matchingJob = LuminaGetter.Get<MKDSupportJob>()
-                                          .Select
-                                          (data => new
-                                              {
-                                                  Data        = data,
-                                                  NameMale    = data.Name.ToString(),
-                                                  NameFemale  = data.NameFemale.ToString(),
-                                                  NameEnglish = data.NameEnglish.ToString()
-                                              }
-                                          )
-                                          .Where
-                                          (x => x.NameMale.Contains(args, StringComparison.OrdinalIgnoreCase)   ||
-                                                x.NameFemale.Contains(args, StringComparison.OrdinalIgnoreCase) ||
-                                                x.NameEnglish.Contains(args, StringComparison.OrdinalIgnoreCase)
-                                          )
-                                          .OrderBy(x => Math.Min(Math.Min(x.NameMale.Length, x.NameFemale.Length), x.NameEnglish.Length))
-                                          .FirstOrDefault();
-            if (matchingJob != null)
-                AgentMKDSupportJobList.Instance()->ChangeSupportJob((byte)matchingJob.Data.RowId);
         }
 
         private static void OnCommandBuff
