@@ -47,6 +47,9 @@ public unsafe class AutoAntiCensorship : ModuleBase
     private static readonly CompSig PartyFinderOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B F9 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
     private                 nint    PartyFinderOriginalMessageOffset;
 
+    private static readonly CompSig LocalMessageOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
+    private                 nint    LocalMessageOriginalMessageOffset;
+
     private static readonly CompSig LocalMessageDisplaySig = new("40 53 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
 
     private delegate Utf8String* LocalMessageDisplayDelegate
@@ -109,6 +112,11 @@ public unsafe class AutoAntiCensorship : ModuleBase
         if (PartyFinderOriginalMessageOffset == nint.Zero)
             PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 招募信息原始字符串偏移量: {PartyFinderOriginalMessageOffset}");
+
+        // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
+        if (LocalMessageOriginalMessageOffset == nint.Zero)
+            LocalMessageOriginalMessageOffset = LocalMessageOriginalMessageOffsetBaseSig.GetStatic();
+        DLog.Debug($"[{nameof(AutoAntiCensorship)}] 聊天信息原始字符串偏移量: {LocalMessageOriginalMessageOffset}");
 
         GetFilteredUtf8String ??= GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
 
@@ -382,9 +390,8 @@ public unsafe class AutoAntiCensorship : ModuleBase
         var seString = source->StringPtr.AsReadOnlySeString();
         HighlightCensorship(ref seString);
 
-        source->SetString(seString);
-        var target = (Utf8String*)(a1 + 1096);
-        target->Copy(source);
+        var target = (Utf8String*)(a1 + LocalMessageOriginalMessageOffset);
+        target->SetString(seString);
         return target;
     }
 
@@ -401,9 +408,8 @@ public unsafe class AutoAntiCensorship : ModuleBase
         var seString = source->StringPtr.AsReadOnlySeString();
         HighlightCensorship(ref seString);
 
-        source->SetString(seString);
         var target = (Utf8String*)(a1 + PartyFinderOriginalMessageOffset);
-        target->Copy(source);
+        target->SetString(seString);
         return target;
     }
 
