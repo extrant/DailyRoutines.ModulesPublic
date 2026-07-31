@@ -154,9 +154,7 @@ public partial class OccultCrescentHelper : ModuleBase
         // 辅助职业技能是否为真
         public bool AddonIsDragRealAction = true;
 
-        // 辅助职业排序
-        public List<uint> AddonSupportJobOrder     = [];
-        public string     AutoEnableDisablePlugins = string.Empty;
+        public string AutoEnableDisablePlugins = string.Empty;
 
         // CE 历史记录
         // 副本 ID - CE ID - 刷新时间秒级时间戳
@@ -189,6 +187,9 @@ public partial class OccultCrescentHelper : ModuleBase
 
         // 隐藏任务指令
         public bool IsEnabledHideDutyCommand;
+
+        // 修改 HUD
+        public bool IsEnabledModifyInfoHUD = true;
 
         // 显示知见水晶
         public bool IsEnabledKnowledgeCrystalFastUse = true;
