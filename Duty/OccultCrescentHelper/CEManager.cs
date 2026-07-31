@@ -819,7 +819,7 @@ public partial class OccultCrescentHelper
 
             var playerPosition = localPlayer.Position.ToVector2();
             var eventRadius = session.Data.Event.Type == CrescentEventType.CE ?
-                                  40f :
+                                  30f :
                                   session.Data.Event.Radius;
 
             if ((eventRadius                                                                      > 0f &&
