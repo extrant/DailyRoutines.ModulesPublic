@@ -458,7 +458,13 @@ public unsafe class AutoAntiCensorship : ModuleBase
             // payload.ToString() 返回宏字符串格式（\< 代替 <），会导致反斜杠累积
             // 需通过原始字节构造临时 ReadOnlySeString 来获取无转义的原始文本
             var payloadText = new ReadOnlySeString(payload.AsSpan().Body).ToString();
-            if (string.IsNullOrEmpty(payloadText.Replace('*', ' ').Trim())) continue;
+
+            // 纯星号内容不可能是屏蔽产物, 原样保留
+            if (string.IsNullOrEmpty(payloadText.Replace('*', ' ').Trim()))
+            {
+                builder.Append(payload);
+                continue;
+            }
 
             builder.Append(BypassCensorship(payloadText));
         }
@@ -662,7 +668,13 @@ public unsafe class AutoAntiCensorship : ModuleBase
 
             // payload.ToString() 返回宏字符串格式（\< 代替 <），会导致反斜杠累积
             var payloadText = new ReadOnlySeString(payload.AsSpan().Body).ToString();
-            if (string.IsNullOrEmpty(payloadText.Replace('*', ' ').Trim())) continue;
+
+            // 纯星号内容不可能是屏蔽产物, 原样保留
+            if (string.IsNullOrEmpty(payloadText.Replace('*', ' ').Trim()))
+            {
+                builder.Append(payload);
+                continue;
+            }
 
             builder.Append(HighlightCensorship(payloadText));
         }
