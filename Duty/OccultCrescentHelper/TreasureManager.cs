@@ -824,7 +824,8 @@ public partial class OccultCrescentHelper
 
         private static readonly FrozenDictionary<string, List<TreasureHuntPoint>> Routes = new Dictionary<string, List<TreasureHuntPoint>>
         {
-            [Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Route-NorthHorn")] =
+            // 北征
+            [LuminaWrapper.GetAddonText(16587)] =
             [
                 new(676.97f, 190.97f, 957.43f),
                 new(673.73f, 161.15f, 729.64f),
@@ -895,7 +896,8 @@ public partial class OccultCrescentHelper
                 new(815.43f, 60.53f, -657.34f),
                 new(950.19f, 73.99f, -359.00f)
             ],
-            [Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Route-SouthHornNorth")] =
+            // 南征
+            [LuminaWrapper.GetAddonText(16586)] =
             [
                 new(617.09f, 66.30f, -703.88f),
                 new(490.41f, 62.46f, -590.57f),
@@ -922,10 +924,7 @@ public partial class OccultCrescentHelper
                 new(-856.96f, 68.83f, -93.16f),
                 new(-798.25f, 105.58f, -310.57f),
                 new(-767.45f, 115.62f, -235.00f),
-                new(-680.54f, 104.84f, -354.79f)
-            ],
-            [Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Route-SouthHornSouth")] =
-            [
+                new(-680.54f, 104.84f, -354.79f),
                 new(666.53f, 79.12f, -480.37f),
                 new(870.66f, 95.69f, -388.36f),
                 new(779.02f, 96.09f, -256.24f),
@@ -969,7 +968,7 @@ public partial class OccultCrescentHelper
                 new(-784.76f, 138.99f, 699.76f),
                 new(-729.55f, 106.98f, 561.15f),
                 new(-648.00f, 75.00f, 403.95f)
-            ]
+            ],
         }.ToFrozenDictionary();
 
         #endregion
