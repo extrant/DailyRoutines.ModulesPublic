@@ -104,34 +104,31 @@ public unsafe class AutoAntiCensorship : ModuleBase
         config ??= Config.Load(this) ?? new();
 
         // mov rax, [rcx + XXXX], 因为是四字节所以用 uint
-        if (VulgarInstanceOffset == nint.Zero)
-            VulgarInstanceOffset = VulgarInstanceOffsetBaseSig.GetStatic();
+        VulgarInstanceOffset = VulgarInstanceOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 屏蔽词系统偏移量: {VulgarInstanceOffset}");
 
         // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
-        if (PartyFinderOriginalMessageOffset == nint.Zero)
-            PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
+        PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 招募信息原始字符串偏移量: {PartyFinderOriginalMessageOffset}");
 
         // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
-        if (LocalMessageOriginalMessageOffset == nint.Zero)
-            LocalMessageOriginalMessageOffset = LocalMessageOriginalMessageOffsetBaseSig.GetStatic();
+        LocalMessageOriginalMessageOffset = LocalMessageOriginalMessageOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 聊天信息原始字符串偏移量: {LocalMessageOriginalMessageOffset}");
 
-        GetFilteredUtf8String ??= GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
+        GetFilteredUtf8String = GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
 
-        LocalMessageDisplayHook ??= LocalMessageDisplaySig.GetHook<LocalMessageDisplayDelegate>(LocalMessageDisplayDetour);
+        LocalMessageDisplayHook = LocalMessageDisplaySig.GetHook<LocalMessageDisplayDelegate>(LocalMessageDisplayDetour);
         LocalMessageDisplayHook.Enable();
 
-        TextInputReceiveEventHook ??= TextInputReceiveEventSig.GetHook<TextInputReceiveDelegate>(TextInputReceiveEventDetour);
+        TextInputReceiveEventHook = TextInputReceiveEventSig.GetHook<TextInputReceiveDelegate>(TextInputReceiveEventDetour);
         TextInputReceiveEventHook.Enable();
 
         ChatManager.Instance().RegPreExecuteCommandInner(OnPreExecuteCommandInner);
 
-        PartyFinderMessageDisplayHook ??= PartyFinderMessageDisplaySig.GetHook<PartyFinderMessageDisplayDelegate>(PartyFinderMessageDisplayDetour);
+        PartyFinderMessageDisplayHook = PartyFinderMessageDisplaySig.GetHook<PartyFinderMessageDisplayDelegate>(PartyFinderMessageDisplayDetour);
         PartyFinderMessageDisplayHook.Enable();
 
-        LookingForGroupConditionReceiveEventHook ??=
+        LookingForGroupConditionReceiveEventHook =
             LookingForGroupConditionReceiveEventSig.GetHook<LookingForGroupConditionReceiveEventDelegate>(LookingForGroupConditionReceiveEventDetour);
         LookingForGroupConditionReceiveEventHook.Enable();
     }
@@ -387,10 +384,20 @@ public unsafe class AutoAntiCensorship : ModuleBase
         if (!config.DisplayCensoredText)
             return LocalMessageDisplayHook.Original(a1, source);
 
+        if (source == null  ||
+            source->IsEmpty ||
+            !source->StringPtr.HasValue)
+            return LocalMessageDisplayHook.Original(a1, source);
+        
         var seString = source->StringPtr.AsReadOnlySeString();
         HighlightCensorship(ref seString);
 
         var target = (Utf8String*)(a1 + LocalMessageOriginalMessageOffset);
+        if (target == null  ||
+            target->IsEmpty ||
+            !target->StringPtr.HasValue)
+            return LocalMessageDisplayHook.Original(a1, source);
+        
         target->SetString(seString);
         return target;
     }
