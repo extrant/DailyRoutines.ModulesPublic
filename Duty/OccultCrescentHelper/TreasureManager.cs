@@ -417,14 +417,18 @@ public partial class OccultCrescentHelper
             treasureTaskHelper.Abort();
             queuedGatheringList.Clear();
 
-            if (LocalPlayerState.DistanceTo2D(CrescentAetheryte.ExpeditionBaseCamp.Position.ToVector2()) <= 50)
+            var startPosition = GameState.TerritoryType == SOUTH_HORN_TERRITORY_ID ?
+                                    CrescentAetheryte.ExpeditionBaseCamp.Position :
+                                    CrescentAetheryte.NorthHornBaseCamp.Position;
+            
+            if (LocalPlayerState.DistanceTo2D(startPosition.ToVector2()) <= 50)
             {
                 NotifyHelper.Instance().NotificationError(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-Danger"));
                 return;
             }
 
             queuedGatheringList = PathPlanner.PlanShortestPath(LocalPlayerState.Object.Position, routeData);
-            currentRoute        = new(queuedGatheringList);
+            currentRoute        = [.. queuedGatheringList];
             MoveToNextTreasurePoint();
         }
 
@@ -695,10 +699,13 @@ public partial class OccultCrescentHelper
         {
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
 
-            var moveType = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
-            new PositionUpdateInstancePacket(localPlayer.Rotation, treasure->Position, moveType).Send();
+            var moveType         = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
+            var origPosition     = localPlayer.Position;
+            var treasurePosition = (Vector3)treasure->Position - new Vector3(0, 8, 0);
+            
+            new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
-            new PositionUpdateInstancePacket(localPlayer.Rotation, localPlayer.Position, moveType).Send();
+            new PositionUpdateInstancePacket(localPlayer.Rotation, origPosition, moveType).Send();
         }
 
         public class TreasureHuntPoint
