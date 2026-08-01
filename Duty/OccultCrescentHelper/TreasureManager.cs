@@ -445,6 +445,16 @@ public partial class OccultCrescentHelper
             {
                 StopAutoTreasureHunt();
 
+                treasureTaskHelper.Enqueue
+                (() =>
+                    {
+                        if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
+                            return false;
+
+                        return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
+                    }
+                );
+
                 var message = Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-End");
                 NotifyHelper.Instance().NotificationInfo(message);
                 NotifyHelper.Speak(message);

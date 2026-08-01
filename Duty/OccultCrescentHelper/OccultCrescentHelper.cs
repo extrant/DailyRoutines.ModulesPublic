@@ -226,4 +226,10 @@ public partial class OccultCrescentHelper : ModuleBase
 
         public virtual void Uninit() { }
     }
+
+    #region 常量
+
+    private const uint DEMI_RETURN_ACTION_ID = 41343;
+
+    #endregion
 }
