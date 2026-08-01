@@ -156,10 +156,6 @@ public partial class OccultCrescentHelper : ModuleBase
 
         public string AutoEnableDisablePlugins = string.Empty;
 
-        // CE 历史记录
-        // 副本 ID - CE ID - 刷新时间秒级时间戳
-        public Dictionary<uint, Dictionary<uint, long>> CEHistory = [];
-
         public Vector3 DefaultPositionEnterZoneNorthHorn = new(882.2f, 258.5f, 882.0f);
         public Vector3 DefaultPositionEnterZoneSouthHorn = new(834, 73, -694);
 

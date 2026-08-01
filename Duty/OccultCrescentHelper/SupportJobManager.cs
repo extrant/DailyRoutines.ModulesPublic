@@ -28,10 +28,7 @@ public partial class OccultCrescentHelper
 
         public override void Init()
         {
-            SupportJobTaskHelper = new()
-            {
-                MoveToNextCheckFunc = () => ActionInsertionTaskHelper?.IsBusy ?? false
-            };
+            SupportJobTaskHelper      = new();
             ActionInsertionTaskHelper = new() { TimeoutMS = 60_000 };
 
             actionInsertionRules =

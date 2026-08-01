@@ -21,7 +21,6 @@ using OmenTools.OmenService.ZoneIndicator;
 using OmenTools.Threading;
 using OmenTools.Threading.TaskHelper;
 using OmenTools.Threading.TaskHelper.Enums;
-using TimeAgo;
 using FateState = Dalamud.Game.ClientState.Fates.FateState;
 
 namespace DailyRoutines.ModulesPublic.Duty;
@@ -49,8 +48,6 @@ public partial class OccultCrescentHelper
 
         private          HashSet<IslandEventData> allIslandEvents = [];
         private readonly HashSet<string>          knownCENames    = [];
-
-        private readonly Dictionary<long, DateTime> localTimes = [];
 
         private ZoneIndicatorHandle? fateHandle;
         private ZoneIndicatorHandle? ceHandle;
@@ -150,50 +147,6 @@ public partial class OccultCrescentHelper
                                 StartPathfinding(ce);
                         }
                     }
-                }
-
-                ImGui.NewLine();
-            }
-
-            if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
-            {
-                if (ImGui.CollapsingHeader($"{Lang.Get("OccultCrescentHelper-CEManager-CEHistory")} ({GameState.ZoneServerID})###CEHistory"))
-                {
-                    using (var table = ImRaii.Table("###CEHistoryTable", 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
-                    {
-                        if (table)
-                        {
-                            ImGui.TableSetupColumn($"{Lang.Get("Name")}",                                              ImGuiTableColumnFlags.WidthStretch, 30);
-                            ImGui.TableSetupColumn($"{Lang.Get("OccultCrescentHelper-CEManager-CEHistory-LastTime")}", ImGuiTableColumnFlags.WidthStretch, 20);
-
-                            ImGui.TableHeadersRow();
-
-                            foreach (var ceID in CrescentEvent.EventToItem.Keys)
-                            {
-                                if (LuminaWrapper.GetDynamicEventName(ceID) is not { } name ||
-                                    string.IsNullOrEmpty(name))
-                                    continue;
-
-                                ImGui.TableNextRow();
-
-                                ImGui.TableNextColumn();
-                                ImGuiOm.TextOutlined(ImGui.GetColorU32(ImGuiCol.Text), $"{name}", KnownColor.LightSkyBlue.ToUInt(), 0.1f);
-
-                                ImGui.TableNextColumn();
-
-                                if (MainModule.config.CEHistory.TryGetValue(GameState.ZoneServerID, out var history) &&
-                                    history.TryGetValue(ceID, out var time))
-                                {
-                                    var dateTime = localTimes.GetOrAdd(time, _ => time.ToUTCDateTimeFromUnixSeconds().ToLocalTime());
-                                    ImGui.TextUnformatted($"{dateTime.TimeAgo()}\t\t\t({dateTime:MM/dd HH:mm:ss})");
-                                }
-                                else
-                                    ImGui.TextUnformatted("-");
-                            }
-                        }
-                    }
-
-                    ImGui.TextWrapped(Lang.Get("OccultCrescentHelper-CEManager-CEHistory-Notify"));
                 }
 
                 ImGui.NewLine();
@@ -414,9 +367,6 @@ public partial class OccultCrescentHelper
             var publicInstance = PublicContentOccultCrescent.GetInstance();
             if (publicInstance == null) return;
 
-            var islandID = GameState.ZoneServerID;
-            MainModule.config.CEHistory.TryAdd(islandID, []);
-
             var currentCENames = new HashSet<string>();
             var newCEData      = new List<IslandEventData>();
 
@@ -458,15 +408,11 @@ public partial class OccultCrescentHelper
                 if (knownCENames.Add(safeCE.Event.Name))
                     NotifyNewCE(safeCE);
 
-                // 因为从刷新到正式开始时间为 3 分钟
-                MainModule.config.CEHistory[islandID][safeCE.Event.DataID] = safeCE.Event.CEStartTime - 180;
             }
 
             knownCENames.IntersectWith(currentCENames);
             allIslandEvents.IntersectWith(newCEData);
 
-            if (Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-OnUpdate-SaveCEHistory", 10_000))
-                MainModule.config.Save(MainModule);
         }
 
         private void OnPostReceivedCommand
