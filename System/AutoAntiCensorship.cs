@@ -32,13 +32,11 @@ public unsafe class AutoAntiCensorship : ModuleBase
     public override ModulePermission Permission { get; } = new() { CNOnly = true, CNDefaultEnabled = true };
 
     private static readonly CompSig GetFilteredUtf8StringSig = new("48 89 74 24 ?? 57 48 83 EC ?? 48 83 79 ?? ?? 48 8B FA 48 8B F1 0F 84 ?? ?? ?? ?? 48 89 5C 24");
-
     private delegate void GetFilteredUtf8StringDelegate
     (
         nint        vulgarInstance,
         Utf8String* str
     );
-
     private GetFilteredUtf8StringDelegate? GetFilteredUtf8String;
 
     private static readonly CompSig VulgarInstanceOffsetBaseSig = new("48 8B 81 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B D3");
@@ -47,45 +45,35 @@ public unsafe class AutoAntiCensorship : ModuleBase
     private static readonly CompSig PartyFinderOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B F9 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
     private                 nint    PartyFinderOriginalMessageOffset;
 
-    private static readonly CompSig LocalMessageOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
-    private                 nint    LocalMessageOriginalMessageOffset;
-
     private static readonly CompSig LocalMessageDisplaySig = new("40 53 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
-
     private delegate Utf8String* LocalMessageDisplayDelegate
     (
         nint        a1,
         Utf8String* source
     );
-
     private Hook<LocalMessageDisplayDelegate>? LocalMessageDisplayHook;
 
     private static readonly CompSig PartyFinderMessageDisplaySig = new("48 89 5C 24 ?? 57 48 83 EC ?? 48 8D 99 ?? ?? ?? ?? 48 8B F9 48 8B CB E8");
-
     private delegate Utf8String* PartyFinderMessageDisplayDelegate
     (
         nint        a1,
         Utf8String* source
     );
-
     private Hook<PartyFinderMessageDisplayDelegate>? PartyFinderMessageDisplayHook;
 
     private static readonly CompSig LookingForGroupConditionReceiveEventSig = new
     (
         "E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 45 8B C2 48 8B D6 48 8B CB E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 45 8B C2 48 8B D6 48 8B CB E8 ?? ?? ?? ?? 0F B6 F8 E9 ?? ?? ?? ?? 48 8B CE"
     );
-
     private delegate byte LookingForGroupConditionReceiveEventDelegate
     (
         nint      a1,
         AtkValue* a2
     );
-
     private Hook<LookingForGroupConditionReceiveEventDelegate>? LookingForGroupConditionReceiveEventHook;
 
     private static readonly CompSig TextInputReceiveEventSig =
         new("4C 8B DC 55 53 57 41 54 41 57 49 8D AB ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 48 8B 9D");
-
     private delegate void TextInputReceiveDelegate
     (
         AtkComponentTextInput* textInput,
@@ -94,8 +82,10 @@ public unsafe class AutoAntiCensorship : ModuleBase
         AtkEvent*              atkEvent,
         AtkEventData*          atkEventData
     );
-
     private Hook<TextInputReceiveDelegate>? TextInputReceiveEventHook;
+    
+    private static readonly CompSig LocalMessageOriginalMessageOffsetBaseSig = new("48 8D 99 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B 0D");
+    private                 nint    LocalMessageOriginalMessageOffset;
 
     private Config config = null!;
 
@@ -104,31 +94,34 @@ public unsafe class AutoAntiCensorship : ModuleBase
         config ??= Config.Load(this) ?? new();
 
         // mov rax, [rcx + XXXX], 因为是四字节所以用 uint
-        VulgarInstanceOffset = VulgarInstanceOffsetBaseSig.GetStatic();
+        if (VulgarInstanceOffset == nint.Zero)
+            VulgarInstanceOffset = VulgarInstanceOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 屏蔽词系统偏移量: {VulgarInstanceOffset}");
 
         // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
-        PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
+        if (PartyFinderOriginalMessageOffset == nint.Zero)
+            PartyFinderOriginalMessageOffset = PartyFinderOriginalMessageOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 招募信息原始字符串偏移量: {PartyFinderOriginalMessageOffset}");
-
+        
         // lea rbx, [rcx+XXXX], 因为是四字节所以用 uint
-        LocalMessageOriginalMessageOffset = LocalMessageOriginalMessageOffsetBaseSig.GetStatic();
+        if (LocalMessageOriginalMessageOffset == nint.Zero)
+            LocalMessageOriginalMessageOffset = LocalMessageOriginalMessageOffsetBaseSig.GetStatic();
         DLog.Debug($"[{nameof(AutoAntiCensorship)}] 聊天信息原始字符串偏移量: {LocalMessageOriginalMessageOffset}");
 
-        GetFilteredUtf8String = GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
+        GetFilteredUtf8String ??= GetFilteredUtf8StringSig.GetDelegate<GetFilteredUtf8StringDelegate>();
 
-        LocalMessageDisplayHook = LocalMessageDisplaySig.GetHook<LocalMessageDisplayDelegate>(LocalMessageDisplayDetour);
+        LocalMessageDisplayHook ??= LocalMessageDisplaySig.GetHook<LocalMessageDisplayDelegate>(LocalMessageDisplayDetour);
         LocalMessageDisplayHook.Enable();
 
-        TextInputReceiveEventHook = TextInputReceiveEventSig.GetHook<TextInputReceiveDelegate>(TextInputReceiveEventDetour);
+        TextInputReceiveEventHook ??= TextInputReceiveEventSig.GetHook<TextInputReceiveDelegate>(TextInputReceiveEventDetour);
         TextInputReceiveEventHook.Enable();
 
         ChatManager.Instance().RegPreExecuteCommandInner(OnPreExecuteCommandInner);
 
-        PartyFinderMessageDisplayHook = PartyFinderMessageDisplaySig.GetHook<PartyFinderMessageDisplayDelegate>(PartyFinderMessageDisplayDetour);
+        PartyFinderMessageDisplayHook ??= PartyFinderMessageDisplaySig.GetHook<PartyFinderMessageDisplayDelegate>(PartyFinderMessageDisplayDetour);
         PartyFinderMessageDisplayHook.Enable();
 
-        LookingForGroupConditionReceiveEventHook =
+        LookingForGroupConditionReceiveEventHook ??=
             LookingForGroupConditionReceiveEventSig.GetHook<LookingForGroupConditionReceiveEventDelegate>(LookingForGroupConditionReceiveEventDetour);
         LookingForGroupConditionReceiveEventHook.Enable();
     }
@@ -384,21 +377,12 @@ public unsafe class AutoAntiCensorship : ModuleBase
         if (!config.DisplayCensoredText)
             return LocalMessageDisplayHook.Original(a1, source);
 
-        if (source == null  ||
-            source->IsEmpty ||
-            !source->StringPtr.HasValue)
-            return LocalMessageDisplayHook.Original(a1, source);
-        
         var seString = source->StringPtr.AsReadOnlySeString();
         HighlightCensorship(ref seString);
 
+        source->SetString(seString);
         var target = (Utf8String*)(a1 + LocalMessageOriginalMessageOffset);
-        if (target == null  ||
-            target->IsEmpty ||
-            !target->StringPtr.HasValue)
-            return LocalMessageDisplayHook.Original(a1, source);
-        
-        target->SetString(seString);
+        target->Copy(source);
         return target;
     }
 
@@ -415,8 +399,9 @@ public unsafe class AutoAntiCensorship : ModuleBase
         var seString = source->StringPtr.AsReadOnlySeString();
         HighlightCensorship(ref seString);
 
+        source->SetString(seString);
         var target = (Utf8String*)(a1 + PartyFinderOriginalMessageOffset);
-        target->SetString(seString);
+        target->Copy(source);
         return target;
     }
 
