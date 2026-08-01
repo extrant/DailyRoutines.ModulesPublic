@@ -692,7 +692,7 @@ public partial class OccultCrescentHelper
             carrotPositions      = carrots;
         }
 
-        private static unsafe void InteractWithTreasure
+        private unsafe void InteractWithTreasure
         (
             Treasure* treasure
         )
@@ -701,7 +701,7 @@ public partial class OccultCrescentHelper
 
             var moveType         = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
             var origPosition     = localPlayer.Position;
-            var treasurePosition = (Vector3)treasure->Position - new Vector3(0, 8, 0);
+            var treasurePosition = (Vector3)treasure->Position - (treasureTaskHelper.IsBusy ? new Vector3(0, 8, 0) : Vector3.Zero);
             
             new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
