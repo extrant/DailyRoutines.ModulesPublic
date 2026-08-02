@@ -3,6 +3,7 @@ using System.Numerics;
 using DailyRoutines.Extensions;
 using DailyRoutines.Manager;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -715,7 +716,12 @@ public partial class OccultCrescentHelper
 
             var moveType         = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
             var origPosition     = localPlayer.Position;
-            var treasurePosition = (Vector3)treasure->Position - (treasureTaskHelper.IsBusy ? new Vector3(0, 20, 0) : Vector3.Zero);
+
+            var origTreasurePosition = (Vector3)treasure->Position;
+
+            var treasurePosition = !treasureTaskHelper.IsBusy ?
+                                       origTreasurePosition :
+                                       origTreasurePosition.WithY(origPosition.Y - 8f);
             
             new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
@@ -908,12 +914,6 @@ public partial class OccultCrescentHelper
                 new(-168.23f, 3.37f, -153.46f),
                 new(43.78f, 2.43f, -108.20f),
                 new(-162.07f, 3.59f, 98.44f),
-                new(-287.77f, -92.03f, 125.66f),
-                new(-144.73f, -129.81f, 304.92f),
-                new(41.21f, -140.80f, 168.47f),
-                new(161.00f, -151.78f, 15.98f),
-                new(223.65f, -161.88f, -30.66f),
-                new(313.89f, -139.54f, 180.04f),
                 new(449.39f, 0.14f, 105.21f),
                 new(383.29f, 32.97f, -175.68f),
                 new(478.45f, 12.41f, -202.99f),
@@ -927,6 +927,18 @@ public partial class OccultCrescentHelper
                 new(815.43f, 60.53f, -657.34f),
                 new(950.19f, 73.99f, -359.00f)
             ],
+            
+            // 北征（地下空洞）
+            [$"{LuminaWrapper.GetAddonText(16587)} ({LuminaWrapper.GetPlaceName(5593)})"] = 
+            [
+                new(-287.77f, -92.03f, 125.66f),
+                new(-144.73f, -129.81f, 304.92f),
+                new(41.21f, -140.80f, 168.47f),
+                new(161.00f, -151.78f, 15.98f),
+                new(223.65f, -161.88f, -30.66f),
+                new(313.89f, -139.54f, 180.04f),
+            ],
+            
             // 南征
             [LuminaWrapper.GetAddonText(16586)] =
             [
