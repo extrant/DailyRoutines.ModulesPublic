@@ -59,7 +59,13 @@ public class AutoUmbralSoul : ModuleBase
 
     private unsafe bool UseRelatedActions()
     {
-        if (ICondition.Instance()[ConditionFlag.InCombat])
+        if (ICondition.Instance().Any
+            (
+                ConditionFlag.InCombat,
+                ConditionFlag.Mounted,
+                ConditionFlag.Mounting,
+                ConditionFlag.InFlight
+            ))
         {
             TaskHelper.Abort();
             return true;
@@ -69,6 +75,12 @@ public class AutoUmbralSoul : ModuleBase
 
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return false;
+
+        if (localPlayer->ClassJob != CLASS_JOB)
+        {
+            TaskHelper.Abort();
+            return true;
+        }
 
         // 六层灵极魂 → 耀星, 不把耀星打出来太亏了
         if (gauge.AstralSoulStacks == 6)
