@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using System.Numerics;
 using DailyRoutines.Extensions;
 using DailyRoutines.Manager;
@@ -26,9 +25,8 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private static float MinHeight => GameState.TerritoryType == SOUTH_HORN_TERRITORY_ID ?
-                                              -5 :
-                                              -160;
+        // 先暂时这样，后续发现没什么问题了再改成常量
+        private static float MinHeight => -5;
         
         private TaskHelper? treasureTaskHelper;
 
@@ -130,14 +128,17 @@ public partial class OccultCrescentHelper
 
                     using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
                     {
-                        foreach (var (routeName, routeData) in Routes)
+                        foreach (var route in Routes.Where(x => x.TerritoryType == GameState.TerritoryType))
                         {
                             if (!isFirst)
                                 ImGui.SameLine();
                             isFirst = false;
 
-                            if (ImGui.Button(routeName))
-                                EnqueueAutoTreasureHunt(routeData);
+                            if (ImGui.Button(route.Name))
+                                EnqueueAutoTreasureHunt(route.Points);
+
+                            if (route.Description is not null)
+                                ImGuiOm.TooltipHover(route.Description, 20f * GlobalUIScale);
                         }
                     }
 
@@ -302,12 +303,12 @@ public partial class OccultCrescentHelper
                 return;
             }
 
-            var (_, routeData) = Routes.Where(x => x.Key.Contains(args, StringComparison.OrdinalIgnoreCase))
-                                       .OrderBy(x => x.Key.Length)
-                                       .FirstOrDefault();
-            if (routeData.Count <= 0) return;
+            var route = Routes.Where(x => x.Name.Contains(args, StringComparison.OrdinalIgnoreCase))
+                              .OrderBy(x => x.Name.Length)
+                              .FirstOrDefault();
+            if (route is null) return;
 
-            EnqueueAutoTreasureHunt(routeData);
+            EnqueueAutoTreasureHunt(route.Points);
         }
 
         private void OnPreSendPacket
@@ -500,7 +501,7 @@ public partial class OccultCrescentHelper
             (() =>
                 {
                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
-                    MovementManager.Instance().TPSmooth(position, 24, MinHeight);
+                    MovementManager.Instance().TPSmooth(position.WithY(0), 24, MinHeight);
 
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check"))
                         return false;
@@ -714,14 +715,14 @@ public partial class OccultCrescentHelper
         {
             if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
 
-            var moveType         = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
-            var origPosition     = localPlayer.Position;
+            var moveType     = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
+            var origPosition = localPlayer.Position;
 
             var origTreasurePosition = (Vector3)treasure->Position;
 
             var treasurePosition = !treasureTaskHelper.IsBusy ?
                                        origTreasurePosition :
-                                       origTreasurePosition.WithY(origPosition.Y - 8f);
+                                       origTreasurePosition.WithY(origPosition.Y - 20f);
             
             new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
@@ -836,6 +837,14 @@ public partial class OccultCrescentHelper
             }
         }
 
+        private record Route
+        (
+            uint                    TerritoryType,
+            string                  Name,
+            string?                 Description,
+            List<TreasureHuntPoint> Points
+        );
+
         #region 常量
 
         private const ImGuiWindowFlags WINDOW_FLAGS =
@@ -859,160 +868,185 @@ public partial class OccultCrescentHelper
         private static readonly uint DotColor      = KnownColor.IndianRed.ToVector4().ToUInt();
         private static readonly uint PlayerColor   = KnownColor.Orange.ToVector4().ToUInt();
 
-        private static readonly FrozenDictionary<string, List<TreasureHuntPoint>> Routes = new Dictionary<string, List<TreasureHuntPoint>>
-        {
+        private static readonly Route[] Routes =
+        [
             // 北征
-            [LuminaWrapper.GetAddonText(16587)] =
-            [
-                new(676.97f, 190.97f, 957.43f),
-                new(673.73f, 161.15f, 729.64f),
-                new(811.98f, 191.97f, 668.97f),
-                new(758.14f, 129.99f, 506.80f),
-                new(719.33f, 69.63f, 268.30f),
-                new(447.87f, 62.88f, 463.34f),
-                new(246.20f, 66.51f, 676.66f),
-                new(222.89f, 90.38f, 913.60f),
-                new(-12.10f, 66.64f, 773.86f),
-                new(-22.69f, 42.07f, 628.99f),
-                new(77.04f, 21.19f, 536.25f),
-                new(-278.07f, 47.78f, 567.96f),
-                new(-256.98f, 100.66f, 812.19f),
-                new(-504.11f, 85.74f, 758.30f),
-                new(-592.00f, 160.08f, 767.67f),
-                new(-645.44f, 160.08f, 967.93f),
-                new(-699.86f, 159.99f, 926.36f),
-                new(-857.82f, 159.84f, 772.21f),
-                new(-800.41f, 157.79f, 633.39f),
-                new(-612.24f, 66.97f, 578.55f),
-                new(-775.91f, 70.69f, 377.13f),
-                new(-923.16f, 113.24f, 197.92f),
-                new(-631.80f, 78.23f, 239.98f),
-                new(-436.45f, 0.20f, 166.22f),
-                new(-590.23f, 87.97f, -7.00f),
-                new(-633.72f, 82.69f, -146.01f),
-                new(-581.51f, 40.91f, -257.44f),
-                new(-879.00f, 13.11f, -314.23f),
-                new(-707.39f, 41.58f, -396.99f),
-                new(-697.29f, 34.90f, -565.03f),
-                new(-857.60f, -12.25f, -609.83f),
-                new(-815.82f, -21.84f, -699.40f),
-                new(-928.65f, -11.25f, -744.96f),
-                new(-736.05f, 21.01f, -881.50f),
-                new(-416.80f, 45.91f, -945.43f),
-                new(-525.81f, 46.83f, -783.47f),
-                new(-439.57f, 43.02f, -558.46f),
-                new(-232.44f, 53.21f, -720.00f),
-                new(-2.33f, 66.67f, -814.91f),
-                new(147.84f, 60.99f, -868.77f),
-                new(389.52f, 60.65f, -733.03f),
-                new(254.72f, 36.91f, -605.01f),
-                new(279.07f, 142.99f, -356.16f),
-                new(85.59f, 3.28f, -281.15f),
-                new(-26.02f, 0.23f, -437.71f),
-                new(-265.77f, 30.17f, -439.54f),
-                new(-254.17f, 1.82f, -266.32f),
-                new(-168.23f, 3.37f, -153.46f),
-                new(43.78f, 2.43f, -108.20f),
-                new(-162.07f, 3.59f, 98.44f),
-                new(449.39f, 0.14f, 105.21f),
-                new(383.29f, 32.97f, -175.68f),
-                new(478.45f, 12.41f, -202.99f),
-                new(649.53f, 46.22f, -157.79f),
-                new(658.81f, 66.12f, -364.71f),
-                new(658.72f, 60.50f, -552.33f),
-                new(639.03f, 60.62f, -698.76f),
-                new(634.79f, 60.50f, -831.82f),
-                new(633.11f, 60.62f, -910.25f),
-                new(865.45f, 70.21f, -874.11f),
-                new(815.43f, 60.53f, -657.34f),
-                new(950.19f, 73.99f, -359.00f)
-            ],
-            
+            new
+            (
+                NORTH_HORN_TERRITORY_ID,
+                LuminaWrapper.GetAddonText(16587),
+                null,
+                [
+                    new(676.97f, 190.97f, 957.43f),
+                    new(673.73f, 161.15f, 729.64f),
+                    new(811.98f, 191.97f, 668.97f),
+                    new(758.14f, 129.99f, 506.80f),
+                    new(719.33f, 69.63f, 268.30f),
+                    new(447.87f, 62.88f, 463.34f),
+                    new(246.20f, 66.51f, 676.66f),
+                    new(222.89f, 90.38f, 913.60f),
+                    new(-12.10f, 66.64f, 773.86f),
+                    new(-22.69f, 42.07f, 628.99f),
+                    new(77.04f, 21.19f, 536.25f),
+                    new(-278.07f, 47.78f, 567.96f),
+                    new(-256.98f, 100.66f, 812.19f),
+                    new(-504.11f, 85.74f, 758.30f),
+                    new(-612.24f, 66.97f, 578.55f),
+                    new(-775.91f, 70.69f, 377.13f),
+                    new(-923.16f, 113.24f, 197.92f),
+                    new(-631.80f, 78.23f, 239.98f),
+                    new(-436.45f, 0.20f, 166.22f),
+                    new(-590.23f, 87.97f, -7.00f),
+                    new(-633.72f, 82.69f, -146.01f),
+                    new(-581.51f, 40.91f, -257.44f),
+                    new(-879.00f, 13.11f, -314.23f),
+                    new(-707.39f, 41.58f, -396.99f),
+                    new(-697.29f, 34.90f, -565.03f),
+                    new(-857.60f, -12.25f, -609.83f),
+                    new(-815.82f, -21.84f, -699.40f),
+                    new(-928.65f, -11.25f, -744.96f),
+                    new(-736.05f, 21.01f, -881.50f),
+                    new(-416.80f, 45.91f, -945.43f),
+                    new(-525.81f, 46.83f, -783.47f),
+                    new(-439.57f, 43.02f, -558.46f),
+                    new(-232.44f, 53.21f, -720.00f),
+                    new(-2.33f, 66.67f, -814.91f),
+                    new(147.84f, 60.99f, -868.77f),
+                    new(389.52f, 60.65f, -733.03f),
+                    new(254.72f, 36.91f, -605.01f),
+                    new(279.07f, 142.99f, -356.16f),
+                    new(85.59f, 3.28f, -281.15f),
+                    new(-26.02f, 0.23f, -437.71f),
+                    new(-265.77f, 30.17f, -439.54f),
+                    new(-254.17f, 1.82f, -266.32f),
+                    new(-168.23f, 3.37f, -153.46f),
+                    new(43.78f, 2.43f, -108.20f),
+                    new(-162.07f, 3.59f, 98.44f),
+                    new(449.39f, 0.14f, 105.21f),
+                    new(383.29f, 32.97f, -175.68f),
+                    new(478.45f, 12.41f, -202.99f),
+                    new(649.53f, 46.22f, -157.79f),
+                    new(658.81f, 66.12f, -364.71f),
+                    new(658.72f, 60.50f, -552.33f),
+                    new(639.03f, 60.62f, -698.76f),
+                    new(634.79f, 60.50f, -831.82f),
+                    new(633.11f, 60.62f, -910.25f),
+                    new(865.45f, 70.21f, -874.11f),
+                    new(815.43f, 60.53f, -657.34f),
+                    new(950.19f, 73.99f, -359.00f)
+                ]
+            ),
+
             // 北征（地下空洞）
-            [$"{LuminaWrapper.GetAddonText(16587)} ({LuminaWrapper.GetPlaceName(5593)})"] = 
-            [
-                new(-287.77f, -92.03f, 125.66f),
-                new(-144.73f, -129.81f, 304.92f),
-                new(41.21f, -140.80f, 168.47f),
-                new(161.00f, -151.78f, 15.98f),
-                new(223.65f, -161.88f, -30.66f),
-                new(313.89f, -139.54f, 180.04f),
-            ],
-            
+            new
+            (
+                NORTH_HORN_TERRITORY_ID,
+                $"{LuminaWrapper.GetPlaceName(5593)}",
+                Lang.Get("OccultCrescentHelper-TreasureManager-Route-Subterrane-Description"),
+                [
+                    new(-287.77f, -92.03f, 125.66f),
+                    new(-144.73f, -129.81f, 304.92f),
+                    new(41.21f, -140.80f, 168.47f),
+                    new(161.00f, -151.78f, 15.98f),
+                    new(223.65f, -161.88f, -30.66f),
+                    new(313.89f, -139.54f, 180.04f),
+                ]
+            ),
+
+            // 北征（浮游遗迹）
+            new
+            (
+                NORTH_HORN_TERRITORY_ID,
+                $"{LuminaWrapper.GetPlaceName(5573)}",
+                Lang.Get("OccultCrescentHelper-TreasureManager-Route-SuspendedMasonry-Description"),
+                [
+                    new(-592.00f, 160.08f, 767.67f),
+                    new(-645.44f, 160.08f, 967.93f),
+                    new(-699.86f, 159.99f, 926.36f),
+                    new(-857.82f, 159.84f, 772.21f),
+                    new(-800.41f, 157.79f, 633.39f),
+                ]
+            ),
+
             // 南征
-            [LuminaWrapper.GetAddonText(16586)] =
-            [
-                new(617.09f, 66.30f, -703.88f),
-                new(490.41f, 62.46f, -590.57f),
-                new(386.92f, 96.79f, -451.38f),
-                new(381.73f, 22.17f, -743.65f),
-                new(142.11f, 16.40f, -574.06f),
-                new(-118.97f, 4.99f, -708.46f),
-                new(-451.68f, 2.98f, -775.57f),
-                new(-585.29f, 4.99f, -864.84f),
-                new(-729.43f, 4.99f, -724.82f),
-                new(-825.1f, 3.0f, -833.6f),
-                new(-884.12f, 3.80f, -682.03f),
-                new(-661.71f, 2.98f, -579.49f),
-                new(-491.02f, 2.98f, -529.59f),
-                new(-140.46f, 22.35f, -414.27f),
-                new(-343.16f, 52.32f, -382.13f),
-                new(-487.11f, 98.53f, -205.46f),
-                new(-444.11f, 90.68f, 26.23f),
-                new(-394.89f, 106.74f, 175.43f),
-                new(-713.80f, 62.06f, 192.61f),
-                new(-756.83f, 76.55f, 97.37f),
-                new(-682.80f, 135.61f, -195.27f),
-                new(-729.92f, 116.53f, -79.06f),
-                new(-856.96f, 68.83f, -93.16f),
-                new(-798.25f, 105.58f, -310.57f),
-                new(-767.45f, 115.62f, -235.00f),
-                new(-680.54f, 104.84f, -354.79f),
-                new(666.53f, 79.12f, -480.37f),
-                new(870.66f, 95.69f, -388.36f),
-                new(779.02f, 96.09f, -256.24f),
-                new(770.75f, 107.99f, -143.57f),
-                new(726.28f, 108.14f, -67.92f),
-                new(475.73f, 95.99f, -87.08f),
-                new(609.61f, 107.99f, 117.27f),
-                new(788.88f, 120.38f, 109.39f),
-                new(826.69f, 122.00f, 434.99f),
-                new(869.29f, 109.97f, 581.20f),
-                new(835.08f, 69.99f, 699.09f),
-                new(697.32f, 69.99f, 597.92f),
-                new(596.46f, 70.30f, 622.77f),
-                new(433.71f, 70.30f, 683.53f),
-                new(294.88f, 56.08f, 640.22f),
-                new(140.98f, 55.99f, 770.99f),
-                new(35.72f, 65.11f, 648.95f),
-                new(256.15f, 73.17f, 492.36f),
-                new(471.18f, 70.30f, 530.02f),
-                new(642.97f, 69.99f, 407.80f),
-                new(517.75f, 67.89f, 236.13f),
-                new(277.79f, 103.78f, 241.90f),
-                new(245.59f, 109.12f, -18.17f),
-                new(354.12f, 95.66f, -288.93f),
-                new(354.12f, 95.66f, -288.93f),
-                new(55.28f, 111.31f, -289.08f),
-                new(-158.65f, 98.62f, -132.74f),
-                new(-25.68f, 102.22f, 150.16f),
-                new(-256.89f, 120.99f, 125.08f),
-                new(-401.66f, 85.04f, 332.54f),
-                new(-283.99f, 115.98f, 377.04f),
-                new(8.99f, 103.20f, 426.96f),
-                new(-197.19f, 74.91f, 618.34f),
-                new(-225.02f, 75.00f, 804.99f),
-                new(-372.67f, 75.00f, 527.43f),
-                new(-550.13f, 106.98f, 627.74f),
-                new(-600.27f, 138.99f, 802.64f),
-                new(-645.69f, 202.99f, 710.17f),
-                new(-716.15f, 170.98f, 794.43f),
-                new(-676.42f, 170.98f, 640.38f),
-                new(-784.76f, 138.99f, 699.76f),
-                new(-729.55f, 106.98f, 561.15f),
-                new(-648.00f, 75.00f, 403.95f)
-            ],
-        }.ToFrozenDictionary();
+            new
+            (
+                SOUTH_HORN_TERRITORY_ID,
+                LuminaWrapper.GetAddonText(16586),
+                null,
+                [
+                    new(617.09f, 66.30f, -703.88f),
+                    new(490.41f, 62.46f, -590.57f),
+                    new(386.92f, 96.79f, -451.38f),
+                    new(381.73f, 22.17f, -743.65f),
+                    new(142.11f, 16.40f, -574.06f),
+                    new(-118.97f, 4.99f, -708.46f),
+                    new(-451.68f, 2.98f, -775.57f),
+                    new(-585.29f, 4.99f, -864.84f),
+                    new(-729.43f, 4.99f, -724.82f),
+                    new(-825.1f, 3.0f, -833.6f),
+                    new(-884.12f, 3.80f, -682.03f),
+                    new(-661.71f, 2.98f, -579.49f),
+                    new(-491.02f, 2.98f, -529.59f),
+                    new(-140.46f, 22.35f, -414.27f),
+                    new(-343.16f, 52.32f, -382.13f),
+                    new(-487.11f, 98.53f, -205.46f),
+                    new(-444.11f, 90.68f, 26.23f),
+                    new(-394.89f, 106.74f, 175.43f),
+                    new(-713.80f, 62.06f, 192.61f),
+                    new(-756.83f, 76.55f, 97.37f),
+                    new(-682.80f, 135.61f, -195.27f),
+                    new(-729.92f, 116.53f, -79.06f),
+                    new(-856.96f, 68.83f, -93.16f),
+                    new(-798.25f, 105.58f, -310.57f),
+                    new(-767.45f, 115.62f, -235.00f),
+                    new(-680.54f, 104.84f, -354.79f),
+                    new(666.53f, 79.12f, -480.37f),
+                    new(870.66f, 95.69f, -388.36f),
+                    new(779.02f, 96.09f, -256.24f),
+                    new(770.75f, 107.99f, -143.57f),
+                    new(726.28f, 108.14f, -67.92f),
+                    new(475.73f, 95.99f, -87.08f),
+                    new(609.61f, 107.99f, 117.27f),
+                    new(788.88f, 120.38f, 109.39f),
+                    new(826.69f, 122.00f, 434.99f),
+                    new(869.29f, 109.97f, 581.20f),
+                    new(835.08f, 69.99f, 699.09f),
+                    new(697.32f, 69.99f, 597.92f),
+                    new(596.46f, 70.30f, 622.77f),
+                    new(433.71f, 70.30f, 683.53f),
+                    new(294.88f, 56.08f, 640.22f),
+                    new(140.98f, 55.99f, 770.99f),
+                    new(35.72f, 65.11f, 648.95f),
+                    new(256.15f, 73.17f, 492.36f),
+                    new(471.18f, 70.30f, 530.02f),
+                    new(642.97f, 69.99f, 407.80f),
+                    new(517.75f, 67.89f, 236.13f),
+                    new(277.79f, 103.78f, 241.90f),
+                    new(245.59f, 109.12f, -18.17f),
+                    new(354.12f, 95.66f, -288.93f),
+                    new(354.12f, 95.66f, -288.93f),
+                    new(55.28f, 111.31f, -289.08f),
+                    new(-158.65f, 98.62f, -132.74f),
+                    new(-25.68f, 102.22f, 150.16f),
+                    new(-256.89f, 120.99f, 125.08f),
+                    new(-401.66f, 85.04f, 332.54f),
+                    new(-283.99f, 115.98f, 377.04f),
+                    new(8.99f, 103.20f, 426.96f),
+                    new(-197.19f, 74.91f, 618.34f),
+                    new(-225.02f, 75.00f, 804.99f),
+                    new(-372.67f, 75.00f, 527.43f),
+                    new(-550.13f, 106.98f, 627.74f),
+                    new(-600.27f, 138.99f, 802.64f),
+                    new(-645.69f, 202.99f, 710.17f),
+                    new(-716.15f, 170.98f, 794.43f),
+                    new(-676.42f, 170.98f, 640.38f),
+                    new(-784.76f, 138.99f, 699.76f),
+                    new(-729.55f, 106.98f, 561.15f),
+                    new(-648.00f, 75.00f, 403.95f)
+                ]
+            ),
+        ];
 
         #endregion
     }
