@@ -85,7 +85,8 @@ public class AutoUmbralSoul : ModuleBase
             action = TRANSPOSE;
         // 灵极冰状态 → 灵极魂转满
         else if (ActionManager.IsActionUnlocked(UMBRAL_SOUL) &&
-                 (gauge.UmbralHearts != 3 || gauge.UmbralIceStacks != 3))
+                 ((ActionManager.IsActionUnlocked(BLIZZARD4) && gauge.UmbralHearts != 3) ||
+                  gauge.UmbralIceStacks != 3))
             action = UMBRAL_SOUL;
 
         if (action == 0)
@@ -142,6 +143,7 @@ public class AutoUmbralSoul : ModuleBase
 
     private const uint UMBRAL_SOUL = 16506;
     private const uint TRANSPOSE   = 149;
+    private const uint BLIZZARD4  = 3576;
 
     #endregion
 }
