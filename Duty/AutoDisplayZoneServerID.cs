@@ -27,7 +27,30 @@ public class AutoDisplayZoneServerID : ModuleBase
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
-        entry  = IDtrBar.Instance().Get("DailyRoutines-AutoDisplayZoneServerID");
+        
+        entry         = IDtrBar.Instance().Get("DailyRoutines-AutoDisplayZoneServerID");
+        entry.Tooltip = Lang.Get("AutoDisplayZoneServerID-DTR-Tooltip");
+
+        entry.OnClick = data =>
+        {
+            switch (data.ClickType)
+            {
+                case MouseClickType.Left:
+                    NotifyHelper.ToastQuest
+                    (
+                        $"{Lang.Get("CopiedToClipboard")}: {GameState.ZoneServerID}",
+                        new()
+                        {
+                            DisplayCheckmark = true
+                        }
+                    );
+                    break;
+                
+                case MouseClickType.Right:
+                    Util.OpenLink($"https://ce-crowdsource.atmoomen.top/dc/{GameState.CurrentDataCenter}/instance/{GameState.ZoneServerID}");
+                    break;
+            }
+        };
 
         DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
@@ -49,7 +72,7 @@ public class AutoDisplayZoneServerID : ModuleBase
 
     private void OnZoneChanged
     (
-        uint u
+        uint zone
     )
     {
         var isValidZone = ContentMemberListValidZones.Contains(GameState.TerritoryIntendedUse);
