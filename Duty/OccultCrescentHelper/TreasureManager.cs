@@ -122,10 +122,7 @@ public partial class OccultCrescentHelper
                 using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
                 using (ImRaii.PushIndent())
                 {
-                    ImGui.TextUnformatted($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {queuedGatheringList.Count}");
-
                     var isFirst = true;
-
                     using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
                     {
                         foreach (var route in Routes.Where(x => x.TerritoryType == GameState.TerritoryType))
@@ -144,6 +141,9 @@ public partial class OccultCrescentHelper
 
                     if (ImGui.Button(Lang.Get("Stop")))
                         StopAutoTreasureHunt();
+                    
+                    ImGui.SameLine(0, 4f * GlobalUIScale);
+                    ImGui.TextUnformatted($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {queuedGatheringList.Count}");
                 }
             }
 
