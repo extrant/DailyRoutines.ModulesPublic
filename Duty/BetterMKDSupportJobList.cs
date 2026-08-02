@@ -472,7 +472,14 @@ public unsafe class BetterMKDSupportJobList : ModuleBase
                     TextureSize        = new(28, 28),
                     OnClick = () =>
                     {
-                        if (DService.Instance().Condition[ConditionFlag.InCombat] || presetJob.IsThisJob() || presetJob.CurrentLevel == 0) return;
+                        if (ICondition.Instance()[ConditionFlag.InCombat] &&
+                            CrescentSupportJob.Freelancer.CurrentLevel < 24)
+                            return;
+                        
+                        if (presetJob.IsThisJob() ||
+                            presetJob.CurrentLevel == 0)
+                            return;
+                        
                         presetJob.ChangeTo();
                         Close();
                     },
