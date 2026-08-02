@@ -873,7 +873,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         public int ReturnTime4;
 
         public int GetFinishCount() =>
-            new List<int> { ReturnTime1, ReturnTime2, ReturnTime3, ReturnTime4 }.Count(x => x != 0 && x <= DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            new List<int> { ReturnTime1, ReturnTime2, ReturnTime3, ReturnTime4 }.Count(x => x != 0 && x <= StandardTimeManager.Instance().UTCNowOffset.ToUnixTimeSeconds());
 
         public int GetAvailableCount() =>
             new List<int> { ReturnTime1, ReturnTime2, ReturnTime3, ReturnTime4 }.Count(x => x != 0);

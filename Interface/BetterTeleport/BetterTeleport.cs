@@ -215,7 +215,7 @@ public unsafe partial class BetterTeleport : ModuleBase
         var terms = searchTerms.Distinct(StringComparer.Ordinal).ToList();
         if (terms.Count == 0) return;
 
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var now = StandardTimeManager.Instance().UTCNowOffset.ToUnixTimeSeconds();
 
         foreach (var term in terms)
         {

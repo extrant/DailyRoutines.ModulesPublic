@@ -1,6 +1,7 @@
 ﻿using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Extensions;
 using OmenTools.Interop.Game.Lumina;
+using OmenTools.OmenService;
 using ItemSheet = Lumina.Excel.Sheets.Item;
 
 namespace DailyRoutines.ModulesPublic.Interface.UnifiedGlamourManager;
@@ -67,7 +68,7 @@ public partial class UnifiedGlamourManager
                 {
                     ItemID  = item.ItemID,
                     Name    = item.Name,
-                    AddedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    AddedAt = StandardTimeManager.Instance().UTCNowOffset.ToUnixTimeSeconds()
                 }
             );
         }
