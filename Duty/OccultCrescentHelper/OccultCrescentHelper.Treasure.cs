@@ -40,8 +40,7 @@ public partial class OccultCrescentHelper
 
         private List<TreasureHuntPoint> currentRoute = [];
 
-        private List<TreasureHuntPoint>? hoveredRoutePoints;
-        private int                     routeListDrawnFrame;
+        private readonly RoutePreview routePreview = new();
 
         private readonly ImGuiMapRenderer routeMapRenderer = new()
         {
@@ -57,6 +56,7 @@ public partial class OccultCrescentHelper
 
         private static readonly CompSig CalculateCollisionSig = new
             ("48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? F3 0F 10 42");
+
         private unsafe delegate nint CalculateCollisionDelegate
         (
             nint     moveControlInstance,
@@ -66,6 +66,7 @@ public partial class OccultCrescentHelper
             nint     collisionFlags,
             ushort   movementType
         );
+
         private Hook<CalculateCollisionDelegate>? calculateCollisionHook;
 
         public override unsafe void Init()
@@ -115,7 +116,7 @@ public partial class OccultCrescentHelper
             treasureObjects.Clear();
         }
 
-        
+
         #region 界面
 
         public override unsafe void DrawConfig()
@@ -147,7 +148,7 @@ public partial class OccultCrescentHelper
                             Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Help"),
                             20f * GlobalUIScale
                         );
-                        
+
                         if (MainModule.config.IsEnabledAutoOpenTreasure)
                         {
                             ImGui.SetNextItemWidth(150f * GlobalUIScale);
@@ -159,10 +160,10 @@ public partial class OccultCrescentHelper
                                 50f,
                                 "%.1f"
                             );
-                            
+
                             if (ImGui.IsItemDeactivatedAfterEdit())
                                 MainModule.config.Save(MainModule);
-                            
+
                             ImGuiOm.HelpMarker
                             (
                                 $"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-DistanceTo-Help")}",
@@ -170,19 +171,19 @@ public partial class OccultCrescentHelper
                             );
                         }
                     }
-                    
+
                     if (origPosition != default || treasureObjects.Count > 0)
                     {
                         var textSize = ImGui.CalcTextSize($"{LuminaWrapper.GetAddonText(395)} [999.99, 999.99, 999.99]");
-                        
+
                         ImGui.NewLine();
-                        
+
                         ImGui.TextColored
                         (
                             KnownColor.LightSkyBlue.ToUInt(),
                             LuminaWrapper.GetAddonText(395)
                         );
-                        
+
                         if (origPosition != default)
                         {
                             ImGui.SameLine();
@@ -208,9 +209,9 @@ public partial class OccultCrescentHelper
                             }
                         }
                     }
-                    
+
                     ImGui.NewLine();
-                    
+
                     ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
 
                     using (ImRaii.PushIndent())
@@ -238,7 +239,7 @@ public partial class OccultCrescentHelper
                     }
                 }
             }
-            
+
             using (var item = ImRaii.TabItem(Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures")))
             using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
             {
@@ -253,7 +254,7 @@ public partial class OccultCrescentHelper
                     using (ImRaii.PushIndent())
                     {
                         ImGui.TextWrapped($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {queuedGatheringList.Count}");
-                        
+
                         if (ImGui.Button($"    {Lang.Get("Stop")}    "))
                             StopAutoTreasureHunt();
                     }
@@ -271,8 +272,7 @@ public partial class OccultCrescentHelper
                         using (ImRaii.PushIndent())
                         using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
                         {
-                            hoveredRoutePoints = null;
-                            routeListDrawnFrame = ImGui.GetFrameCount();
+                            Route? hoveredRoute = null;
 
                             foreach (var route in Routes)
                             {
@@ -285,13 +285,15 @@ public partial class OccultCrescentHelper
                                     ImGuiOm.TooltipHover(route.Description, 20f * GlobalUIScale);
 
                                 if (ImGui.IsItemHovered())
-                                    hoveredRoutePoints = route.Points;
+                                    hoveredRoute = route;
                             }
+
+                            routePreview.Update(hoveredRoute);
                         }
                     }
-                    
+
                     ImGui.NewLine();
-                    
+
                     ImGui.TextColored
                     (
                         KnownColor.LightSkyBlue.ToVector4(),
@@ -311,7 +313,7 @@ public partial class OccultCrescentHelper
                 }
             }
         }
-        
+
         // 绘制寻宝路线地图
         private void DrawTreasureRouteMap
         (
@@ -323,7 +325,7 @@ public partial class OccultCrescentHelper
 
             var displaySize = ScaledVector2(400);
 
-            ImGui.SetNextWindowSize(displaySize + ScaledVector2(20, 40));
+            ImGui.SetNextWindowSize(displaySize                    + ScaledVector2(20, 40));
             ImGui.SetNextWindowPos(ImGui.GetMainViewport().WorkPos + ScaledVector2(16, 16));
             ImGui.SetNextWindowBgAlpha(0.8f);
 
@@ -340,7 +342,7 @@ public partial class OccultCrescentHelper
                         var currentScreenPos = r.WorldToScreen(route[i].Position);
                         var nextScreenPos    = r.WorldToScreen(route[i + 1].Position);
 
-                        drawList.AddLine(currentScreenPos, nextScreenPos, 0x66000000, 7f);
+                        drawList.AddLine(currentScreenPos, nextScreenPos, 0x66000000,    7f);
                         drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 5f);
                     }
                 };
@@ -352,12 +354,12 @@ public partial class OccultCrescentHelper
                     var playerScreenPos = r.WorldToScreen(localPlayer.Position);
 
                     var direction = new Vector2(MathF.Sin(localPlayer.Rotation), MathF.Cos(localPlayer.Rotation));
-                    var normal    = new Vector2(-direction.Y, direction.X);
+                    var normal    = new Vector2(-direction.Y,                    direction.X);
                     var tip       = playerScreenPos + (direction * 10f);
                     var basePoint = playerScreenPos - (direction * 7f);
 
                     drawList.AddTriangleFilled(tip, basePoint + (normal * 7f), basePoint - (normal * 7f), PlayerColor);
-                    drawList.AddTriangle(tip, basePoint + (normal * 7f), basePoint - (normal * 7f), 0xFF000000, 2f);
+                    drawList.AddTriangle(tip, basePoint       + (normal * 7f), basePoint - (normal * 7f), 0xFF000000, 2f);
                 };
 
                 routeMapRenderer.ClearMarkers();
@@ -383,10 +385,10 @@ public partial class OccultCrescentHelper
         }
 
         #endregion
-        
+
 
         #region 事件
-        
+
         private static unsafe nint CalculateCollisionDetour
         (
             nint     moveControlInstance,
@@ -523,12 +525,11 @@ public partial class OccultCrescentHelper
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
-            if (ImGui.GetFrameCount() - routeListDrawnFrame > 0)
-                hoveredRoutePoints = null;
+            routePreview.ResetIfNotDrawnThisFrame();
 
             // 绘制地图
-            if (hoveredRoutePoints != null)
-                DrawTreasureRouteMap(hoveredRoutePoints);
+            if (routePreview.Points is { } previewPoints)
+                DrawTreasureRouteMap(previewPoints);
             else if (treasureTaskHelper.IsBusy)
                 DrawTreasureRouteMap(currentRoute);
         }
@@ -546,7 +547,7 @@ public partial class OccultCrescentHelper
             var startPosition = GameState.TerritoryType == SOUTH_HORN_TERRITORY_ID ?
                                     CrescentAetheryte.ExpeditionBaseCamp.Position :
                                     CrescentAetheryte.NorthHornBaseCamp.Position;
-            
+
             if (LocalPlayerState.DistanceTo2D(startPosition.ToVector2()) <= 50)
             {
                 NotifyHelper.Instance().NotificationError(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-Danger"));
@@ -611,7 +612,7 @@ public partial class OccultCrescentHelper
                 StopAutoTreasureHunt();
                 return;
             }
-            
+
             treasureTaskHelper.Abort();
 
             if (queuedGatheringList.Count == 0)
@@ -824,25 +825,31 @@ public partial class OccultCrescentHelper
             var treasurePosition = !treasureTaskHelper.IsBusy ?
                                        origTreasurePosition :
                                        origTreasurePosition.WithY(origPosition.Y);
-            
+
             new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
             new PositionUpdateInstancePacket(localPlayer.Rotation, origPosition, moveType).Send();
         }
 
-        
+
         #region 嵌套类
 
-        public class TreasureHuntPoint
-        (
-            float x,
-            float y,
-            float z,
-            bool  isExact = false
-        )
+        public readonly record struct TreasureHuntPoint
         {
-            public Vector3 Position { get; } = new(x, y, z);
-            public bool    IsExact  { get; } = isExact;
+            public Vector3 Position { get; }
+            public bool    IsExact  { get; }
+
+            public TreasureHuntPoint
+            (
+                float x,
+                float y,
+                float z,
+                bool  isExact = false
+            )
+            {
+                Position = new(x, y, z);
+                IsExact  = isExact;
+            }
         }
 
         private static class PathPlanner
@@ -883,8 +890,8 @@ public partial class OccultCrescentHelper
 
                 while (remainingPoints.Count > 0)
                 {
-                    TreasureHuntPoint nearestPoint = null;
-                    var               minDistance  = float.MaxValue;
+                    TreasureHuntPoint? nearestPoint = null;
+                    var                minDistance  = float.MaxValue;
 
                     foreach (var point in remainingPoints)
                     {
@@ -899,9 +906,9 @@ public partial class OccultCrescentHelper
 
                     if (nearestPoint != null)
                     {
-                        orderedPath.Add(nearestPoint);
-                        remainingPoints.Remove(nearestPoint);
-                        currentPoint = nearestPoint;
+                        orderedPath.Add(nearestPoint.Value);
+                        remainingPoints.Remove(nearestPoint.Value);
+                        currentPoint = nearestPoint.Value;
                     }
                 }
 
@@ -949,9 +956,70 @@ public partial class OccultCrescentHelper
             List<TreasureHuntPoint> Points
         );
 
+        private class RoutePreview
+        {
+            private Route?  route;
+            private Vector2 plannedPosition;
+            private int     drawnFrame;
+            private long    lastUpdateTick;
+
+            public List<TreasureHuntPoint>? Points { get; private set; }
+
+            public void Update
+            (
+                Route? hoveredRoute
+            )
+            {
+                drawnFrame = ImGui.GetFrameCount();
+
+                if (hoveredRoute is null)
+                {
+                    route  = null;
+                    Points = null;
+                    return;
+                }
+
+                if (Points == null)
+                {
+                    Plan(hoveredRoute);
+                    return;
+                }
+
+                var currentTick = Environment.TickCount64;
+                if (currentTick - lastUpdateTick < 500)
+                    return;
+
+                lastUpdateTick = currentTick;
+
+                if (ReferenceEquals(route, hoveredRoute) &&
+                    LocalPlayerState.DistanceTo2DSquared(plannedPosition) <= 50f * 50f)
+                    return;
+
+                Plan(hoveredRoute);
+            }
+
+            private void Plan
+            (
+                Route target
+            )
+            {
+                var playerPosition = LocalPlayerState.Object.Position;
+                route           = target;
+                plannedPosition = playerPosition.ToVector2();
+                Points          = [.. PathPlanner.PlanShortestPath(playerPosition, target.Points)];
+                lastUpdateTick  = Environment.TickCount64;
+            }
+
+            public void ResetIfNotDrawnThisFrame()
+            {
+                if (ImGui.GetFrameCount() - drawnFrame > 0)
+                    Points = null;
+            }
+        }
+
         #endregion
 
-        
+
         #region 常量
 
         private const ImGuiWindowFlags WINDOW_FLAGS =
@@ -1040,38 +1108,18 @@ public partial class OccultCrescentHelper
                     new(633.11f, -23.5f, -910.25f),
                     new(865.45f, -23.5f, -874.11f),
                     new(815.43f, -23.5f, -657.34f),
-                    new(950.19f, -23.5f, -359.00f)
-                ]
-            ),
-
-            // 北征（地下空洞）
-            new
-            (
-                NORTH_HORN_TERRITORY_ID,
-                $"{LuminaWrapper.GetPlaceName(5593)}",
-                Lang.Get("OccultCrescentHelper-TreasureManager-Route-Subterrane-Description"),
-                [
+                    new(950.19f, -23.5f, -359.00f),
                     new(-287.77f, -23.5f, 125.66f),
                     new(-144.73f, -23.5f, 304.92f),
                     new(41.21f, -23.5f, 168.47f),
                     new(161.00f, -23.5f, 15.98f),
                     new(223.65f, -23.5f, -30.66f),
                     new(313.89f, -23.5f, 180.04f),
-                ]
-            ),
-
-            // 北征（浮游遗迹）
-            new
-            (
-                NORTH_HORN_TERRITORY_ID,
-                $"{LuminaWrapper.GetPlaceName(5573)}",
-                Lang.Get("OccultCrescentHelper-TreasureManager-Route-SuspendedMasonry-Description"),
-                [
                     new(-592.00f, -23.5f, 767.67f),
                     new(-645.44f, -23.5f, 967.93f),
                     new(-699.86f, -23.5f, 926.36f),
                     new(-857.82f, -23.5f, 772.21f),
-                    new(-800.41f, -23.5f, 633.39f),
+                    new(-800.41f, -23.5f, 633.39f)
                 ]
             ),
 
@@ -1152,7 +1200,7 @@ public partial class OccultCrescentHelper
                     new(-729.55f, -20f, 561.15f),
                     new(-648.00f, -20f, 403.95f)
                 ]
-            ),
+            )
         ];
 
         #endregion
