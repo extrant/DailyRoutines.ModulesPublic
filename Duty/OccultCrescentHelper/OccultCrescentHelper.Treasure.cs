@@ -40,6 +40,9 @@ public partial class OccultCrescentHelper
 
         private List<TreasureHuntPoint> currentRoute = [];
 
+        private List<TreasureHuntPoint>? hoveredRoutePoints;
+        private int                     routeListDrawnFrame;
+
         private readonly ImGuiMapRenderer routeMapRenderer = new()
         {
             Zoomable             = false,
@@ -268,6 +271,9 @@ public partial class OccultCrescentHelper
                         using (ImRaii.PushIndent())
                         using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
                         {
+                            hoveredRoutePoints = null;
+                            routeListDrawnFrame = ImGui.GetFrameCount();
+
                             foreach (var route in Routes)
                             {
                                 if (route.TerritoryType != GameState.TerritoryType) continue;
@@ -277,6 +283,9 @@ public partial class OccultCrescentHelper
 
                                 if (route.Description is not null)
                                     ImGuiOm.TooltipHover(route.Description, 20f * GlobalUIScale);
+
+                                if (ImGui.IsItemHovered())
+                                    hoveredRoutePoints = route.Points;
                             }
                         }
                     }
@@ -304,14 +313,18 @@ public partial class OccultCrescentHelper
         }
         
         // 绘制寻宝路线地图
-        private void DrawTreasureRouteMap()
+        private void DrawTreasureRouteMap
+        (
+            List<TreasureHuntPoint> route
+        )
         {
             var mapID = GameState.Map;
-            if (mapID == 0) return;
+            if (mapID == 0 || route.Count == 0) return;
 
             var displaySize = ScaledVector2(400);
 
             ImGui.SetNextWindowSize(displaySize + ScaledVector2(20, 40));
+            ImGui.SetNextWindowPos(ImGui.GetMainViewport().WorkPos + ScaledVector2(16, 16));
             ImGui.SetNextWindowBgAlpha(0.8f);
 
             if (ImGui.Begin("###AutoTreasureHuntMap", WINDOW_FLAGS))
@@ -320,14 +333,15 @@ public partial class OccultCrescentHelper
 
                 routeMapRenderer.OnCustomMapDraw = (r, drawList) =>
                 {
-                    if (currentRoute.Count <= 1) return;
+                    if (route.Count <= 1) return;
 
-                    for (var i = 0; i < currentRoute.Count - 1; i++)
+                    for (var i = 0; i < route.Count - 1; i++)
                     {
-                        var currentScreenPos = r.WorldToScreen(currentRoute[i].Position);
-                        var nextScreenPos    = r.WorldToScreen(currentRoute[i + 1].Position);
+                        var currentScreenPos = r.WorldToScreen(route[i].Position);
+                        var nextScreenPos    = r.WorldToScreen(route[i + 1].Position);
 
-                        drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 2f);
+                        drawList.AddLine(currentScreenPos, nextScreenPos, 0x66000000, 7f);
+                        drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 5f);
                     }
                 };
 
@@ -336,20 +350,27 @@ public partial class OccultCrescentHelper
                     if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
 
                     var playerScreenPos = r.WorldToScreen(localPlayer.Position);
-                    drawList.AddCircleFilled(playerScreenPos, 6f, PlayerColor);
+
+                    var direction = new Vector2(MathF.Sin(localPlayer.Rotation), MathF.Cos(localPlayer.Rotation));
+                    var normal    = new Vector2(-direction.Y, direction.X);
+                    var tip       = playerScreenPos + (direction * 10f);
+                    var basePoint = playerScreenPos - (direction * 7f);
+
+                    drawList.AddTriangleFilled(tip, basePoint + (normal * 7f), basePoint - (normal * 7f), PlayerColor);
+                    drawList.AddTriangle(tip, basePoint + (normal * 7f), basePoint - (normal * 7f), 0xFF000000, 2f);
                 };
 
                 routeMapRenderer.ClearMarkers();
 
-                for (var i = 0; i < currentRoute.Count; i++)
+                for (var i = 0; i < route.Count; i++)
                     routeMapRenderer.AddMarker
                     (
                         new()
                         {
                             ID          = $"TreasureRoute_{i}",
-                            Position    = currentRoute[i].Position,
+                            Position    = route[i].Position,
                             Color       = DotColor,
-                            Size        = new(8f),
+                            Size        = new(16f),
                             ShowLabel   = false,
                             ShowTooltip = false
                         }
@@ -502,9 +523,14 @@ public partial class OccultCrescentHelper
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent) return;
 
+            if (ImGui.GetFrameCount() - routeListDrawnFrame > 0)
+                hoveredRoutePoints = null;
+
             // 绘制地图
-            if (treasureTaskHelper.IsBusy)
-                DrawTreasureRouteMap();
+            if (hoveredRoutePoints != null)
+                DrawTreasureRouteMap(hoveredRoutePoints);
+            else if (treasureTaskHelper.IsBusy)
+                DrawTreasureRouteMap(currentRoute);
         }
 
         #endregion
