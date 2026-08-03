@@ -36,7 +36,7 @@ public partial class OccultCrescentHelper
         private List<Vector3> surveyPointPositions = [];
         private List<Vector3> carrotPositions      = [];
 
-        private Vector3 originalPosition;
+        private Vector3 origPosition;
 
         private List<TreasureHuntPoint> currentRoute = [];
 
@@ -115,196 +115,192 @@ public partial class OccultCrescentHelper
         
         #region 界面
 
-        public override void DrawConfig()
+        public override unsafe void DrawConfig()
         {
-            if (ImGui.Checkbox(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure"), ref MainModule.config.IsEnabledAutoOpenTreasure))
-                MainModule.config.Save(MainModule);
-            ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Help"), 20f * GlobalUIScale);
+            using var tabBar = ImRaii.TabBar("TabBar");
+            if (!tabBar) return;
 
-            if (MainModule.config.IsEnabledAutoOpenTreasure)
+            using (var item = ImRaii.TabItem(Lang.Get("General")))
             {
-                ImGui.SetNextItemWidth(150f * GlobalUIScale);
-                ImGui.SliderFloat
-                (
-                    $"{Lang.Get("OccultCrescentHelper-DistanceTo")}",
-                    ref MainModule.config.DistanceToAutoOpenTreasure,
-                    1.0f,
-                    50f,
-                    "%.1f"
-                );
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                    MainModule.config.Save(MainModule);
-                ImGuiOm.HelpMarker($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-DistanceTo-Help")}", 20f * GlobalUIScale);
-            }
-
-            ImGui.NewLine();
-
-            using (FontManager.Instance().UIFont.Push())
-            {
-                ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures"));
-                ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Help"), 20f * GlobalUIScale);
-
-                using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
-                using (ImRaii.PushIndent())
+                if (item)
                 {
-                    var isFirst = true;
-                    using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToUInt(),
+                        Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure")
+                    );
+
+                    using (ImRaii.PushIndent())
                     {
-                        foreach (var route in Routes.Where(x => x.TerritoryType == GameState.TerritoryType))
+                        if (ImGui.Checkbox
+                            (
+                                $"{Lang.Get("Enable")}##AutoOpenTreasures",
+                                ref MainModule.config.IsEnabledAutoOpenTreasure
+                            ))
+                            MainModule.config.Save(MainModule);
+
+                        ImGuiOm.HelpMarker
+                        (
+                            Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Help"),
+                            20f * GlobalUIScale
+                        );
+                        
+                        if (MainModule.config.IsEnabledAutoOpenTreasure)
                         {
-                            if (!isFirst)
-                                ImGui.SameLine();
-                            isFirst = false;
-
-                            if (ImGui.Button(route.Name))
-                                EnqueueAutoTreasureHunt(route.Points);
-
-                            if (route.Description is not null)
-                                ImGuiOm.TooltipHover(route.Description, 20f * GlobalUIScale);
+                            ImGui.SetNextItemWidth(150f * GlobalUIScale);
+                            ImGui.SliderFloat
+                            (
+                                $"{Lang.Get("OccultCrescentHelper-DistanceTo")}",
+                                ref MainModule.config.DistanceToAutoOpenTreasure,
+                                1.0f,
+                                50f,
+                                "%.1f"
+                            );
+                            
+                            if (ImGui.IsItemDeactivatedAfterEdit())
+                                MainModule.config.Save(MainModule);
+                            
+                            ImGuiOm.HelpMarker
+                            (
+                                $"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-DistanceTo-Help")}",
+                                20f * GlobalUIScale
+                            );
                         }
                     }
-
-                    if (ImGui.Button(Lang.Get("Stop")))
-                        StopAutoTreasureHunt();
                     
-                    ImGui.SameLine(0, 4f * GlobalUIScale);
-                    ImGui.TextUnformatted($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {queuedGatheringList.Count}");
+                    if (origPosition != default || treasureObjects.Count > 0)
+                    {
+                        var textSize = ImGui.CalcTextSize($"{LuminaWrapper.GetAddonText(395)} [999.99, 999.99, 999.99]");
+                        
+                        ImGui.NewLine();
+                        
+                        ImGui.TextColored
+                        (
+                            KnownColor.LightSkyBlue.ToUInt(),
+                            LuminaWrapper.GetAddonText(395)
+                        );
+                        
+                        if (origPosition != default)
+                        {
+                            ImGui.SameLine();
+                            if (ImGui.SmallButton(Lang.Get("OccultCrescentHelper-TreasureManager-ReturnToOrigPostion")))
+                                EnqueueMoveTo(origPosition);
+                        }
+
+                        using (ImRaii.PushIndent())
+                        {
+                            foreach (var treasure in treasureObjects)
+                            {
+                                var pos = (Vector3)((Treasure*)treasure)->Position;
+
+                                if (ImGui.Button
+                                    (
+                                        $"{pos.X:F1}, {pos.Y:F1}, {pos.Z:F1}",
+                                        new(textSize.X * 2, ImGui.GetFrameHeight())
+                                    ))
+                                {
+                                    origPosition = LocalPlayerState.Object.Position;
+                                    EnqueueMoveTo(pos);
+                                }
+                            }
+                        }
+                    }
+                    
+                    ImGui.NewLine();
+                    
+                    ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
+
+                    using (ImRaii.PushIndent())
+                    {
+                        if (ImGui.Checkbox
+                            (
+                                $"{LuminaWrapper.GetAddonText(395)}",
+                                ref MainModule.config.IsEnabledHighlightTreasure
+                            ))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox
+                            (
+                                $"{LuminaWrapper.GetEObjName(2014695)}",
+                                ref MainModule.config.IsEnabledHighlightSurveyPoint
+                            ))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox
+                            (
+                                $"{LuminaWrapper.GetItemName(48096)}",
+                                ref MainModule.config.IsEnabledHighlightCarrot
+                            ))
+                            MainModule.config.Save(MainModule);
+                    }
                 }
             }
-
-            ImGui.NewLine();
             
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
-
-            using (ImRaii.PushIndent())
+            using (var item = ImRaii.TabItem(Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures")))
+            using (ImRaii.Disabled(GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent))
             {
-                if (ImGui.Checkbox
-                    (
-                        $"{LuminaWrapper.GetAddonText(395)}",
-                        ref MainModule.config.IsEnabledHighlightTreasure
-                    ))
-                    MainModule.config.Save(MainModule);
-
-                if (ImGui.Checkbox
-                    (
-                        $"{LuminaWrapper.GetEObjName(2014695)}",
-                        ref MainModule.config.IsEnabledHighlightSurveyPoint
-                    ))
-                    MainModule.config.Save(MainModule);
-
-                if (ImGui.Checkbox
-                    (
-                        $"{LuminaWrapper.GetItemName(48096)}",
-                        ref MainModule.config.IsEnabledHighlightCarrot
-                    ))
-                    MainModule.config.Save(MainModule);
-            }
-
-            ImGui.NewLine();
-
-            if (originalPosition != default || treasureObjects.Count > 0)
-            {
-                using var disabled = ImRaii.Disabled(treasureTaskHelper.IsBusy);
-
-                var textSize = ImGui.CalcTextSize($"{LuminaWrapper.GetAddonText(395)} [999.99, 999.99, 999.99]");
-                
-                if (originalPosition != default)
+                if (item)
                 {
-                    if (ImGui.Button
-                        (
-                            $"[{originalPosition.X:F1}, {originalPosition.Y:F1}, {originalPosition.Z:F1}]",
-                            new(textSize.X * 2, ImGui.GetTextLineHeightWithSpacing())
-                        ))
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToUInt(),
+                        Lang.Get("State")
+                    );
+
+                    using (ImRaii.PushIndent())
                     {
-                        treasureTaskHelper.EnqueueAsync
-                        (async ct =>
-                            {
-                                unsafe
-                                {
-                                    PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
-                                }
-
-                                await MovementManager.Instance().TPSmoothAsync
-                                (
-                                    originalPosition,
-                                    ICondition.Instance()[ConditionFlag.Mounted] ?
-                                        24 :
-                                        12,
-                                    ct
-                                );
-
-                                if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) return false;
-
-                                if (LocalPlayerState.DistanceTo2D(originalPosition.ToVector2()) >= 3) return false;
-
-                                OnUpdate();
-
-                                unsafe
-                                {
-                                    PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
-                                }
-
-                                return true;
-                            }
-                        );
+                        ImGui.TextWrapped($"{Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-LeftPoints")}: {queuedGatheringList.Count}");
+                        
+                        if (ImGui.Button($"    {Lang.Get("Stop")}    "))
+                            StopAutoTreasureHunt();
                     }
 
-                    ImGui.Spacing();
-                }
-
-                foreach (var treasure in treasureObjects)
-                {
-                    var treasureObject = IGameObject.Create(treasure);
-
-                    if (ImGui.Button
-                        (
-                            $"{LuminaWrapper.GetAddonText(395)} [{treasureObject.Position.X:F1}, {treasureObject.Position.Y:F1}, {treasureObject.Position.Z:F1}]",
-                            new(textSize.X * 2, ImGui.GetTextLineHeightWithSpacing())
-                        ))
+                    if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
                     {
-                        originalPosition = LocalPlayerState.Object.Position;
+                        ImGui.NewLine();
 
-                        treasureTaskHelper.EnqueueAsync
-                        (async ct =>
-                            {
-                                unsafe
-                                {
-                                    PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
-                                }
-
-                                await MovementManager.Instance().TPSmoothAsync
-                                (
-                                    treasureObject.Position,
-                                    ICondition.Instance()[ConditionFlag.Mounted] ?
-                                        24 :
-                                        12,
-                                    ct
-                                );
-
-                                if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) return false;
-
-                                if (LocalPlayerState.DistanceTo2D(treasureObject.Position.ToVector2()) >= 3) return false;
-
-                                OnUpdate();
-
-                                unsafe
-                                {
-                                    PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
-                                }
-
-                                return true;
-                            }
+                        ImGui.TextColored
+                        (
+                            KnownColor.LightSkyBlue.ToUInt(),
+                            Lang.Get("Route")
                         );
+
+                        using (ImRaii.PushIndent())
+                        using (ImRaii.Disabled(treasureTaskHelper.IsBusy))
+                        {
+                            foreach (var route in Routes)
+                            {
+                                if (route.TerritoryType != GameState.TerritoryType) continue;
+
+                                if (ImGui.Button(route.Name))
+                                    EnqueueAutoTreasureHunt(route.Points);
+
+                                if (route.Description is not null)
+                                    ImGuiOm.TooltipHover(route.Description, 20f * GlobalUIScale);
+                            }
+                        }
                     }
+                    
+                    ImGui.NewLine();
+                    
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToVector4(),
+                        Lang.Get("Command")
+                    );
+
+                    using (ImRaii.PushIndent())
+                        ImGui.TextWrapped($"/pdr {COMMAND_TREASURE} {Lang.Get("OccultCrescentHelper-Command-PTreasure-Help")}");
                 }
-                
-                ImGui.NewLine();
+                else if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
+                {
+                    ImGuiOm.TooltipHover
+                    (
+                        Lang.Get("OccultCrescentHelper-TreasureManager-AutoHuntTresures-Help"),
+                        20f * GlobalUIScale
+                    );
+                }
             }
-
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Command"));
-
-            using (ImRaii.PushIndent())
-                ImGui.TextWrapped($"/pdr {COMMAND_TREASURE} {Lang.Get("OccultCrescentHelper-Command-PTreasure-Help")}");
         }
         
         // 绘制寻宝路线地图
@@ -535,6 +531,42 @@ public partial class OccultCrescentHelper
             currentRoute        = [.. queuedGatheringList];
             MoveToNextTreasurePoint();
         }
+
+        private void EnqueueMoveTo
+        (
+            Vector3 position
+        ) =>
+            treasureTaskHelper.EnqueueAsync
+            (async ct =>
+                {
+                    unsafe
+                    {
+                        PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
+                    }
+
+                    await MovementManager.Instance().TPSmoothAsync
+                    (
+                        position,
+                        ICondition.Instance()[ConditionFlag.Mounted] ?
+                            24 :
+                            12,
+                        ct
+                    );
+
+                    if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) return false;
+
+                    if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 3) return false;
+
+                    OnUpdate();
+
+                    unsafe
+                    {
+                        PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
+                    }
+
+                    return true;
+                }
+            );
 
         private unsafe void StopAutoTreasureHunt()
         {
