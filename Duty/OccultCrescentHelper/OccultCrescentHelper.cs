@@ -106,31 +106,36 @@ public partial class OccultCrescentHelper : ModuleBase
         using (var aetheryteTab = ImRaii.TabItem($"{LuminaWrapper.GetEObjName(2014664)}"))
         {
             if (aetheryteTab)
-                aetheryteModule.DrawConfig();
+                using (ImRaii.PushId("AetheryteManager"))
+                    aetheryteModule.DrawConfig();
         }
 
         using (var ceTab = ImRaii.TabItem(Lang.Get("DynamicEvent")))
         {
             if (ceTab)
-                ceModule.DrawConfig();
+                using (ImRaii.PushId("CEManager"))
+                    ceModule.DrawConfig();
         }
 
         using (var treasureTab = ImRaii.TabItem($"{LuminaWrapper.GetAddonText(395)}"))
         {
             if (treasureTab)
-                treasureModule.DrawConfig();
+                using (ImRaii.PushId("TreasureManager"))
+                    treasureModule.DrawConfig();
         }
 
         using (var supportJobTab = ImRaii.TabItem($"{LuminaWrapper.GetAddonText(16633)}"))
         {
             if (supportJobTab)
-                supportJobModule.DrawConfig();
+                using (ImRaii.PushId("SupportJobManager"))
+                    supportJobModule.DrawConfig();
         }
 
         using (var othersTab = ImRaii.TabItem($"{LuminaWrapper.GetAddonText(832)}"))
         {
             if (othersTab)
-                othersModule.DrawConfig();
+                using (ImRaii.PushId("OthersManager"))
+                    othersModule.DrawConfig();
         }
     }
 

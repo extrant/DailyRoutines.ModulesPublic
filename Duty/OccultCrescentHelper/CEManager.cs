@@ -115,8 +115,6 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            using var id = ImRaii.PushId("CEManager");
-
             if (allIslandEvents.Count > 0)
             {
                 ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Pathfind"));

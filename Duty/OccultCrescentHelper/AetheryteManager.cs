@@ -50,8 +50,6 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            using var id = ImRaii.PushId("AetheryteManager");
-
             if (GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent)
             {
                 ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Teleport"));

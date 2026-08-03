@@ -75,8 +75,6 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            using var id = ImRaii.PushId("SupportJobManager");
-
             ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), LuminaWrapper.GetMKDSupportJobName(6));
 
             using (ImRaii.PushIndent())

@@ -77,8 +77,6 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            using var id = ImRaii.PushId("OthersManager");
-
             if (ImGui.Checkbox
                 (
                     Lang.Get("OccultCrescentHelper-OthersManager-ModifyInfoHUD"),

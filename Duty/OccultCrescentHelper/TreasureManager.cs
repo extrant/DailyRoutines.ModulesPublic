@@ -117,8 +117,6 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            using var id = ImRaii.PushId("TreasureManager");
-
             if (ImGui.Checkbox(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure"), ref MainModule.config.IsEnabledAutoOpenTreasure))
                 MainModule.config.Save(MainModule);
             ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Help"), 20f * GlobalUIScale);
