@@ -2,6 +2,7 @@ using System.Numerics;
 using DailyRoutines.Extensions;
 using DailyRoutines.Manager;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Hooking;
 using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -10,6 +11,7 @@ using OmenTools.ImGuiOm.Widgets.MapRenderer;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Packets.Upstream;
 using OmenTools.Interop.Game.Lumina;
+using OmenTools.Interop.Game.Models;
 using OmenTools.Interop.Game.Models.Native;
 using OmenTools.OmenService;
 using OmenTools.OmenService.ZoneIndicator;
@@ -25,9 +27,6 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        // 先暂时这样，后续发现没什么问题了再改成常量
-        private static float MinHeight => -5;
-        
         private TaskHelper? treasureTaskHelper;
 
         private Queue<TreasureHuntPoint> queuedGatheringList = [];
@@ -52,9 +51,29 @@ public partial class OccultCrescentHelper
         private ZoneIndicatorHandle? surveyPointHandle;
         private ZoneIndicatorHandle? carrotHandle;
 
-        public override void Init()
+        private static readonly CompSig CalculateCollisionSig = new
+            ("48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? F3 0F 10 42");
+        private unsafe delegate nint CalculateCollisionDelegate
+        (
+            nint     moveControlInstance,
+            Vector3* expectedPosition,
+            nint     controlState,
+            Vector3* currentPosition,
+            nint     collisionFlags,
+            ushort   movementType
+        );
+        private Hook<CalculateCollisionDelegate>? calculateCollisionHook;
+
+        public override unsafe void Init()
         {
-            treasureTaskHelper ??= new() { TimeoutMS = 180_000 };
+            calculateCollisionHook ??= CalculateCollisionSig.GetHook<CalculateCollisionDelegate>(CalculateCollisionDetour);
+
+            treasureTaskHelper ??= new()
+            {
+                TimeoutMS       = 180_000,
+                EnterBusyAction = () => calculateCollisionHook?.Enable(),
+                LeaveBusyAction = () => calculateCollisionHook?.Disable()
+            };
 
             WindowManager.Instance().PostDraw                += OnPosDraw;
             DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
@@ -85,8 +104,15 @@ public partial class OccultCrescentHelper
             treasureTaskHelper?.Dispose();
             treasureTaskHelper = null;
 
+            calculateCollisionHook?.Disable();
+            calculateCollisionHook?.Dispose();
+            calculateCollisionHook = null;
+
             treasureObjects.Clear();
         }
+
+        
+        #region 界面
 
         public override void DrawConfig()
         {
@@ -205,7 +231,6 @@ public partial class OccultCrescentHelper
                                     ICondition.Instance()[ConditionFlag.Mounted] ?
                                         24 :
                                         12,
-                                    MinHeight,
                                     ct
                                 );
 
@@ -254,7 +279,6 @@ public partial class OccultCrescentHelper
                                     ICondition.Instance()[ConditionFlag.Mounted] ?
                                         24 :
                                         12,
-                                    MinHeight,
                                     ct
                                 );
 
@@ -283,8 +307,80 @@ public partial class OccultCrescentHelper
             using (ImRaii.PushIndent())
                 ImGui.TextWrapped($"/pdr {COMMAND_TREASURE} {Lang.Get("OccultCrescentHelper-Command-PTreasure-Help")}");
         }
+        
+        // 绘制寻宝路线地图
+        private void DrawTreasureRouteMap()
+        {
+            var mapID = GameState.Map;
+            if (mapID == 0) return;
+
+            var displaySize = ScaledVector2(400);
+
+            ImGui.SetNextWindowSize(displaySize + ScaledVector2(20, 40));
+            ImGui.SetNextWindowBgAlpha(0.8f);
+
+            if (ImGui.Begin("###AutoTreasureHuntMap", WINDOW_FLAGS))
+            {
+                routeMapRenderer.SetMap(mapID);
+
+                routeMapRenderer.OnCustomMapDraw = (r, drawList) =>
+                {
+                    if (currentRoute.Count <= 1) return;
+
+                    for (var i = 0; i < currentRoute.Count - 1; i++)
+                    {
+                        var currentScreenPos = r.WorldToScreen(currentRoute[i].Position);
+                        var nextScreenPos    = r.WorldToScreen(currentRoute[i + 1].Position);
+
+                        drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 2f);
+                    }
+                };
+
+                routeMapRenderer.OnCustomForegroundDraw = (r, drawList) =>
+                {
+                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+
+                    var playerScreenPos = r.WorldToScreen(localPlayer.Position);
+                    drawList.AddCircleFilled(playerScreenPos, 6f, PlayerColor);
+                };
+
+                routeMapRenderer.ClearMarkers();
+
+                for (var i = 0; i < currentRoute.Count; i++)
+                    routeMapRenderer.AddMarker
+                    (
+                        new()
+                        {
+                            ID          = $"TreasureRoute_{i}",
+                            Position    = currentRoute[i].Position,
+                            Color       = DotColor,
+                            Size        = new(8f),
+                            ShowLabel   = false,
+                            ShowTooltip = false
+                        }
+                    );
+
+                routeMapRenderer.Draw(displaySize);
+            }
+
+            ImGui.End();
+        }
+
+        #endregion
+        
 
         #region 事件
+        
+        private static unsafe nint CalculateCollisionDetour
+        (
+            nint     moveControlInstance,
+            Vector3* expectedPosition,
+            nint     controlState,
+            Vector3* currentPosition,
+            nint     collisionFlags,
+            ushort   movementType
+        ) =>
+            nint.Zero;
 
         private void OnCommandTreasure
         (
@@ -501,7 +597,7 @@ public partial class OccultCrescentHelper
             (() =>
                 {
                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
-                    MovementManager.Instance().TPSmooth(position.WithY(0), 24, MinHeight);
+                    MovementManager.Instance().TPSmooth(position.WithY(0), 24);
 
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check"))
                         return false;
@@ -535,64 +631,6 @@ public partial class OccultCrescentHelper
             );
 
             treasureTaskHelper.Enqueue(MoveToNextTreasurePoint, "下一轮开始");
-        }
-
-        // 绘制寻宝路线地图
-        private void DrawTreasureRouteMap()
-        {
-            var mapID = GameState.Map;
-            if (mapID == 0) return;
-
-            var displaySize = ScaledVector2(400);
-
-            ImGui.SetNextWindowSize(displaySize + ScaledVector2(20, 40));
-            ImGui.SetNextWindowBgAlpha(0.8f);
-
-            if (ImGui.Begin("###AutoTreasureHuntMap", WINDOW_FLAGS))
-            {
-                routeMapRenderer.SetMap(mapID);
-
-                routeMapRenderer.OnCustomMapDraw = (r, drawList) =>
-                {
-                    if (currentRoute.Count <= 1) return;
-
-                    for (var i = 0; i < currentRoute.Count - 1; i++)
-                    {
-                        var currentScreenPos = r.WorldToScreen(currentRoute[i].Position);
-                        var nextScreenPos    = r.WorldToScreen(currentRoute[i + 1].Position);
-
-                        drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 2f);
-                    }
-                };
-
-                routeMapRenderer.OnCustomForegroundDraw = (r, drawList) =>
-                {
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
-
-                    var playerScreenPos = r.WorldToScreen(localPlayer.Position);
-                    drawList.AddCircleFilled(playerScreenPos, 6f, PlayerColor);
-                };
-
-                routeMapRenderer.ClearMarkers();
-
-                for (var i = 0; i < currentRoute.Count; i++)
-                    routeMapRenderer.AddMarker
-                    (
-                        new()
-                        {
-                            ID          = $"TreasureRoute_{i}",
-                            Position    = currentRoute[i].Position,
-                            Color       = DotColor,
-                            Size        = new(8f),
-                            ShowLabel   = false,
-                            ShowTooltip = false
-                        }
-                    );
-
-                routeMapRenderer.Draw(displaySize);
-            }
-
-            ImGui.End();
         }
 
         // 自动开箱
@@ -722,12 +760,15 @@ public partial class OccultCrescentHelper
 
             var treasurePosition = !treasureTaskHelper.IsBusy ?
                                        origTreasurePosition :
-                                       origTreasurePosition.WithY(origPosition.Y - 20f);
+                                       origTreasurePosition.WithY(origPosition.Y);
             
             new PositionUpdateInstancePacket(localPlayer.Rotation, treasurePosition, moveType).Send();
             new TreasureOpenPacket(treasure->EntityId).Send();
             new PositionUpdateInstancePacket(localPlayer.Rotation, origPosition, moveType).Send();
         }
+
+        
+        #region 嵌套类
 
         public class TreasureHuntPoint
         (
@@ -845,6 +886,9 @@ public partial class OccultCrescentHelper
             List<TreasureHuntPoint> Points
         );
 
+        #endregion
+
+        
         #region 常量
 
         private const ImGuiWindowFlags WINDOW_FLAGS =
@@ -877,63 +921,63 @@ public partial class OccultCrescentHelper
                 LuminaWrapper.GetAddonText(16587),
                 null,
                 [
-                    new(676.97f, 190.97f, 957.43f),
-                    new(673.73f, 161.15f, 729.64f),
-                    new(811.98f, 191.97f, 668.97f),
-                    new(758.14f, 129.99f, 506.80f),
-                    new(719.33f, 69.63f, 268.30f),
-                    new(447.87f, 62.88f, 463.34f),
-                    new(246.20f, 66.51f, 676.66f),
-                    new(222.89f, 90.38f, 913.60f),
-                    new(-12.10f, 66.64f, 773.86f),
-                    new(-22.69f, 42.07f, 628.99f),
-                    new(77.04f, 21.19f, 536.25f),
-                    new(-278.07f, 47.78f, 567.96f),
-                    new(-256.98f, 100.66f, 812.19f),
-                    new(-504.11f, 85.74f, 758.30f),
-                    new(-612.24f, 66.97f, 578.55f),
-                    new(-775.91f, 70.69f, 377.13f),
-                    new(-923.16f, 113.24f, 197.92f),
-                    new(-631.80f, 78.23f, 239.98f),
-                    new(-436.45f, 0.20f, 166.22f),
-                    new(-590.23f, 87.97f, -7.00f),
-                    new(-633.72f, 82.69f, -146.01f),
-                    new(-581.51f, 40.91f, -257.44f),
-                    new(-879.00f, 13.11f, -314.23f),
-                    new(-707.39f, 41.58f, -396.99f),
-                    new(-697.29f, 34.90f, -565.03f),
-                    new(-857.60f, -12.25f, -609.83f),
-                    new(-815.82f, -21.84f, -699.40f),
-                    new(-928.65f, -11.25f, -744.96f),
-                    new(-736.05f, 21.01f, -881.50f),
-                    new(-416.80f, 45.91f, -945.43f),
-                    new(-525.81f, 46.83f, -783.47f),
-                    new(-439.57f, 43.02f, -558.46f),
-                    new(-232.44f, 53.21f, -720.00f),
-                    new(-2.33f, 66.67f, -814.91f),
-                    new(147.84f, 60.99f, -868.77f),
-                    new(389.52f, 60.65f, -733.03f),
-                    new(254.72f, 36.91f, -605.01f),
-                    new(279.07f, 142.99f, -356.16f),
-                    new(85.59f, 3.28f, -281.15f),
-                    new(-26.02f, 0.23f, -437.71f),
-                    new(-265.77f, 30.17f, -439.54f),
-                    new(-254.17f, 1.82f, -266.32f),
-                    new(-168.23f, 3.37f, -153.46f),
-                    new(43.78f, 2.43f, -108.20f),
-                    new(-162.07f, 3.59f, 98.44f),
-                    new(449.39f, 0.14f, 105.21f),
-                    new(383.29f, 32.97f, -175.68f),
-                    new(478.45f, 12.41f, -202.99f),
-                    new(649.53f, 46.22f, -157.79f),
-                    new(658.81f, 66.12f, -364.71f),
-                    new(658.72f, 60.50f, -552.33f),
-                    new(639.03f, 60.62f, -698.76f),
-                    new(634.79f, 60.50f, -831.82f),
-                    new(633.11f, 60.62f, -910.25f),
-                    new(865.45f, 70.21f, -874.11f),
-                    new(815.43f, 60.53f, -657.34f),
-                    new(950.19f, 73.99f, -359.00f)
+                    new(676.97f, -23.5f, 957.43f),
+                    new(673.73f, -23.5f, 729.64f),
+                    new(811.98f, -23.5f, 668.97f),
+                    new(758.14f, -23.5f, 506.80f),
+                    new(719.33f, -23.5f, 268.30f),
+                    new(447.87f, -23.5f, 463.34f),
+                    new(246.20f, -23.5f, 676.66f),
+                    new(222.89f, -23.5f, 913.60f),
+                    new(-12.10f, -23.5f, 773.86f),
+                    new(-22.69f, -23.5f, 628.99f),
+                    new(77.04f, -23.5f, 536.25f),
+                    new(-278.07f, -23.5f, 567.96f),
+                    new(-256.98f, -23.5f, 812.19f),
+                    new(-504.11f, -23.5f, 758.30f),
+                    new(-612.24f, -23.5f, 578.55f),
+                    new(-775.91f, -23.5f, 377.13f),
+                    new(-923.16f, -23.5f, 197.92f),
+                    new(-631.80f, -23.5f, 239.98f),
+                    new(-436.45f, -23.5f, 166.22f),
+                    new(-590.23f, -23.5f, -7.00f),
+                    new(-633.72f, -23.5f, -146.01f),
+                    new(-581.51f, -23.5f, -257.44f),
+                    new(-879.00f, -23.5f, -314.23f),
+                    new(-707.39f, -23.5f, -396.99f),
+                    new(-697.29f, -23.5f, -565.03f),
+                    new(-857.60f, -40f, -609.83f),
+                    new(-815.82f, -40f, -699.40f),
+                    new(-928.65f, -40f, -744.96f),
+                    new(-736.05f, -23.5f, -881.50f),
+                    new(-416.80f, -23.5f, -945.43f),
+                    new(-525.81f, -23.5f, -783.47f),
+                    new(-439.57f, -23.5f, -558.46f),
+                    new(-232.44f, -23.5f, -720.00f),
+                    new(-2.33f, -23.5f, -814.91f),
+                    new(147.84f, -23.5f, -868.77f),
+                    new(389.52f, -23.5f, -733.03f),
+                    new(254.72f, -23.5f, -605.01f),
+                    new(279.07f, -23.5f, -356.16f),
+                    new(85.59f, -23.5f, -281.15f),
+                    new(-26.02f, -23.5f, -437.71f),
+                    new(-265.77f, -23.5f, -439.54f),
+                    new(-254.17f, -23.5f, -266.32f),
+                    new(-168.23f, -23.5f, -153.46f),
+                    new(43.78f, -23.5f, -108.20f),
+                    new(-162.07f, -23.5f, 98.44f),
+                    new(449.39f, -23.5f, 105.21f),
+                    new(383.29f, -23.5f, -175.68f),
+                    new(478.45f, -23.5f, -202.99f),
+                    new(649.53f, -23.5f, -157.79f),
+                    new(658.81f, -23.5f, -364.71f),
+                    new(658.72f, -23.5f, -552.33f),
+                    new(639.03f, -23.5f, -698.76f),
+                    new(634.79f, -23.5f, -831.82f),
+                    new(633.11f, -23.5f, -910.25f),
+                    new(865.45f, -23.5f, -874.11f),
+                    new(815.43f, -23.5f, -657.34f),
+                    new(950.19f, -23.5f, -359.00f)
                 ]
             ),
 
@@ -944,12 +988,12 @@ public partial class OccultCrescentHelper
                 $"{LuminaWrapper.GetPlaceName(5593)}",
                 Lang.Get("OccultCrescentHelper-TreasureManager-Route-Subterrane-Description"),
                 [
-                    new(-287.77f, -92.03f, 125.66f),
-                    new(-144.73f, -129.81f, 304.92f),
-                    new(41.21f, -140.80f, 168.47f),
-                    new(161.00f, -151.78f, 15.98f),
-                    new(223.65f, -161.88f, -30.66f),
-                    new(313.89f, -139.54f, 180.04f),
+                    new(-287.77f, -23.5f, 125.66f),
+                    new(-144.73f, -23.5f, 304.92f),
+                    new(41.21f, -23.5f, 168.47f),
+                    new(161.00f, -23.5f, 15.98f),
+                    new(223.65f, -23.5f, -30.66f),
+                    new(313.89f, -23.5f, 180.04f),
                 ]
             ),
 
@@ -960,11 +1004,11 @@ public partial class OccultCrescentHelper
                 $"{LuminaWrapper.GetPlaceName(5573)}",
                 Lang.Get("OccultCrescentHelper-TreasureManager-Route-SuspendedMasonry-Description"),
                 [
-                    new(-592.00f, 160.08f, 767.67f),
-                    new(-645.44f, 160.08f, 967.93f),
-                    new(-699.86f, 159.99f, 926.36f),
-                    new(-857.82f, 159.84f, 772.21f),
-                    new(-800.41f, 157.79f, 633.39f),
+                    new(-592.00f, -23.5f, 767.67f),
+                    new(-645.44f, -23.5f, 967.93f),
+                    new(-699.86f, -23.5f, 926.36f),
+                    new(-857.82f, -23.5f, 772.21f),
+                    new(-800.41f, -23.5f, 633.39f),
                 ]
             ),
 
@@ -975,75 +1019,75 @@ public partial class OccultCrescentHelper
                 LuminaWrapper.GetAddonText(16586),
                 null,
                 [
-                    new(617.09f, 66.30f, -703.88f),
-                    new(490.41f, 62.46f, -590.57f),
-                    new(386.92f, 96.79f, -451.38f),
-                    new(381.73f, 22.17f, -743.65f),
-                    new(142.11f, 16.40f, -574.06f),
-                    new(-118.97f, 4.99f, -708.46f),
-                    new(-451.68f, 2.98f, -775.57f),
-                    new(-585.29f, 4.99f, -864.84f),
-                    new(-729.43f, 4.99f, -724.82f),
-                    new(-825.1f, 3.0f, -833.6f),
-                    new(-884.12f, 3.80f, -682.03f),
-                    new(-661.71f, 2.98f, -579.49f),
-                    new(-491.02f, 2.98f, -529.59f),
-                    new(-140.46f, 22.35f, -414.27f),
-                    new(-343.16f, 52.32f, -382.13f),
-                    new(-487.11f, 98.53f, -205.46f),
-                    new(-444.11f, 90.68f, 26.23f),
-                    new(-394.89f, 106.74f, 175.43f),
-                    new(-713.80f, 62.06f, 192.61f),
-                    new(-756.83f, 76.55f, 97.37f),
-                    new(-682.80f, 135.61f, -195.27f),
-                    new(-729.92f, 116.53f, -79.06f),
-                    new(-856.96f, 68.83f, -93.16f),
-                    new(-798.25f, 105.58f, -310.57f),
-                    new(-767.45f, 115.62f, -235.00f),
-                    new(-680.54f, 104.84f, -354.79f),
-                    new(666.53f, 79.12f, -480.37f),
-                    new(870.66f, 95.69f, -388.36f),
-                    new(779.02f, 96.09f, -256.24f),
-                    new(770.75f, 107.99f, -143.57f),
-                    new(726.28f, 108.14f, -67.92f),
-                    new(475.73f, 95.99f, -87.08f),
-                    new(609.61f, 107.99f, 117.27f),
-                    new(788.88f, 120.38f, 109.39f),
-                    new(826.69f, 122.00f, 434.99f),
-                    new(869.29f, 109.97f, 581.20f),
-                    new(835.08f, 69.99f, 699.09f),
-                    new(697.32f, 69.99f, 597.92f),
-                    new(596.46f, 70.30f, 622.77f),
-                    new(433.71f, 70.30f, 683.53f),
-                    new(294.88f, 56.08f, 640.22f),
-                    new(140.98f, 55.99f, 770.99f),
-                    new(35.72f, 65.11f, 648.95f),
-                    new(256.15f, 73.17f, 492.36f),
-                    new(471.18f, 70.30f, 530.02f),
-                    new(642.97f, 69.99f, 407.80f),
-                    new(517.75f, 67.89f, 236.13f),
-                    new(277.79f, 103.78f, 241.90f),
-                    new(245.59f, 109.12f, -18.17f),
-                    new(354.12f, 95.66f, -288.93f),
-                    new(354.12f, 95.66f, -288.93f),
-                    new(55.28f, 111.31f, -289.08f),
-                    new(-158.65f, 98.62f, -132.74f),
-                    new(-25.68f, 102.22f, 150.16f),
-                    new(-256.89f, 120.99f, 125.08f),
-                    new(-401.66f, 85.04f, 332.54f),
-                    new(-283.99f, 115.98f, 377.04f),
-                    new(8.99f, 103.20f, 426.96f),
-                    new(-197.19f, 74.91f, 618.34f),
-                    new(-225.02f, 75.00f, 804.99f),
-                    new(-372.67f, 75.00f, 527.43f),
-                    new(-550.13f, 106.98f, 627.74f),
-                    new(-600.27f, 138.99f, 802.64f),
-                    new(-645.69f, 202.99f, 710.17f),
-                    new(-716.15f, 170.98f, 794.43f),
-                    new(-676.42f, 170.98f, 640.38f),
-                    new(-784.76f, 138.99f, 699.76f),
-                    new(-729.55f, 106.98f, 561.15f),
-                    new(-648.00f, 75.00f, 403.95f)
+                    new(617.09f, -20f, -703.88f),
+                    new(490.41f, -20f, -590.57f),
+                    new(386.92f, -20f, -451.38f),
+                    new(381.73f, -20f, -743.65f),
+                    new(142.11f, -20f, -574.06f),
+                    new(-118.97f, -20f, -708.46f),
+                    new(-451.68f, -20f, -775.57f),
+                    new(-585.29f, -20f, -864.84f),
+                    new(-729.43f, -20f, -724.82f),
+                    new(-825.1f, -20f, -833.6f),
+                    new(-884.12f, -20f, -682.03f),
+                    new(-661.71f, -20f, -579.49f),
+                    new(-491.02f, -20f, -529.59f),
+                    new(-140.46f, -20f, -414.27f),
+                    new(-343.16f, -20f, -382.13f),
+                    new(-487.11f, -20f, -205.46f),
+                    new(-444.11f, -20f, 26.23f),
+                    new(-394.89f, -20f, 175.43f),
+                    new(-713.80f, -20f, 192.61f),
+                    new(-756.83f, -20f, 97.37f),
+                    new(-682.80f, -20f, -195.27f),
+                    new(-729.92f, -20f, -79.06f),
+                    new(-856.96f, -20f, -93.16f),
+                    new(-798.25f, -20f, -310.57f),
+                    new(-767.45f, -20f, -235.00f),
+                    new(-680.54f, -20f, -354.79f),
+                    new(666.53f, -20f, -480.37f),
+                    new(870.66f, -20f, -388.36f),
+                    new(779.02f, -20f, -256.24f),
+                    new(770.75f, -20f, -143.57f),
+                    new(726.28f, -20f, -67.92f),
+                    new(475.73f, -20f, -87.08f),
+                    new(609.61f, -20f, 117.27f),
+                    new(788.88f, -20f, 109.39f),
+                    new(826.69f, -20f, 434.99f),
+                    new(869.29f, -20f, 581.20f),
+                    new(835.08f, -20f, 699.09f),
+                    new(697.32f, -20f, 597.92f),
+                    new(596.46f, -20f, 622.77f),
+                    new(433.71f, -20f, 683.53f),
+                    new(294.88f, -20f, 640.22f),
+                    new(140.98f, -20f, 770.99f),
+                    new(35.72f, -20f, 648.95f),
+                    new(256.15f, -20f, 492.36f),
+                    new(471.18f, -20f, 530.02f),
+                    new(642.97f, -20f, 407.80f),
+                    new(517.75f, -20f, 236.13f),
+                    new(277.79f, -20f, 241.90f),
+                    new(245.59f, -20f, -18.17f),
+                    new(354.12f, -20f, -288.93f),
+                    new(354.12f, -20f, -288.93f),
+                    new(55.28f, -20f, -289.08f),
+                    new(-158.65f, -20f, -132.74f),
+                    new(-25.68f, -20f, 150.16f),
+                    new(-256.89f, -20f, 125.08f),
+                    new(-401.66f, -20f, 332.54f),
+                    new(-283.99f, -20f, 377.04f),
+                    new(8.99f, -20f, 426.96f),
+                    new(-197.19f, -20f, 618.34f),
+                    new(-225.02f, -20f, 804.99f),
+                    new(-372.67f, -20f, 527.43f),
+                    new(-550.13f, -20f, 627.74f),
+                    new(-600.27f, -20f, 802.64f),
+                    new(-645.69f, -20f, 710.17f),
+                    new(-716.15f, -20f, 794.43f),
+                    new(-676.42f, -20f, 640.38f),
+                    new(-784.76f, -20f, 699.76f),
+                    new(-729.55f, -20f, 561.15f),
+                    new(-648.00f, -20f, 403.95f)
                 ]
             ),
         ];
