@@ -27,7 +27,7 @@ namespace DailyRoutines.ModulesPublic.Duty;
 
 public partial class OccultCrescentHelper
 {
-    private unsafe class CEManager
+    private unsafe class EventManager
     (
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
@@ -1245,7 +1245,7 @@ public partial class OccultCrescentHelper
 
             public DalamudLinkPayload GetOrAddLinkPayload
             (
-                CEManager manager
+                EventManager manager
             )
             {
                 if (LinkPayloadID != -1) return LinkPayload;

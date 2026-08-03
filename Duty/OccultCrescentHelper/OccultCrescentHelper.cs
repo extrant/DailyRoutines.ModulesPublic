@@ -29,22 +29,13 @@ public partial class OccultCrescentHelper : ModuleBase
 
     private Config config = null!;
 
-    private readonly AetheryteManager  aetheryteModule;
-    private readonly CEManager         ceModule;
-    private readonly TreasureManager   treasureModule;
-    private readonly SupportJobManager supportJobModule;
-    private readonly OthersManager     othersModule;
+    private AetheryteManager  aetheryteModule  = null!;
+    private EventManager      eventModule      = null!;
+    private TreasureManager   treasureModule   = null!;
+    private SupportJobManager supportJobModule = null!;
+    private OthersManager     othersModule     = null!;
 
     private List<BaseIslandModule> modules = [];
-
-    public OccultCrescentHelper()
-    {
-        aetheryteModule  = new(this);
-        ceModule         = new(this);
-        treasureModule   = new(this);
-        supportJobModule = new(this);
-        othersModule     = new(this);
-    }
 
     protected override void Init()
     {
@@ -52,8 +43,14 @@ public partial class OccultCrescentHelper : ModuleBase
 
         Overlay       ??= new(this);
         Overlay.Flags &=  ~ImGuiWindowFlags.AlwaysAutoResize;
+        
+        aetheryteModule  = new(this);
+        eventModule      = new(this);
+        treasureModule   = new(this);
+        supportJobModule = new(this);
+        othersModule     = new(this);
 
-        modules = [aetheryteModule, ceModule, treasureModule, supportJobModule, othersModule];
+        modules = [aetheryteModule, eventModule, treasureModule, supportJobModule, othersModule];
 
         foreach (var module in modules)
             module.Init();
@@ -114,7 +111,7 @@ public partial class OccultCrescentHelper : ModuleBase
         {
             if (ceTab)
                 using (ImRaii.PushId("CEManager"))
-                    ceModule.DrawConfig();
+                    eventModule.DrawConfig();
         }
 
         using (var treasureTab = ImRaii.TabItem($"{LuminaWrapper.GetAddonText(395)}"))
