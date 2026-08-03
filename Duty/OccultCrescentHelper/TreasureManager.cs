@@ -9,6 +9,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using OmenTools.ImGuiOm.Widgets.MapRenderer;
 using OmenTools.Info.Game;
+using OmenTools.Info.Game.Enums;
 using OmenTools.Info.Game.Packets.Upstream;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -564,6 +565,12 @@ public partial class OccultCrescentHelper
                 treasureTaskHelper.Enqueue
                 (() =>
                     {
+                        if (DService.Instance().Condition[ConditionFlag.Mounted])
+                        {
+                            ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
+                            return false;
+                        }
+
                         if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
                             return false;
 
