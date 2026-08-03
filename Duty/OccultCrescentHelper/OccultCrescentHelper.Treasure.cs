@@ -1180,7 +1180,6 @@ public partial class OccultCrescentHelper
                     new(277.79f, -20f, 241.90f),
                     new(245.59f, -20f, -18.17f),
                     new(354.12f, -20f, -288.93f),
-                    new(354.12f, -20f, -288.93f),
                     new(55.28f, -20f, -289.08f),
                     new(-158.65f, -20f, -132.74f),
                     new(-25.68f, -20f, 150.16f),
