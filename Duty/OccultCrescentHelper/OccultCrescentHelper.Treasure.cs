@@ -631,12 +631,6 @@ public partial class OccultCrescentHelper
                 treasureTaskHelper.Enqueue
                 (() =>
                     {
-                        if (DService.Instance().Condition[ConditionFlag.Mounted])
-                        {
-                            ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
-                            return false;
-                        }
-
                         if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
                             return false;
 
@@ -694,7 +688,8 @@ public partial class OccultCrescentHelper
                             (x => Vector2.DistanceSquared(((GameObject*)x)->Position.ToVector2(), position.ToVector2()) <= 225) is var ptr &&
                         ptr > nint.Zero)
                     {
-                        position = ((GameObject*)ptr)->Position;
+                        position   = ((GameObject*)ptr)->Position;
+                        position.Y = data.Position.Y;
                         return false;
                     }
 
@@ -1061,37 +1056,37 @@ public partial class OccultCrescentHelper
                 Lang.Get("InnerLoop"),
                 null,
                 [
-                    new(-590.23f, -23.5f, -7.00f),
-                    new(-633.72f, -23.5f, -146.01f),
-                    new(-581.51f, -23.5f, -257.44f),
-                    new(-439.57f, -23.5f, -558.46f),
-                    new(-232.44f, -23.5f, -720.00f),
-                    new(-265.77f, -23.5f, -439.54f),
-                    new(-254.17f, -23.5f, -266.32f),
-                    new(-168.23f, -23.5f, -153.46f),
-                    new(43.78f, -23.5f, -108.20f),
-                    new(85.59f, -23.5f, -281.15f),
-                    new(-26.02f, -23.5f, -437.71f),
-                    new(254.72f, -23.5f, -605.01f),
-                    new(279.07f, -23.5f, -356.16f),
-                    new(658.81f, -23.5f, -364.71f),
-                    new(478.45f, -23.5f, -202.99f),
-                    new(383.29f, -23.5f, -175.68f),
-                    new(223.65f, -23.5f, -30.66f),
-                    new(161.00f, -23.5f, 15.98f),
-                    new(313.89f, -23.5f, 180.04f),
-                    new(449.39f, -23.5f, 105.21f),
-                    new(447.87f, -23.5f, 463.34f),
-                    new(246.20f, -23.5f, 676.66f),
-                    new(77.04f, -23.5f, 536.25f),
-                    new(-22.69f, -23.5f, 628.99f),
-                    new(-278.07f, -23.5f, 567.96f),
-                    new(-144.73f, -23.5f, 304.92f),
-                    new(41.21f, -23.5f, 168.47f),
-                    new(-162.07f, -23.5f, 98.44f),
-                    new(-287.77f, -23.5f, 125.66f),
-                    new(-436.45f, -23.5f, 166.22f),
-                    new(-631.80f, -23.5f, 239.98f)
+                    new(-590.23f, -23f, -7.00f),
+                    new(-633.72f, -23f, -146.01f),
+                    new(-581.51f, -23f, -257.44f),
+                    new(-439.57f, -23f, -558.46f),
+                    new(-232.44f, -23f, -720.00f),
+                    new(-265.77f, -23f, -439.54f),
+                    new(-254.17f, -23f, -266.32f),
+                    new(-168.23f, -23f, -153.46f),
+                    new(43.78f, -23f, -108.20f),
+                    new(85.59f, -23f, -281.15f),
+                    new(-26.02f, -23f, -437.71f),
+                    new(254.72f, -23f, -605.01f),
+                    new(279.07f, -23f, -356.16f),
+                    new(658.81f, -23f, -364.71f),
+                    new(478.45f, -23f, -202.99f),
+                    new(383.29f, -23f, -175.68f),
+                    new(223.65f, -23f, -30.66f),
+                    new(161.00f, -23f, 15.98f),
+                    new(313.89f, -23f, 180.04f),
+                    new(449.39f, -23f, 105.21f),
+                    new(447.87f, -23f, 463.34f),
+                    new(246.20f, -23f, 676.66f),
+                    new(77.04f, -23f, 536.25f),
+                    new(-22.69f, -23f, 628.99f),
+                    new(-278.07f, -23f, 567.96f),
+                    new(-144.73f, -23f, 304.92f),
+                    new(41.21f, -23f, 168.47f),
+                    new(-162.07f, -23f, 98.44f),
+                    new(-287.77f, -23f, 125.66f),
+                    new(-436.45f, -23f, 166.22f),
+                    new(-631.80f, -23f, 239.98f)
                 ]
             ),
 
@@ -1102,43 +1097,43 @@ public partial class OccultCrescentHelper
                 Lang.Get("OuterLoop"),
                 null,
                 [
-                    new(-879.00f, -23.5f, -314.23f),
-                    new(-707.39f, -23.5f, -396.99f),
-                    new(-697.29f, -23.5f, -565.03f),
+                    new(-879.00f, -23f, -314.23f),
+                    new(-707.39f, -23f, -396.99f),
+                    new(-697.29f, -23f, -565.03f),
                     new(-857.60f, -40f, -609.83f),
                     new(-815.82f, -40f, -699.40f),
                     new(-928.65f, -40f, -744.96f),
-                    new(-736.05f, -23.5f, -881.50f),
-                    new(-525.81f, -23.5f, -783.47f),
-                    new(-416.80f, -23.5f, -945.43f),
-                    new(-2.33f, -23.5f, -814.91f),
-                    new(147.84f, -23.5f, -868.77f),
-                    new(389.52f, -23.5f, -733.03f),
-                    new(639.03f, -23.5f, -698.76f),
-                    new(634.79f, -23.5f, -831.82f),
-                    new(633.11f, -23.5f, -910.25f),
-                    new(865.45f, -23.5f, -874.11f),
-                    new(815.43f, -23.5f, -657.34f),
-                    new(658.72f, -23.5f, -552.33f),
-                    new(950.19f, -23.5f, -359.00f),
-                    new(649.53f, -23.5f, -157.79f),
-                    new(719.33f, -23.5f, 268.30f),
-                    new(758.14f, -23.5f, 506.80f),
-                    new(811.98f, -23.5f, 668.97f),
-                    new(673.73f, -23.5f, 729.64f),
-                    new(676.97f, -23.5f, 957.43f),
-                    new(222.89f, -23.5f, 913.60f),
-                    new(-12.10f, -23.5f, 773.86f),
-                    new(-256.98f, -23.5f, 812.19f),
-                    new(-504.11f, -23.5f, 758.30f),
-                    new(-612.24f, -23.5f, 578.55f),
-                    new(-592.00f, -23.5f, 767.67f),
-                    new(-645.44f, -23.5f, 967.93f),
-                    new(-699.86f, -23.5f, 926.36f),
-                    new(-857.82f, -23.5f, 772.21f),
-                    new(-800.41f, -23.5f, 633.39f),
-                    new(-775.91f, -23.5f, 377.13f),
-                    new(-923.16f, -23.5f, 197.92f)
+                    new(-736.05f, -23f, -881.50f),
+                    new(-525.81f, -23f, -783.47f),
+                    new(-416.80f, -23f, -945.43f),
+                    new(-2.33f, -23f, -814.91f),
+                    new(147.84f, -23f, -868.77f),
+                    new(389.52f, -23f, -733.03f),
+                    new(639.03f, -23f, -698.76f),
+                    new(634.79f, -23f, -831.82f),
+                    new(633.11f, -23f, -910.25f),
+                    new(865.45f, -23f, -874.11f),
+                    new(815.43f, -23f, -657.34f),
+                    new(658.72f, -23f, -552.33f),
+                    new(950.19f, -23f, -359.00f),
+                    new(649.53f, -23f, -157.79f),
+                    new(719.33f, -23f, 268.30f),
+                    new(758.14f, -23f, 506.80f),
+                    new(811.98f, -23f, 668.97f),
+                    new(673.73f, -23f, 729.64f),
+                    new(676.97f, -23f, 957.43f),
+                    new(222.89f, -23f, 913.60f),
+                    new(-12.10f, -23f, 773.86f),
+                    new(-256.98f, -23f, 812.19f),
+                    new(-504.11f, -23f, 758.30f),
+                    new(-612.24f, -23f, 578.55f),
+                    new(-592.00f, -23f, 767.67f),
+                    new(-645.44f, -23f, 967.93f),
+                    new(-699.86f, -23f, 926.36f),
+                    new(-857.82f, -23f, 772.21f),
+                    new(-800.41f, -23f, 633.39f),
+                    new(-775.91f, -23f, 377.13f),
+                    new(-923.16f, -23f, 197.92f)
                 ]
             ),
 
