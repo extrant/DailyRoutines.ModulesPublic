@@ -274,11 +274,17 @@ public partial class OccultCrescentHelper
                         {
                             Route? hoveredRoute = null;
 
+                            var isFirst = true;
                             foreach (var route in Routes)
                             {
                                 if (route.TerritoryType != GameState.TerritoryType) continue;
 
-                                if (ImGui.Button(route.Name))
+                                if (!isFirst)
+                                    ImGui.SameLine();
+
+                                isFirst = false;
+                                
+                                if (ImGui.Button($"    {route.Name}    "))
                                     EnqueueAutoTreasureHunt(route.Points);
 
                                 if (route.Description is not null)
@@ -664,7 +670,7 @@ public partial class OccultCrescentHelper
             (() =>
                 {
                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
-                    MovementManager.Instance().TPSmooth(position.WithY(0), 24);
+                    MovementManager.Instance().TPSmooth(position, 24);
 
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check"))
                         return false;
