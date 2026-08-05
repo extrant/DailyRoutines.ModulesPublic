@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
 using KamiToolKit.UiOverlay;
+using OmenTools.Dalamud;
 using OmenTools.Info.Game;
 using OmenTools.Interop.Game.Helpers;
 using OmenTools.Interop.Game.Lumina;
@@ -279,7 +280,8 @@ public partial class OccultCrescentHelper
                 isJustLogin = false;
                 
                 if (GameState.TerritoryType == PHANTOM_VILLIAGE_TERRITORY_ID &&
-                    !string.IsNullOrWhiteSpace(MainModule.config.LeaveDutyCommands))
+                    !string.IsNullOrWhiteSpace(MainModule.config.LeaveDutyCommands) &&
+                    Throttler.Shared.Throttle("OccultCrescentHelper.OthersManager.Leave", 3_000))
                     ChatManager.Instance().ExecuteMacro(MainModule.config.LeaveDutyCommands);
 
                 return;
@@ -309,7 +311,8 @@ public partial class OccultCrescentHelper
                 );
             }
 
-            if (!string.IsNullOrWhiteSpace(MainModule.config.JoinDutyCommands))
+            if (!string.IsNullOrWhiteSpace(MainModule.config.JoinDutyCommands) &&
+                Throttler.Shared.Throttle("OccultCrescentHelper.OthersManager.Join", 3_000))
                 ChatManager.Instance().ExecuteMacro(MainModule.config.JoinDutyCommands);
         }
 
