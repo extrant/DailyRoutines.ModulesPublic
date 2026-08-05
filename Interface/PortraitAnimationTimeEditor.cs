@@ -56,33 +56,25 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         addon?.SetPlaybackState(true);
     }
 
-    private bool UpdateAnimationState()
+    private hkaDefaultAnimationControl* UpdateAnimationState()
     {
-        var chara     = PortraitChara;
+        var view      = CharaView;
+        var chara     = view == null ? null : view->GetCharacter();
         var animation = GetAnimationControl(chara);
+        var binding   = animation == null ? null : animation->hkaAnimationControl.Binding.ptr;
+        var clip      = binding == null ? null : binding->Animation.ptr;
+        var timeline  = chara == null ? null : chara->Timeline.TimelineSequencer.GetSchedulerTimeline(0);
 
-        if (chara == null || animation == null || CharaView == null)
+        if (view == null || clip == null || timeline == null)
         {
             frameCount   = 0;
             currentFrame = 0;
-            return false;
+            return null;
         }
 
-        var baseTimeline = chara->Timeline.TimelineSequencer.GetSchedulerTimeline(0);
-
-        if (baseTimeline                                              == null ||
-            animation->hkaAnimationControl.Binding.ptr                == null ||
-            animation->hkaAnimationControl.Binding.ptr->Animation.ptr == null)
-        {
-            frameCount   = 0;
-            currentFrame = 0;
-            return false;
-        }
-
-        var duration = animation->hkaAnimationControl.Binding.ptr->Animation.ptr->Duration - 0.5f;
-        frameCount   = Math.Max(0, (int)Math.Round(30f * duration));
-        currentFrame = Math.Clamp(CharaView->GetAnimationTime(), 0f, frameCount);
-        return true;
+        frameCount   = Math.Max(0, (int)Math.Round(30f * (clip->Duration - 0.5f)));
+        currentFrame = Math.Clamp(view->GetAnimationTime(), 0f, frameCount);
+        return animation;
     }
 
     private static void UpdatePortraitCurrentFrame
@@ -90,8 +82,11 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         float frame
     )
     {
-        var chara = PortraitChara;
-        if (chara == null || CharaView == null || EditorState == null || BannerEditor == null)
+        var editorState = EditorState;
+        var view        = editorState == null ? null : editorState->CharaView;
+        var chara       = view == null ? null : view->GetCharacter();
+        var banner      = (AddonBannerEditor*)BannerEditor;
+        if (editorState == null || view == null || chara == null || banner == null)
             return;
 
         var baseTimeline = chara->Timeline.TimelineSequencer.GetSchedulerTimeline(0);
@@ -100,15 +95,15 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
 
         var delta = frame - baseTimeline->TimelineController.CurrentTimestamp;
         if (delta < 0)
-            CharaView->SetPoseTimed(chara->Timeline.BannerTimelineRowId, frame);
+            view->SetPoseTimed(chara->Timeline.BannerTimelineRowId, frame);
         else
             baseTimeline->UpdateBanner(delta);
 
-        CharaView->ToggleAnimationPlayback(true);
-        ((AddonBannerEditor*)BannerEditor)->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
+        view->ToggleAnimationPlayback(true);
+        banner->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
 
-        if (!EditorState->HasDataChanged)
-            EditorState->SetHasChanged(true);
+        if (!editorState->HasDataChanged)
+            editorState->SetHasChanged(true);
     }
 
     private static hkaDefaultAnimationControl* GetAnimationControl
@@ -118,16 +113,15 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
     {
         if (charaActor == null) return null;
 
-        var actor = (Actor*)charaActor;
-        if (actor->Model                                                                                      == null ||
-            actor->Model->Skeleton                                                                            == null ||
-            actor->Model->Skeleton->PartialSkeletons                                                          == null ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)                             == null ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls.Length   == 0    ||
-            actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0].Value == null)
+        var model             = ((Actor*)charaActor)->Model;
+        var skeleton          = model == null ? null : model->Skeleton;
+        var partialSkeletons  = skeleton == null ? null : skeleton->PartialSkeletons;
+        var animatedSkeleton  = partialSkeletons == null ? null : partialSkeletons->GetHavokAnimatedSkeleton(0);
+        if (animatedSkeleton == null)
             return null;
 
-        return actor->Model->Skeleton->PartialSkeletons->GetHavokAnimatedSkeleton(0)->AnimationControls[0];
+        var animationControls = animatedSkeleton->AnimationControls;
+        return animationControls.Length == 0 ? null : animationControls[0];
     }
 
     private sealed class PortraitAnimationTimeEditorAddon
@@ -139,10 +133,9 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
         private const float BUTTON_SPACING = 4f;
         private const float CONTROL_WIDTH  = (3f * BUTTON_SIZE) + (2f * BUTTON_SPACING);
 
-        private HorizontalListNode controlRow    = null!;
-        private TextNode           frameLabel    = null!;
-        private FloatSliderNode    frameSlider   = null!;
-        private CircleButtonNode   ControlButton = null!;
+        private TextNode         frameLabel      = null!;
+        private FloatSliderNode  frameSlider     = null!;
+        private CircleButtonNode playbackButton = null!;
 
         private CircleButtonNode[] controlButtons = [];
         private bool               isSyncing;
@@ -167,7 +160,7 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             };
             verticalList.AttachNode(this);
 
-            controlRow = new()
+            var controlRow = new HorizontalListNode
             {
                 Size             = ContentSize with { Y = 28 },
                 FirstItemSpacing = (ContentSize.X - CONTROL_WIDTH) / 2f,
@@ -176,55 +169,24 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
 
             controlButtons =
             [
-                new CircleButtonNode
-                {
-                    IsVisible   = true,
-                    IsEnabled   = true,
-                    Size        = new(BUTTON_SIZE),
-                    Icon        = CircleButtonIcon.LeftArrow,
-                    TextTooltip = "-1",
-                    OnClick = () => module.SetCurrentFrame
-                    (
-                        module.currentFrame % 1f == 0 ?
-                            module.currentFrame                - 1f :
-                            MathF.Ceiling(module.currentFrame) - 1f
-                    )
-                },
-                ControlButton = new CircleButtonNode
-                {
-                    IsVisible   = true,
-                    IsEnabled   = true,
-                    Size        = new(BUTTON_SIZE),
-                    Icon        = CircleButtonIcon.MusicNote,
-                    TextTooltip = LuminaWrapper.GetAddonText(4802),
-                    OnClick = () =>
-                    {
-                        var chara   = PortraitChara;
-                        var control = GetAnimationControl(chara);
-                        if (chara == null || control == null || CharaView == null || BannerEditor == null)
-                            return;
-
-                        var actualIsPlaying = control->PlaybackSpeed > 0;
-                        var isPlaying       = GetPlaybackState(actualIsPlaying);
-                        CharaView->ToggleAnimationPlayback(isPlaying);
-                        ((AddonBannerEditor*)BannerEditor)->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
-                        SetPlaybackState(!isPlaying, true);
-                    }
-                },
-                new CircleButtonNode
-                {
-                    IsVisible   = true,
-                    IsEnabled   = true,
-                    Size        = new(BUTTON_SIZE),
-                    Icon        = CircleButtonIcon.RightArrow,
-                    TextTooltip = "+1",
-                    OnClick = () => module.SetCurrentFrame
-                    (
-                        module.currentFrame % 1f == 0 ?
-                            module.currentFrame + 1f :
-                            MathF.Ceiling(module.currentFrame)
-                    )
-                }
+                CreateControlButton
+                (
+                    CircleButtonIcon.LeftArrow,
+                    "-1",
+                    () => module.SetCurrentFrame(MathF.Ceiling(module.currentFrame) - 1f)
+                ),
+                playbackButton = CreateControlButton
+                (
+                    CircleButtonIcon.MusicNote,
+                    LuminaWrapper.GetAddonText(4802),
+                    TogglePlayback
+                ),
+                CreateControlButton
+                (
+                    CircleButtonIcon.RightArrow,
+                    "+1",
+                    () => module.SetCurrentFrame(MathF.Floor(module.currentFrame) + 1f)
+                )
             ];
             controlRow.AddNode(controlButtons);
             controlRow.RecalculateLayout();
@@ -264,32 +226,57 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             AtkUnitBase* hostAddon
         )
         {
-            var charaResNode = hostAddon->GetNodeById(107);
-            if (charaResNode == null)
+            if (hostAddon->GetNodeById(107) != null)
+                SyncControls(module.UpdateAnimationState());
+        }
+
+        private static CircleButtonNode CreateControlButton
+        (
+            CircleButtonIcon icon,
+            string           tooltip,
+            Action           onClick
+        ) =>
+            new()
+            {
+                IsVisible   = true,
+                IsEnabled   = true,
+                Size        = new(BUTTON_SIZE),
+                Icon        = icon,
+                TextTooltip = tooltip,
+                OnClick     = onClick
+            };
+
+        private void TogglePlayback()
+        {
+            var view    = CharaView;
+            var control = GetAnimationControl(view == null ? null : view->GetCharacter());
+            var banner  = (AddonBannerEditor*)BannerEditor;
+            if (view == null || control == null || banner == null)
                 return;
 
-            var hasAnimation = module.UpdateAnimationState();
-            SyncControls(hasAnimation);
+            var isPlaying = pendingPlaybackState ?? control->PlaybackSpeed > 0;
+            view->ToggleAnimationPlayback(isPlaying);
+            banner->PlayAnimationCheckbox->AtkComponentButton.IsChecked = false;
+            SetPlaybackState(!isPlaying, true);
         }
 
         private void SyncControls
         (
-            bool hasAnimation
+            hkaDefaultAnimationControl* animation
         )
         {
+            var hasAnimation = animation != null;
             var maxFrame = MathF.Max(1f, module.frameCount);
 
             foreach (var button in controlButtons)
                 button.IsEnabled = hasAnimation;
 
             frameSlider.IsEnabled = hasAnimation;
-            var control         = GetAnimationControl(PortraitChara);
-            var actualIsPlaying = control != null && control->PlaybackSpeed > 0;
-            if (!hasAnimation || (pendingPlaybackState is { } pendingState && pendingState == actualIsPlaying))
+            var actualIsPlaying = hasAnimation && animation->PlaybackSpeed > 0;
+            if (!hasAnimation || pendingPlaybackState == actualIsPlaying)
                 pendingPlaybackState = null;
 
-            var isPlaying = pendingPlaybackState ?? actualIsPlaying;
-            UpdatePlaybackButton(isPlaying);
+            UpdatePlaybackButton(pendingPlaybackState ?? actualIsPlaying);
 
             frameLabel.String = module.frameCount < 100 ?
                                     $"{module.currentFrame:F3} / {module.frameCount}" :
@@ -301,11 +288,6 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             frameSlider.Value = module.currentFrame;
             isSyncing         = false;
         }
-
-        public bool GetPlaybackState
-        (
-            bool actualIsPlaying
-        ) => pendingPlaybackState ?? actualIsPlaying;
 
         public void SetPlaybackState
         (
@@ -319,8 +301,8 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             if (!refreshTooltip)
                 return;
 
-            ControlButton.HideTooltip();
-            ControlButton.ShowTooltip();
+            playbackButton.HideTooltip();
+            playbackButton.ShowTooltip();
         }
 
         private void UpdatePlaybackButton
@@ -328,12 +310,12 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
             bool isPlaying
         )
         {
-            ControlButton.Icon = isPlaying ?
-                                     CircleButtonIcon.WavePulse :
-                                     CircleButtonIcon.MusicNote;
-            ControlButton.TextTooltip = isPlaying ?
-                                            LuminaWrapper.GetAddonText(13910) :
-                                            LuminaWrapper.GetAddonText(4802);
+            playbackButton.Icon = isPlaying ?
+                                      CircleButtonIcon.WavePulse :
+                                      CircleButtonIcon.MusicNote;
+            playbackButton.TextTooltip = isPlaying ?
+                                             LuminaWrapper.GetAddonText(13910) :
+                                             LuminaWrapper.GetAddonText(4802);
         }
     }
 
@@ -359,11 +341,6 @@ public unsafe class PortraitAnimationTimeEditor : ModuleBase
     private static CharaViewPortrait* CharaView =>
         EditorState != null ?
             EditorState->CharaView :
-            null;
-
-    private static Character* PortraitChara =>
-        CharaView != null ?
-            CharaView->GetCharacter() :
             null;
 
     #endregion
