@@ -41,6 +41,38 @@ public partial class OccultCrescentHelper : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
+        var isConfigChanged = false;
+
+        if (!string.IsNullOrWhiteSpace(config.AutoEnableDisablePlugins))
+        {
+            var plugins = config.AutoEnableDisablePlugins
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Take(MAX_DUTY_COMMAND_LINES)
+                .ToArray();
+
+            config.JoinDutyCommands  = string.Join("\n", plugins.Select(plugin => $"/xlenableplugin {plugin}"));
+            config.LeaveDutyCommands = string.Join("\n", plugins.Select(plugin => $"/xldisableplugin {plugin}"));
+            config.AutoEnableDisablePlugins = string.Empty;
+            isConfigChanged = true;
+        }
+
+        var joinDutyCommands = LimitDutyCommandLines(config.JoinDutyCommands);
+        if (joinDutyCommands != config.JoinDutyCommands)
+        {
+            config.JoinDutyCommands = joinDutyCommands;
+            isConfigChanged = true;
+        }
+
+        var leaveDutyCommands = LimitDutyCommandLines(config.LeaveDutyCommands);
+        if (leaveDutyCommands != config.LeaveDutyCommands)
+        {
+            config.LeaveDutyCommands = leaveDutyCommands;
+            isConfigChanged = true;
+        }
+
+        if (isConfigChanged)
+            config.Save(this);
+
         Overlay       ??= new(this);
         Overlay.Flags &=  ~ImGuiWindowFlags.AlwaysAutoResize;
         
@@ -151,19 +183,43 @@ public partial class OccultCrescentHelper : ModuleBase
 
     protected override void OverlayPostDraw() => FontManager.Instance().UIFont80.Pop();
 
+    private static string LimitDutyCommandLines
+    (
+        string commands
+    )
+    {
+        if (string.IsNullOrEmpty(commands)) return string.Empty;
+
+        var commandLines = commands.Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
+        return commandLines.Length <= MAX_DUTY_COMMAND_LINES ?
+                   commands :
+                   string.Join("\n", commandLines.Take(MAX_DUTY_COMMAND_LINES));
+    }
+
+    private static int GetDutyCommandLineCount
+    (
+        string commands
+    ) =>
+        string.IsNullOrEmpty(commands) ?
+            0 :
+            commands.Split(["\r\n", "\n", "\r"], StringSplitOptions.None).Length;
+
     private class Config : ModuleConfig
     {
         // 辅助职业技能是否为真
         public bool AddonIsDragRealAction = true;
 
+        // 仅用于迁移旧配置
         public string AutoEnableDisablePlugins = string.Empty;
+        public string JoinDutyCommands         = string.Empty;
+        public string LeaveDutyCommands        = string.Empty;
 
         public Vector3 DefaultPositionEnterZoneNorthHorn = new(882.2f, 258.5f, 882.0f);
         public Vector3 DefaultPositionEnterZoneSouthHorn = new(834, 73, -694);
 
         public float DistanceToAutoOpenTreasure = 5f;
 
-        // 自动启用/禁用插件
+        // 自动执行进出副本指令
         public bool IsEnabledAutoEnableDisablePlugins = true;
 
         // 自动开箱
@@ -227,6 +283,7 @@ public partial class OccultCrescentHelper : ModuleBase
 
     #region 常量
 
+    private const int MAX_DUTY_COMMAND_LINES = 15;
     private const uint DEMI_RETURN_ACTION_ID   = 41343;
     private const uint SOUTH_HORN_TERRITORY_ID = 1252;
     private const uint NORTH_HORN_TERRITORY_ID = 1346;

@@ -4,7 +4,6 @@ using DailyRoutines.Manager;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
@@ -180,11 +179,21 @@ public partial class OccultCrescentHelper
             {
                 using var indent = ImRaii.PushIndent();
 
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - (20f * GlobalUIScale));
-                ImGui.InputText("###AutoEnableDisablePluginsInput", ref MainModule.config.AutoEnableDisablePlugins, 1024);
-                if (ImGui.IsItemDeactivatedAfterEdit())
-                    MainModule.config.Save(MainModule);
-                ImGuiOm.TooltipHover(MainModule.config.AutoEnableDisablePlugins);
+                DrawDutyCommands
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-JoinDutyCommands"),
+                    "###JoinDutyCommandsInput",
+                    ref MainModule.config.JoinDutyCommands
+                );
+
+                ImGui.Spacing();
+
+                DrawDutyCommands
+                (
+                    Lang.Get("OccultCrescentHelper-OthersManager-LeaveDutyCommands"),
+                    "###LeaveDutyCommandsInput",
+                    ref MainModule.config.LeaveDutyCommands
+                );
 
             }
 
@@ -209,6 +218,32 @@ public partial class OccultCrescentHelper
             ImGuiOm.HelpMarker(Lang.Get("OccultCrescentHelper-OthersManager-FastUseKnowledgeCrystal-Help"), 20f * GlobalUIScale);
         }
 
+        private void DrawDutyCommands
+        (
+            string     label,
+            string     inputID,
+            ref string commands
+        )
+        {
+            ImGui.TextUnformatted(label);
+            
+            ImGui.SetNextItemWidth(-1f);
+            ImGui.InputTextMultiline(inputID, ref commands, 4096, new(-1f, 120f * GlobalUIScale));
+
+            var limitedCommands = LimitDutyCommandLines(commands);
+            var isLimited       = limitedCommands != commands;
+            if (isLimited)
+                commands = limitedCommands;
+
+            if (isLimited || ImGui.IsItemDeactivatedAfterEdit())
+                MainModule.config.Save(MainModule);
+
+            ImGui.TextDisabled
+            (
+                $"{GetDutyCommandLineCount(commands)}/{MAX_DUTY_COMMAND_LINES}"
+            );
+        }
+
         private void OnZoneChanged
         (
             uint u
@@ -221,18 +256,10 @@ public partial class OccultCrescentHelper
 
                 isJustLogin = false;
 
-                if (GameState.TerritoryType == 1278 && MainModule.config.IsEnabledAutoEnableDisablePlugins)
-                {
-                    var pluginsNames = MainModule.config.AutoEnableDisablePlugins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-                    foreach (var plugin in pluginsNames)
-                    {
-                        if (string.IsNullOrWhiteSpace(plugin)) continue;
-                        if (!DService.Instance().PI.IsPluginEnabled(plugin)) continue;
-
-                        ChatManager.Instance().SendMessage($"/xldisableplugin {plugin}");
-                    }
-                }
+                if (GameState.TerritoryType == 1278                     &&
+                    MainModule.config.IsEnabledAutoEnableDisablePlugins &&
+                    !string.IsNullOrWhiteSpace(MainModule.config.LeaveDutyCommands))
+                    ChatManager.Instance().ExecuteMacro(MainModule.config.LeaveDutyCommands);
 
                 return;
             }
@@ -261,18 +288,9 @@ public partial class OccultCrescentHelper
                 );
             }
 
-            if (MainModule.config.IsEnabledAutoEnableDisablePlugins)
-            {
-                var pluginsNames = MainModule.config.AutoEnableDisablePlugins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-                foreach (var plugin in pluginsNames)
-                {
-                    if (string.IsNullOrWhiteSpace(plugin)) continue;
-                    if (DService.Instance().PI.IsPluginEnabled(plugin)) continue;
-
-                    ChatManager.Instance().SendMessage($"/xlenableplugin {plugin}");
-                }
-            }
+            if (MainModule.config.IsEnabledAutoEnableDisablePlugins &&
+                !string.IsNullOrWhiteSpace(MainModule.config.JoinDutyCommands))
+                ChatManager.Instance().ExecuteMacro(MainModule.config.JoinDutyCommands);
         }
 
         private void OnActionContents
