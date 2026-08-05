@@ -219,9 +219,6 @@ public partial class OccultCrescentHelper : ModuleBase
 
         public float DistanceToAutoOpenTreasure = 5f;
 
-        // 自动执行进出副本指令
-        public bool IsEnabledAutoEnableDisablePlugins = true;
-
         // 自动开箱
         public bool IsEnabledAutoOpenTreasure;
 
@@ -283,10 +280,11 @@ public partial class OccultCrescentHelper : ModuleBase
 
     #region 常量
 
-    private const int MAX_DUTY_COMMAND_LINES = 15;
-    private const uint DEMI_RETURN_ACTION_ID   = 41343;
-    private const uint SOUTH_HORN_TERRITORY_ID = 1252;
-    private const uint NORTH_HORN_TERRITORY_ID = 1346;
+    private const int  MAX_DUTY_COMMAND_LINES        = 15;
+    private const uint DEMI_RETURN_ACTION_ID         = 41343;
+    private const uint SOUTH_HORN_TERRITORY_ID       = 1252;
+    private const uint NORTH_HORN_TERRITORY_ID       = 1346;
+    private const uint PHANTOM_VILLIAGE_TERRITORY_ID = 1252;
 
     #endregion
 }
