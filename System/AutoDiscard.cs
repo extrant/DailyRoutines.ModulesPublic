@@ -1,11 +1,14 @@
 using System.Collections.Frozen;
 using System.Numerics;
+using DailyRoutines.Common.Info.Abstractions;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using DailyRoutines.Extensions;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Gui.ContextMenu;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
@@ -15,6 +18,7 @@ using OmenTools.Interop.Game.AddonEvent;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
 using OmenTools.Threading.TaskHelper;
+using MenuItem = Dalamud.Game.Gui.ContextMenu.MenuItem;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -59,12 +63,15 @@ public unsafe class AutoDiscard : ModuleBase
 
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoDiscard-CommandHelp") });
 
+        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreSetup, "SelectYesno", OnAddon);
     }
 
     protected override void Uninit()
     {
         DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
 
         CommandManager.Instance().RemoveCommand(COMMAND);
         itemSearcher = null;
@@ -249,10 +256,11 @@ public unsafe class AutoDiscard : ModuleBase
                 {
                     foreach (var item in group.Items.TakeLast(15))
                     {
-                        var itemData = LuminaGetter.GetRow<Item>(item);
+                        var (baseItemID, itemKind) = ItemUtil.GetBaseId(item);
+                        var itemData = LuminaGetter.GetRow<Item>(baseItemID);
                         if (itemData == null) continue;
 
-                        var itemIcon = DService.Instance().Texture.GetFromGameIcon(new(itemData.Value.Icon)).GetWrapOrDefault();
+                        var itemIcon = ImageHelper.GetGameIcon(itemData.Value.Icon, itemKind == ItemKind.Hq);
                         if (itemIcon == null) continue;
 
                         ImGui.Image(itemIcon.Handle, new(ImGui.GetTextLineHeightWithSpacing()));
@@ -418,10 +426,11 @@ public unsafe class AutoDiscard : ModuleBase
 
                         foreach (var item in group.Items)
                         {
-                            var specificItemNullable = LuminaGetter.GetRow<Item>(item);
+                            var (baseItemID, itemKind) = ItemUtil.GetBaseId(item);
+                            var specificItemNullable = LuminaGetter.GetRow<Item>(baseItemID);
                             if (specificItemNullable == null) continue;
                             var specificItem     = specificItemNullable.Value;
-                            var specificItemIcon = DService.Instance().Texture.GetFromGameIcon(new(specificItem.Icon)).GetWrapOrDefault();
+                            var specificItemIcon = ImageHelper.GetGameIcon(specificItem.Icon, itemKind == ItemKind.Hq);
                             if (specificItemIcon == null) continue;
 
                             if (!string.IsNullOrWhiteSpace(selectedItemSearchInput) &&
@@ -431,11 +440,13 @@ public unsafe class AutoDiscard : ModuleBase
                                 (
                                     specificItemIcon.Handle,
                                     new(ImGui.GetTextLineHeightWithSpacing()),
-                                    specificItem.Name.ToString(),
+                                    itemKind == ItemKind.Hq ?
+                                        $"{specificItem.Name} (HQ)" :
+                                        specificItem.Name.ToString(),
                                     false,
                                     ImGuiSelectableFlags.DontClosePopups
                                 ))
-                                group.Items.Remove(specificItem.RowId);
+                                group.Items.Remove(item);
                         }
                     }
                 }
@@ -578,6 +589,18 @@ public unsafe class AutoDiscard : ModuleBase
     ) =>
         EnqueueDiscardGroup(arguments.Trim());
 
+    private void OnContextMenuOpened
+    (
+        IMenuOpenedArgs args
+    )
+    {
+        if (args is not { MenuType: ContextMenuType.Inventory, Target: MenuTargetInventory { TargetItem: { } item } }) return;
+        if (!LuminaGetter.TryGetRow<Item>(item.BaseItemId, out _)) return;
+        if (moduleConfig.DiscardGroups.Count == 0) return;
+
+        args.AddMenuItem(new AddItemToGroupMenuItem(this, item.ItemId).Get());
+    }
+
     private void OnAddon
     (
         AddonEvent type,
@@ -648,6 +671,57 @@ public unsafe class AutoDiscard : ModuleBase
         }
     }
 
+    private class AddItemToGroupMenuItem
+    (
+        AutoDiscard module,
+        uint        itemID
+    ) : MenuItemBase
+    {
+        public override string Name       { get; protected set; } = Lang.Get("AutoDiscard-AddToGroupMenu");
+        public override string Identifier { get; protected set; } = nameof(AutoDiscard);
+
+        protected override bool WithDRPrefix { get; set; } = true;
+        protected override bool IsSubmenu    { get; set; } = true;
+
+        protected override void OnClicked
+        (
+            IMenuItemClickedArgs args
+        ) =>
+            args.OpenSubmenu(Name, ProcessMenuItems());
+
+        private List<MenuItem> ProcessMenuItems()
+        {
+            var list = new List<MenuItem>();
+
+            foreach (var group in module.moduleConfig.DiscardGroups)
+            {
+                list.Add
+                (
+                    new()
+                    {
+                        Name = group.UniqueName,
+                        OnClicked = _ =>
+                        {
+                            group.Items.Add(itemID);
+                            module.moduleConfig.Save(module);
+
+                            NotifyHelper.ToastQuest
+                            (
+                                Lang.Get("AutoDiscard-Notification-AddedToGroup", group.UniqueName),
+                                new()
+                                {
+                                    DisplayCheckmark = true
+                                }
+                            );
+                        }
+                    }
+                );
+            }
+
+            return list;
+        }
+    }
+
     private enum DiscardBehaviour
     {
         Discard,
@@ -689,7 +763,14 @@ public unsafe class AutoDiscard : ModuleBase
 
             foreach (var item in Items)
             {
-                if (!Inventories.Player.TryGetItems(x => x.GetBaseItemId() == item, out var foundItem) || foundItem.Count <= 0) continue;
+                if (!Inventories.Player.TryGetItems
+                    (
+                        x => x.GetItemId() == item ||
+                             (item < 500000 && x.GetBaseItemId() == item),
+                        out var foundItem
+                    ) ||
+                    foundItem.Count <= 0)
+                    continue;
 
                 foreach (var fItem in foundItem)
                 {
