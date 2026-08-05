@@ -30,15 +30,15 @@ public partial class OccultCrescentHelper
     {
         private TaskHelper? treasureTaskHelper;
 
-        private Queue<TreasureHuntPoint> queuedGatheringList = [];
+        private Queue<Vector3> queuedGatheringList = [];
 
-        private List<nint>    treasureObjects      = [];
-        private List<Vector3> surveyPointPositions = [];
-        private List<Vector3> carrotPositions      = [];
+        private List<(nint Ptr, Vector3 Position)> treasureObjects      = [];
+        private List<Vector3>                      surveyPointPositions = [];
+        private List<Vector3>                      carrotPositions      = [];
 
         private Vector3 origPosition;
 
-        private List<TreasureHuntPoint> currentRoute = [];
+        private List<Vector3> currentRoute = [];
 
         private readonly RoutePreview routePreview = new();
 
@@ -119,7 +119,7 @@ public partial class OccultCrescentHelper
 
         #region 界面
 
-        public override unsafe void DrawConfig()
+        public override void DrawConfig()
         {
             using var tabBar = ImRaii.TabBar("TabBar");
             if (!tabBar) return;
@@ -193,10 +193,8 @@ public partial class OccultCrescentHelper
 
                         using (ImRaii.PushIndent())
                         {
-                            foreach (var treasure in treasureObjects)
+                            foreach (var (_, pos) in treasureObjects)
                             {
-                                var pos = (Vector3)((Treasure*)treasure)->Position;
-
                                 if (ImGui.Button
                                     (
                                         $"{pos.X:F1}, {pos.Y:F1}, {pos.Z:F1}",
@@ -323,7 +321,7 @@ public partial class OccultCrescentHelper
         // 绘制寻宝路线地图
         private void DrawTreasureRouteMap
         (
-            List<TreasureHuntPoint> route
+            List<Vector3> route
         )
         {
             var mapID = GameState.Map;
@@ -345,8 +343,8 @@ public partial class OccultCrescentHelper
 
                     for (var i = 0; i < route.Count - 1; i++)
                     {
-                        var currentScreenPos = r.WorldToScreen(route[i].Position);
-                        var nextScreenPos    = r.WorldToScreen(route[i + 1].Position);
+                        var currentScreenPos = r.WorldToScreen(route[i]);
+                        var nextScreenPos    = r.WorldToScreen(route[i + 1]);
 
                         drawList.AddLine(currentScreenPos, nextScreenPos, 0x66000000,    7f);
                         drawList.AddLine(currentScreenPos, nextScreenPos, LineColorBlue, 5f);
@@ -376,7 +374,7 @@ public partial class OccultCrescentHelper
                         new()
                         {
                             ID          = $"TreasureRoute_{i}",
-                            Position    = route[i].Position,
+                            Position    = route[i],
                             Color       = DotColor,
                             Size        = new(16f),
                             ShowLabel   = false,
@@ -450,7 +448,7 @@ public partial class OccultCrescentHelper
             isPrevented = true;
         }
 
-        private unsafe void OnZoneChanged
+        private void OnZoneChanged
         (
             uint u
         )
@@ -478,7 +476,7 @@ public partial class OccultCrescentHelper
                 () => MainModule.config.IsEnabledHighlightTreasure ?
                           treasureObjects :
                           [],
-                ptr => ((GameObject*)ptr)->Position,
+                x => x.Position,
                 new()
                 {
                     TextGetter = _ => new()
@@ -547,7 +545,7 @@ public partial class OccultCrescentHelper
 
         private void EnqueueAutoTreasureHunt
         (
-            List<TreasureHuntPoint> routeData
+            List<Vector3> routeData
         )
         {
             treasureTaskHelper.Abort();
@@ -621,13 +619,11 @@ public partial class OccultCrescentHelper
                 StopAutoTreasureHunt();
                 return;
             }
-
-            treasureTaskHelper.Abort();
-
+            
             if (queuedGatheringList.Count == 0)
             {
-                StopAutoTreasureHunt();
-
+                var currentPosition = LocalPlayerState.Object.Position;
+                
                 treasureTaskHelper.Enqueue
                 (() =>
                     {
@@ -637,21 +633,29 @@ public partial class OccultCrescentHelper
                         return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
                     }
                 );
-
-                var message = Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-End");
-                NotifyHelper.Instance().NotificationInfo(message);
-                NotifyHelper.Speak(message);
+                
+                treasureTaskHelper.Enqueue(() => LocalPlayerState.DistanceTo2DSquared(currentPosition.ToVector2()) >= 50 * 50);
+                
+                treasureTaskHelper.Enqueue(() =>
+                {
+                    PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = false;
+                    currentRoute.Clear();
+                    
+                    var message = Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-End");
+                    NotifyHelper.Instance().NotificationInfo(message);
+                    NotifyHelper.Speak(message);
+                });
+                
                 return;
             }
 
-            var data     = queuedGatheringList.Dequeue();
-            var position = data.Position;
+            var position = queuedGatheringList.Dequeue();
 
             treasureTaskHelper.Enqueue
             (() =>
                 {
                     if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
-                    if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-UseMount")) return false;
+                    if (!Throttler.Shared.Throttle("OccultCrescentHelper.TreasureManager.UseMount")) return false;
 
                     if (DService.Instance().Condition.IsCasting) return false;
 
@@ -666,30 +670,18 @@ public partial class OccultCrescentHelper
                     PlayerController.Instance()->MoveControllerWalk.IsMovementInputLocked = true;
                     MovementManager.Instance().TPSmooth(position, 24);
 
-                    if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check"))
+                    if (!Throttler.Shared.Throttle("OccultCrescentHelper.TreasureManager.Pathfind.Check", 100))
                         return false;
 
-                    if (!data.IsExact)
-                    {
-                        // 还没加载出来呢
-                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50)
-                            return false;
-                    }
-                    else
-                    {
-                        if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 3)
-                            return false;
-                    }
+                    if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50)
+                        return false;
 
                     OnUpdate();
 
-                    // 找到了, 移动过去
-                    if (treasureObjects.FirstOrDefault
-                            (x => Vector2.DistanceSquared(((GameObject*)x)->Position.ToVector2(), position.ToVector2()) <= 225) is var ptr &&
-                        ptr > nint.Zero)
+                    foreach (var (_, pos) in treasureObjects)
                     {
-                        position   = ((GameObject*)ptr)->Position;
-                        position.Y = data.Position.Y;
+                        position   = pos;
+                        position.Y = position.Y;
                         return false;
                     }
 
@@ -809,7 +801,7 @@ public partial class OccultCrescentHelper
                 }
             }
 
-            treasureObjects      = treasures;
+            treasureObjects      = [.. treasures.Select(x => (x, (Vector3)((GameObject*)x)->Position))];
             surveyPointPositions = surveyPoints;
             carrotPositions      = carrots;
         }
@@ -838,38 +830,20 @@ public partial class OccultCrescentHelper
 
         #region 嵌套类
 
-        public readonly record struct TreasureHuntPoint
-        {
-            public Vector3 Position { get; }
-            public bool    IsExact  { get; }
-
-            public TreasureHuntPoint
-            (
-                float x,
-                float y,
-                float z,
-                bool  isExact = false
-            )
-            {
-                Position = new(x, y, z);
-                IsExact  = isExact;
-            }
-        }
-
         private static class PathPlanner
         {
-            public static Queue<TreasureHuntPoint> PlanShortestPath
+            public static Queue<Vector3> PlanShortestPath
             (
-                Vector3                 currentPosition,
-                List<TreasureHuntPoint> locations
+                Vector3       currentPosition,
+                List<Vector3> locations
             )
             {
-                if (locations == null || locations.Count == 0)
+                if (locations is not { Count: > 0 })
                     return [];
 
-                var startPoint = new TreasureHuntPoint(currentPosition.X, currentPosition.Y, currentPosition.Z);
+                var startPoint = new Vector3(currentPosition.X, currentPosition.Y, currentPosition.Z);
 
-                var allPoints = new List<TreasureHuntPoint> { startPoint };
+                var allPoints = new List<Vector3> { startPoint };
                 allPoints.AddRange(locations);
 
                 var orderedPath = CreateInitialPathNearestNeighbor(allPoints);
@@ -877,16 +851,16 @@ public partial class OccultCrescentHelper
                 OptimizePath2Opt(orderedPath);
 
                 orderedPath.RemoveAt(0);
-                return new Queue<TreasureHuntPoint>(orderedPath);
+                return new Queue<Vector3>(orderedPath);
             }
 
-            private static List<TreasureHuntPoint> CreateInitialPathNearestNeighbor
+            private static List<Vector3> CreateInitialPathNearestNeighbor
             (
-                List<TreasureHuntPoint> points
+                List<Vector3> points
             )
             {
-                var remainingPoints = new List<TreasureHuntPoint>(points);
-                var orderedPath     = new List<TreasureHuntPoint>();
+                var remainingPoints = new List<Vector3>(points);
+                var orderedPath     = new List<Vector3>();
 
                 var currentPoint = remainingPoints[0];
                 orderedPath.Add(currentPoint);
@@ -894,16 +868,15 @@ public partial class OccultCrescentHelper
 
                 while (remainingPoints.Count > 0)
                 {
-                    TreasureHuntPoint? nearestPoint = null;
-                    var                minDistance  = float.MaxValue;
+                    Vector3? nearestPoint = null;
 
+                    var minDistanceSQ = float.MaxValue;
                     foreach (var point in remainingPoints)
                     {
-                        var distance = Vector3.Distance(currentPoint.Position, point.Position);
-
-                        if (distance < minDistance)
+                        var distance = Vector3.DistanceSquared(currentPoint, point);
+                        if (distance < minDistanceSQ)
                         {
-                            minDistance  = distance;
+                            minDistanceSQ  = distance;
                             nearestPoint = point;
                         }
                     }
@@ -921,7 +894,7 @@ public partial class OccultCrescentHelper
 
             private static void OptimizePath2Opt
             (
-                List<TreasureHuntPoint> path
+                List<Vector3> path
             )
             {
                 var improvementFound = true;
@@ -934,13 +907,13 @@ public partial class OccultCrescentHelper
                     for (var i = 0; i < n - 2; i++)
                     for (var j = i + 2; j < n - 1; j++)
                     {
-                        var p1 = path[i].Position;
-                        var p2 = path[i + 1].Position;
-                        var p3 = path[j].Position;
-                        var p4 = path[j + 1].Position;
+                        var p1 = path[i];
+                        var p2 = path[i + 1];
+                        var p3 = path[j];
+                        var p4 = path[j + 1];
 
-                        var currentDist = Vector3.Distance(p1, p2) + Vector3.Distance(p3, p4);
-                        var newDist     = Vector3.Distance(p1, p3) + Vector3.Distance(p2, p4);
+                        var currentDist = Vector3.DistanceSquared(p1, p2) + Vector3.DistanceSquared(p3, p4);
+                        var newDist     = Vector3.DistanceSquared(p1, p3) + Vector3.DistanceSquared(p2, p4);
 
                         if (newDist < currentDist)
                         {
@@ -954,10 +927,10 @@ public partial class OccultCrescentHelper
 
         private record Route
         (
-            uint                    TerritoryType,
-            string                  Name,
-            string?                 Description,
-            List<TreasureHuntPoint> Points
+            uint          TerritoryType,
+            string        Name,
+            string?       Description,
+            List<Vector3> Points
         );
 
         private class RoutePreview
@@ -967,7 +940,7 @@ public partial class OccultCrescentHelper
             private int     drawnFrame;
             private long    lastUpdateTick;
 
-            public List<TreasureHuntPoint>? Points { get; private set; }
+            public List<Vector3>? Points { get; private set; }
 
             public void Update
             (
