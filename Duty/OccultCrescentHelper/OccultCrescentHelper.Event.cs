@@ -115,138 +115,158 @@ public partial class OccultCrescentHelper
 
         public override void DrawConfig()
         {
-            if (allIslandEvents.Count > 0)
+            using var tabBar = ImRaii.TabBar("TabBar");
+            if (!tabBar) return;
+
+            using (var item = ImRaii.TabItem(Lang.Get("General")))
             {
-                ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Pathfind"));
-
-                ImGui.SameLine(0, 8f * GlobalUIScale);
-
-                if (ImGui.SmallButton($"{Lang.Get("Stop")}##StopCE"))
-                    StopPathfinding();
-
-                using (ImRaii.PushIndent())
+                if (item)
                 {
-                    foreach (var ce in allIslandEvents)
-                    {
-                        if (!DService.Instance().Texture.TryGetFromGameIcon(new(ce.Event.IconID), out var texture)) continue;
+                    ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Pathfind"));
 
-                        using (ImRaii.Disabled(!CanStartPathfinding(ce)))
+                    using (ImRaii.PushIndent())
+                    {
+                        foreach (var ce in allIslandEvents)
                         {
-                            if (ImGuiOm.SelectableImageWithText
-                                (
-                                    texture.GetWrapOrEmpty().Handle,
-                                    new(ImGui.GetTextLineHeightWithSpacing()),
-                                    $"{ce.Event.NameDisplay}",
-                                    false
-                                ))
-                                StartPathfinding(ce);
+                            if (!DService.Instance().Texture.TryGetFromGameIcon(new(ce.Event.IconID), out var texture)) continue;
+
+                            using (ImRaii.Disabled(!CanStartPathfinding(ce)))
+                            {
+                                if (ImGuiOm.SelectableImageWithText
+                                    (
+                                        texture.GetWrapOrEmpty().Handle,
+                                        new(ImGui.GetTextLineHeightWithSpacing()),
+                                        $"{ce.Event.NameDisplay}",
+                                        false
+                                    ))
+                                    StartPathfinding(ce);
+                            }
                         }
-                    }
-                }
 
-                ImGui.NewLine();
-            }
+                        ImGui.Spacing();
 
-            if (ImGui.Checkbox(Lang.Get("OccultCrescentHelper-CEManager-InterruptOnMovementInput"), ref MainModule.config.InterruptPathfindingOnMovementInput))
-                MainModule.config.Save(MainModule);
+                        if (ImGui.SmallButton($"    {Lang.Get("Stop")}    ##StopCE"))
+                            StopPathfinding();
 
-            ImGui.NewLine();
+                        ImGui.Spacing();
 
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-CEManager-AutoDismount"));
-
-            using (ImRaii.PushIndent())
-            {
-                if (ImGui.Checkbox
-                    (
-                        $"{CrescentEvent.GetEventTypeName(CrescentEventType.FATE)}##AutoDismountFATE",
-                        ref MainModule.config.IsEnabledDismountFATE
-                    ))
-                    MainModule.config.Save(MainModule);
-
-                if (ImGui.Checkbox
-                    (
-                        $"{CrescentEvent.GetEventTypeName(CrescentEventType.CE)}##AutoDismountCE",
-                        ref MainModule.config.IsEnabledDismountCE
-                    ))
-                    MainModule.config.Save(MainModule);
-            }
-
-            ImGui.NewLine();
-
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToUInt(), Lang.Get("OccultCrescentHelper-Highlight"));
-
-            using (ImRaii.PushIndent())
-            {
-                if (ImGui.Checkbox
-                    (
-                        $"{CrescentEvent.GetEventTypeName(CrescentEventType.CE)}",
-                        ref MainModule.config.IsEnabledHighlightCE
-                    ))
-                    MainModule.config.Save(MainModule);
-
-                if (ImGui.Checkbox
-                    (
-                        $"{CrescentEvent.GetEventTypeName(CrescentEventType.FATE)}",
-                        ref MainModule.config.IsEnabledHighlightFATE
-                    ))
-                    MainModule.config.Save(MainModule);
-            }
-
-            ImGui.NewLine();
-
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-CEManager-NotifyEventAppears"));
-
-            using (ImRaii.PushIndent())
-            {
-                var counter = 0;
-
-                foreach (var (type, isEnabled) in MainModule.config.IsEnabledNotifyEventsCategoried)
-                {
-                    using var isEnabledNotifyEventsDataID = ImRaii.PushId($"{type}");
-
-                    using (ImRaii.Group())
-                    {
-                        var isEnabledCopy = isEnabled;
-
-                        if (ImGui.Checkbox($"{CrescentEvent.GetEventTypeName(type)}##{type}", ref isEnabledCopy))
-                        {
-                            MainModule.config.IsEnabledNotifyEventsCategoried[type] = isEnabledCopy;
+                        if (ImGui.Checkbox
+                            (
+                                Lang.Get("OccultCrescentHelper-CEManager-InterruptOnMovementInput"),
+                                ref MainModule.config.InterruptPathfindingOnMovementInput
+                            ))
                             MainModule.config.Save(MainModule);
-                        }
                     }
 
-                    if (counter != 7 && counter != 11 && counter != MainModule.config.IsEnabledNotifyEventsCategoried.Count - 1)
-                        ImGui.SameLine(0, 4f * GlobalUIScale);
-                    counter++;
+                    ImGui.NewLine();
+
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToUInt(),
+                        Lang.Get("OccultCrescentHelper-CEManager-AutoDismount")
+                    );
+
+                    using (ImRaii.PushIndent())
+                    {
+                        if (ImGui.Checkbox
+                            (
+                                $"{CrescentEvent.GetEventTypeName(CrescentEventType.FATE)}##AutoDismountFATE",
+                                ref MainModule.config.IsEnabledDismountFATE
+                            ))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox
+                            (
+                                $"{CrescentEvent.GetEventTypeName(CrescentEventType.CE)}##AutoDismountCE",
+                                ref MainModule.config.IsEnabledDismountCE
+                            ))
+                            MainModule.config.Save(MainModule);
+                    }
+
+                    ImGui.NewLine();
+
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToUInt(),
+                        Lang.Get("OccultCrescentHelper-Highlight")
+                    );
+
+                    using (ImRaii.PushIndent())
+                    {
+                        if (ImGui.Checkbox
+                            (
+                                $"{CrescentEvent.GetEventTypeName(CrescentEventType.CE)}",
+                                ref MainModule.config.IsEnabledHighlightCE
+                            ))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox
+                            (
+                                $"{CrescentEvent.GetEventTypeName(CrescentEventType.FATE)}",
+                                ref MainModule.config.IsEnabledHighlightFATE
+                            ))
+                            MainModule.config.Save(MainModule);
+                    }
+                    
+                    ImGui.NewLine();
+
+                    ImGui.TextColored
+                    (
+                        KnownColor.LightSkyBlue.ToVector4(),
+                        Lang.Get("Command")
+                    );
+
+                    using (ImRaii.PushIndent())
+                    {
+                        ImGui.TextWrapped($"/pdr {COMMAND_FATE} {Lang.Get("OccultCrescentHelper-Command-PFate-Help")}");
+
+                        ImGui.TextWrapped($"/pdr {COMMAND_CE} {Lang.Get("OccultCrescentHelper-Command-PCE-Help")}");
+                    }
                 }
             }
 
-            ImGui.NewLine();
-
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-CEManager-NotifyCEStarts"));
-
-            using (ImRaii.PushId("NotifyCEStarts"))
-            using (ImRaii.PushIndent())
+            using (var item = ImRaii.TabItem(Lang.Get("Notification")))
             {
-                if (ImGui.Checkbox(Lang.Get("SendNotification"), ref MainModule.config.IsEnabledNotifyCENotification))
-                    MainModule.config.Save(MainModule);
+                if (item)
+                {
+                    ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-CEManager-NotifyEventAppears"));
 
-                if (ImGui.Checkbox(Lang.Get("SendTTS"), ref MainModule.config.IsEnabledNotifyCETTS))
-                    MainModule.config.Save(MainModule);
+                    using (ImRaii.PushIndent())
+                    {
+                        foreach (var (type, isEnabled) in MainModule.config.IsEnabledNotifyEventsCategoried)
+                        {
+                            using var isEnabledNotifyEventsDataID = ImRaii.PushId($"{type}");
 
-                if (ImGui.Checkbox(Lang.Get("SendSystemSound"), ref MainModule.config.IsEnabledNotifyCESystemSound))
-                    MainModule.config.Save(MainModule);
-            }
+                            using (ImRaii.Group())
+                            {
+                                var isEnabledCopy = isEnabled;
 
-            ImGui.NewLine();
+                                if (ImGui.Checkbox($"{CrescentEvent.GetEventTypeName(type)}##{type}", ref isEnabledCopy))
+                                {
+                                    MainModule.config.IsEnabledNotifyEventsCategoried[type] = isEnabledCopy;
+                                    MainModule.config.Save(MainModule);
+                                }
+                            }
+                        }
+                    }
 
-            ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("Command"));
+                    ImGui.NewLine();
 
-            using (ImRaii.PushIndent())
-            {
-                ImGui.TextWrapped($"/pdr {COMMAND_FATE} {Lang.Get("OccultCrescentHelper-Command-PFate-Help")}");
+                    ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), Lang.Get("OccultCrescentHelper-CEManager-NotifyCEStarts"));
 
-                ImGui.TextWrapped($"/pdr {COMMAND_CE} {Lang.Get("OccultCrescentHelper-Command-PCE-Help")}");
+                    using (ImRaii.PushId("NotifyCEStarts"))
+                    using (ImRaii.PushIndent())
+                    {
+                        if (ImGui.Checkbox(Lang.Get("SendNotification"), ref MainModule.config.IsEnabledNotifyCENotification))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox(Lang.Get("SendTTS"), ref MainModule.config.IsEnabledNotifyCETTS))
+                            MainModule.config.Save(MainModule);
+
+                        if (ImGui.Checkbox(Lang.Get("SendSystemSound"), ref MainModule.config.IsEnabledNotifyCESystemSound))
+                            MainModule.config.Save(MainModule);
+                    }
+                }
             }
         }
 
