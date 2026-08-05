@@ -33,7 +33,14 @@ public partial class OccultCrescentHelper
             DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
             DService.Instance().ClientState.Logout           += OnLogout;
 
-            CommandManager.Instance().AddSubCommand(COMMAND_TP, new(OnCommandTP) { HelpMessage = Lang.Get("OccultCrescentHelper-Command-PTP-Help") });
+            CommandManager.Instance().AddSubCommand
+            (
+                COMMAND_TP,
+                new(OnCommandTP)
+                {
+                    HelpMessage = Lang.Get("OccultCrescentHelper-Command-PTP-Help")
+                }
+            );
         }
 
         public override void Uninit()
@@ -117,16 +124,29 @@ public partial class OccultCrescentHelper
             args = args.Trim().ToLowerInvariant();
             if (string.IsNullOrWhiteSpace(args)) return;
 
-            CrescentAetheryte? aetheryte;
+            var source = GameState.TerritoryType == SOUTH_HORN_TERRITORY_ID ?
+                             CrescentAetheryte.SouthHornAetherytes :
+                             CrescentAetheryte.NorthHornAetherytes;
+
+            CrescentAetheryte? aetheryte = null;
 
             if (byte.TryParse(args, out var parsedIndex))
-                aetheryte = CrescentAetheryte.SouthHornAetherytes[parsedIndex];
+            {
+                try
+                {
+                    aetheryte = source[parsedIndex];
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
             else
             {
-                aetheryte = CrescentAetheryte.SouthHornAetherytes
-                                             .Where(x => x.Name.Contains(args, StringComparison.OrdinalIgnoreCase))
-                                             .OrderBy(x => x.Name)
-                                             .FirstOrDefault();
+                aetheryte = source
+                            .Where(x => x.Name.Contains(args, StringComparison.OrdinalIgnoreCase))
+                            .OrderBy(x => x.Name)
+                            .FirstOrDefault();
             }
 
             if (aetheryte == null) return;
