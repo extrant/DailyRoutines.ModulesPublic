@@ -260,8 +260,8 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
 
             ImGui.TableNextColumn();
             var keepHighlight = statusConfig.KeepHighlight;
-            ImGuiOm.CenterCursorXFor(ImGui.GetFrameHeight());
-
+            
+            ImGuiOm.CenterAlignFor(ImGui.GetFrameHeight());
             if (ImGui.Checkbox($"##KeepHighlight_{status}", ref keepHighlight))
             {
                 statusConfig.KeepHighlight = keepHighlight;
