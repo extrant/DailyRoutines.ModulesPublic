@@ -7,10 +7,12 @@ using Dalamud.Utility.Numerics;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using OmenTools.ImGuiOm.Widgets.MapRenderer;
 using OmenTools.Info.Game;
 using OmenTools.Info.Game.Enums;
 using OmenTools.Info.Game.Packets.Upstream;
+using OmenTools.Interop.Game.ExecuteCommand.Implementations;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
 using OmenTools.Interop.Game.Models.Native;
@@ -627,14 +629,32 @@ public partial class OccultCrescentHelper
                 treasureTaskHelper.Enqueue
                 (() =>
                     {
+                        if (LocalPlayerState.DistanceTo2DSquared(currentPosition.ToVector2()) >= 50 * 50)
+                            return true;
+
+                        if (!UIModule.IsScreenReady())
+                            return false;
+                        
+                        MovementManager.Instance().TPSmooth(currentPosition, 24f);
+                        
+                        if (ICondition.Instance()[ConditionFlag.Mounted])
+                        {
+                            MountCommand.Dismount();
+                            return false;
+                        }
+
+                        if (ICondition.Instance()[ConditionFlag.Casting])
+                            return false;
+                        
                         if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
                             return false;
 
-                        return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
+                        if (Throttler.Shared.Throttle("OccultCrescentHelper.TreasureManager.DemiReturn"))
+                            UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
+                        
+                        return false;
                     }
                 );
-                
-                treasureTaskHelper.Enqueue(() => LocalPlayerState.DistanceTo2DSquared(currentPosition.ToVector2()) >= 50 * 50);
                 
                 treasureTaskHelper.Enqueue(() =>
                 {
@@ -649,15 +669,16 @@ public partial class OccultCrescentHelper
                 return;
             }
 
-            var position = queuedGatheringList.Dequeue();
+            var origPosition = queuedGatheringList.Dequeue();
+            var position     = origPosition;
 
             treasureTaskHelper.Enqueue
             (() =>
                 {
-                    if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                    if (ICondition.Instance()[ConditionFlag.Mounted]) return true;
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper.TreasureManager.UseMount")) return false;
 
-                    if (DService.Instance().Condition.IsCasting) return false;
+                    if (ICondition.Instance().IsCasting) return false;
 
                     UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9);
                     return false;
@@ -681,7 +702,7 @@ public partial class OccultCrescentHelper
                     foreach (var (_, pos) in treasureObjects)
                     {
                         position   = pos;
-                        position.Y = position.Y;
+                        position.Y = origPosition.Y;
                         return false;
                     }
 
@@ -698,13 +719,13 @@ public partial class OccultCrescentHelper
         {
             if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.OccultCrescent ||
                 !MainModule.config.IsEnabledAutoOpenTreasure                          ||
-                DService.Instance().Condition[ConditionFlag.InCombat]                 ||
+                ICondition.Instance()[ConditionFlag.InCombat]                         ||
                 treasureObjects is not { Count: > 0 })
                 return;
 
-            if (DService.Instance().ObjectTable.LocalPlayer is not { IsDead: false, Position.Y: > -40 }) return;
+            if (LocalPlayerState.Object is null) return;
 
-            var treasure = EventObjectManager.Instance()->FindFirst
+            var treasures = EventObjectManager.Instance()->FindAll
             (ptr =>
                 {
                     var gameObject = (Treasure*)ptr;
@@ -725,10 +746,11 @@ public partial class OccultCrescentHelper
                 }
             );
 
-            if (treasure == null)
+            if (treasures.Count == 0)
                 return;
 
-            InteractWithTreasure((Treasure*)treasure);
+            foreach (var treasure in treasures)
+                InteractWithTreasure((Treasure*)treasure);
         }
 
         // 更新特殊物体数据
@@ -811,7 +833,7 @@ public partial class OccultCrescentHelper
             Treasure* treasure
         )
         {
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+            if (LocalPlayerState.Object is not { } localPlayer) return;
 
             var moveType     = MovementManager.Instance().GetInstanceMoveType(PositionUpdateInstancePacket.MoveType.NormalMove0);
             var origPosition = localPlayer.Position;
