@@ -12,6 +12,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Interface.Utility;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -95,10 +96,14 @@ public unsafe class AutoCountPlayers : ModuleBase
         LogMessageManager.Instance().RegPre(OnLogMessage);
         FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 10_000);
         OnUpdate(DService.Instance().Framework);
+
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+
         FrameworkManager.Instance().Unreg(OnUpdate);
         LogMessageManager.Instance().Unreg(OnLogMessage);
 
@@ -323,6 +328,12 @@ public unsafe class AutoCountPlayers : ModuleBase
     }
 
     #region 事件
+    
+    private static void OnZoneChanged
+    (
+        uint zone
+    ) =>
+        Throttler.Shared.Remove("AutoCountPlayers.Zone");
 
     private void OnDraw()
     {
@@ -426,6 +437,10 @@ public unsafe class AutoCountPlayers : ModuleBase
     )
     {
         if (!IsPlayerSearchLocation) return;
+
+        if (!UIModule.IsScreenReady() ||
+            Throttler.Shared.Throttle("AutoCountPlayers.Zone", 60_000))
+            return;
         
         if (IsContentSearchZone)
         {
