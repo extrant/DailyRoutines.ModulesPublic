@@ -213,7 +213,7 @@ public partial class OccultCrescentHelper
                             // 已经在坐骑上
                             if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
 
-                            if (distanceSQ <= 30)
+                            if (distanceSQ <= 30f * 30f)
                             {
                                 // 用一下冲刺
                                 taskHelper.Enqueue
@@ -250,13 +250,17 @@ public partial class OccultCrescentHelper
                     (() =>
                         {
                             // 可以稍微放宽一点
-                            if (LocalPlayerState.DistanceTo3D(targetObj.Position) <= 4f || !vnavmeshIPC.GetIsPathfindRunning())
-                            {
-                                ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
-                                vnavmeshIPC.StopPathfind();
-                                return true;
-                            }
+                            if (LocalPlayerState.DistanceTo3D(targetObj.Position) > 4f &&
+                                vnavmeshIPC.GetIsPathfindRunning())
+                                return false;
 
+                            vnavmeshIPC.StopPathfind();
+
+                            if (!DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                            if (!Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-Dismount"))
+                                return false;
+
+                            ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
                             return false;
                         }
                     );
