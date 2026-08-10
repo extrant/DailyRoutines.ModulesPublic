@@ -75,7 +75,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
 
             if (contentSelectCombo.DrawCheckbox())
             {
-                config.BlacklistContents = contentSelectCombo.SelectedIDs.ToHashSet();
+                config.BlacklistContents = [.. contentSelectCombo.SelectedIDs];
                 config.Save(this);
             }
         }
@@ -274,7 +274,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
             (
                 Lang.GetSe
                 (
-                    "AutoPlayerCommend-NoticeMessage",
+                    "AutoPlayerCommend-Notification-Given",
                     new PlayerPayload(memberInfo.Name, memberInfo.HomeWorld),
                     job.ToBitmapFontIcon(),
                     job.Name.ToString()
@@ -283,7 +283,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
             return true;
         }
 
-        NotifyHelper.Instance().ChatError(Lang.Get("AutoPlayerCommend-ErrorWhenGiveCommendationMessage"));
+        NotifyHelper.Instance().ChatError(Lang.Get("AutoPlayerCommend-Notification-ErrorWhenGave"));
         return true;
 
         bool TryFindPlayerIndex
@@ -360,10 +360,20 @@ public unsafe class AutoPlayerCommend : ModuleBase
             IMenuOpenedArgs args
         )
         {
-            if (!DService.Instance().Condition[ConditionFlag.BoundByDuty]) return false;
-            if (args.MenuType != ContextMenuType.Default    ||
-                args.Target is not MenuTargetDefault target ||
-                (target.TargetCharacter == null && target.TargetContentId == 0)) return false;
+            if (!ICondition.Instance()[ConditionFlag.BoundByDuty]) 
+                return false;
+
+            if (args.MenuType != ContextMenuType.Default                                          ||
+                args.Target is not MenuTargetDefault { TargetCharacter.ContentId: var contentID } ||
+                contentID == 0)
+                return false;
+
+            Name = Lang.Get
+            (
+                LocalPlayerState.ContentID != contentID ?
+                    "AutoPlayerCommend-ContextMenu-AssignPlayer" :
+                    "AutoPlayerCommend-ContextMenu-AssignNobody"
+            );
 
             return true;
         }
@@ -373,21 +383,27 @@ public unsafe class AutoPlayerCommend : ModuleBase
             IMenuItemClickedArgs args
         )
         {
-            if (args.Target is not MenuTargetDefault target) return;
-            if (target.TargetCharacter == null && target.TargetContentId == 0) return;
+            if (args.Target is not MenuTargetDefault { TargetCharacter: { ContentId: var contentID } targetCharacter } ||
+                contentID == 0)
+                return;
+            
+            var playerName  = targetCharacter.Name;
+            var playerWorld = targetCharacter.HomeWorld.Value;
+            var playerJob   = targetCharacter.ClassJob.Value;
 
-            var contentID = target.TargetCharacter?.ContentId ?? target.TargetContentId;
-            var playerName = target.TargetCharacter != null ?
-                                 target.TargetCharacter.Name :
-                                 target.TargetName;
-            var playerWorld = target.TargetCharacter?.HomeWorld ?? target.TargetHomeWorld;
-
-            NotifyHelper.Instance().NotificationInfo
-            (
-                contentID == LocalPlayerState.ContentID ?
-                    Lang.Get("AutoPlayerCommend-GiveNobodyCommendMessage") :
-                    Lang.Get("AutoPlayerCommend-AssignPlayerCommendMessage", playerName, playerWorld.Value.Name.ToString())
-            );
+            if (contentID == LocalPlayerState.ContentID)
+                NotifyHelper.Instance().Chat(Lang.Get("AutoPlayerCommend-Notification-AssignedNobody"));
+            else
+                NotifyHelper.Instance().Chat
+                (
+                    Lang.GetSe
+                    (
+                        "AutoPlayerCommend-Notification-AssignedPlayer",
+                        new PlayerPayload(playerName, playerWorld.RowId),
+                        playerJob.ToBitmapFontIcon(),
+                        playerJob.Name.ToString()
+                    )
+                );
 
             module.assignedContentID = contentID;
         }
