@@ -8,6 +8,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Text.ReadOnly;
@@ -37,11 +38,10 @@ public partial class OccultCrescentHelper
 
         private const int AETHERYTE_ROUTE_PLANNING_TIMEOUT_MS = 30_000;
 
-        private const float MOUNT_MINIMUM_DISTANCE             = 50f;
-        private const float PATHFINDING_COMPLETION_DISTANCE    = 5f;
-        private const float PATHFINDING_TARGET_UPDATE_DISTANCE = 2f;
-        private const float PATH_POINT_RADIUS                  = 4f;
-        private const float PATH_LINE_THICKNESS                = 2f;
+        private const float MOUNT_MINIMUM_DISTANCE          = 50f;
+        private const float PATHFINDING_COMPLETION_DISTANCE = 5f;
+        private const float PATH_POINT_RADIUS               = 4f;
+        private const float PATH_LINE_THICKNESS             = 2f;
 
         private static readonly uint PathLineColor  = KnownColor.DeepSkyBlue.ToUInt();
         private static readonly uint PathPointColor = KnownColor.LightSkyBlue.ToUInt();
@@ -927,7 +927,21 @@ public partial class OccultCrescentHelper
 
             var isFate = session.Data.Event.Type is CrescentEventType.FATE or CrescentEventType.MagicPot;
             if (isFate && session.TravelStage == PathfindingTravelStage.Pathfinding)
-                UpdateFateMonsterTarget(session);
+            {
+                if (session.FateMonsterID == 0)
+                    TrySetFateMonsterTarget(session);
+
+                if (session.FateMonsterID != 0)
+                {
+                    EnsureFateMonsterSelected(session.FateMonsterID);
+
+                    if (IsFateMonsterInHaterList(session.FateMonsterID))
+                    {
+                        StopPathfinding(session);
+                        return;
+                    }
+                }
+            }
 
             var playerPosition = localPlayer.Position.ToVector2();
             var eventRadius = session.Data.Event.Type == CrescentEventType.CE ?
@@ -941,9 +955,13 @@ public partial class OccultCrescentHelper
                                     playerPosition,
                                     session.Data.Event.Position.ToVector2()
                                 ) <= eventRadius * eventRadius;
+            var completionDistanceSquared = PATHFINDING_COMPLETION_DISTANCE * PATHFINDING_COMPLETION_DISTANCE;
+            if (session.FateMonsterID != 0)
+                completionDistanceSquared += session.FateMonsterRadius * session.FateMonsterRadius;
+
             var isAtDestination = Vector2.DistanceSquared
                 (playerPosition, session.Destination.ToVector2()) <=
-                PATHFINDING_COMPLETION_DISTANCE * PATHFINDING_COMPLETION_DISTANCE;
+                completionDistanceSquared;
 
             if (isInsideEvent || (isAtDestination && (!isFate || session.FateMonsterID != 0)))
             {
@@ -964,8 +982,7 @@ public partial class OccultCrescentHelper
             {
                 session.PathfindingTask = null;
 
-                if (Vector3.DistanceSquared(session.PathfindingTaskDestination, session.Destination) >
-                    PATHFINDING_TARGET_UPDATE_DISTANCE * PATHFINDING_TARGET_UPDATE_DISTANCE)
+                if (session.PathfindingTaskDestination != session.Destination)
                 {
                     session.Path = [];
                     session.IsAtPathfindingDestination = false;
@@ -1011,28 +1028,18 @@ public partial class OccultCrescentHelper
                 StartNavigationPath(session, localPlayer.Position);
         }
 
-        private void UpdateFateMonsterTarget
+        private void TrySetFateMonsterTarget
         (
             PathfindingSession session
         )
         {
             var monster = FindFateMonster(session);
-            if (monster is null)
-            {
-                if (session.FateMonsterID == 0) return;
+            if (monster is null) return;
 
-                session.FateMonsterID = 0;
-                SetNavigationTarget(session, session.EventDestination);
-                return;
-            }
-
-            if (session.FateMonsterID == monster.EntityID &&
-                Vector3.DistanceSquared(session.Destination, monster.Position) <=
-                PATHFINDING_TARGET_UPDATE_DISTANCE * PATHFINDING_TARGET_UPDATE_DISTANCE)
-                return;
-
-            session.FateMonsterID = monster.EntityID;
+            session.FateMonsterID     = monster.EntityID;
+            session.FateMonsterRadius = monster.HitboxRadius;
             SetNavigationTarget(session, monster.Position);
+            TargetManager.Instance().SetHardTarget(monster, ignoreTargetModes: true);
         }
 
         private static IGameObject? FindFateMonster
@@ -1048,15 +1055,41 @@ public partial class OccultCrescentHelper
                     .OrderBy(x => Vector3.DistanceSquared(x.Position, session.Destination))
                     .FirstOrDefault();
 
+        private static void EnsureFateMonsterSelected
+        (
+            uint entityID
+        )
+        {
+            if (TargetManager.Target?.EntityID == entityID) return;
+
+            if (DService.Instance().ObjectTable.SearchByEntityID(entityID, IObjectTable.CharactersRange) is { } monster)
+                TargetManager.Instance().SetHardTarget(monster, ignoreTargetModes: true);
+        }
+
+        private static unsafe bool IsFateMonsterInHaterList
+        (
+            uint entityID
+        )
+        {
+            var hater      = UIState.Instance()->Hater;
+            var haterCount = Math.Min(hater.HaterCount, hater.Haters.Length);
+
+            for (var i = 0; i < haterCount; i++)
+            {
+                if (hater.Haters[i].EntityId == entityID)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void SetNavigationTarget
         (
             PathfindingSession session,
             Vector3             destination
         )
         {
-            if (Vector3.DistanceSquared(session.Destination, destination) <=
-                PATHFINDING_TARGET_UPDATE_DISTANCE * PATHFINDING_TARGET_UPDATE_DISTANCE)
-                return;
+            if (session.Destination == destination) return;
 
             session.Destination = destination;
             session.IsAtPathfindingDestination = false;
@@ -1234,15 +1267,9 @@ public partial class OccultCrescentHelper
             if (ceTaskHelper is not { } taskHelper) return;
 
             taskHelper.Enqueue
-            (() =>
-                {
-                    if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
-
-                    ChatManager.Instance().SendMessage("/tenemy");
-                    return true;
-                }
+            (
+                () => !DService.Instance().Condition[ConditionFlag.Mounted]
             );
-            taskHelper.DelayNext(100);
             taskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/facetarget"));
             taskHelper.DelayNext(100);
             taskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/automove on"));
@@ -1373,7 +1400,6 @@ public partial class OccultCrescentHelper
         )
         {
             public IslandEventData          Data                                  { get; } = data;
-            public Vector3                  EventDestination                      { get; } = destination;
             public Vector3                  Destination                           { get; set; } = destination;
             public CrescentAetheryte?       Aetheryte                             { get; set; }
             public PathfindingTravelStage   TravelStage                           { get; set; }
@@ -1384,8 +1410,9 @@ public partial class OccultCrescentHelper
             public Task<List<Vector3>>?     PathfindingTask                       { get; set; }
             public Vector3                  PathfindingTaskDestination             { get; set; }
             public List<Vector3>            Path                                  { get; set; } = [];
-            public ulong                     FateMonsterID                         { get; set; }
-            public bool                      IsAtPathfindingDestination             { get; set; }
+            public uint                     FateMonsterID                         { get; set; }
+            public float                    FateMonsterRadius                     { get; set; }
+            public bool                     IsAtPathfindingDestination            { get; set; }
             public bool                     IsMovementInterrupted                 { get; set; }
         }
 
