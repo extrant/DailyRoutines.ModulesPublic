@@ -352,7 +352,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
         AutoPlayerCommend module
     ) : MenuItemBase
     {
-        public override string Name       { get; protected set; } = Lang.Get("AutoPlayerCommend-AssignPlayerCommend");
+        public override string Name       { get; protected set; } = Lang.Get("AutoPlayerCommend-AssignPlayer");
         public override string Identifier { get; protected set; } = nameof(AutoPlayerCommend);
 
         public override bool IsDisplay
