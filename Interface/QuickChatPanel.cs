@@ -884,8 +884,8 @@ public unsafe class QuickChatPanel : ModuleBase
             var listNode = new ListNode<Item, ItemListItemNode>
             {
                 IsVisible   = true,
-                Size        = new(contentList.ContentNode.Width, contentList.Size.Y - 48f),
                 ItemSpacing = 4f,
+                Size        = new(contentList.ContentNode.Width, contentList.Size.Y - 48f),
                 OptionsList = GetGameItemResults(),
                 OnItemSelected = item =>
                 {
