@@ -239,9 +239,9 @@ public partial class OccultCrescentHelper
                     (() =>
                         {
                             if (!Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo")) return false;
-                            if (vnavmeshIPC.GetIsPathfindRunning()) return true;
+                            if (vnavmeshIPC.GetIsPathfindRunning() || vnavmeshIPC.GetIsPathfindInProgress()) return true;
 
-                            vnavmeshIPC.PathfindAndMoveTo(targetObj.Position, false);
+                            vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 4f);
                             return false;
                         }
                     );
@@ -249,10 +249,15 @@ public partial class OccultCrescentHelper
                     taskHelper.Enqueue
                     (() =>
                         {
-                            // 可以稍微放宽一点
-                            if (LocalPlayerState.DistanceTo3D(targetObj.Position) > 4f &&
-                                vnavmeshIPC.GetIsPathfindRunning())
+                            if (LocalPlayerState.DistanceTo3D(targetObj.Position) > 4f)
+                            {
+                                if (!vnavmeshIPC.GetIsPathfindRunning() &&
+                                    !vnavmeshIPC.GetIsPathfindInProgress() &&
+                                    Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo-Retry"))
+                                    vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 4f);
+
                                 return false;
+                            }
 
                             vnavmeshIPC.StopPathfind();
 
