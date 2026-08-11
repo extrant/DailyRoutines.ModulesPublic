@@ -94,7 +94,7 @@ public unsafe class AutoCountPlayers : ModuleBase
         InfoProxySearchEndRequestHook.Enable();
 
         LogMessageManager.Instance().RegPre(OnLogMessage);
-        FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 10_000);
+        FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 1_000);
         OnUpdate(DService.Instance().Framework);
 
         IClientState.Instance().TerritoryChanged += OnZoneChanged;
@@ -439,7 +439,7 @@ public unsafe class AutoCountPlayers : ModuleBase
         if (!IsPlayerSearchLocation) return;
 
         if (!UIModule.IsScreenReady() ||
-            Throttler.Shared.Throttle("AutoCountPlayers.Zone", 60_000))
+            !Throttler.Shared.Throttle("AutoCountPlayers.Zone", 60_000))
             return;
         
         if (IsContentSearchZone)

@@ -552,7 +552,7 @@ public partial class OccultCrescentHelper
             StopPathfinding();
             MainModule.aetheryteModule.StopPathfinding();
 
-            var session = new PathfindingSession(data, data.Event.GetRandomPointNearEdge());
+            var session = new PathfindingSession(data, data.Event.Position);
             pathfindingSession = session;
 
             session.TravelStage = PathfindingTravelStage.RoutePlanning;
