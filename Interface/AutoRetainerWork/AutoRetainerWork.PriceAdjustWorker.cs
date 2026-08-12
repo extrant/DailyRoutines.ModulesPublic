@@ -272,7 +272,7 @@ public unsafe partial class AutoRetainerWork
                     if (retainerSelector != null)
                         items = items.Where(x => !module.playerRetainers.Contains(retainerSelector(x)));
 
-                    var enumerable = items as T[] ?? items.ToArray();
+                    var enumerable = items as T[] ?? [.. items];
                     var minPrice = enumerable.Length != 0 ?
                                        enumerable.Min(priceSelector) :
                                        0;
@@ -666,7 +666,7 @@ public unsafe partial class AutoRetainerWork
             {
                 foreach (var behavior in Enum.GetValues<AdjustBehavior>())
                 {
-                    if (ImGui.RadioButton(behavior.ToString(), behavior == selectedItemConfig.AdjustBehavior))
+                    if (ImGui.RadioButton(AdjustBehaviorLoc.GetValueOrDefault(behavior), behavior == selectedItemConfig.AdjustBehavior))
                     {
                         selectedItemConfig.AdjustBehavior = behavior;
                         Module.config.Save(Module);
@@ -792,18 +792,20 @@ public unsafe partial class AutoRetainerWork
             {
                 ImGui.SetNextItemWidth(250f * GlobalUIScale);
 
-                using (var combo = ImRaii.Combo("###AddNewLogicConditionCombo", conditionInput.ToString(), ImGuiComboFlags.HeightLarge))
+                using (var combo = ImRaii.Combo("###AddNewLogicConditionCombo", GetAbortConditionName(conditionInput), ImGuiComboFlags.HeightLarge))
                 {
                     if (combo)
                     {
-                        foreach (AbortCondition condition in Enum.GetValues(typeof(AbortCondition)))
+                        foreach (var condition in AbortConditions)
                         {
                             if (condition == AbortCondition.无) continue;
 
-                            if (ImGui.Selectable(condition.ToString(), conditionInput.HasFlag(condition), ImGuiSelectableFlags.DontClosePopups))
+                            var isSelected = (conditionInput & condition) == condition;
+
+                            if (ImGui.Selectable(AbortConditionLoc.GetValueOrDefault(condition), isSelected, ImGuiSelectableFlags.DontClosePopups))
                             {
                                 var combinedCondition = conditionInput;
-                                if (conditionInput.HasFlag(condition))
+                                if (isSelected)
                                     combinedCondition &= ~condition;
                                 else
                                     combinedCondition |= condition;
@@ -816,13 +818,13 @@ public unsafe partial class AutoRetainerWork
 
                 ImGui.SetNextItemWidth(250f * GlobalUIScale);
 
-                using (var combo = ImRaii.Combo("###AddNewLogicBehaviorCombo", behaviorInput.ToString(), ImGuiComboFlags.HeightLarge))
+                using (var combo = ImRaii.Combo("###AddNewLogicBehaviorCombo", AbortBehaviorLoc.GetValueOrDefault(behaviorInput), ImGuiComboFlags.HeightLarge))
                 {
                     if (combo)
                     {
                         foreach (AbortBehavior behavior in Enum.GetValues(typeof(AbortBehavior)))
                         {
-                            if (ImGui.Selectable(behavior.ToString(), behaviorInput == behavior, ImGuiSelectableFlags.DontClosePopups))
+                            if (ImGui.Selectable(AbortBehaviorLoc.GetValueOrDefault(behavior), behaviorInput == behavior, ImGuiSelectableFlags.DontClosePopups))
                                 behaviorInput = behavior;
                         }
                     }
@@ -852,7 +854,7 @@ public unsafe partial class AutoRetainerWork
             foreach (var logic in selectedItemConfig.AbortLogic.ToList())
             {
                 // 条件处理 (键)
-                var origConditionStr = logic.Key.ToString();
+                var origConditionStr = GetAbortConditionName(logic.Key);
                 ImGui.SetNextItemWidth(300f * GlobalUIScale);
                 ImGui.InputText($"###Condition_{origConditionStr}", ref origConditionStr, 100, ImGuiInputTextFlags.ReadOnly);
 
@@ -863,12 +865,14 @@ public unsafe partial class AutoRetainerWork
                 {
                     if (popup)
                     {
-                        foreach (AbortCondition condition in Enum.GetValues(typeof(AbortCondition)))
+                        foreach (var condition in AbortConditions)
                         {
-                            if (ImGui.Selectable(condition.ToString(), logic.Key.HasFlag(condition)))
+                            var isSelected = (logic.Key & condition) == condition;
+
+                            if (ImGui.Selectable(AbortConditionLoc.GetValueOrDefault(condition), isSelected))
                             {
                                 var combinedCondition = logic.Key;
-                                if (logic.Key.HasFlag(condition))
+                                if (isSelected)
                                     combinedCondition &= ~condition;
                                 else
                                     combinedCondition |= condition;
@@ -889,7 +893,7 @@ public unsafe partial class AutoRetainerWork
                 ImGui.TextUnformatted("→");
 
                 // 行为处理 (值)
-                var origBehaviorStr = logic.Value.ToString();
+                var origBehaviorStr = AbortBehaviorLoc.GetValueOrDefault(logic.Value);
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(300f * GlobalUIScale);
                 ImGui.InputText($"###Behavior_{origBehaviorStr}", ref origBehaviorStr, 128, ImGuiInputTextFlags.ReadOnly);
@@ -903,7 +907,7 @@ public unsafe partial class AutoRetainerWork
                     {
                         foreach (var behavior in Enum.GetValues<AbortBehavior>())
                         {
-                            if (ImGui.Selectable(behavior.ToString(), behavior == logic.Value))
+                            if (ImGui.Selectable(AbortBehaviorLoc.GetValueOrDefault(behavior), behavior == logic.Value))
                             {
                                 selectedItemConfig.AbortLogic[logic.Key] = behavior;
                                 Module.config.Save(Module);
@@ -1017,7 +1021,7 @@ public unsafe partial class AutoRetainerWork
                         {
                             if (ImGui.MenuItem
                                 (
-                                    $"{sortOrder}",
+                                    SortOrderLoc.GetValueOrDefault(sortOrder),
                                     string.Empty,
                                     sortOrder == Module.config.MarketItemsSortOrder
                                 ))
@@ -1629,6 +1633,7 @@ public unsafe partial class AutoRetainerWork
 
             using (ImRaii.Group())
             using (FontManager.Instance().UIFont160.Push())
+            {
                 ImGui.TextUnformatted
                 (
                     $"{itemData.Name.ToString()}" +
@@ -1636,6 +1641,7 @@ public unsafe partial class AutoRetainerWork
                          "\ue03c" :
                          string.Empty)
                 );
+            }
 
             manualUnitPriceImageSize = ImGui.GetItemRectSize();
 
@@ -2024,7 +2030,7 @@ public unsafe partial class AutoRetainerWork
                     var message = Lang.GetSe
                     (
                         "AutoRetainerWork-PriceAdjust-ConductAbortBehavior",
-                        new SeStringBuilder().AddUiForeground(behavior.ToString(), 67).Build()
+                        new SeStringBuilder().AddUiForeground(AbortBehaviorLoc.GetValueOrDefault(behavior), 67).Build()
                     );
                     NotifyHelper.Instance().Chat(message);
                 }
@@ -2318,13 +2324,21 @@ public unsafe partial class AutoRetainerWork
             // 检查每个条件
             foreach (var condition in PriceCheckConditions.GetAll())
             {
-                if (config.AbortLogic.Keys.Any(x => x.HasFlag(condition.Condition)) &&
-                    condition.Predicate(config, origPrice, modifiedPrice, marketPrice))
+                var hasBehavior = false;
+
+                foreach (var logic in config.AbortLogic)
                 {
-                    conditionMet   = condition.Condition;
-                    behaviorNeeded = config.AbortLogic.FirstOrDefault(x => x.Key.HasFlag(condition.Condition)).Value;
-                    return true;
+                    if ((logic.Key & condition.Condition) != condition.Condition) continue;
+
+                    behaviorNeeded = logic.Value;
+                    hasBehavior    = true;
+                    break;
                 }
+
+                if (!hasBehavior || !condition.Predicate(config, origPrice, modifiedPrice, marketPrice)) continue;
+
+                conditionMet = condition.Condition;
+                return true;
             }
 
             return false;
@@ -2414,7 +2428,7 @@ public unsafe partial class AutoRetainerWork
                     "AutoRetainerWork-PriceAdjust-DetectAbortCondition",
                     itemPayload,
                     RetainerManager.Instance()->GetActiveRetainer()->NameString,
-                    new SeStringBuilder().AddUiForeground(condition.ToString(), 60).Build()
+                    new SeStringBuilder().AddUiForeground(GetAbortConditionName(condition), 60).Build()
                 )
             );
         }

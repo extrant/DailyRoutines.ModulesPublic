@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+using System.Text;
 using DailyRoutines.Common.Extensions;
 using DailyRoutines.Common.KamiToolKit.Nodes;
 using DailyRoutines.Common.Module.Abstractions;
@@ -90,6 +92,29 @@ public unsafe partial class AutoRetainerWork : ModuleBase
     }
 
     #endregion
+
+    private static string GetAbortConditionName
+    (
+        AbortCondition condition
+    )
+    {
+        var localizedName = AbortConditionLoc.GetValueOrDefault(condition);
+        if (localizedName != null) return localizedName;
+
+        var builder = new StringBuilder();
+
+        foreach (var flag in AbortConditions)
+        {
+            if (flag == AbortCondition.无 || (condition & flag) != flag) continue;
+
+            if (builder.Length > 0)
+                builder.Append(" / ");
+
+            builder.Append(AbortConditionLoc.GetValueOrDefault(flag));
+        }
+
+        return builder.ToString();
+    }
 
     #region 单独操作
 
@@ -285,6 +310,8 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         高于最大值    = 64
     }
 
+    private static readonly AbortCondition[] AbortConditions = Enum.GetValues<AbortCondition>();
+
     private enum AbortBehavior
     {
         无,
@@ -302,6 +329,41 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         物品ID,
         物品类型
     }
+
+    private static readonly FrozenDictionary<AdjustBehavior, string> AdjustBehaviorLoc = new Dictionary<AdjustBehavior, string>
+    {
+        [AdjustBehavior.固定值] = Lang.Get("AutoRetainerWork-AdjustBehavior-FixedValue"),
+        [AdjustBehavior.百分比] = Lang.Get("AutoRetainerWork-AdjustBehavior-Percentage")
+    }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<AbortCondition, string> AbortConditionLoc = new Dictionary<AbortCondition, string>
+    {
+        [AbortCondition.无]               = Lang.Get("None"),
+        [AbortCondition.低于最小值]       = Lang.Get("AutoRetainerWork-AbortCondition-BelowMinimum"),
+        [AbortCondition.低于预期值]       = Lang.Get("AutoRetainerWork-AbortCondition-BelowExpected"),
+        [AbortCondition.低于收购价]       = Lang.Get("AutoRetainerWork-AbortCondition-BelowVendorPrice"),
+        [AbortCondition.大于可接受降价值] = Lang.Get("AutoRetainerWork-AbortCondition-ExceedsMaximumReduction"),
+        [AbortCondition.高于预期值]       = Lang.Get("AutoRetainerWork-AbortCondition-AboveExpected"),
+        [AbortCondition.高于最大值]       = Lang.Get("AutoRetainerWork-AbortCondition-AboveMaximum")
+    }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<AbortBehavior, string> AbortBehaviorLoc = new Dictionary<AbortBehavior, string>
+    {
+        [AbortBehavior.无]             = Lang.Get("None"),
+        [AbortBehavior.收回至雇员]     = Lang.Get("AutoRetainerWork-AbortBehavior-ReturnToRetainer"),
+        [AbortBehavior.收回至背包]     = Lang.Get("AutoRetainerWork-AbortBehavior-ReturnToInventory"),
+        [AbortBehavior.出售至系统商店] = Lang.Get("AutoRetainerWork-AbortBehavior-SellToVendor"),
+        [AbortBehavior.改价至最小值]   = Lang.Get("AutoRetainerWork-AbortBehavior-AdjustToMinimum"),
+        [AbortBehavior.改价至预期值]   = Lang.Get("AutoRetainerWork-AbortBehavior-AdjustToExpected"),
+        [AbortBehavior.改价至最高值]   = Lang.Get("AutoRetainerWork-AbortBehavior-AdjustToMaximum")
+    }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<SortOrder, string> SortOrderLoc = new Dictionary<SortOrder, string>
+    {
+        [SortOrder.上架顺序] = Lang.Get("AutoRetainerWork-SortOrder-Listing"),
+        [SortOrder.物品ID]   = Lang.Get("AutoRetainerWork-SortOrder-ItemID"),
+        [SortOrder.物品类型] = Lang.Get("AutoRetainerWork-SortOrder-ItemType")
+    }.ToFrozenDictionary();
 
     private abstract class RetainerWorkerBase
     (
