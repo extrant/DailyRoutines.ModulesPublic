@@ -658,6 +658,21 @@ public unsafe class CustomizeGameObject : ModuleBase
         ImGui.TableSetupColumn("Lable", ImGuiTableColumnFlags.WidthFixed,   ImGui.CalcTextSize("--Model Skeleton ID--").X);
         ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthStretch, 50);
 
+        DrawRow(Lang.Get("Name"),    chara.Name);
+        DrawRow("Data ID",           chara.DataID.ToString());
+        DrawRow("Object ID",         chara.GameObjectID.ToString());
+        DrawRow("Model Chara ID",    chara.ModelCharaID.ToString());
+        DrawRow("Model Skeleton ID", chara.ModelSkeletonID.ToString());
+
+        if (chara is IPlayerCharacter { CurrentMount: not null } pc)
+        {
+            var mountObj = pc.ToStruct()->Mount.MountObject;
+            if (mountObj != null)
+                DrawRow("Mount Object ID", ((ulong)mountObj->GetGameObjectId()).ToString());
+        }
+
+        return;
+
         void DrawRow
         (
             string label,
@@ -665,27 +680,14 @@ public unsafe class CustomizeGameObject : ModuleBase
         )
         {
             ImGui.TableNextRow();
+            
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             ImGui.TextUnformatted(label);
+            
             ImGui.TableNextColumn();
             ImGui.SetNextItemWidth(-1f);
             ImGui.InputText($"###{label}Preview", ref value, 128, ImGuiInputTextFlags.ReadOnly);
-        }
-
-        DrawRow(Lang.Get("Name"),    chara.Name);
-        DrawRow("Data ID",           chara.DataID.ToString());
-        DrawRow("Object ID",         chara.GameObjectID.ToString()); // Use hex for clarity? or keep decimal
-        DrawRow("Model Chara ID",    chara.ModelCharaID.ToString());
-        DrawRow("Model Skeleton ID", chara.ModelSkeletonID.ToString());
-
-        if (chara is IPlayerCharacter { CurrentMount: not null } pc)
-        {
-            // Accessing mount object safely
-            // Using pointer logic similar to original but safer if possible
-            var mountObj = pc.ToStruct()->Mount.MountObject;
-            if (mountObj != null)
-                DrawRow("Mount Object ID", mountObj->GetGameObjectId().ToString());
         }
     }
 
