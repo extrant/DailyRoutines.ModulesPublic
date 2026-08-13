@@ -17,13 +17,15 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
     public override ModuleInfo Info { get; } = new()
     {
         Title       = Lang.Get("AutoIgnoreLoginLockTitle"),
-        Description = Lang.Get("AutoIgnoreLoginLockDescription", LuminaWrapper.GetLogMessageText(430)),
+        Description = Lang.Get("AutoIgnoreLoginLockDescription"),
         Category    = ModuleCategory.System
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private Hook<AgentLobby.Delegates.Update> AgentLobbyUpdateHook;
+    
+    private Hook<AgentLobby.Delegates.OpenLoginWaitDialog> OpenLoginWaitDialogHook;
 
     private delegate byte TimerDelegate
     (
@@ -32,26 +34,13 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
         int   retryCount
     );
 
-    private CompSig             timer0Sig = null!;
-    private Hook<TimerDelegate> Timer0Hook;
+    private static readonly CompSig             Timer0Sig = new("40 57 41 57 48 83 EC ?? 48 8B 05 ?? ?? ?? ?? 45 8B F8");
+    private                 Hook<TimerDelegate> Timer0Hook;
 
-    private CompSig             timer1Sig = null!;
-    private Hook<TimerDelegate> Timer1Hook;
-
-    private CompSig playSystemSoundSig = null!;
-
-    private delegate SoundData* PlaySystemSoundDelegate
-    (
-        SoundManager*       soundManager,
-        CStringPointer      path,
-        float               volume,
-        uint                soundNumber,
-        uint                fadeInDuration,
-        bool                autoRelease,
-        SoundVolumeCategory volumeCategory
-    );
-
-    private Hook<PlaySystemSoundDelegate> PlaySystemSoundHook;
+    private static readonly CompSig             Timer1Sig = new("40 53 57 48 83 EC ?? 48 8B F9 41 8B D8");
+    private                 Hook<TimerDelegate> Timer1Hook;
+    
+    private Hook<SoundManager.Delegates.PlaySystemSound> PlaySystemSoundHook;
 
     private MemoryPatch loginFallbackPatch = null!;
 
@@ -60,10 +49,6 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
 
     protected override void Init()
     {
-        timer0Sig          = new("40 57 41 57 48 83 EC ?? 48 8B 05 ?? ?? ?? ?? 45 8B F8");
-        timer1Sig          = new("40 53 57 48 83 EC ?? 48 8B F9 41 8B D8");
-        playSystemSoundSig = new("E8 ?? ?? ?? ?? 48 0F BE 46 ?? 41 B1");
-
         loginFallbackPatch = new
         (
             "48 81 BE ?? ?? ?? ?? ?? ?? ?? ?? 76",
@@ -79,12 +64,30 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
             [0x00]
         );
 
-        AgentLobbyUpdateHook = AgentLobby.Instance()->VirtualTable->HookVFuncFromName("Update", (AgentLobby.Delegates.Update)AgentLobbyUpdateDetour);
+        AgentLobbyUpdateHook = AgentLobby.Instance()->VirtualTable->HookVFuncFromName
+        (
+            "Update",
+            (AgentLobby.Delegates.Update)AgentLobbyUpdateDetour
+        );
         AgentLobbyUpdateHook.Enable();
+        
+        OpenLoginWaitDialogHook = IGameInteropProvider.Instance().HookFromMemberFunction
+        (
+            typeof(AgentLobby.MemberFunctionPointers),
+            "OpenLoginWaitDialog",
+            (AgentLobby.Delegates.OpenLoginWaitDialog)OpenLoginWaitDialogDetour
+        );
+        OpenLoginWaitDialogHook.Enable();
 
-        Timer0Hook          = timer0Sig.GetHook<TimerDelegate>(Timer0Detour);
-        Timer1Hook          = timer1Sig.GetHook<TimerDelegate>(Timer1Detour);
-        PlaySystemSoundHook = playSystemSoundSig.GetHook<PlaySystemSoundDelegate>(PlaySystemSoundDetour);
+        Timer0Hook = Timer0Sig.GetHook<TimerDelegate>(Timer0Detour);
+        Timer1Hook = Timer1Sig.GetHook<TimerDelegate>(Timer1Detour);
+
+        PlaySystemSoundHook = IGameInteropProvider.Instance().HookFromMemberFunction
+        (
+            typeof(SoundManager.MemberFunctionPointers),
+            "PlaySystemSound",
+            (SoundManager.Delegates.PlaySystemSound)PlaySystemSoundDetour
+        );
 
         Timer0Hook.Enable();
         Timer1Hook.Enable();
@@ -103,10 +106,17 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
         agent->TemporaryLocked = false;
         AgentLobbyUpdateHook.Original(agent, deltaTime);
 
-        if (agent->LobbyUpdateStage == LOGIN_QUEUE_LOBBY_UPDATE_STAGE)
-            Throttler.Shared.Throttle("AutoIgnoreLoginLock.SystemSound", 1500, true);
-
         agent->TemporaryLocked = false;
+    }
+    
+    private void OpenLoginWaitDialogDetour
+    (
+        AgentLobby* thisPtr,
+        int         position
+    )
+    {
+        Throttler.Shared.Throttle("AutoIgnoreLoginLock.SystemSound", 1500, true);
+        OpenLoginWaitDialogHook.Original(thisPtr, position);
     }
 
     private byte Timer0Detour
@@ -138,10 +148,4 @@ public unsafe class AutoIgnoreLoginLock : ModuleBase
         !Throttler.Shared.Check("AutoIgnoreLoginLock.SystemSound") ?
             null :
             PlaySystemSoundHook.Original(soundManager, path, volume, soundNumber, fadeInDuration, autoRelease, volumeCategory);
-
-    #region 常量
-
-    private const byte LOGIN_QUEUE_LOBBY_UPDATE_STAGE = 31;
-
-    #endregion
 }
