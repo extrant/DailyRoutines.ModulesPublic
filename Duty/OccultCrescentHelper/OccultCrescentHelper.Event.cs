@@ -683,21 +683,6 @@ public partial class OccultCrescentHelper
             (() =>
                 {
                     if (pathfindingSession != session) return true;
-                    if (DService.Instance().Condition.IsOccupiedInEvent) return false;
-                    if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return false;
-                    if (Vector3.DistanceSquared(player.Position, session.Destination) <=
-                        MOUNT_MINIMUM_DISTANCE * MOUNT_MINIMUM_DISTANCE)
-                        return true;
-
-                    return UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9);
-                }
-            );
-
-            taskHelper.Enqueue
-            (() =>
-                {
-                    if (pathfindingSession != session) return true;
 
                     if (DService.Instance().ObjectTable.LocalPlayer is not { } player)
                     {
@@ -1014,7 +999,10 @@ public partial class OccultCrescentHelper
 
                 session.IsAtPathfindingDestination = false;
                 if (!session.IsMovementInterrupted)
+                {
+                    vnavmeshIPC.SetPathfindTolerance(0.1f);
                     vnavmeshIPC.PathfindWithPath([.. session.Path], false);
+                }
             }
 
             if (session is
@@ -1026,6 +1014,27 @@ public partial class OccultCrescentHelper
                     IsAtPathfindingDestination: false
                 })
                 StartNavigationPath(session, localPlayer.Position);
+
+            TryMountWhenPathIsLong(session);
+        }
+
+        private void TryMountWhenPathIsLong
+        (
+            PathfindingSession session
+        )
+        {
+            if (session.TravelStage != PathfindingTravelStage.Pathfinding) return;
+
+            if (DService.Instance().Condition[ConditionFlag.Mounted] ||
+                DService.Instance().Condition.IsOccupiedInEvent)
+                return;
+
+            if (!vnavmeshIPC.GetIsPathfindRunning() ||
+                vnavmeshIPC.GetPathLeftDistance() < MOUNT_MINIMUM_DISTANCE)
+                return;
+
+            if (Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-Mount", 1_000))
+                UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9);
         }
 
         private void TrySetFateMonsterTarget
