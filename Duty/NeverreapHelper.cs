@@ -17,21 +17,13 @@ public unsafe class NeverreapHelper : ModuleBase
 {
     public override ModuleInfo Info { get; } = new()
     {
-        Title = Lang.Get("NeverreapHelperTitle"),
-        Description = Lang.Get
-        (
-            "NeverreapHelperDescription",
-            LuminaWrapper.GetContentName(33),                      // 空中神域不获岛
-            LuminaWrapper.GetENPCName(1013331),                    // 托努瓦努                      
-            LuminaWrapper.GetItemName(2001568),                    // 云卵石
-            LuminaWrapper.GetBNPCName(3726),                       // 奴涅努克怪鸟
-            LuminaWrapper.GetBNPCName(SHADOW_MONSTER_BNPC_NAME_ID) // 奴涅努克之影
-        ),
+        Title               = Lang.Get("NeverreapHelperTitle"),
+        Description         = Lang.Get("NeverreapHelperDescription"),
         Category            = ModuleCategory.Duty,
         ModulesPrerequisite = ["AutoTalkSkip"]
     };
 
-    public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
+    public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     private ZoneIndicatorHandle? handle;
 
