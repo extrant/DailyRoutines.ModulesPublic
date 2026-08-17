@@ -1475,7 +1475,7 @@ public partial class OccultCrescentHelper
             {
                 if (!LuminaGetter.TryGetRow(ce.DynamicEventId, out Lumina.Excel.Sheets.DynamicEvent data)) return null;
                 if (ce.State is DynamicEventState.Inactive) return null;
-                if (data.RowId != 48 && ce.MapMarker.Position == default) return null;
+                if (!CrescentEvent.ForkTowers.Contains(data.RowId) && ce.MapMarker.Position == default) return null;
 
                 var leftTime = ce.StartTimestamp - GameState.ServerTimeUnix;
                 if (leftTime < 0)
@@ -1483,7 +1483,7 @@ public partial class OccultCrescentHelper
 
                 var name = ce.Name.ToString();
 
-                if (data.RowId != 48) // 两歧塔 力之塔
+                if (!CrescentEvent.ForkTowers.Contains(data.RowId)) // 两歧塔
                 {
                     name = ce.State switch
                     {
