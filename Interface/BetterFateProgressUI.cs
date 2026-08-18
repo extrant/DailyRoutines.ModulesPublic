@@ -12,14 +12,13 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
-using OmenTools.Info.Game.Enums;
+using OmenTools.Info.Game.Data;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.OmenService;
 using OmenTools.Threading;
 
 namespace DailyRoutines.ModulesPublic.Interface;
 
-// TODO: 用 FFCS 的 Achievement 里的 RequestFateProgressTab
 public class BetterFateProgressUI : ModuleBase
 {
     public override ModuleInfo Info { get; } = new()
@@ -40,7 +39,8 @@ public class BetterFateProgressUI : ModuleBase
 
     protected override void Init()
     {
-        ObtainAllFateProgress();
+        if (GameState.IsLoggedIn)
+            ObtainAllFateProgress();
 
         Overlay                 ??= new(this);
         Overlay.Flags           &=  ~ImGuiWindowFlags.NoTitleBar;
@@ -141,10 +141,10 @@ public class BetterFateProgressUI : ModuleBase
         }
     }
 
-    private static void ObtainAllFateProgress()
+    private static unsafe void ObtainAllFateProgress()
     {
-        foreach (var achivement in AchievementToZone.Keys)
-            ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.RequestAchievement, achivement);
+        for (byte i = 0; i < FateAchievements.VersionCount; i++)
+            UIState.Instance()->Achievement.RequestFateProgressTab(i);
     }
 
     private unsafe void OnAddon
@@ -288,28 +288,6 @@ public class BetterFateProgressUI : ModuleBase
 
     #region 常量
 
-    private static readonly FrozenDictionary<uint, uint> AchievementToZone = new Dictionary<uint, uint>
-    {
-        [2343] = 813,  // 雷克兰德
-        [2345] = 815,  // 安穆·艾兰
-        [2346] = 816,  // 伊尔美格
-        [2344] = 814,  // 珂露西亚岛
-        [2347] = 817,  // 拉凯提卡大森林
-        [2348] = 818,  // 黑风海
-        [3022] = 956,  // 迷津
-        [3023] = 957,  // 萨维奈岛
-        [3024] = 958,  // 加雷马
-        [3025] = 959,  // 叹息海
-        [3026] = 961,  // 厄尔庇斯
-        [3027] = 960,  // 天外天垓
-        [3559] = 1187, // 奥阔帕恰山
-        [3560] = 1188, // 克扎玛乌卡湿地
-        [3561] = 1189, // 亚克特尔树海
-        [3562] = 1190, // 夏劳尼荒野
-        [3563] = 1191, // 遗产之地
-        [3564] = 1192  // 活着的记忆
-    }.ToFrozenDictionary();
-
     private static FrozenDictionary<uint, List<ZoneFateProgressInfo>> VersionToZoneInfos
     {
         get
@@ -323,7 +301,7 @@ public class BetterFateProgressUI : ModuleBase
             var counter        = 0;
             var currentVersion = 0U;
 
-            foreach (var (achievementID, zoneID) in AchievementToZone)
+            foreach (var (achievementID, zoneID) in FateAchievements.AchievementToZone)
             {
                 if (!LuminaGetter.TryGetRow<TerritoryType>(zoneID, out var zoneRow)) continue;
 
@@ -361,7 +339,7 @@ public class BetterFateProgressUI : ModuleBase
 
     private static readonly Vector2 ChildSize = ScaledVector2(450f, 150f);
 
-    private static readonly uint BicolorGemCap = LuminaGetter.GetRow<Item>(26807)?.StackSize ?? 1500;
+    private static readonly uint BicolorGemCap = LuminaGetter.GetRowOrDefault<Item>(26807).StackSize;
 
     #endregion
 }
