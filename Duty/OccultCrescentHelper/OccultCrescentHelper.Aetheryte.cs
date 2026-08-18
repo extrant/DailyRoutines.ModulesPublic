@@ -241,7 +241,7 @@ public partial class OccultCrescentHelper
                             if (!Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo")) return false;
                             if (vnavmeshIPC.GetIsPathfindRunning() || vnavmeshIPC.GetIsPathfindInProgress()) return true;
 
-                            vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 4f);
+                            vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 0.1f);
                             return false;
                         }
                     );
@@ -249,12 +249,13 @@ public partial class OccultCrescentHelper
                     taskHelper.Enqueue
                     (() =>
                         {
-                            if (LocalPlayerState.DistanceTo3D(targetObj.Position) > 4f)
+                            if (vnavmeshIPC.GetIsPathfindRunning() || vnavmeshIPC.GetIsPathfindInProgress())
+                                return false;
+
+                            if (LocalPlayerState.DistanceTo3DSquared(targetObj.Position) > 4f * 4f)
                             {
-                                if (!vnavmeshIPC.GetIsPathfindRunning() &&
-                                    !vnavmeshIPC.GetIsPathfindInProgress() &&
-                                    Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo-Retry"))
-                                    vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 4f);
+                                if (Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-MoveTo-Retry"))
+                                    vnavmeshIPC.PathfindAndMoveToClosely(targetObj.Position, false, 0.1f);
 
                                 return false;
                             }
@@ -281,7 +282,7 @@ public partial class OccultCrescentHelper
                         }
                     );
 
-                    taskHelper.Enqueue(() => LocalPlayerState.DistanceTo3D(aetheryte.Position) <= 30);
+                    taskHelper.Enqueue(() => LocalPlayerState.DistanceTo3DSquared(aetheryte.Position) <= 30f * 30f);
                     return true;
                 }
             }

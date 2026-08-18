@@ -33,19 +33,6 @@ public partial class OccultCrescentHelper
         OccultCrescentHelper mainModule
     ) : BaseIslandModule(mainModule)
     {
-        private const string COMMAND_FATE = "pfate";
-        private const string COMMAND_CE   = "pce";
-
-        private const int AETHERYTE_ROUTE_PLANNING_TIMEOUT_MS = 30_000;
-
-        private const float MOUNT_MINIMUM_DISTANCE          = 50f;
-        private const float PATHFINDING_COMPLETION_DISTANCE = 5f;
-        private const float PATH_POINT_RADIUS               = 4f;
-        private const float PATH_LINE_THICKNESS             = 2f;
-
-        private static readonly uint PathLineColor  = KnownColor.DeepSkyBlue.ToUInt();
-        private static readonly uint PathPointColor = KnownColor.LightSkyBlue.ToUInt();
-
         private          HashSet<IslandEventData> allIslandEvents = [];
         private readonly HashSet<string>          knownCENames    = [];
 
@@ -867,7 +854,7 @@ public partial class OccultCrescentHelper
                         session.Aetheryte is not { } aetheryte)
                         return true;
 
-                    if (LocalPlayerState.DistanceTo3D(aetheryte.Position) > 30f) return false;
+                    if (LocalPlayerState.DistanceTo3DSquared(aetheryte.Position) > 30f * 30f) return false;
 
                     session.Aetheryte                = null;
                     session.TravelStage              = PathfindingTravelStage.Pathfinding;
@@ -910,7 +897,8 @@ public partial class OccultCrescentHelper
                 return;
             }
 
-            var isFate = session.Data.Event.Type is CrescentEventType.FATE or CrescentEventType.MagicPot;
+            var playerPosition = localPlayer.Position.ToVector2();
+            var isFate         = session.Data.Event.Type is CrescentEventType.FATE or CrescentEventType.MagicPot;
             if (isFate && session.TravelStage == PathfindingTravelStage.Pathfinding)
             {
                 if (session.FateMonsterID == 0)
@@ -918,7 +906,7 @@ public partial class OccultCrescentHelper
 
                 if (session.FateMonsterID != 0)
                 {
-                    EnsureFateMonsterSelected(session.FateMonsterID);
+                    EnsureFateMonsterSelected(session.FateMonsterID, playerPosition);
 
                     if (IsFateMonsterInHaterList(session.FateMonsterID))
                     {
@@ -928,7 +916,6 @@ public partial class OccultCrescentHelper
                 }
             }
 
-            var playerPosition = localPlayer.Position.ToVector2();
             var eventRadius = session.Data.Event.Type == CrescentEventType.CE ?
                                   25f :
                                   session.Data.Event.Radius;
@@ -1048,7 +1035,6 @@ public partial class OccultCrescentHelper
             session.FateMonsterID     = monster.EntityID;
             session.FateMonsterRadius = monster.HitboxRadius;
             SetNavigationTarget(session, monster.Position);
-            TargetManager.Instance().SetHardTarget(monster, ignoreTargetModes: true);
         }
 
         private static IGameObject? FindFateMonster
@@ -1066,13 +1052,16 @@ public partial class OccultCrescentHelper
 
         private static void EnsureFateMonsterSelected
         (
-            uint entityID
+            uint    entityID,
+            Vector2 playerPosition
         )
         {
             if (TargetManager.Target?.EntityID == entityID) return;
 
-            if (DService.Instance().ObjectTable.SearchByEntityID(entityID, IObjectTable.CharactersRange) is { } monster)
-                TargetManager.Instance().SetHardTarget(monster, ignoreTargetModes: true);
+            if (DService.Instance().ObjectTable.SearchByEntityID(entityID, IObjectTable.CharactersRange) is { } monster &&
+                Vector2.DistanceSquared(playerPosition, monster.Position.ToVector2()) <=
+                FATE_MONSTER_TARGET_DISTANCE_SQUARED)
+                TargetManager.Target = monster;
         }
 
         private static unsafe bool IsFateMonsterInHaterList
@@ -1608,5 +1597,23 @@ public partial class OccultCrescentHelper
                 IslandEventData? right
             ) => !Equals(left, right);
         }
+        
+        #region 常量
+
+        private const string COMMAND_FATE = "pfate";
+        private const string COMMAND_CE   = "pce";
+
+        private const int AETHERYTE_ROUTE_PLANNING_TIMEOUT_MS = 30_000;
+
+        private const float FATE_MONSTER_TARGET_DISTANCE_SQUARED = 50f * 50f;
+        private const float MOUNT_MINIMUM_DISTANCE               = 40f;
+        private const float PATHFINDING_COMPLETION_DISTANCE      = 5f;
+        private const float PATH_POINT_RADIUS                    = 4f;
+        private const float PATH_LINE_THICKNESS                  = 2f;
+
+        private static readonly uint PathLineColor  = KnownColor.DeepSkyBlue.ToUInt();
+        private static readonly uint PathPointColor = KnownColor.LightSkyBlue.ToUInt();
+
+        #endregion
     }
 }

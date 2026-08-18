@@ -557,7 +557,7 @@ public partial class OccultCrescentHelper
                                     CrescentAetheryte.ExpeditionBaseCamp.Position :
                                     CrescentAetheryte.NorthHornBaseCamp.Position;
 
-            if (LocalPlayerState.DistanceTo2D(startPosition.ToVector2()) <= 50)
+            if (LocalPlayerState.DistanceTo2DSquared(startPosition.ToVector2()) <= 50f * 50f)
             {
                 NotifyHelper.Instance().NotificationError(Lang.Get("OccultCrescentHelper-TreasureManager-AutoOpenTreasure-Notification-Danger"));
                 return;
@@ -591,7 +591,7 @@ public partial class OccultCrescentHelper
 
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper-TreasureManager-Pathfind-Check")) return false;
 
-                    if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 3) return false;
+                    if (LocalPlayerState.DistanceTo2DSquared(position.ToVector2()) >= 3f * 3f) return false;
 
                     OnUpdate();
 
@@ -694,7 +694,7 @@ public partial class OccultCrescentHelper
                     if (!Throttler.Shared.Throttle("OccultCrescentHelper.TreasureManager.Pathfind.Check", 100))
                         return false;
 
-                    if (LocalPlayerState.DistanceTo2D(position.ToVector2()) >= 50)
+                    if (LocalPlayerState.DistanceTo2DSquared(position.ToVector2()) >= 50f * 50f)
                         return false;
 
                     OnUpdate();
