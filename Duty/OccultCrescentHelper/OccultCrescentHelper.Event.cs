@@ -833,7 +833,7 @@ public partial class OccultCrescentHelper
             }
 
             return Vector3.Distance(origin, destination) / 12f >
-                   Vector3.Distance(bestAetheryte.Position, destination) / 12f + 10f ?
+                   (Vector3.Distance(bestAetheryte.Position, destination) / 12f) + 10f ?
                        bestAetheryte :
                        null;
         }
@@ -1018,7 +1018,7 @@ public partial class OccultCrescentHelper
             TryMountWhenPathIsLong(session);
         }
 
-        private void TryMountWhenPathIsLong
+        private static void TryMountWhenPathIsLong
         (
             PathfindingSession session
         )
@@ -1030,7 +1030,7 @@ public partial class OccultCrescentHelper
                 return;
 
             if (!vnavmeshIPC.GetIsPathfindRunning() ||
-                vnavmeshIPC.GetPathLeftDistance() < MOUNT_MINIMUM_DISTANCE)
+                vnavmeshIPC.GetPathfindWayPoints().GetTotalDistanceSquared() <= MOUNT_MINIMUM_DISTANCE * MOUNT_MINIMUM_DISTANCE)
                 return;
 
             if (Throttler.Shared.Throttle("OccultCrescentHelper-CEManager-Mount", 1_000))
