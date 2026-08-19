@@ -113,7 +113,11 @@ public class AutoChangeBattleEffectLevel : ModuleBase
 
                     if (!ImageHelper.TryGetGameIcon(contentType.Icon, out var image)) continue;
 
-                    if (ImGuiOm.TreeNodeImageWithText(image.Handle, new(ImGui.GetTextLineHeightWithSpacing()), $"{name} ({contentType.RowId})"))
+                    var isPush = false;
+                    using (ImRaii.PushColor(ImGuiCol.Text, KnownColor.LawnGreen.ToUInt(), setting.IsEnabled))
+                        isPush = ImGuiOm.TreeNodeImageWithText(image.Handle, new(ImGui.GetTextLineHeightWithSpacing()), $"{name}");
+                    
+                    if (isPush)
                     {
                         DrawBattleEffectSetting($"Duty_{contentType.RowId}", setting);
                         ImGui.TreePop();
