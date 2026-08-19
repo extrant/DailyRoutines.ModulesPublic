@@ -26,9 +26,7 @@ public unsafe class AutoHideBanners : ModuleBase
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
-    // TODO: bannerID 从 uint 变成了 int, 需要测试
     private static readonly CompSig SetImageSig = new("48 89 5C 24 ?? 57 48 83 EC 30 48 8B D9 89 91");
-
     private delegate void SetImageDelegate
     (
         AddonImage*   addon,
@@ -36,7 +34,6 @@ public unsafe class AutoHideBanners : ModuleBase
         IconSubFolder folder,
         int           soundEffectID
     );
-
     private Hook<SetImageDelegate>? SetImageHook;
 
     private Config config = null!;
