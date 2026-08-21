@@ -46,7 +46,7 @@ public unsafe class AutoStoreToCabinet : ModuleBase
     }
 
     private static List<uint> GetItemsToStoreToCabinet() =>
-        Inventories.PlayerWithArmory.TryGetItems
+        Inventories.Player.TryGetItems
         (
             x =>
             {
@@ -58,7 +58,7 @@ public unsafe class AutoStoreToCabinet : ModuleBase
             },
             out var items
         ) ?
-            items.Select(x => CabinetItems[x.GetBaseItemId()]).ToList() :
+            [.. items.Select(x => CabinetItems[x.GetBaseItemId()])] :
             [];
 
     private sealed class AutoStoreToCabinetAddon
