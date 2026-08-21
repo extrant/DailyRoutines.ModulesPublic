@@ -79,12 +79,6 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
 
         if (ImGui.Checkbox(Lang.Get("SendChat"), ref config.SendChat))
             config.Save(this);
-
-        if (ImGui.Checkbox(Lang.Get("SendNotification"), ref config.SendNotification))
-            config.Save(this);
-
-        if (ImGui.Checkbox(Lang.Get("SendTTS"), ref config.SendTTS))
-            config.Save(this);
     }
 
     private void OnZoneChanged
@@ -154,17 +148,21 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
             TaskHelper.Abort();
             return;
         }
-
-        if (LocalPlayerState.Object is not { IsDead: false } ||
-            DService.Instance().Condition.IsOccupiedInEvent  ||
-            DService.Instance().Condition.IsOnMount)
+        
+        // 并没有解锁搭档作战
+        if (!QuestManager.IsQuestComplete(BUDDY_UNLOCK_QUEST_ID))
             return;
 
-        if (!config.NotBattleJobUsingGysahl && LocalPlayerState.ClassJobData.DohDolJobIndex != -1)
+        if (LocalPlayerState.Object is not { IsDead: false } ||
+            ICondition.Instance().IsOccupiedInEvent          ||
+            ICondition.Instance().IsOnMount)
+            return;
+
+        if (!config.NotBattleJobUsingGysahl &&
+            LocalPlayerState.ClassJobData.DohDolJobIndex != -1)
             return;
 
         var companionInfo = UIState.Instance()->Buddy.CompanionInfo;
-
         if (companionInfo.TimeLeft > 300)
         {
             if (config.AutoSwitchStance && companionInfo.ActiveCommand != (int)config.Stance)
@@ -172,18 +170,14 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
             return;
         }
 
-        if (LocalPlayerState.GetItemCount(GYSAHL_GREENS_ITEM_ID) <= 3)
+        if (config.SendChat && LocalPlayerState.GetItemCount(GYSAHL_GREENS_ITEM_ID) <= 3)
         {
             if (hasNotifiedInCurrentZone) return;
             hasNotifiedInCurrentZone = true;
 
             var notificationMessage = Lang.Get("AutoSummonBuddyChocobo-NotificationMessage");
-            if (config.SendChat)
-                NotifyHelper.Instance().Chat(notificationMessage);
-            if (config.SendNotification)
-                NotifyHelper.Instance().NotificationInfo(notificationMessage);
-            if (config.SendTTS)
-                NotifyHelper.Speak(notificationMessage);
+            NotifyHelper.Instance().Chat(notificationMessage);
+            NotifyHelper.ToastError(notificationMessage);
 
             return;
         }
@@ -225,14 +219,13 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
 
         public bool          NotBattleJobUsingGysahl;
         public bool          SendChat;
-        public bool          SendNotification = true;
-        public bool          SendTTS;
         public ChocoboStance Stance = ChocoboStance.FreeStance;
     }
 
     #region 常量
 
     private const uint GYSAHL_GREENS_ITEM_ID = 4868;
+    private const uint BUDDY_UNLOCK_QUEST_ID = 66698;
 
     #endregion
 }
