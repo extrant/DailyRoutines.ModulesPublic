@@ -126,6 +126,12 @@ public partial class FastWorldTravel : ModuleBase
 
         if (CheckAndNotifyIfNotValid(GameState.HomeWorld))
             return;
+
+        if (config.SkipReturnHomeConfirmation)
+        {
+            ChatManager.Instance().SendCommand($"/pdr worldtravel {GameState.HomeWorldData.Name}");
+            return;
+        }
         
         if (selectYesnoAddon != null &&
             !AddonHelper.TryGetPtrByName("DRSelectYesno", out _))
