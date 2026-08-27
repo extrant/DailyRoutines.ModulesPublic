@@ -1,4 +1,5 @@
 using System.Numerics;
+using DailyRoutines.Common.KamiToolKit.Addons;
 using DailyRoutines.Common.KamiToolKit.Nodes;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
@@ -8,7 +9,6 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using KamiToolKit.BaseTypes;
 using KamiToolKit.Nodes;
 using OmenTools.Dalamud.Abstractions;
 using OmenTools.Dalamud.Attributes;
@@ -43,7 +43,7 @@ public class OptimizedLetter : ModuleBase
         {
             InternalName = "DROptimizedLetter",
             Title        = Info.Title,
-            Size         = new(290f, 200f)
+            Size         = new(290f, 190f)
         };
 
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesNo);
@@ -192,7 +192,7 @@ public class OptimizedLetter : ModuleBase
     private class AddonDROptimizedLetter
     (
         TaskHelper taskHelper
-    ) : NativeAddon
+    ) : AttachedAddon("LetterList")
     {
         private static AtkEventWrapper? FireRequestEvent;
 
@@ -215,23 +215,8 @@ public class OptimizedLetter : ModuleBase
                         {
                             if (!LetterList->IsAddonAndNodesReady()) return;
 
-                            var buttonNode = LetterList->GetComponentButtonById(4);
-
-                            if (buttonNode != null)
-                            {
-                                AgentId.Letter.SendEvent(9, 0);
-                                buttonNode->SetEnabledState(false);
-
-                                taskHelper.Abort();
-                                taskHelper.DelayNext(200);
-                                taskHelper.Enqueue
-                                (() =>
-                                    {
-                                        if (buttonNode == null) return;
-                                        buttonNode->SetEnabledState(true);
-                                    }
-                                );
-                            }
+                            NotifyHelper.Toast(Lang.Get("OptimizedLetter-Notification-RewardDeliveryRequested"));
+                            InfoProxyLetter.Instance()->RequestRewardDelivery();
                         }
                     );
 
@@ -241,7 +226,6 @@ public class OptimizedLetter : ModuleBase
 
             var layoutNode = new VerticalListNode
             {
-                IsVisible   = true,
                 Position    = ContentStartPosition + new Vector2(0, 2),
                 ItemSpacing = 1,
                 Size        = new(275, 28),
@@ -252,16 +236,16 @@ public class OptimizedLetter : ModuleBase
             {
                 UnlockAfterClick = true,
                 Size             = new(layoutNode.Size.X - 10, 38),
-                String           = $"{Lang.Get("OptimizedLetter-DeleteMails")} ({Lang.Get("All")})",
+                String           = Lang.Get("OptimizedLetter-Button-Delete-All"),
                 OnClick = () =>
                 {
                     if (!TryFindLetters(_ => true, out var letters)) return;
 
+                    var info = InfoProxyLetter.Instance();
                     foreach (var (index, _) in letters)
-                    {
-                        AgentId.Letter.SendEvent(0, 0, index, 0, 1);
-                        AgentId.Letter.SendEvent(4, 0);
-                    }
+                        InfoProxyLetter.Instance()->DeleteLetter((uint)index);
+                    
+                    info->RequestData();
                 }
             };
             layoutNode.AddNode(deleteAllButton);
@@ -271,85 +255,51 @@ public class OptimizedLetter : ModuleBase
             {
                 UnlockAfterClick = true,
                 Size             = new(layoutNode.Size.X - 10, 38),
-                String           = $"{Lang.Get("OptimizedLetter-DeleteMails")} ({Lang.Get("OptimizedLetter-DeleteMails-ExceptPlayers")})",
+                String           = Lang.Get("OptimizedLetter-Button-Delete-AllButPlayers"),
                 OnClick = () =>
                 {
                     if (!TryFindLetters(x => x.SenderContentId < 100000000000, out var letters)) return;
 
+                    var info = InfoProxyLetter.Instance();
                     foreach (var (index, _) in letters)
-                    {
-                        AgentId.Letter.SendEvent(0, 0, index, 0, 1);
-                        AgentId.Letter.SendEvent(4, 0);
-                    }
+                        info->DeleteLetter((uint)index);
+
+                    info->RequestData();
                 }
             };
             layoutNode.AddNode(deleteNonPlayerButton);
             layoutNode.AddDummy(5);
-
-            layoutNode.AddDummy(5);
-
-            var claimAllButton = new TextButtonNode
+            
+            var claimAllButton = new HoldButtonNode
             {
-                IsVisible = true,
-                IsEnabled = true,
-                Size      = new(layoutNode.Size.X - 10, 38),
-                String    = Lang.Get("OptimizedLetter-ClaimMails"),
+                UnlockAfterClick = true,
+                Size             = new(layoutNode.Size.X - 10, 38),
+                String           = Lang.Get("OptimizedLetter-Button-Claim"),
                 OnClick = () =>
                 {
                     if (!TryFindLetters(x => x.Attachments.ToArray().Any(d => d.Count > 0), out var letters)) return;
 
+                    var info = InfoProxyLetter.Instance();
+
                     foreach (var (index, _) in letters)
                     {
-                        taskHelper.Enqueue(() => AgentId.Letter.SendEvent(0, 0, index, 0,  1));
-                        taskHelper.Enqueue(() => AgentId.Letter.SendEvent(1, 0, 0,     0U, 0, 0));
-                        taskHelper.Enqueue(() => LetterViewer->IsAddonAndNodesReady());
-                        taskHelper.Enqueue(() => AgentId.LetterView.SendEvent(0, 1));
+                        taskHelper.Enqueue(() => info->TakeAttachments((uint)index, -1));
                         taskHelper.Enqueue(() => AtkStage.Instance()->GetNumberArrayData(NumberArrayType.Letter)->IntArray[136] == 0);
-                        taskHelper.Enqueue
-                        (() =>
-                            {
-                                LetterViewer->Close(true);
-                                AgentId.LetterView.SendEvent(0, -1);
-                            }
-                        );
                     }
                 }
             };
+            
             layoutNode.AddNode(claimAllButton);
             layoutNode.AttachNode(this);
         }
 
-        protected override unsafe void OnUpdate
-        (
-            AtkUnitBase* addon
-        )
-        {
-            if (LetterList == null)
-            {
-                Close();
-                return;
-            }
-
-            SetWindowPosition
-            (
-                new
-                (
-                    LetterList->RootNode->ScreenX - addon->GetScaledWidth(true),
-                    LetterList->RootNode->ScreenY
-                )
-            );
-        }
-
-        protected override unsafe void OnFinalize
+        protected override unsafe void OnAttachedAddonFinalize
         (
             AtkUnitBase* addon
         )
         {
             FireRequestEvent?.Dispose();
             FireRequestEvent = null;
-
-            if (LetterList == null) return;
-            LetterList->Close(true);
         }
 
         private static unsafe bool TryFindLetters
