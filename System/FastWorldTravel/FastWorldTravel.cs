@@ -8,6 +8,7 @@ using DailyRoutines.Manager;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Config;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Utility;
@@ -629,6 +630,8 @@ public partial class FastWorldTravel : ModuleBase
                 entry.Tooltip =   Lang.Get("FastWorldTravel-DtrEntryTooltip");
                 entry.Text    =   LuminaWrapper.GetAddonText(12510);
                 entry.Shown   =   true;
+                
+                IGameConfig.Instance().UiConfig.Set(nameof(UiConfigOption.InfoSettingDispWorldNameType), 0U);
                 return;
             case false when entry != null:
                 entry.Remove();
