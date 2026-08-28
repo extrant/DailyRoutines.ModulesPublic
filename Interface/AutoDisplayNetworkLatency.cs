@@ -133,9 +133,8 @@ public class AutoDisplayNetworkLatency : ModuleBase
         var currentPing = monitor.LastPing;
         var color       = GetPingColor(currentPing);
 
-        ImGui.SetWindowFontScale(1.5f);
-        ImGui.TextColored(color, $"{currentPing}");
-        ImGui.SetWindowFontScale(1.0f);
+        using (FontManager.Instance().UIFont160.Push())
+            ImGui.TextColored(color, $"{currentPing}");
 
         ImGui.SameLine();
         ImGui.TextColored(color, "ms");
@@ -183,9 +182,9 @@ public class AutoDisplayNetworkLatency : ModuleBase
         {
             if (table)
             {
-                DrawStatColumn("AVG", $"{average:F0}", GetPingColor(average));
-                DrawStatColumn("MIN", $"{min:F0}",     GetPingColor(min));
-                DrawStatColumn("MAX", $"{max:F0}",     GetPingColor(max));
+                DrawStatColumn(Lang.Get("AutoDisplayNetworkLatencyTitle-Stat-Avg"), $"{average:F0}", GetPingColor(average));
+                DrawStatColumn(Lang.Get("AutoDisplayNetworkLatencyTitle-Stat-Min"), $"{min:F0}",     GetPingColor(min));
+                DrawStatColumn(Lang.Get("AutoDisplayNetworkLatencyTitle-Stat-Max"), $"{max:F0}",     GetPingColor(max));
 
                 var lossColor = lossRate switch
                 {
@@ -193,7 +192,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
                     < 0.05f => KnownColor.Orange.ToVector4(),
                     _       => KnownColor.Red.ToVector4()
                 };
-                DrawStatColumn("LOSS", $"{lossRate:P0}", lossColor);
+                DrawStatColumn(Lang.Get("AutoDisplayNetworkLatencyTitle-Stat-Loss"), $"{lossRate:P0}", lossColor);
             }
         }
 
@@ -252,10 +251,13 @@ public class AutoDisplayNetworkLatency : ModuleBase
         )
         {
             ImGui.TableNextColumn();
+            
             ImGui.Spacing();
             ImGui.TextDisabled(label);
+            
             ImGui.SameLine(0, 8f * GlobalUIScale);
-            using (FontManager.Instance().UIFont120.Push())
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().FramePadding.Y);
+            using (FontManager.Instance().UIFont140.Push())
                 ImGui.TextColored(color, value);
         }
     }
@@ -304,7 +306,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
                                                            .AddText($"{address}:{port}");
 
                         if (currentMonitor.AddressInfo is { } info)
-                            builder.AddText($" ({info.CountryName} - {info.CityName})");
+                            builder.AddText($"（{info.CountryName} - {info.CityName}）");
 
                         currentEntry.Tooltip = builder.Build();
                     },
