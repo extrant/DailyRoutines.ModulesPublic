@@ -1,10 +1,11 @@
-using System.Collections.Frozen;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using Dalamud.Game.ClientState.Keys;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Nodes;
@@ -47,9 +48,14 @@ public class AutoAethericMimicry : ModuleBase
         ref uint                        comboRouteID
     )
     {
-        if (actionType != ActionType.Action || actionID != 18322) return;
-        if (targetID   != 0xE0000000 && targetID        != LocalPlayerState.EntityID) return;
-        if (Status.Any(x => LocalPlayerState.HasStatus(x, out _))) return;
+        if (actionType != ActionType.Action ||
+            actionID   != AethericMimicryActionID)
+            return;
+        if (targetID != 0xE0000000 &&
+            targetID != LocalPlayerState.EntityID)
+            return;
+        if (Status.Any(x => LocalPlayerState.HasStatus(x, out _)))
+            return;
 
         AddonDRAutoAethericMimicry.OpenWithNewInstance();
         isPrevented = true;
@@ -70,10 +76,12 @@ public class AutoAethericMimicry : ModuleBase
 
             Addon = new()
             {
-                InternalName = "DRAutoAethericMimicry",
-                Title        = string.Empty,
-                Size         = new(180f, 50f)
+                InternalName     = "DRAutoAethericMimicry",
+                Title            = Lang.Get("SelectTarget"),
+                Size             = new(230f, 120f),
+                CreateWindowNode = () => new WindowNode(),
             };
+            
             Addon.SetWindowPosition(ImGui.GetMousePos() - Addon.Size with { X = Addon.Size.X / 1.5f });
 
             Addon.Open();
@@ -85,67 +93,20 @@ public class AutoAethericMimicry : ModuleBase
             Span<AtkValue> atkValues
         )
         {
-            ((WindowNode)WindowNode).CloseButtonNode.IsVisible = false;
-
-            var rowOneContainer = new HorizontalFlexNode
+            var rowOneContainer = new HorizontalListNode
             {
-                Size      = new(160, 50),
-                Position  = new(10, 19),
-                IsVisible = true
+                Size        = new(ContentSize.X + 10f, 64f),
+                Position    = ContentStartPosition,
+                ItemSpacing = 16f
             };
 
-            tankButton = new()
-            {
-                Size      = new(50f),
-                IsVisible = true,
-                IsEnabled = true,
-                IconId    = 62581,
-                OnClick = () =>
-                {
-                    if (TryGetChara([1], out var chara))
-                        UseActionManager.Instance().UseActionLocation(ActionType.Action, 18322, chara.EntityID);
-
-                    Notify(chara);
-                    Addon.Close();
-                },
-                TextTooltip = $"{LuminaWrapper.GetActionName(18322)}: {LuminaWrapper.GetAddonText(1082)}"
-            };
+            tankButton = CreateButton(62581, [1], 1082);
             rowOneContainer.AddNode(tankButton);
 
-            healerButton = new()
-            {
-                Size      = new(53f),
-                IsVisible = true,
-                IsEnabled = true,
-                IconId    = 62582,
-                OnClick = () =>
-                {
-                    if (TryGetChara([4], out var chara))
-                        UseActionManager.Instance().UseActionLocation(ActionType.Action, 18322, chara.EntityID);
-
-                    Notify(chara);
-                    Addon.Close();
-                },
-                TextTooltip = $"{LuminaWrapper.GetActionName(18322)}: {LuminaWrapper.GetAddonText(1083)}"
-            };
+            healerButton = CreateButton(62582, [4], 1083);
             rowOneContainer.AddNode(healerButton);
 
-            dpsButton = new()
-            {
-                Size      = new(53f),
-                IsVisible = true,
-                IsEnabled = true,
-                IconId    = 62583,
-                OnClick = () =>
-                {
-                    if (TryGetChara([2, 3], out var chara))
-                        UseActionManager.Instance().UseActionLocation(ActionType.Action, 18322, chara.EntityID);
-
-                    Notify(chara);
-                    Addon.Close();
-                },
-                TextTooltip = $"{LuminaWrapper.GetActionName(18322)}: {LuminaWrapper.GetAddonText(1084)}"
-            };
+            dpsButton = CreateButton(62583, [2, 3], 1084);
             rowOneContainer.AddNode(dpsButton);
 
             tankButton.IsEnabled   = TryGetChara([1],    out _);
@@ -153,6 +114,40 @@ public class AutoAethericMimicry : ModuleBase
             dpsButton.IsEnabled    = TryGetChara([2, 3], out _);
 
             rowOneContainer.AttachNode(this);
+            return;
+
+            IconButtonNode CreateButton(uint iconID, byte[] roles, uint addonTextID)
+            {
+                var button = new IconButtonNode
+                {
+                    Size   = new(58f),
+                    IconId = iconID,
+                    OnClick = () =>
+                    {
+                        if (TryGetChara(roles, out var chara))
+                            UseActionManager.Instance().UseActionLocation(ActionType.Action, AethericMimicryActionID, chara.EntityID);
+
+                        Notify(chara);
+                        Addon.Close();
+                    },
+                    TextTooltip = $"{LuminaWrapper.GetActionName(AethericMimicryActionID)}：{LuminaWrapper.GetAddonText(addonTextID)}"
+                };
+
+                using var rented  = new RentedSeStringBuilder();
+                var       builder = rented.Builder;
+
+                builder.AppendIcon((uint)BitmapFontIcon.BlueMage);
+
+                var iconText = new TextNode
+                {
+                    String   = builder.ToReadOnlySeString(),
+                    Size     = new(16),
+                    Position = new(0, button.Height - 16f)
+                };
+                iconText.AttachNode(button);
+
+                return button;
+            }
         }
 
         protected override unsafe void OnUpdate
@@ -169,7 +164,7 @@ public class AutoAethericMimicry : ModuleBase
                 return;
             }
 
-            if (!Throttler.Shared.Throttle("AutoAethericMimicry-OnUpdateButtons")) return;
+            if (!Throttler.Shared.Throttle("AutoAethericMimicry.OnUpdateButtons")) return;
 
             tankButton.IsEnabled   = TryGetChara([1],    out _);
             healerButton.IsEnabled = TryGetChara([4],    out _);
@@ -178,43 +173,55 @@ public class AutoAethericMimicry : ModuleBase
 
         private static bool TryGetChara
         (
-            HashSet<byte>         roles,
+            byte[]                roles,
             out IPlayerCharacter? chara
         )
         {
             chara = null;
 
-            chara = DService.Instance().ObjectTable
-                            .Where
-                            (x => x is IPlayerCharacter player                 &&
-                                  player.EntityID != LocalPlayerState.EntityID &&
-                                  roles.Contains(player.ClassJob.Value.Role)
-                            )
-                            .Where(x => x is { Distance: <= 25 })
-                            .OrderBy(x => x.Distance)
-                            .OfType<IPlayerCharacter>()
-                            .FirstOrDefault();
+            chara = IObjectTable.Instance()
+                                .Where
+                                (x => x is IPlayerCharacter player                 &&
+                                      player.EntityID != LocalPlayerState.EntityID &&
+                                      roles.Contains(player.ClassJob.Value.Role)
+                                )
+                                .Where(x => x is { Distance: <= 25 })
+                                .OrderBy(x => x.Distance)
+                                .OfType<IPlayerCharacter>()
+                                .FirstOrDefault();
             return chara != null;
         }
 
-        private static void Notify
+        private static unsafe void Notify
         (
             IPlayerCharacter? chara
         )
         {
             if (chara == null)
             {
-                NotifyHelper.Instance().Chat(Lang.Get("AutoAethericMimicry-NoAvailableTarget"));
+                // 无法指定目标。
+                RaptureLogModule.Instance()->ShowLogMessage(563);
                 return;
             }
 
-            NotifyHelper.Instance().Chat
+            using var rented  = new RentedSeStringBuilder();
+            var       builder = rented.Builder;
+
+            builder.AppendIcon((uint)chara.ClassJob.Value.ToBitmapFontIcon())
+                   .Append(chara.Name);
+
+            if (chara.HomeWorld.RowId != GameState.HomeWorld)
+            {
+                builder.AppendIcon((uint)BitmapFontIcon.CrossWorld)
+                       .Append(chara.HomeWorld.Value.Name);
+            }
+
+            NotifyHelper.Toast
             (
                 Lang.GetSe
                 (
-                    "AutoAethericMimicry-MimicTarget",
-                    chara.ClassJob.Value.ToBitmapFontIcon(),
-                    new PlayerPayload(chara.Name, chara.HomeWorld.RowId)
+                    "AutoAethericMimicry-Notification-MimickedTarget",
+                    builder.ToReadOnlySeString()
                 )
             );
         }
@@ -222,7 +229,9 @@ public class AutoAethericMimicry : ModuleBase
 
     #region 常量
 
-    private static readonly FrozenSet<uint> Status = [2124, 2125, 2126];
+    private static readonly uint[] Status = [2124, 2125, 2126];
+    
+    private const uint AethericMimicryActionID = 18322;
 
     #endregion
 }
