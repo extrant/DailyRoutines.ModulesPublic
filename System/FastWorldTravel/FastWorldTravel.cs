@@ -260,18 +260,14 @@ public partial class FastWorldTravel : ModuleBase
             return;
 
         var worldName = LuminaWrapper.GetWorldName(worldID);
-        NotifyHelper.ToastQuest
+        var message = Lang.Get
         (
-            Lang.Get
-            (
-                "FastWorldTravel-Notification-TravelingTo",
-                $"{char.ToUpper(worldName[0])}{worldName[1..]}"
-            ),
-            new()
-            {
-                DisplayCheckmark = true
-            }
+            "FastWorldTravel-Notification-TravelingTo",
+            $"{char.ToUpper(worldName[0])}{worldName[1..]}"
         );
+        
+        NotifyHelper.Chat(message);
+        NotifyHelper.Toast(message);
         
         // 跨大区
         if (LuminaWrapper.GetWorldDC(worldID) != GameState.CurrentDataCenter)
