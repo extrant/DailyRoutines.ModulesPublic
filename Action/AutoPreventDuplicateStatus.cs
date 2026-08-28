@@ -491,9 +491,7 @@ public unsafe class AutoPreventDuplicateStatus : ModuleBase
         // 星遁天诛
         [29515] = new([new(1302, DetectType.Target), new(3039, DetectType.Target)]),
         // 分析 (PVP)
-        [29414] = new([new(3158, DetectType.Self)]),
-        // 魔封魔
-        [41624] = new([new(4259, DetectType.Target)])
+        [29414] = new([new(3158, DetectType.Self)])
     }.ToFrozenDictionary();
 
     #endregion
