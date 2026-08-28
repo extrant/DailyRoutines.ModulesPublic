@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using DailyRoutines.Common.Module.Abstractions;
 using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
@@ -24,7 +22,7 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
     public override ModuleInfo Info { get; } = new()
     {
         Title       = "自动记录剩余游戏时间",
-        Description = "登录时, 自动记录保存当前账号剩余的游戏时间, 并显示在服务器信息栏",
+        Description = "登录时，自动记录保存当前账号剩余的游戏时间，并显示在服务器信息栏。",
         Category    = ModuleCategory.General,
         Author      = ["Due"]
     };
@@ -79,17 +77,6 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "CharaSelect",        OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_CharaSelectRemain", OnAddon);
         DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_CharaSelectRemain", OnAddon);
-    }
-
-    protected override void ConfigUI()
-    {
-        EnsureQueryState();
-
-        DrawSubscriptionInfo(LocalPlayerState.ContentID);
-
-        ImGui.NewLine();
-
-        DrawPlaytimeStatistics();
     }
 
     protected override void Uninit()
@@ -174,6 +161,22 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         UpdateSubscriptionFromAgent(agent);
         return ret;
     }
+    
+    private static void OnDTREntryClick
+    (
+        DtrInteractionEvent eventData
+    )
+    {
+        switch (eventData.ClickType)
+        {
+            case MouseClickType.Left:
+                ChatManager.Instance().SendMessage($"/pdr search {nameof(AutoRecordSubTimeLeft)}");
+                break;
+            case MouseClickType.Right:
+                Util.OpenLink("https://pay.sdo.com/item/GWPAY-100001900");
+                break;
+        }
+    }
 
     private unsafe void UpdateSubscriptionFromAgent
     (
@@ -230,15 +233,6 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         config.Infos[contentID] = new(StandardTimeManager.Instance().Now, leftMonth, leftTime);
         config.Save(this);
         return true;
-    }
-
-    private static unsafe (long MonthTime, long PointTime) GetLeftTimeSecond
-    (
-        in LobbySubscriptionInfo info
-    )
-    {
-        var ptr = Unsafe.AsPointer(ref Unsafe.AsRef(in info));
-        return (Marshal.ReadInt64((nint)ptr, 16), Marshal.ReadInt64((nint)ptr, 24));
     }
 
     private void UpdateEntryAndTimeInfo
@@ -324,21 +318,5 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
                       .Append(")");
         entry.Tooltip = tooltipBuilder.Builder.ToReadOnlySeString().ToDalamudString();
         entry.Shown   = true;
-    }
-
-    private static void OnDTREntryClick
-    (
-        DtrInteractionEvent eventData
-    )
-    {
-        switch (eventData.ClickType)
-        {
-            case MouseClickType.Left:
-                ChatManager.Instance().SendMessage($"/pdr search {nameof(AutoRecordSubTimeLeft)}");
-                break;
-            case MouseClickType.Right:
-                Util.OpenLink("https://pay.sdo.com/item/GWPAY-100001900");
-                break;
-        }
     }
 }
