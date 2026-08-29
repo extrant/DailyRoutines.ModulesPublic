@@ -4,7 +4,6 @@ using DailyRoutines.Common.Module.Models;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
-using OmenTools.Dalamud.Attributes;
 using OmenTools.Interop.Game;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
@@ -45,31 +44,21 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
     private void ProcessRequestResultDetour
     (
         InfoProxyItemSearch* info,
-        byte                 a2,
-        int                  a3
+        byte                 resultCount,
+        int                  errorCode
     )
     {
-        if (a2                               == 0                              &&
-            a3                               > 0                               &&
+        if (resultCount                      == 0                              &&
+            errorCode                        > 0                               &&
             GameState.ContentFinderCondition == 0                              &&
             info->SearchItemId               != 0                              &&
             LuminaGetter.TryGetRow<Item>(info->SearchItemId, out var itemData) &&
             itemData.ItemSearchCategory.RowId > 0)
         {
-            IsCurrentMarketStuck = true;
-
             info->RequestData();
             return;
         }
 
-        IsCurrentMarketStuck = false;
-        ProcessRequestResultHook.Original(info, a2, a3);
+        ProcessRequestResultHook.Original(info, resultCount, errorCode);
     }
-
-    #region IPC
-
-    [IPCProvider("DailyRoutines.Modules.AutoRefreshMarketSearchResult.IsMarketStuck")]
-    private bool IsCurrentMarketStuck { get; set; }
-
-    #endregion
 }
