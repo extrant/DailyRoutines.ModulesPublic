@@ -103,7 +103,7 @@ public unsafe class AutoDisplayFateItemCount : ModuleBase
 
             HoldLabelNode = new()
             {
-                String           = Lang.Get("AutoDisplayFateItemCount-HoldCount"),
+                String           = LuminaWrapper.GetAddonText(358),
                 FontSize         = 14,
                 TextFlags        = TextFlags.Edge,
                 TextOutlineColor = ColorHelper.GetColor(37),
