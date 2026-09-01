@@ -24,6 +24,8 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
 
     protected override void Init()
     {
+        TaskHelper ??= new() { TimeoutMS = 2000 };
+        
         waitMessagePatch = new(WaitMessageSig.Get(), [0xBA, 0xB9, 0x1A, 0x00, 0x00]);
         waitMessagePatch.Enable();
         
@@ -33,9 +35,13 @@ public unsafe class AutoRefreshMarketSearchResult : ModuleBase
     protected override void Uninit() =>
         GameState.Instance().MarketListingsStuck -= OnMarketListingsStuck;
 
-    private static void OnMarketListingsStuck
+    private void OnMarketListingsStuck
     (
         int errorCode
-    ) =>
-        InfoProxyItemSearch.Instance()->RequestData();
+    )
+    {
+        TaskHelper.Abort();
+        TaskHelper.DelayNext(500);
+        TaskHelper.Enqueue(() => InfoProxyItemSearch.Instance()->RequestData());
+    }
 }
