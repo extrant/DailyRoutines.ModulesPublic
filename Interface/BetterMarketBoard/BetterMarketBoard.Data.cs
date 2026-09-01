@@ -4,6 +4,7 @@ using DailyRoutines.RemoteInteraction.Universalis;
 using DailyRoutines.RemoteInteraction.Universalis.Models.Requests;
 using DailyRoutines.RemoteInteraction.Universalis.Models.Responses;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 using OmenTools.Info.Game.ItemSource;
 using OmenTools.Info.Game.ItemSource.Enums;
@@ -402,6 +403,13 @@ public unsafe partial class BetterMarketBoard
             MarketBoardListing item
         )
         {
+            if (IsOwnRetainer(item.RetainerId))
+            {
+                // 无法购买自己的雇员所出售的道具。
+                RaptureLogModule.Instance()->ShowLogMessage(468);
+                return false;
+            }
+
             InfoProxy->SetLastPurchasedItem(&item);
             return InfoProxy->SendPurchaseRequestPacket();
         }
@@ -1033,6 +1041,12 @@ public unsafe partial class BetterMarketBoard
             foreach (var listingID in selectedListings.Keys.ToList())
             {
                 if (!currentListings.TryGetValue(listingID, out var listing))
+                {
+                    selectedListings.Remove(listingID);
+                    continue;
+                }
+
+                if (IsOwnRetainer(listing.RetainerId))
                 {
                     selectedListings.Remove(listingID);
                     continue;

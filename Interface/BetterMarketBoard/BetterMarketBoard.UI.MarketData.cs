@@ -518,8 +518,9 @@ public unsafe partial class BetterMarketBoard
 
         using (ImRaii.Disabled(listingsArray.Count == 0))
         {
-            var selectedCount = listingsArray.Count(x => provider.SelectedListings.ContainsKey(x.ListingId));
-            var allSelected   = listingsArray.Count > 0 && selectedCount == listingsArray.Count;
+            var selectableListings = listingsArray.Where(x => !IsOwnRetainer(x.RetainerId)).ToList();
+            var selectedCount      = selectableListings.Count(x => provider.SelectedListings.ContainsKey(x.ListingId));
+            var allSelected        = selectableListings.Count > 0 && selectedCount == selectableListings.Count;
 
             var decoBool = allSelected;
             ImGui.Checkbox("###SelectAll", ref decoBool);
@@ -528,18 +529,18 @@ public unsafe partial class BetterMarketBoard
             {
                 if (!allSelected)
                 {
-                    foreach (var l in listingsArray)
+                    foreach (var l in selectableListings)
                         provider.AddListing(l.ListingId, l);
                 }
                 else
                 {
-                    foreach (var l in listingsArray)
+                    foreach (var l in selectableListings)
                         provider.RemoveListing(l.ListingId);
                 }
             }
             else if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                foreach (var l in listingsArray)
+                foreach (var l in selectableListings)
                     provider.ToggleListing(l.ListingId, l);
             }
 
@@ -602,15 +603,21 @@ public unsafe partial class BetterMarketBoard
             using var id = ImRaii.PushId(listing.ListingId.ToString());
             ImGui.TableNextRow();
 
+            var isOwnRetainer = IsOwnRetainer(listing.RetainerId);
+            using var rowColor = ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled), isOwnRetainer);
+
             ImGui.TableNextColumn();
             var isSelected = provider.SelectedListings.ContainsKey(listing.ListingId);
 
-            if (ImGui.Checkbox("###SelectCheckbox", ref isSelected))
+            using (ImRaii.Disabled(isOwnRetainer))
             {
-                if (isSelected)
-                    provider.ToggleListing(listing.ListingId, listing);
-                else
-                    provider.RemoveListing(listing.ListingId);
+                if (ImGui.Checkbox("###SelectCheckbox", ref isSelected))
+                {
+                    if (isSelected)
+                        provider.ToggleListing(listing.ListingId, listing);
+                    else
+                        provider.RemoveListing(listing.ListingId);
+                }
             }
 
             if (isAnyHQ)
@@ -659,25 +666,28 @@ public unsafe partial class BetterMarketBoard
             var totalPrice = (listing.UnitPrice * listing.Quantity) + listing.TotalTax;
             ImGui.TableNextColumn();
 
-            if (ImGui.Selectable
-                (
-                    $"{totalPrice.ToChineseString()}\ue049",
-                    ImGui.IsPopupOpen($"ExecuteBuyPopup_{listing.ListingId}"),
-                    ImGuiSelectableFlags.SpanAllColumns
-                ))
+            using (ImRaii.Disabled(isOwnRetainer))
             {
-                if (isSelected)
-                    provider.RemoveListing(listing.ListingId);
-                else
-                    provider.ToggleListing(listing.ListingId, listing);
+                if (ImGui.Selectable
+                    (
+                        $"{totalPrice.ToChineseString()}\ue049",
+                        ImGui.IsPopupOpen($"ExecuteBuyPopup_{listing.ListingId}"),
+                        ImGuiSelectableFlags.SpanAllColumns
+                    ))
+                {
+                    if (isSelected)
+                        provider.RemoveListing(listing.ListingId);
+                    else
+                        provider.ToggleListing(listing.ListingId, listing);
+                }
             }
 
             if (PluginConfig.Instance().ConflictKeyBinding.IsPressed())
             {
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && !isOwnRetainer)
                     MarketDataProvider.SendBuyRequest(listing);
             }
-            else
+            else if (!isOwnRetainer)
             {
                 using var popup = ImRaii.ContextPopupItem($"ExecuteBuyPopup_{listing.ListingId}");
 

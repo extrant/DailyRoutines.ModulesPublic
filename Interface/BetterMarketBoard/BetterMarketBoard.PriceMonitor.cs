@@ -100,7 +100,8 @@ public unsafe partial class BetterMarketBoard
                                           (x => x.ItemId    == monitorItem.ItemID         &&
                                                 x.UnitPrice > 0                           &&
                                                 x.UnitPrice <= monitorItem.PriceThreshold &&
-                                                (!monitorItem.HQOnly || x.IsHqItem)
+                                                (!monitorItem.HQOnly || x.IsHqItem)       &&
+                                                !IsOwnRetainer(x.RetainerId)
                                           )
                                           .OrderBy(x => x.UnitPrice)
                                           .ToList();
