@@ -356,10 +356,11 @@ public unsafe partial class AutoShowItemNPCShopInfo
             VerticalListNode parent
         )
         {
-            var slot           = new SectionSlot();
-            var containerWidth = parent.Width - 4;
+            var slot = new SectionSlot
+            {
+                Container = new ResNode { Size = new(parent.Width, 100) }
+            };
 
-            slot.Container = new ResNode { Size = new(containerWidth, 100) };
             parent.AddNode(slot.Container);
 
             slot.Background = new SimpleNineGridNode
