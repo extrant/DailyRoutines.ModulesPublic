@@ -90,7 +90,7 @@ public unsafe partial class BetterMarketBoard
             var taskHelper = owner.TaskHelper;
 
             taskHelper.Abort();
-            taskHelper.Enqueue(() => _ = MarketDataProvider.RequestLocalSearchData(monitorItem.ItemID));
+            taskHelper.Enqueue(() => MarketDataProvider.RequestLocalSearchData(monitorItem.ItemID));
             taskHelper.Enqueue(() => InfoProxyItemSearch.Instance()->IsFullyReceived(monitorItem.ItemID));
             taskHelper.Enqueue
             (() =>
@@ -157,16 +157,30 @@ public unsafe partial class BetterMarketBoard
                     if (owner.config.AutoBuy)
                     {
                         var heldCount = LocalPlayerState.GetItemCount(monitorItem.ItemID);
-
-                        if (owner.config.AutoBuyQuantityLimit == 0 || heldCount <= owner.config.AutoBuyQuantityLimit)
+                        var quantityLimit = owner.config.AutoBuyQuantityLimit == 0 ?
+                                                uint.MaxValue :
+                                                owner.config.AutoBuyQuantityLimit;
+                        
+                        if (heldCount <= quantityLimit)
                         {
-                            var totalCount = 0U;
+                            var totalCount        = 0U;
+                            var totalListingCount = 0U;
 
                             foreach (var listing in listingsToSnipe)
                             {
-                                totalCount += listing.Quantity;
-                                owner.TaskHelper.Enqueue(() => MarketDataProvider.SendBuyRequest(listing), weight: 1);
-                                owner.TaskHelper.DelayNext(500, weight: 1);
+                                totalCount        += listing.Quantity;
+                                totalListingCount += 1;
+
+                                if (totalCount + heldCount > quantityLimit)
+                                    break;
+                                
+                                owner.TaskHelper.Enqueue(() =>
+                                {
+                                    if (MarketDataProvider.SendBuyRequest(listing))
+                                        return;
+                                    
+                                    taskHelper.Abort();
+                                }, weight: 1);
                             }
 
                             // 自动购买通知
@@ -174,7 +188,7 @@ public unsafe partial class BetterMarketBoard
                             (
                                 "BetterMarketBoard-PriceMonitor-Notification-AutoBuy",
                                 SeString.CreateItemLink(monitorItem.ItemID, monitorItem.HQOnly),
-                                listingsToSnipe.Count,
+                                totalListingCount,
                                 totalCount
                             );
 

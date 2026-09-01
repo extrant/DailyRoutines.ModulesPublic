@@ -22,7 +22,11 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         Category            = ModuleCategory.Interface,
         Author              = ["Fragile"],
         ModulesPrerequisite = ["FastWorldTravel", "AutoShowItemNPCShopInfo"],
-        ModulesRecommend    = ["AutoRefreshMarketSearchResult"]
+        ModulesRecommend    = ["AutoRefreshMarketSearchResult"],
+        PreviewImageURL =
+        [
+            "https://gh.atmoomen.top/raw.githubusercontent.com/Dalamud-DailyRoutines/DailyRoutines/main/Resources/Modules/BetterMarketBoard/preview-1.png"
+        ]
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true, AllDefaultEnabled = true };
@@ -107,7 +111,10 @@ public unsafe partial class BetterMarketBoard : ModuleBase
             [x => x.Name.ToString(), x => x.RowId.ToString(), x => x.LevelItem.RowId.ToString()]
         );
 
-        TaskHelper = new() { TimeoutMS = 30_000 };
+        TaskHelper = new()
+        {
+            TaskIntervalMS = 500
+        };
 
         TaskHelper.Enqueue
         (() =>
