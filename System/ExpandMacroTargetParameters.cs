@@ -21,16 +21,6 @@ namespace DailyRoutines.ModulesPublic;
 
 public unsafe class ExpandMacroTargetParameters : ModuleBase
 {
-    private delegate float? BattleCharaMetric
-    (
-        BattleChara* chara
-    );
-
-    private delegate bool BattleCharaPredicate
-    (
-        BattleChara* chara
-    );
-
     public override ModuleInfo Info { get; } = new()
     {
         Title       = Lang.Get("ExpandMacroTargetParametersTitle"),
@@ -428,11 +418,20 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
     (
         GameObject* target
     ) =>
-        target->GetIsTargetable()  &&
-        target->IsReadyToDraw()    &&
-        target->NextDistance <= 45 &&
-        (ActionManager.CanUseActionOnTarget(7428, target) || ActionManager.CanUseActionOnTarget(29415, target));
+        ActionManager.ClassifyTarget((Character*)target) == ActionManager.TargetCategory.Enemy &&
+        target->GetIsTargetable()                                                              &&
+        target->NextDistance <= 45;
 
+    private delegate float? BattleCharaMetric
+    (
+        BattleChara* chara
+    );
+
+    private delegate bool BattleCharaPredicate
+    (
+        BattleChara* chara
+    );
+    
     #region 常量
 
     private static readonly FrozenDictionary<string, (string Description, Func<nint> Handler)> Arguments =
