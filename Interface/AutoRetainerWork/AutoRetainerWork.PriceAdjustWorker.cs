@@ -1516,7 +1516,7 @@ public unsafe partial class AutoRetainerWork
             PriceCacheManager.OnOfferingReceived(Module, data);
 
         // 历史交易数据获取
-        private void OnHistoryReceived
+        private static void OnHistoryReceived
         (
             IMarketBoardHistory history
         ) =>
@@ -1701,7 +1701,6 @@ public unsafe partial class AutoRetainerWork
                             () =>
                             {
                                 if (taskHelper.AbortByConflictKey(Module)) return true;
-                                if (IsMarketStuck()) return false;
 
                                 return IsMarketItemDataReady(itemID);
                             },
@@ -2004,8 +2003,11 @@ public unsafe partial class AutoRetainerWork
         private static void RequestMarketItemData
         (
             uint itemID
-        ) =>
+        )
+        {
+            if (InfoProxyItemSearch.Instance()->SearchItemId == itemID) return;
             SearchItemIPC.TryInvokeFunc(itemID);
+        }
 
         /// <summary>
         ///     当前市场物品数据是否已就绪
@@ -2017,14 +2019,6 @@ public unsafe partial class AutoRetainerWork
         {
             var proxy = InfoProxyItemSearch.Instance();
             if (proxy == null) return false;
-
-            if (proxy->SearchItemId != itemID)
-            {
-                RequestMarketItemData(itemID);
-                return false;
-            }
-
-            if (IsMarketStuck()) return false;
 
             return proxy->IsFullyReceived(itemID);
         }
@@ -2241,20 +2235,6 @@ public unsafe partial class AutoRetainerWork
 
             count = (uint)Math.Min(item.Quantity, upshelfLimit);
             return true;
-        }
-
-        /// <summary>
-        ///     当前市场是否正在重新请求
-        /// </summary>
-        /// <returns></returns>
-        private static bool IsMarketStuck()
-        {
-            if (!ModuleManager.Instance().TryGetModuleByName("AutoRefreshMarketSearchResult", out var module) || module == null) return false;
-
-            var type     = module.GetType();
-            var property = type.GetProperty("IsMarketStuck", BindingFlags.Public | BindingFlags.Static);
-
-            return property != null && (bool)property.GetValue(null);
         }
 
         #endregion
