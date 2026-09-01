@@ -44,7 +44,8 @@ public unsafe partial class BetterMarketBoard : ModuleBase
 
     private readonly Dictionary<uint, uint> itemIDToPayloadID = [];
 
-    private uint lastWorldID;
+    private uint  lastWorldID;
+    private bool  isMarketAdjustSession;
 
     protected override void Init()
     {
@@ -180,6 +181,7 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         itemIDToPayloadID.Clear();
 
         searchCategoryToItems.Clear();
+        isMarketAdjustSession = false;
 
         provider.ClearAllData();
         monitorProvider = null!;
@@ -236,6 +238,8 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         IFramework framework
     )
     {
+        if (isMarketAdjustSession) return;
+
         if (!IsAbleToSearchMarket())
             return;
 
@@ -311,6 +315,38 @@ public unsafe partial class BetterMarketBoard : ModuleBase
 
     [IPCSubscriber("DailyRoutines.Modules.AutoShowItemNPCShopInfo.OpenByItemID")]
     private static IPCSubscriber<uint, bool> OpenShopListByItemIDIPC;
+
+    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.SearchItem")]
+    private bool SearchItem
+    (
+        uint itemID
+    )
+    {
+        if (itemID == 0) return false;
+
+        provider.AnchorWorld();
+        return provider.FollowLocalSearch(itemID);
+    }
+
+    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.BeginMarketAdjustSession")]
+    private bool BeginMarketAdjustSession()
+    {
+        if (Overlay == null) return false;
+
+        isMarketAdjustSession = true;
+        ToggleOverlay(true);
+        return true;
+    }
+
+    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.EndMarketAdjustSession")]
+    private bool EndMarketAdjustSession()
+    {
+        if (Overlay == null) return false;
+
+        isMarketAdjustSession = false;
+        ToggleOverlay(false);
+        return true;
+    }
 
     #endregion
 }

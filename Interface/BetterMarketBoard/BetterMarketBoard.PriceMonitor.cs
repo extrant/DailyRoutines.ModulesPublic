@@ -81,8 +81,9 @@ public unsafe partial class BetterMarketBoard
                 itemData.ItemSearchCategory.RowId == 0)
                 return;
 
-            if (!IsAbleToSearchMarket() ||
-                owner.Overlay.IsOpen    ||
+            if (owner.isMarketAdjustSession ||
+                !IsAbleToSearchMarket()     ||
+                owner.Overlay.IsOpen        ||
                 GameState.TerritoryIntendedUse != TerritoryIntendedUse.Town)
                 return;
 

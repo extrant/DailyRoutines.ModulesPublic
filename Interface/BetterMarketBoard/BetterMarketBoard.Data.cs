@@ -261,6 +261,33 @@ public unsafe partial class BetterMarketBoard
             }
         }
 
+        public bool FollowLocalSearch
+        (
+            uint itemID
+        )
+        {
+            var info = InfoProxy;
+            if (info == null || itemID == 0) return false;
+
+            var isItemChanged = SelectedItemID != itemID;
+
+            if (isItemChanged)
+            {
+                itemEpoch++;
+                HQOnly = false;
+                selectedListings.Clear();
+            }
+
+            SelectedItemID = itemID;
+            LastSelectTime = Environment.TickCount64;
+
+            info->SearchItemId = itemID;
+
+            if (!IsViewingCurrentWorld) return false;
+
+            return RequestLocalSearchData(itemID);
+        }
+
         public void SelectWorld
         (
             uint worldID

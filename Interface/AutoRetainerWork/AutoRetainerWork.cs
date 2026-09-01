@@ -28,7 +28,7 @@ public unsafe partial class AutoRetainerWork : ModuleBase
         Title               = Lang.Get("AutoRetainerWorkTitle"),
         Description         = Lang.Get("AutoRetainerWorkDescription"),
         Category            = ModuleCategory.Interface,
-        ModulesPrerequisite = ["AutoTalkSkip", "AutoRefreshMarketSearchResult"]
+        ModulesPrerequisite = ["AutoTalkSkip", "AutoRefreshMarketSearchResult", "BetterMarketBoard"]
     };
 
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
