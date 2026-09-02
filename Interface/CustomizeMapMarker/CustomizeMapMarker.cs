@@ -420,7 +420,6 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
                 {
                     MapId          = marker.MapID,
                     Position       = marker.TexturePosition,
-                    UseRawPosition = true,
                     IconId         = marker.IconID,
                     Size           = new(32),
                     MarkerScale    = marker.Scale,
