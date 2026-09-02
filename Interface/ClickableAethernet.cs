@@ -95,7 +95,7 @@ public unsafe class ClickableAethernet : ModuleBase
                                 @"<kilo(lnum2,\,)>",
                                 "<string(lstr2)>"
                             );
-            
+
             foreach (var marker in markers)
             {
                 // 城内以太之晶
@@ -108,14 +108,14 @@ public unsafe class ClickableAethernet : ModuleBase
                 if (AetheryteRecordManager.Instance().AllRecords.FirstOrDefault(x => x.GetData().AethernetName.RowId == placeNameRow.RowId)
                     is not { } aetheryteRecord)
                     continue;
-                
+
                 var isSameGroup = AetheryteRecordManager.Instance().GetNearestAetheryte(GameState.TerritoryType, Vector3.Zero) is { } record &&
                                   record.Group == aetheryteRecord.Group;
-                
+
                 var cost = isSameGroup ?
                                0 :
                                aetheryteRecord.Cost;
-                
+
                 mapOverlayController.AddMarker
                 (
                     new MapMarkerNode
@@ -175,10 +175,11 @@ public unsafe class ClickableAethernet : ModuleBase
                                     },
                                     Position = new
                                     (
-                                        addon->RootNode->GetNodeState().Center * 0.9f,
+                                        addon->RootNode->GetNodeState().Center,
                                         AddonPositionAlignment.TopCenter
                                     ),
-                                    BlockedParentID = addon->Id
+                                    BlockedParentID = addon->Id,
+                                    ParentID        = addon->Id
                                 }
                             );
                         }
