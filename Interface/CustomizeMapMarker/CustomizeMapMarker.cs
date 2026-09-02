@@ -419,7 +419,7 @@ public unsafe partial class CustomizeMapMarker : ModuleBase
                 new MapMarkerNode
                 {
                     MapId          = marker.MapID,
-                    WorldPosition  = marker.TexturePosition,
+                    Position       = marker.TexturePosition,
                     UseRawPosition = true,
                     IconId         = marker.IconID,
                     Size           = new(32),
