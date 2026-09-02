@@ -49,7 +49,6 @@ public unsafe partial class BetterMarketBoard : ModuleBase
     private readonly Dictionary<uint, uint> itemIDToPayloadID = [];
 
     private uint  lastWorldID;
-    private bool  isMarketAdjustSession;
 
     protected override void Init()
     {
@@ -188,7 +187,6 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         itemIDToPayloadID.Clear();
 
         searchCategoryToItems.Clear();
-        isMarketAdjustSession = false;
 
         provider.ClearAllData();
         monitorProvider = null!;
@@ -245,8 +243,6 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         IFramework framework
     )
     {
-        if (isMarketAdjustSession) return;
-
         if (!IsAbleToSearchMarket())
             return;
 
@@ -324,7 +320,7 @@ public unsafe partial class BetterMarketBoard : ModuleBase
     private static IPCSubscriber<uint, bool> OpenShopListByItemIDIPC;
 
     [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.SearchItem")]
-    private bool SearchItem
+    private bool SearchItemIPC
     (
         uint itemID
     )
@@ -332,26 +328,16 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         if (itemID == 0) return false;
 
         provider.AnchorWorld();
-        return provider.FollowLocalSearch(itemID);
-    }
-
-    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.BeginMarketAdjustSession")]
-    private bool BeginMarketAdjustSession()
-    {
-        if (Overlay == null) return false;
-
-        isMarketAdjustSession = true;
-        ToggleOverlay(true);
+        provider.SelectItem(itemID);
         return true;
     }
 
-    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.EndMarketAdjustSession")]
-    private bool EndMarketAdjustSession()
+    [IPCProvider("DailyRoutines.Modules.BetterMarketBoard.ToggleOverlay")]
+    private bool ToggleOverlayIPC(bool? isOpen)
     {
         if (Overlay == null) return false;
-
-        isMarketAdjustSession = false;
-        ToggleOverlay(false);
+        
+        ToggleOverlay(isOpen);
         return true;
     }
 

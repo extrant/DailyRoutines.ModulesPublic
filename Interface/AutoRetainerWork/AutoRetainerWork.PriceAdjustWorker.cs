@@ -31,12 +31,9 @@ public unsafe partial class AutoRetainerWork
 {
     [IPCSubscriber("DailyRoutines.Modules.BetterMarketBoard.SearchItem")]
     private static IPCSubscriber<uint, bool> SearchItemIPC;
-
-    [IPCSubscriber("DailyRoutines.Modules.BetterMarketBoard.BeginMarketAdjustSession")]
-    private static IPCSubscriber<bool> BeginMarketAdjustSessionIPC;
-
-    [IPCSubscriber("DailyRoutines.Modules.BetterMarketBoard.EndMarketAdjustSession")]
-    private static IPCSubscriber<bool> EndMarketAdjustSessionIPC;
+    
+    [IPCSubscriber("DailyRoutines.Modules.BetterMarketBoard.ToggleOverlay")]
+    private static IPCSubscriber<bool?, bool> ToggleOverlayIPC;
     
     private class PriceAdjustWorker
     (
@@ -81,8 +78,7 @@ public unsafe partial class AutoRetainerWork
             MoveToRetainerMarketHook.Enable();
 
             taskHelper ??= new() { TimeoutMS = 30_000, ShowDebug = true };
-            taskHelper.EnterBusyAction = BeginMarketAdjustSession;
-            taskHelper.LeaveBusyAction = EndMarketAdjustSession;
+            taskHelper.EnterBusyAction = () => ToggleOverlayIPC.TryInvokeFunc(true);
 
             DService.Instance().MarketBoard.HistoryReceived   += OnHistoryReceived;
             DService.Instance().MarketBoard.OfferingsReceived += OnOfferingReceived;
@@ -194,7 +190,11 @@ public unsafe partial class AutoRetainerWork
                 return;
             }
 
-            if (ImGui.Begin("上架窗口##AutoRetainerWork-PriceAdjustWorker", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
+            if (ImGui.Begin
+                (
+                    "上架窗口##AutoRetainerWork-PriceAdjustWorker",
+                    ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar
+                ))
             {
                 DrawMarketUpshelf();
                 ImGui.End();
@@ -217,9 +217,7 @@ public unsafe partial class AutoRetainerWork
 
             DService.Instance().MarketBoard.HistoryReceived   -= OnHistoryReceived;
             DService.Instance().MarketBoard.OfferingsReceived -= OnOfferingReceived;
-
-            EndMarketAdjustSession();
-
+            
             taskHelper?.Abort();
             taskHelper?.Dispose();
             taskHelper = null;
@@ -1187,7 +1185,7 @@ public unsafe partial class AutoRetainerWork
             if (ImGui.IsItemHovered())
                 ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (ImGui.IsItemClicked())
-                RequestMarketItemData(itemID);
+                RequestMarketItemData(itemID, true);
 
             using var popup = ImRaii.ContextPopupItem("MarketItemOperationPopup");
             if (!popup) return;
@@ -1232,7 +1230,7 @@ public unsafe partial class AutoRetainerWork
                     {
                         ImGui.CloseCurrentPopup();
 
-                        RequestMarketItemData(itemID);
+                        RequestMarketItemData(itemID, true);
                         isNeedOpenManualModifyPopup = true;
                     }
 
@@ -1248,7 +1246,7 @@ public unsafe partial class AutoRetainerWork
                         {
                             ImGui.CloseCurrentPopup();
 
-                            RequestMarketItemData(itemID);
+                            RequestMarketItemData(itemID, true);
                             isNeedOpenAllManualModifyPopup = true;
                         }
                     }
@@ -1551,9 +1549,8 @@ public unsafe partial class AutoRetainerWork
 
             var info = InfoProxyItemSearch.Instance();
             if (info == null) return;
-
-            if (info->SearchItemId != slot->ItemId)
-                RequestMarketItemData(slot->ItemId);
+            
+            RequestMarketItemData(slot->ItemId, true);
 
             upshelfUnitPriceInput = LuminaGetter.TryGetRow<Item>(slot->ItemId, out var itemRow) ?
                                         itemRow.PriceMid :
@@ -1689,7 +1686,7 @@ public unsafe partial class AutoRetainerWork
                             () =>
                             {
                                 if (taskHelper.AbortByConflictKey(Module)) return;
-                                RequestMarketItemData(itemID);
+                                RequestMarketItemData(itemID, false);
                             },
                             $"请求雇员 {retainer->NameString} {slotIndex} 号位置处 {itemName} 的市场价格数据",
                             weight: 2
@@ -1986,27 +1983,18 @@ public unsafe partial class AutoRetainerWork
         }
 
         /// <summary>
-        ///     开启改价会话, 由 BetterMarketBoard 独占市场数据请求
-        /// </summary>
-        private static void BeginMarketAdjustSession() =>
-            BeginMarketAdjustSessionIPC.TryInvokeFunc();
-
-        /// <summary>
-        ///     结束改价会话
-        /// </summary>
-        private static void EndMarketAdjustSession() =>
-            EndMarketAdjustSessionIPC.TryInvokeFunc();
-
-        /// <summary>
         ///     获取当前市场物品数据
         /// </summary>
         private static void RequestMarketItemData
         (
-            uint itemID
+            uint itemID,
+            bool openOverlay
         )
         {
-            if (InfoProxyItemSearch.Instance()->SearchItemId == itemID) return;
-            SearchItemIPC.TryInvokeFunc(itemID);
+            if (InfoProxyItemSearch.Instance()->SearchItemId != itemID)
+                SearchItemIPC.InvokeFunc(itemID);
+            if (openOverlay)
+                ToggleOverlayIPC.InvokeFunc(true);
         }
 
         /// <summary>
