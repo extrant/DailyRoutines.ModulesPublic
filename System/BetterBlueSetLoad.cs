@@ -4,11 +4,9 @@ using DailyRoutines.Common.Module.Models;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.String;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
-using AgentReceiveEventDelegate = OmenTools.Interop.Game.Models.Native.AgentReceiveEventDelegate;
 
 namespace DailyRoutines.ModulesPublic;
 
@@ -22,58 +20,42 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
-
-    private Hook<AgentReceiveEventDelegate>? AgentAozNotebookReceiveEventHook;
+    
+    private static readonly CompSig CanAssignBlueMageActionSig =
+        new("48 89 5C 24 ?? 57 48 83 EC ?? 8B DA 48 8B F9 85 D2 0F 84 ?? ?? ?? ?? 8B CA E8 ?? ?? ?? ?? 44 8B C3");
+    private delegate bool CanAssignBlueMageActionDelegate
+    (
+        ActionManager* actionManager,
+        uint           actionID
+    );
+    private Hook<CanAssignBlueMageActionDelegate>? CanAssignBlueMageActionHook;
 
     protected override void Init()
     {
-        AgentAozNotebookReceiveEventHook =
-            AgentModule.Instance()->GetAgentByInternalId(AgentId.AozNotebook)->VirtualTable->HookVFuncFromName
+        CanAssignBlueMageActionHook =
+            IGameInteropProvider.Instance().HookFromSignature<CanAssignBlueMageActionDelegate>
             (
-                "ReceiveEvent",
-                (AgentReceiveEventDelegate)AgentAozNotebookReceiveEventDetour
+                CanAssignBlueMageActionSig.Get(),
+                CanAssignBlueMageActionDetour
             );
-        AgentAozNotebookReceiveEventHook.Enable();
+        CanAssignBlueMageActionHook.Enable();
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("BetterBlueSetLoad-CommandHelp") });
     }
 
     protected override void ConfigUI()
     {
-        ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("Command")}:");
+        ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("Command")}");
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted($"/pdr {COMMAND} → {Lang.Get("BetterBlueSetLoad-CommandHelp")}");
+        using (ImRaii.PushIndent())
+            ImGui.TextUnformatted($"/pdr {COMMAND} → {Lang.Get("BetterBlueSetLoad-CommandHelp")}");
     }
 
-    private AtkValue* AgentAozNotebookReceiveEventDetour
+    private static bool CanAssignBlueMageActionDetour
     (
-        AgentInterface* agent,
-        AtkValue*       returnValues,
-        AtkValue*       values,
-        uint            valueCount,
-        ulong           eventKind
-    )
-    {
-        if (!AOZNotebookPresetList->IsAddonAndNodesReady() ||
-            AOZNotebookPresetList->AtkValues       == null ||
-            AOZNotebookPresetList->AtkValues->UInt != 0    ||
-            eventKind                              != 1    ||
-            valueCount                             != 2)
-            return InvokeOriginal();
-        
-        var index = values[1].UInt;
-        if (values[1].Type != AtkValueType.UInt || index > 4) 
-            return InvokeOriginal();
-        
-        ApplyByIndex(index);
-
-        returnValues->SetBool(false);
-        return returnValues;
-
-        AtkValue* InvokeOriginal() =>
-            AgentAozNotebookReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
-    }
+        ActionManager* actionManager,
+        uint           actionID
+    ) => true;
 
     private static void OnCommand
     (
@@ -95,7 +77,7 @@ public unsafe class BetterBlueSetLoad : ModuleBase
                         .DistinctBy(x => x.Name)
                         .ToDictionary(x => x.Name, x => x.Index);
             if (!names.TryGetValue(args, out setIndex)) return;
-
+            
             ApplyByIndex(setIndex);
         }
     }
@@ -107,70 +89,15 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     {
         if (index > 4) return;
 
-        CompareAndApply((int)index);
-        CompareAndApply((int)index);
+        var set = AozNoteModule.Instance()->ActiveSets[(int)index];
 
-        var       setName    = AozNoteModule.Instance()->ActiveSets[(int)index].CustomNameString;
-        using var utf8String = new Utf8String(setName);
+        var actionArray = stackalloc uint[24];
+        for (var i = 0; i < 24; i++)
+            actionArray[i] = set.ActiveActions[i];
+        ActionManager.Instance()->SetBlueMageActions(actionArray);
+
+        using var utf8String = new Utf8String(set.CustomNameString);
         RaptureLogModule.Instance()->ShowLogMessageString(9472, &utf8String);
-    }
-
-    private static void CompareAndApply
-    (
-        int index
-    )
-    {
-        if (index > 4) return;
-
-        var blueModule    = AozNoteModule.Instance();
-        var actionManager = ActionManager.Instance();
-
-        Span<uint> presetActions = stackalloc uint[24];
-
-        fixed (uint* actions = blueModule->ActiveSets[index].ActiveActions)
-        {
-            for (var i = 0; i < 24; i++)
-            {
-                var action = actions[i];
-                if (action == 0) continue;
-
-                presetActions[i] = action;
-            }
-        }
-
-        Span<uint> currentActions = stackalloc uint[24];
-
-        for (var i = 0; i < 24; i++)
-        {
-            var action = actionManager->GetActiveBlueMageActionInSlot(i);
-            if (action == 0) continue;
-            currentActions[i] = action;
-        }
-
-        Span<uint> finalActions = stackalloc uint[24];
-        presetActions.CopyTo(finalActions);
-
-        for (var i = 0; i < 24; i++)
-        {
-            if (finalActions[i] == 0) continue;
-
-            for (var j = 0; j < 24; j++)
-                if (finalActions[i] == currentActions[j])
-                {
-                    actionManager->SwapBlueMageActionSlots(i, j);
-                    finalActions[i] = 0;
-                    break;
-                }
-        }
-
-        for (var i = 0; i < 24; i++)
-        {
-            var action = finalActions[i];
-            if (action == 0) continue;
-            actionManager->AssignBlueMageActionToSlot(i, action);
-        }
-
-        blueModule->LoadActiveSetHotBars(index);
     }
 
     #region 常量
