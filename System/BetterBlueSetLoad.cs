@@ -5,6 +5,7 @@ using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 
@@ -15,7 +16,7 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     public override ModuleInfo Info { get; } = new()
     {
         Title       = Lang.Get("BetterBlueSetLoadTitle"),
-        Description = Lang.Get("BetterBlueSetLoadDescription"),
+        Description = Lang.Get("BetterBlueSetLoadDescription", COMMAND),
         Category    = ModuleCategory.System
     };
 
@@ -42,6 +43,9 @@ public unsafe class BetterBlueSetLoad : ModuleBase
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("BetterBlueSetLoad-CommandHelp") });
     }
+
+    protected override void Uninit() =>
+        CommandManager.Instance().RemoveSubCommand(COMMAND);
 
     protected override void ConfigUI()
     {
@@ -90,13 +94,16 @@ public unsafe class BetterBlueSetLoad : ModuleBase
         if (index > 4) return;
 
         var set = AozNoteModule.Instance()->ActiveSets[(int)index];
+        var setName = string.IsNullOrWhiteSpace(set.CustomNameString) ?
+                          LuminaWrapper.GetAddonText(12271 + index) :
+                          set.CustomNameString;
 
         var actionArray = stackalloc uint[24];
         for (var i = 0; i < 24; i++)
             actionArray[i] = set.ActiveActions[i];
         ActionManager.Instance()->SetBlueMageActions(actionArray);
 
-        using var utf8String = new Utf8String(set.CustomNameString);
+        using var utf8String = new Utf8String(setName);
         RaptureLogModule.Instance()->ShowLogMessageString(9472, &utf8String);
     }
 
