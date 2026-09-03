@@ -107,7 +107,7 @@ public class BaitSwitchCommand : ModuleBase
             var matchingItems = source
                                 .Where
                                 (x => x.Value.NameLower.Contains(itemName, StringComparison.OrdinalIgnoreCase) ||
-                                      (DService.Instance().ClientState.ClientLanguage == (ClientLanguage)4 &&
+                                      (GameState.IsCN &&
                                        x.Value.NamePinyin.Contains(itemName, StringComparison.OrdinalIgnoreCase))
                                 )
                                 .OrderBy(x => x.Value.NameLower)
