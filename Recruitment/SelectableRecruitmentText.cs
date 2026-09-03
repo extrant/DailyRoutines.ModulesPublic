@@ -30,13 +30,13 @@ public unsafe class SelectableRecruitmentText : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "LookingForGroupDetail", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "LookingForGroupDetail", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         recruitmentTextNode?.Dispose();
         recruitmentTextNode = null;

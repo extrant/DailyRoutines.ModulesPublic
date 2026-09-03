@@ -42,7 +42,7 @@ public unsafe partial class AutoRefuseTrade : ModuleBase
         );
         AgentTradeShowHook.Enable();
 
-        SendTradeRequestHook = DService.Instance().Hook.HookFromMemberFunction
+        SendTradeRequestHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(InventoryManager.MemberFunctionPointers),
             "SendTradeRequest",

@@ -64,7 +64,7 @@ public unsafe partial class AutoShowItemNPCShopInfo
             var isAddonExisted = Addon?.IsOpen ?? false;
             CloseAndClear();
 
-            OpenAddonTask = DService.Instance().Framework.RunOnTick
+            OpenAddonTask = IFramework.Instance().RunOnTick
             (
                 () =>
                 {
@@ -242,7 +242,7 @@ public unsafe partial class AutoShowItemNPCShopInfo
             AtkUnitBase* addon
         )
         {
-            if (DService.Instance().KeyState[VirtualKey.ESCAPE])
+            if (IKeyState.Instance()[VirtualKey.ESCAPE])
             {
                 Close();
                 if (SystemMenu != null) SystemMenu->Close(true);

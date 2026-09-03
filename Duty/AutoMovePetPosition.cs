@@ -41,18 +41,18 @@ public class AutoMovePetPosition : ModuleBase
         config             =   Config.Load(this) ?? new();
         TaskHelper         ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
 
         TaskHelper.Enqueue(SchedulePetMovements);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     protected override void ConfigUI()
@@ -216,7 +216,7 @@ public class AutoMovePetPosition : ModuleBase
                         Lang.Get("AutoMovePetPosition-GetCurrent")
                     ))
                 {
-                    if (DService.Instance().ObjectTable.LocalPlayer is { } localPlayer)
+                    if (IObjectTable.Instance().LocalPlayer is { } localPlayer)
                     {
                         schedule.Position = localPlayer.Position.ToVector2();
                         config.Save(this);
@@ -250,7 +250,7 @@ public class AutoMovePetPosition : ModuleBase
                     if ((ImGui.IsKeyDown(ImGuiKey.LeftAlt)  || ImGui.IsKeyDown(ImGuiKey.RightAlt)) &&
                         (ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl)))
                     {
-                        if (DService.Instance().GameGUI.ScreenToWorld(ImGui.GetMousePos(), out var worldPos))
+                        if (IGameGui.Instance().ScreenToWorld(ImGui.GetMousePos(), out var worldPos))
                         {
                             var currentPickingZone  = currentPickingRow?.territoryKey ?? 0;
                             var currentPickingIndex = currentPickingRow?.index        ?? -1;
@@ -363,14 +363,14 @@ public class AutoMovePetPosition : ModuleBase
         var zoneID = GameState.TerritoryType;
         if (!config.PositionSchedules.TryGetValue(zoneID, out var schedulesForThisDuty)) return;
 
-        if (DService.Instance().ObjectTable.LocalPlayer is { } localPlayer)
+        if (IObjectTable.Instance().LocalPlayer is { } localPlayer)
         {
             if (!ValidJobs.Contains(localPlayer.ClassJob.RowId)) return;
 
             var enabledSchedules     = schedulesForThisDuty.Where(x => x.Enabled).ToList();
             var elapsedTimeInSeconds = (StandardTimeManager.Instance().Now - battleStartTime).TotalSeconds;
 
-            if (DService.Instance().Condition[ConditionFlag.InCombat])
+            if (ICondition.Instance()[ConditionFlag.InCombat])
             {
                 var bestSchedule = enabledSchedules
                                    .Where(x => x.DelayS <= elapsedTimeInSeconds)
@@ -401,7 +401,7 @@ public class AutoMovePetPosition : ModuleBase
     )
     {
         if (!CheckIsEightPlayerDuty()) return;
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } player) return;
         if (!ValidJobs.Contains(player.ClassJob.RowId)) return;
 
         var pet = CharacterManager.Instance()->LookupPetByOwnerObject(player.ToStruct());

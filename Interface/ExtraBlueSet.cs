@@ -32,9 +32,9 @@ public unsafe class ExtraBlueSet : ModuleBase
 
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "AOZNotebook", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "AOZNotebook", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "AOZNotebook", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "AOZNotebook", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "AOZNotebook", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "AOZNotebook", OnAddon);
         if (AOZNotebook->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
 
@@ -44,7 +44,7 @@ public unsafe class ExtraBlueSet : ModuleBase
     protected override void Uninit()
     {
         CommandManager.Instance().RemoveSubCommand(COMMAND);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
     }
 
     protected override void OverlayUI()
@@ -140,7 +140,7 @@ public unsafe class ExtraBlueSet : ModuleBase
                 {
                     var action = preset.Actions[index];
                     if (!LuminaGetter.TryGetRow<Action>(action, out var actionData)) continue;
-                    if (!DService.Instance().Texture.TryGetFromGameIcon(new(actionData.Icon), out var actionIcon)) continue;
+                    if (!ITextureProvider.Instance().TryGetFromGameIcon(new(actionData.Icon), out var actionIcon)) continue;
 
                     if (index != 0)
                         ImGui.SameLine();

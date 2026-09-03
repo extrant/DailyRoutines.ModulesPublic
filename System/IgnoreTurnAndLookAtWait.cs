@@ -33,14 +33,14 @@ public unsafe class IgnoreTurnAndLookAtWait : ModuleBase
     {
         var baseAddress = WaitForBaseSig.ScanText();
 
-        WaitForTurnHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+        WaitForTurnHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
         (
             baseAddress.GetLuaFunctionByName("WaitForTurn"),
             EventSceneScriptDetour
         );
         WaitForTurnHook.Enable();
 
-        WaitForLookAtHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+        WaitForLookAtHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
         (
             baseAddress.GetLuaFunctionByName("WaitForLookAt"),
             EventSceneScriptDetour

@@ -33,15 +33,15 @@ public unsafe class FastContentsFinderRegister : ModuleBase
         Overlay       ??= new(this);
         Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "ContentsFinder", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "ContentsFinder", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "ContentsFinder", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "ContentsFinder", OnAddon);
         if (ContentsFinder != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         manager.ClearCache();
     }
 
@@ -79,7 +79,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
             {
                 if (cachedData.InDutyQueue)
                 {
-                    if (DService.Instance().Texture.TryGetFromGameIcon(new(61502), out var explorerTexture))
+                    if (ITextureProvider.Instance().TryGetFromGameIcon(new(61502), out var explorerTexture))
                     {
                         ImGui.SetCursorScreenPos(startPosition);
                         if (ImGui.ImageButton(explorerTexture.GetWrapOrEmpty().Handle, new(item.Height)))
@@ -95,7 +95,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                     {
                         using (ImRaii.Disabled(item.IsLocked))
                         {
-                            if (DService.Instance().Texture.TryGetFromGameIcon(new(60081), out var joinTexture))
+                            if (ITextureProvider.Instance().TryGetFromGameIcon(new(60081), out var joinTexture))
                             {
                                 ImGui.SetCursorScreenPos(startPosition);
 
@@ -112,7 +112,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                             {
                                 if (PluginConfig.Instance().ConflictKeyBinding.IsPressed())
                                 {
-                                    if (DService.Instance().Texture.TryGetFromGameIcon(new(60648), out var explorerTexture))
+                                    if (ITextureProvider.Instance().TryGetFromGameIcon(new(60648), out var explorerTexture))
                                     {
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(explorerTexture.GetWrapOrEmpty().Handle, new(item.Height)))
@@ -122,7 +122,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                                 }
                                 else
                                 {
-                                    if (DService.Instance().Texture.TryGetFromGameIcon(new(60641), out var unrestTexture))
+                                    if (ITextureProvider.Instance().TryGetFromGameIcon(new(60641), out var unrestTexture))
                                     {
                                         ImGui.SameLine();
                                         if (ImGui.ImageButton(unrestTexture.GetWrapOrEmpty().Handle, new(item.Height)))
@@ -254,7 +254,7 @@ public unsafe class FastContentsFinderRegister : ModuleBase
                 var newData = new ContentFinderCacheData
                 {
                     CurrentTab     = ContentsFinder->AtkValues[26].UInt,
-                    InDutyQueue    = DService.Instance().Condition[ConditionFlag.InDutyQueue],
+                    InDutyQueue    = ICondition.Instance()[ConditionFlag.InDutyQueue],
                     LastUpdateTime = StandardTimeManager.Instance().Now
                 };
 

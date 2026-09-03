@@ -61,18 +61,18 @@ public partial class FastWorldTravel : ModuleBase
         if (config.AddDtrEntry)
             HandleDtrEntry(true);
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
         OnConditionChanged(ConditionFlag.BetweenAreas, false);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "WorldTravelSelect", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "WorldTravelSelect", OnAddon);
         if (WorldTravelSelect->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         HandleDtrEntry(false);
 
@@ -308,7 +308,7 @@ public partial class FastWorldTravel : ModuleBase
 
         if (!WorldTravelValidZones.Contains(GameState.TerritoryType))
         {
-            var nearestAetheryte = DService.Instance().AetheryteList
+            var nearestAetheryte = IAetheryteList.Instance()
                                            .Where(x => WorldTravelValidZones.Contains(x.TerritoryID))
                                            .MinBy(x => x.GilCost);
             if (nearestAetheryte == null) return;
@@ -590,13 +590,13 @@ public partial class FastWorldTravel : ModuleBase
     
     private static bool LeaveNonCrossWorldParty()
     {
-        if (DService.Instance().PartyList.Length < 2 || DService.Instance().Condition[ConditionFlag.ParticipatingInCrossWorldPartyOrAlliance])
+        if (IPartyList.Instance().Length < 2 || ICondition.Instance()[ConditionFlag.ParticipatingInCrossWorldPartyOrAlliance])
             return true;
         if (!Throttler.Shared.Throttle("FastWorldTravel-LeaveNonCrossWorldParty"))
             return false;
 
         ChatManager.Instance().SendMessage("/leave");
-        return DService.Instance().PartyList.Length < 2;
+        return IPartyList.Instance().Length < 2;
     }
 
     private static (bool, uint) CheckCNDataCenterStatus
@@ -625,7 +625,7 @@ public partial class FastWorldTravel : ModuleBase
         switch (isAdd)
         {
             case true:
-                entry         ??= DService.Instance().DTRBar.Get("DailyRoutines-FastWorldTravel");
+                entry         ??= IDtrBar.Instance().Get("DailyRoutines-FastWorldTravel");
                 entry.OnClick =   OnDTRClick;
                 entry.Tooltip =   Lang.Get("FastWorldTravel-DtrEntryTooltip");
                 entry.Text    =   LuminaWrapper.GetAddonText(12510);

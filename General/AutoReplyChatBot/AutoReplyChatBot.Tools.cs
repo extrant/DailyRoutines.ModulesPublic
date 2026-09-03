@@ -67,7 +67,7 @@ public partial class AutoReplyChatBot
                            JObject.Parse(argumentsJSON);
 
             DLog.Debug($"[ExecuteToolAsync] 调度到主线程执行: {name}");
-            var result = await DService.Instance().Framework.RunOnTick
+            var result = await IFramework.Instance().RunOnTick
                          (async () =>
                              {
                                  try
@@ -1049,7 +1049,7 @@ public partial class AutoReplyChatBot
         private static string BuildConditions()
         {
             var conditions = Enum.GetValues<ConditionFlag>()
-                                 .Where(x => DService.Instance().Condition[x])
+                                 .Where(x => ICondition.Instance()[x])
                                  .ToList();
 
             if (conditions.Count == 0)
@@ -1060,7 +1060,7 @@ public partial class AutoReplyChatBot
 
         private static string BuildParty()
         {
-            var list = DService.Instance().PartyList;
+            var list = IPartyList.Instance();
 
             if (list.Length <= 1)
                 return "当前未组队或仅有自己一人在小队中";
@@ -1101,7 +1101,7 @@ public partial class AutoReplyChatBot
             var count = 0;
 
             // ObjectTable.SearchObjects 需要 Predicate<IGameObject>
-            var nearby = DService.Instance().ObjectTable.SearchObjects
+            var nearby = IObjectTable.Instance().SearchObjects
             (obj =>
                 {
                     if (obj is not IPlayerCharacter pc) return false;

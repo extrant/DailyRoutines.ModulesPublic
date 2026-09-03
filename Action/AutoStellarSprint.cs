@@ -21,13 +21,13 @@ public class AutoStellarSprint : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
+        IClientState.Instance().TerritoryChanged += OnZoneChange;
         OnZoneChange(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
+        IClientState.Instance().TerritoryChanged -= OnZoneChange;
         FrameworkManager.Instance().Unreg(OnUpdate);
         CharacterStatusManager.Instance().Unreg(OnLoseStatus);
     }
@@ -74,7 +74,7 @@ public class AutoStellarSprint : ModuleBase
         IFramework _
     )
     {
-        if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition.IsOccupiedInEvent) return;
+        if (ICondition.Instance().IsBetweenAreas || ICondition.Instance().IsOccupiedInEvent) return;
 
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.CosmicExploration)
         {

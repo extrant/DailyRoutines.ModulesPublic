@@ -26,11 +26,11 @@ public unsafe class AutoCancelCast : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init() =>
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
@@ -53,13 +53,13 @@ public unsafe class AutoCancelCast : ModuleBase
         IFramework _
     )
     {
-        if (!DService.Instance().Condition.IsCasting)
+        if (!ICondition.Instance().IsCasting)
         {
             FrameworkManager.Instance().Unreg(OnUpdate);
             return;
         }
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         if (localPlayer.CastActionType != ActionType.Action                ||
             Sheets.TargetAreaActions.ContainsKey(localPlayer.CastActionID) ||

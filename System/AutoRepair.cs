@@ -39,18 +39,18 @@ public unsafe class AutoRepair : ModuleBase
 
         ExecuteCommandManager.Instance().RegPost(OnExecuteCommand);
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
     }
 
     protected override void Uninit()
     {
         ExecuteCommandManager.Instance().Unreg(OnExecuteCommand);
 
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
     }
 
     protected override void ConfigUI()
@@ -78,7 +78,7 @@ public unsafe class AutoRepair : ModuleBase
     {
         if (TaskHelper.IsBusy         ||
             GameState.IsInPVPInstance ||
-            DService.Instance().ObjectTable.LocalPlayer is not { CurrentHp: > 0 })
+            IObjectTable.Instance().LocalPlayer is not { CurrentHp: > 0 })
             return;
 
         var playerState      = PlayerState.Instance();
@@ -256,10 +256,10 @@ public unsafe class AutoRepair : ModuleBase
 
     private static bool IsAbleToRepair() =>
         UIModule.IsScreenReady()                         &&
-        !DService.Instance().Condition.IsOccupiedInEvent &&
+        !ICondition.Instance().IsOccupiedInEvent &&
         !GameState.IsInPVPInstance                       &&
-        !DService.Instance().Condition.IsOnMount         &&
-        !DService.Instance().Condition.IsCasting         &&
+        !ICondition.Instance().IsOnMount         &&
+        !ICondition.Instance().IsCasting         &&
         ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 6) == 0;
 
     #region 事件

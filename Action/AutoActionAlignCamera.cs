@@ -62,7 +62,7 @@ public unsafe class AutoActionAlignCamera : ModuleBase
         {
             if (!LuminaGetter.TryGetRow<Action>(actionPair.Key, out var data)) continue;
 
-            var actionIcon = DService.Instance().Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
+            var actionIcon = ITextureProvider.Instance().GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
             if (actionIcon == null) continue;
 
             using var id = ImRaii.PushId($"{actionPair.Key}");
@@ -113,7 +113,7 @@ public unsafe class AutoActionAlignCamera : ModuleBase
         var adjustedID = ActionManager.Instance()->GetAdjustedActionId(actionID);
         if (!config.ActionEnabled.TryGetValue(adjustedID, out var enabled) || !enabled) return;
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         var transformedRotation = RotationHelper.CameraDirHToChara(CameraManager.Instance()->Camera->DirH);
 

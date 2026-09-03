@@ -83,7 +83,7 @@ public partial class OccultCrescentHelper
             };
 
             WindowManager.Instance().PostDraw                += OnPosDraw;
-            DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+            IClientState.Instance().TerritoryChanged += OnZoneChanged;
             OnZoneChanged(0);
 
             GamePacketManager.Instance().RegPreSendPacket(OnPreSendPacket);
@@ -101,7 +101,7 @@ public partial class OccultCrescentHelper
 
             GamePacketManager.Instance().Unreg(OnPreSendPacket);
 
-            DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+            IClientState.Instance().TerritoryChanged -= OnZoneChanged;
             WindowManager.Instance().PostDraw                -= OnPosDraw;
 
             treasureHandle?.Unreg();
@@ -355,7 +355,7 @@ public partial class OccultCrescentHelper
 
                 routeMapRenderer.OnCustomForegroundDraw = (r, drawList) =>
                 {
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+                    if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
                     var playerScreenPos = r.WorldToScreen(localPlayer.Position);
 

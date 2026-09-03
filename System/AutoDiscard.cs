@@ -63,15 +63,15 @@ public unsafe class AutoDiscard : ModuleBase
 
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoDiscard-CommandHelp") });
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreSetup, "SelectYesno", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreSetup, "SelectYesno", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
         CommandManager.Instance().RemoveCommand(COMMAND);
         itemSearcher = null;
@@ -481,7 +481,7 @@ public unsafe class AutoDiscard : ModuleBase
                         {
                             if (group.Items.Contains(item.RowId)) continue;
 
-                            var itemIcon = DService.Instance().Texture.GetFromGameIcon(new(item.Icon)).GetWrapOrDefault();
+                            var itemIcon = ITextureProvider.Instance().GetFromGameIcon(new(item.Icon)).GetWrapOrDefault();
                             if (itemIcon == null) continue;
 
                             if (ImGuiOm.SelectableImageWithText

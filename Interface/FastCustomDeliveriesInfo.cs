@@ -30,11 +30,11 @@ public unsafe class FastCustomDeliveriesInfo : ModuleBase
     private ContextMenu? contextMenu;
 
     protected override void Init() =>
-        DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PreReceiveEvent, AgentId.SatisfactionList, OnAgent);
+        IAgentLifecycle.Instance().RegisterListener(AgentEvent.PreReceiveEvent, AgentId.SatisfactionList, OnAgent);
 
     protected override void Uninit()
     {
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
+        IAgentLifecycle.Instance().UnregisterListener(OnAgent);
 
         contextMenu?.Dispose();
         contextMenu = null;
@@ -88,7 +88,7 @@ public unsafe class FastCustomDeliveriesInfo : ModuleBase
             new()
             {
                 Name = LuminaWrapper.GetAddonText(8887),
-                OnClick = () => DService.Instance().Framework.RunOnTick
+                OnClick = () => IFramework.Instance().RunOnTick
                 (
                     () => AgentMap.Instance()->SetMapFlagAndOpen
                     (

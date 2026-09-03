@@ -30,11 +30,11 @@ public class AutoInDutySelectYes : ModuleBase
                         .Where(x => !string.IsNullOrWhiteSpace(x))
         );
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectYesno);
 
     private unsafe void OnAddonSelectYesno
     (

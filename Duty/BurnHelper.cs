@@ -21,13 +21,13 @@ public unsafe class BurnHelper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         LogMessageManager.Instance().Unreg(OnPreContentText);
         FrameworkManager.Instance().Unreg(OnUpdate);
         UseActionManager.Instance().Unreg(OnPreUseAction);

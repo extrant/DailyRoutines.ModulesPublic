@@ -28,11 +28,11 @@ public class AutoNotifyMessages : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().Chat.ChatMessage += OnChatMessage;
+        IChatGui.Instance().ChatMessage += OnChatMessage;
     }
 
     protected override void Uninit() =>
-        DService.Instance().Chat.ChatMessage -= OnChatMessage;
+        IChatGui.Instance().ChatMessage -= OnChatMessage;
 
     protected override void ConfigUI()
     {

@@ -158,7 +158,7 @@ public class BaitSwitchCommand : ModuleBase
             }
         }
 
-        if (DService.Instance().Condition[ConditionFlag.Fishing])
+        if (ICondition.Instance()[ConditionFlag.Fishing])
         {
             NotifyHelper.Instance().ChatError(Lang.Get("BaitSwitchCommand-Notice-FishingNow"));
             return false;

@@ -45,11 +45,11 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
 
         cooldown = config.RefreshInterval;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "LookingForGroup",       OnAddonPF);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "LookingForGroup",       OnAddonPF);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup",       OnAddonPF);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "LookingForGroupDetail", OnAddonLFGD);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddonLFGD);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "LookingForGroup",       OnAddonPF);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "LookingForGroup",       OnAddonPF);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroup",       OnAddonPF);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "LookingForGroupDetail", OnAddonLFGD);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddonLFGD);
 
         if (LookingForGroup != null)
             OnAddonPF(AddonEvent.PostSetup, null);
@@ -57,8 +57,8 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonPF);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonLFGD);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonPF);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonLFGD);
 
         if (refreshTimer != null)
         {
@@ -141,7 +141,7 @@ public unsafe class AutoRefreshPartyFinder : ModuleBase
         cooldown = config.RefreshInterval;
         UpdateNextRefreshTime(cooldown);
 
-        DService.Instance().Framework.Run(() => AgentLookingForGroup.Instance()->RequestListingsUpdate());
+        IFramework.Instance().Run(() => AgentLookingForGroup.Instance()->RequestListingsUpdate());
     }
 
     private void CleanNodes()

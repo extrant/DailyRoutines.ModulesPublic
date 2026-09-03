@@ -64,7 +64,7 @@ public unsafe partial class UnifiedGlamourManager
 
     protected override void OverlayUI()
     {
-        if (DService.Instance().Condition.IsBetweenAreas) return;
+        if (ICondition.Instance().IsBetweenAreas) return;
 
         var storage       = ImGui.GetStateStorage();
         var selectedTabID = ImGui.GetID("##UnifiedGlamourManagerSelectedTab");
@@ -901,7 +901,7 @@ public unsafe partial class UnifiedGlamourManager
 
                 ImGui.TableNextColumn();
 
-                using (ImRaii.Disabled(TaskHelper.IsBusy || AgentTryon.Instance() == null || DService.Instance().Condition.IsOccupiedInEvent))
+                using (ImRaii.Disabled(TaskHelper.IsBusy || AgentTryon.Instance() == null || ICondition.Instance().IsOccupiedInEvent))
                 {
                     if (ImGui.Button(Lang.Get("UnifiedGlamourManager-Preset-TryOnImportedContent"), new Vector2(-1f, 0f)))
                         TaskHelper.Enqueue(() => StartTryOnPreset(ImportFromClipboard<PlatePreset>()));
@@ -1089,7 +1089,7 @@ public unsafe partial class UnifiedGlamourManager
         // 试穿按钮
         ImGui.TableNextColumn();
 
-        using (ImRaii.Disabled(TaskHelper.IsBusy || AgentTryon.Instance() == null || DService.Instance().Condition.IsOccupiedInEvent))
+        using (ImRaii.Disabled(TaskHelper.IsBusy || AgentTryon.Instance() == null || ICondition.Instance().IsOccupiedInEvent))
         {
             if (ImGui.Button(LuminaWrapper.GetAddonText(2426), new Vector2(-1f, 0f)))
                 TaskHelper.Enqueue(() => StartTryOnPreset(selectedPreset));

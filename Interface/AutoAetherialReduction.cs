@@ -33,14 +33,14 @@ public unsafe class AutoAetherialReduction : ModuleBase
         TaskHelper ??= new();
         Overlay    ??= new Overlay(this);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "PurifyItemSelector", OnAddonList);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "PurifyItemSelector", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "PurifyItemSelector", OnAddonList);
 
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonList);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonList);
         ClearNodes();
     }
 
@@ -67,7 +67,7 @@ public unsafe class AutoAetherialReduction : ModuleBase
         var manager = InventoryManager.Instance();
         if (manager == null) return false;
 
-        if (DService.Instance().Condition.IsOccupiedInEvent) return false;
+        if (ICondition.Instance().IsOccupiedInEvent) return false;
 
         var firstItem = agent->ReducibleItems.First;
 
@@ -158,7 +158,7 @@ public unsafe class AutoAetherialReduction : ModuleBase
     private bool IsCurrentEnvironmentInvalid()
     {
         if (Inventories.Player.IsFull() ||
-            DService.Instance().Condition.Any(ConditionFlag.Mounted, ConditionFlag.InCombat))
+            ICondition.Instance().Any(ConditionFlag.Mounted, ConditionFlag.InCombat))
         {
             TaskHelper.Abort();
             return true;

@@ -33,8 +33,8 @@ public partial class BetterPartyFinderFilter : ModuleBase
 
     private static uint NotifyNewRecruitment
     {
-        get => DService.Instance().GameConfig.UiConfig.GetUInt("PartyFinderNewArrivalDisp");
-        set => DService.Instance().GameConfig.UiConfig.Set("PartyFinderNewArrivalDisp", value);
+        get => IGameConfig.Instance().UiConfig.GetUInt("PartyFinderNewArrivalDisp");
+        set => IGameConfig.Instance().UiConfig.Set("PartyFinderNewArrivalDisp", value);
     }
 
     private Config config = null!;
@@ -51,7 +51,7 @@ public partial class BetterPartyFinderFilter : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new();
 
-        DService.Instance().PartyFinder.ReceiveListing += OnReceiveListing;
+        IPartyFinderGui.Instance().ReceiveListing += OnReceiveListing;
 
         addon ??= new(this)
         {
@@ -61,14 +61,14 @@ public partial class BetterPartyFinderFilter : ModuleBase
             RememberClosePosition = false
         };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "LookingForGroup", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "LookingForGroup", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().PartyFinder.ReceiveListing -= OnReceiveListing;
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IPartyFinderGui.Instance().ReceiveListing -= OnReceiveListing;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         addon?.Dispose();
         addon = null;

@@ -52,8 +52,8 @@ public class DungeonLoggerUploader : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyCompleted      += OnDutyCompleted;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      += OnDutyCompleted;
 
         if (!string.IsNullOrEmpty(config.Username) && !string.IsNullOrEmpty(config.Password))
             Task.Run(() => LoginAsync());
@@ -257,8 +257,8 @@ public class DungeonLoggerUploader : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyCompleted      -= OnDutyCompleted;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      -= OnDutyCompleted;
 
         isLoggedIn = false;
     }

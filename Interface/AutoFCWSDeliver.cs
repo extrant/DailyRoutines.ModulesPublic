@@ -34,11 +34,11 @@ public unsafe class AutoFCWSDeliver : ModuleBase
         TaskHelper ??= new() { TimeoutMS = 30_000 };
         Overlay    ??= new(this);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SelectYesno",                OnAddonYesno);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SelectString",               OnAddonString);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SubmarinePartsMenu",         OnAddonMenu);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SubmarinePartsMenu",         OnAddonMenu);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "CompanyCraftRecipeNoteBook", OnAddonRecipeNote);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "SelectYesno",                OnAddonYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "SelectString",               OnAddonString);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "SubmarinePartsMenu",         OnAddonMenu);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "SubmarinePartsMenu",         OnAddonMenu);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "CompanyCraftRecipeNoteBook", OnAddonRecipeNote);
 
         if (SubmarinePartsMenu != null)
             OnAddonMenu(AddonEvent.PostSetup, null);
@@ -46,10 +46,10 @@ public unsafe class AutoFCWSDeliver : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonRecipeNote);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonYesno);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonString);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonMenu);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonRecipeNote);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonString);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonMenu);
     }
 
     protected override void ConfigUI() => ImGuiOm.ConflictKeyText();
@@ -190,14 +190,14 @@ public unsafe class AutoFCWSDeliver : ModuleBase
             () =>
             {
                 if (TaskHelper.AbortByConflictKey(this)) return true;
-                if (DService.Instance().UIBuilder.CutsceneActive || !UIModule.IsScreenReady()) return false;
+                if (IUiBuilder.Instance().CutsceneActive || !UIModule.IsScreenReady()) return false;
 
                 if (TargetManager.Target is not { ObjectKind: ObjectKind.EventObj, DataID: 2011588 })
                 {
                     var target =
-                        DService.Instance().ObjectTable.FindNearest
+                        IObjectTable.Instance().FindNearest
                         (
-                            DService.Instance().ObjectTable.LocalPlayer.Position,
+                            IObjectTable.Instance().LocalPlayer.Position,
                             x => x is { ObjectKind: ObjectKind.EventObj, DataID: 2011588 }
                         );
                     TargetManager.Target = target;

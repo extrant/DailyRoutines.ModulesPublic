@@ -28,18 +28,18 @@ public unsafe class FastRidePillion : ModuleBase
     protected override void Init()
     {
         AgentContextReceiveEventHook ??=
-            DService.Instance().Hook.HookFromAddress<AgentReceiveEventDelegate>
+            IGameInteropProvider.Instance().HookFromAddress<AgentReceiveEventDelegate>
             (
                 AgentContext.Instance()->VirtualTable->GetVFuncByName("ReceiveEvent"),
                 AgentContextReceiveEventDetour
             );
         AgentContextReceiveEventHook.Enable();
 
-        DService.Instance().Condition.ConditionChange += OnCondition;
+        ICondition.Instance().ConditionChange += OnCondition;
     }
 
     protected override void Uninit() =>
-        DService.Instance().Condition.ConditionChange -= OnCondition;
+        ICondition.Instance().ConditionChange -= OnCondition;
 
     private static void OnCondition
     (
@@ -62,7 +62,7 @@ public unsafe class FastRidePillion : ModuleBase
         ulong           eventKind
     )
     {
-        if (eventKind != 0 || values == null || values->Int != 1 || DService.Instance().Condition.IsOnMount)
+        if (eventKind != 0 || values == null || values->Int != 1 || ICondition.Instance().IsOnMount)
             return AgentContextReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
 
         var targetObjectIDGame = ((AgentContext*)agent)->TargetObjectId;

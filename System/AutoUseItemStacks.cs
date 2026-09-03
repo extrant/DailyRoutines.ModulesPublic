@@ -26,11 +26,11 @@ public unsafe class AutoUseItemStacks : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
     protected override void ConfigUI() =>
         ImGuiOm.ConflictKeyText();
@@ -41,7 +41,7 @@ public unsafe class AutoUseItemStacks : ModuleBase
     )
     {
         if (args.Target is not MenuTargetInventory targetInventory) return;
-        if (DService.Instance().Condition.IsOccupiedInEvent) return;
+        if (ICondition.Instance().IsOccupiedInEvent) return;
 
         var itemID = targetInventory.TargetItem?.ItemId ?? 0;
         if (itemID == 0) return;
@@ -60,7 +60,7 @@ public unsafe class AutoUseItemStacks : ModuleBase
 
         TaskHelper.Enqueue(() => AgentInventoryContext.Instance()->UseItem(itemID));
         TaskHelper.DelayNext(500);
-        TaskHelper.Enqueue(() => !DService.Instance().Condition[ConditionFlag.Casting]);
+        TaskHelper.Enqueue(() => !ICondition.Instance()[ConditionFlag.Casting]);
         TaskHelper.DelayNext(500);
         TaskHelper.Enqueue(() => EnqueueOpenAllCoffers(itemID));
     }

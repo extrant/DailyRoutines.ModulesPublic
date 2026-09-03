@@ -67,12 +67,12 @@ public class FasterTerritoryTransport : ModuleBase
         IsConditionAbleToSetHook ??= IsConditionAbleToSetSig.GetHook<IsConditionAbleToSetDelegate>(IsConditionAbleToSetDetour);
         IsConditionAbleToSetHook.Enable();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
 
         ExecuteCommandManager.Instance().Unreg(OnPostUseCommand);
         UseActionManager.Instance().Unreg(OnPostUseActionLocation);
@@ -98,7 +98,7 @@ public class FasterTerritoryTransport : ModuleBase
     {
         var ret = IsConditionAbleToSetHook.Original(conditionaddress, flag, a3, a4);
 
-        if (!DService.Instance().Condition[ConditionFlag.BetweenAreas] && !DService.Instance().Condition[ConditionFlag.Occupied33])
+        if (!ICondition.Instance()[ConditionFlag.BetweenAreas] && !ICondition.Instance()[ConditionFlag.Occupied33])
             return ret;
 
         if (BlockedFlags.Contains((uint)flag)) return true;
@@ -126,7 +126,7 @@ public class FasterTerritoryTransport : ModuleBase
     {
         if (flag != ConditionFlag.BetweenAreas) return;
 
-        if (!config.OnlyLocal && !DService.Instance().ClientState.IsPvPExcludingDen && transportThrottler.Check("Block"))
+        if (!config.OnlyLocal && !IClientState.Instance().IsPvPExcludingDen && transportThrottler.Check("Block"))
             ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.StartTerritoryTransport);
 
         if (!value)

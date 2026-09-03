@@ -44,15 +44,15 @@ public unsafe class PlaceFurnitureAnywhere : ModuleBase
 
     protected override void Init()
     {
-        var baseAddress0 = DService.Instance().SigScanner.ScanText("C6 83 ?? ?? ?? ?? ?? 0F 29 44 24") + 6;
+        var baseAddress0 = ISigScanner.Instance().ScanText("C6 83 ?? ?? ?? ?? ?? 0F 29 44 24") + 6;
         patch0 = new(baseAddress0, [0x1]);
         patch0.Enable();
 
-        var baseAddress1 = DService.Instance().SigScanner.ScanText("48 85 C0 74 ?? C6 87 ?? ?? 00 00 00") + 11;
+        var baseAddress1 = ISigScanner.Instance().ScanText("48 85 C0 74 ?? C6 87 ?? ?? 00 00 00") + 11;
         patch1 = new(baseAddress1, [0x1]);
         patch1.Enable();
 
-        var baseAddress2 = DService.Instance().SigScanner.ScanText("C6 87 83 01 00 00 00 48 83 C4 ??") + 6;
+        var baseAddress2 = ISigScanner.Instance().ScanText("C6 87 83 01 00 00 00 48 83 C4 ??") + 6;
         patch2 = new(baseAddress2, [0x1]);
         patch2.Enable();
 
@@ -71,7 +71,7 @@ public unsafe class PlaceFurnitureAnywhere : ModuleBase
         int*               flags
     )
     {
-        if (!DService.Instance().Condition[ConditionFlag.UsingHousingFunctions])
+        if (!ICondition.Instance()[ConditionFlag.UsingHousingFunctions])
             return RaycastFilterHook.Original(module, hitInfo, origin, direction, maxDistance, layerMask, flags);
 
         return false;

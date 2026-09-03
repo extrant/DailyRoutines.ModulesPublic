@@ -180,7 +180,7 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
                 using var id = ImRaii.PushId($"ActionCustomName_{actionNamePair.Key}");
 
                 if (!LuminaGetter.TryGetRow<Action>(actionNamePair.Key, out var data)) continue;
-                var actionIcon = DService.Instance().Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
+                var actionIcon = ITextureProvider.Instance().GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
                 if (actionIcon == null) continue;
 
                 using var group = ImRaii.Group();
@@ -245,7 +245,7 @@ public unsafe class AutoBroadcastActionHitInfo : ModuleBase
             var targets = effectHeader->NumTargets;
             if (targets < 1) return;
 
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
             if (localPlayer.EntityID != sourceEntityID) return;
 
             var actionID   = effectHeader->ActionId;

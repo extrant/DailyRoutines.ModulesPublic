@@ -60,7 +60,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
         config = Config.Load(this) ?? new();
 
         GetAdjustedCastTimeHook ??=
-            DService.Instance().Hook.HookFromMemberFunction
+            IGameInteropProvider.Instance().HookFromMemberFunction
             (
                 typeof(ActionManager.MemberFunctionPointers),
                 "GetAdjustedCastTime",
@@ -69,7 +69,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
         GetAdjustedCastTimeHook.Enable();
 
         GetAdjustedRecastTimeHook ??=
-            DService.Instance().Hook.HookFromMemberFunction
+            IGameInteropProvider.Instance().HookFromMemberFunction
             (
                 typeof(ActionManager.MemberFunctionPointers),
                 "GetAdjustedRecastTime",
@@ -170,7 +170,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
 
                         ImGui.TableNextColumn();
 
-                        if (DService.Instance().Texture.TryGetFromGameIcon(new(action.Icon), out var icon))
+                        if (ITextureProvider.Instance().TryGetFromGameIcon(new(action.Icon), out var icon))
                         {
                             ImGuiOm.SelectableImageWithText
                             (
@@ -274,7 +274,7 @@ public unsafe class CustomActionCastRecastTime : ModuleBase
 
                         ImGui.TableNextColumn();
 
-                        if (DService.Instance().Texture.TryGetFromGameIcon(new(action.Icon), out var icon))
+                        if (ITextureProvider.Instance().TryGetFromGameIcon(new(action.Icon), out var icon))
                         {
                             ImGuiOm.SelectableImageWithText
                             (

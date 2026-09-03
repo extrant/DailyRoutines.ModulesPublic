@@ -26,11 +26,11 @@ public unsafe class FastRetainerStore : ModuleBase
     {
         TaskHelper ??= new();
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
     private void OnContextMenuOpened
     (

@@ -66,7 +66,7 @@ public unsafe class CustomizeGameObject : ModuleBase
         config = Config.Load(this) ?? new();
         RebuildLookupCache();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
         CharacterUpdateHook ??= CharacterUpdateSig.GetHook<CharacterUpdateDelegate>(UpdateCharacterDetour);
         CharacterUpdateHook.Enable();
@@ -74,10 +74,10 @@ public unsafe class CustomizeGameObject : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         CharacterUpdateHook?.Disable();
 
-        if (DService.Instance().ObjectTable.LocalPlayer != null)
+        if (IObjectTable.Instance().LocalPlayer != null)
             ResetAllCustomizeFromHistory();
 
         customizeHistory.Clear();

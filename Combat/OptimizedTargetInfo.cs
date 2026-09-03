@@ -51,39 +51,39 @@ public unsafe class OptimizedTargetInfo : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnAddonTargetInfo);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_TargetInfo", OnAddonTargetInfo);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_TargetInfo", OnAddonTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", OnAddonTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_TargetInfo", OnAddonTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_TargetInfo", OnAddonTargetInfo);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoMainTarget", OnAddonTargetInfoSplitTarget);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", OnAddonFocusTargetInfo);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_FocusTargetInfo", OnAddonFocusTargetInfo);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_FocusTargetInfo", OnAddonFocusTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", OnAddonFocusTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_FocusTargetInfo", OnAddonFocusTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_FocusTargetInfo", OnAddonFocusTargetInfo);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoCastBar", OnAddonTargetInfoCastBar);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_TargetInfoBuffDebuff", OnAddonTargetInfoBuffDebuff);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "CastBarEnemy", OnAddonCastBarEnemy);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "CastBarEnemy", OnAddonCastBarEnemy);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "CastBarEnemy", OnAddonCastBarEnemy);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "CastBarEnemy", OnAddonCastBarEnemy);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "CastBarEnemy", OnAddonCastBarEnemy);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "CastBarEnemy", OnAddonCastBarEnemy);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfo);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfoSplitTarget);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonFocusTargetInfo);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfoCastBar);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTargetInfoBuffDebuff);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonCastBarEnemy);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonTargetInfo);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonTargetInfoSplitTarget);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonFocusTargetInfo);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonTargetInfoCastBar);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonTargetInfoBuffDebuff);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonCastBarEnemy);
 
         targetHPTextNode?.Dispose();
         targetHPTextNode = null;
@@ -613,7 +613,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                 break;
 
             case AddonEvent.PostDraw:
-                if (!DService.Instance().Condition[ConditionFlag.InCombat] ||
+                if (!ICondition.Instance()[ConditionFlag.InCombat] ||
                     !Throttler.Shared.Throttle($"OptimizedTargetInfo-{addon->NameString}", 10))
                     return;
 
@@ -709,7 +709,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                 break;
 
             case AddonEvent.PostDraw:
-                if (!DService.Instance().Condition[ConditionFlag.InCombat] ||
+                if (!ICondition.Instance()[ConditionFlag.InCombat] ||
                     !Throttler.Shared.Throttle("OptimizedTargetInfo-CastBarEnemy", 10))
                     return;
 
@@ -782,7 +782,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
             case AddonEvent.PostDraw:
                 if (!addon->IsAddonAndNodesReady()) return;
 
-                if (!DService.Instance().Condition[ConditionFlag.InCombat] ||
+                if (!ICondition.Instance()[ConditionFlag.InCombat] ||
                     !Throttler.Shared.Throttle($"OptimizedTargetInfo-{addon->NameString}", 10))
                     return;
 
@@ -843,7 +843,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
                         autoAttackNode->ToggleVisibility(false);
                 }
 
-                textNode.IsVisible = isEnabled && !DService.Instance().Condition[ConditionFlag.Gathering];
+                textNode.IsVisible = isEnabled && !ICondition.Instance()[ConditionFlag.Gathering];
                 if (!isEnabled) return;
 
                 if (getTarget() is IBattleChara { ObjectKind: not ObjectKind.GatheringPoint } target)
@@ -907,7 +907,7 @@ public unsafe class OptimizedTargetInfo : ModuleBase
             case AddonEvent.PostDraw:
                 if (!addon->IsAddonAndNodesReady()) return;
 
-                if (!DService.Instance().Condition[ConditionFlag.InCombat] ||
+                if (!ICondition.Instance()[ConditionFlag.InCombat] ||
                     !Throttler.Shared.Throttle($"OptimizedTargetInfo-{addon->NameString}", 10))
                     return;
 

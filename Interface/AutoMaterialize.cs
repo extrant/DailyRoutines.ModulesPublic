@@ -56,9 +56,9 @@ public unsafe class AutoMaterialize : ModuleBase
         ExtractMateriaHook = ExtractMateriaSig.GetHook<ExtractMateriaDelegate>(ExtractMateriaDetour);
         ExtractMateriaHook.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "Materialize",       OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "Materialize",       OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "MaterializeDialog", OnDialogAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "Materialize",       OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "Materialize",       OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "MaterializeDialog", OnDialogAddon);
         if (MaterializeDialog != null)
             OnDialogAddon(AddonEvent.PostSetup, null);
 
@@ -73,7 +73,7 @@ public unsafe class AutoMaterialize : ModuleBase
         CommandManager.Instance().RemoveSubCommand(COMMAND);
         LogMessageManager.Instance().Unreg(OnLogMessage);
         UseActionManager.Instance().Unreg(OnPreUseAction);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon, OnDialogAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon, OnDialogAddon);
 
         lableNode?.Dispose();
         lableNode = null;

@@ -186,7 +186,7 @@ public unsafe class AutoPreventDuplicateStatus : ModuleBase
         if (adjustedActionID == 7535)
             canTargetSelf = false;
 
-        var gameObj = DService.Instance().ObjectTable.SearchByID(targetID);
+        var gameObj = IObjectTable.Instance().SearchByID(targetID);
 
         var targetIDDetection = targetID;
         if (canTargetSelf && (gameObj == null || !ActionManager.CanUseActionOnTarget(adjustedActionID, gameObj.ToStruct())))
@@ -291,7 +291,7 @@ public unsafe class AutoPreventDuplicateStatus : ModuleBase
         public IDalamudTextureWrap? GetIcon() =>
             !LuminaGetter.TryGetRow(StatusID, out Status row) ?
                 null :
-                DService.Instance().Texture.GetFromGameIcon(new(row.Icon)).GetWrapOrDefault();
+                ITextureProvider.Instance().GetFromGameIcon(new(row.Icon)).GetWrapOrDefault();
 
         public string? GetName() =>
             !Sheets.Statuses.TryGetValue(StatusID, out var rowData) ?
@@ -342,7 +342,7 @@ public unsafe class AutoPreventDuplicateStatus : ModuleBase
             ulong                      gameObjectID
         )
         {
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
 
             var battleChara = DetectType == DetectType.Self || gameObjectID == 0xE0000000 || gameObjectID == LocalPlayerState.EntityID ?
                                   localPlayer.ToBCStruct() :

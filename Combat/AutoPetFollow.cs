@@ -27,11 +27,11 @@ public class AutoPetFollow : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
     }
 
     protected override void Uninit() =>
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
 
     protected override void ConfigUI()
     {
@@ -48,7 +48,7 @@ public class AutoPetFollow : ModuleBase
         if (flag != ConditionFlag.InCombat                       ||
             value                                                ||
             GameState.IsInPVPArea                                ||
-            DService.Instance().Condition[ConditionFlag.Mounted] ||
+            ICondition.Instance()[ConditionFlag.Mounted] ||
             !ValidClassJobs.Contains(LocalPlayerState.ClassJob))
             return;
 

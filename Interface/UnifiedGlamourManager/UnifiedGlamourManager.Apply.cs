@@ -106,7 +106,7 @@ public unsafe partial class UnifiedGlamourManager
         var isSetPart       = item.IsSetPart;
         var parentSetItemID = item.ParentSetItemID;
 
-        DService.Instance().Framework.RunOnTick
+        IFramework.Instance().RunOnTick
         (
             () =>
             {
@@ -322,7 +322,7 @@ public unsafe partial class UnifiedGlamourManager
         PlatePreset preset
     )
     {
-        if (DService.Instance().Condition.IsOccupiedInEvent ||
+        if (ICondition.Instance().IsOccupiedInEvent ||
             AgentTryon.Instance() == null)
             return false;
 

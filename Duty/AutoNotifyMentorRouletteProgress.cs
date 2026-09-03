@@ -36,13 +36,13 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
     {
         TaskHelper ??= new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         if (achievementLinkPayload != null)
             LinkPayloadManager.Instance().Unreg(achievementLinkPayload.CommandId);
@@ -129,7 +129,7 @@ public unsafe class AutoNotifyMentorRouletteProgress : ModuleBase
                        .AddText($"   {Lang.Get("AutoNotifyMentorRouletteProgres-Notification-CurrentDuty")}: ")
                        .Append
                        (
-                           DService.Instance().SeStringEvaluator.EvaluateFromAddon
+                           ISeStringEvaluator.Instance().EvaluateFromAddon
                            (
                                12599,
                                [

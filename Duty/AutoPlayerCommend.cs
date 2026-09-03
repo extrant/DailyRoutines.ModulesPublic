@@ -30,8 +30,8 @@ public unsafe class AutoPlayerCommend : ModuleBase
 
     private static uint MIPDisplayType
     {
-        get => DService.Instance().GameConfig.UiConfig.GetUInt("MipDispType");
-        set => DService.Instance().GameConfig.UiConfig.Set("MipDispType", value);
+        get => IGameConfig.Instance().UiConfig.GetUInt("MipDispType");
+        set => IGameConfig.Instance().UiConfig.Set("MipDispType", value);
     }
 
     private Config config = null!;
@@ -51,16 +51,16 @@ public unsafe class AutoPlayerCommend : ModuleBase
 
         contentSelectCombo.SelectedIDs = config.BlacklistContents;
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().ContextMenu.OnMenuOpened     += OnMenuOpen;
-        DService.Instance().DutyState.DutyCompleted      += OnDutyComplete;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IContextMenu.Instance().OnMenuOpened     += OnMenuOpen;
+        IDutyState.Instance().DutyCompleted      += OnDutyComplete;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().ContextMenu.OnMenuOpened     -= OnMenuOpen;
-        DService.Instance().DutyState.DutyCompleted      -= OnDutyComplete;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IContextMenu.Instance().OnMenuOpened     -= OnMenuOpen;
+        IDutyState.Instance().DutyCompleted      -= OnDutyComplete;
 
         assignedContentID = 0;
     }
@@ -108,7 +108,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
     {
         if (TaskHelper.AbortByConflictKey(this)) return;
         if (config.BlacklistContents.Contains(GameState.ContentFinderCondition)) return;
-        if (DService.Instance().PartyList.Length <= 1) return;
+        if (IPartyList.Instance().Length <= 1) return;
 
         var orig = MIPDisplayType;
         TaskHelper.Enqueue(() => MIPDisplayType = 0,    "设置最优队员推荐不显示列表");
@@ -144,7 +144,7 @@ public unsafe class AutoPlayerCommend : ModuleBase
         var hudMembers = AgentHUD.Instance()->PartyMembers.ToArray();
         Dictionary<(string Name, uint HomeWorld, uint ClassJob, uint ClassJobCategory, byte RoleRaw, PlayerRole Role, ulong ContentID), int> partyMembers = [];
 
-        foreach (var member in DService.Instance().PartyList)
+        foreach (var member in IPartyList.Instance())
         {
             if (member.ContentId == LocalPlayerState.ContentID) continue;
 

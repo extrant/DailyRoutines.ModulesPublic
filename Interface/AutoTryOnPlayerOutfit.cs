@@ -31,13 +31,13 @@ public unsafe class AutoTryOnPlayerOutfit : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 10_000 };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "CharacterInspect", OnAddonList);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CharacterInspect", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "CharacterInspect", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "CharacterInspect", OnAddonList);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonList);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonList);
 
         tryOnButtonNode?.Dispose();
         tryOnButtonNode = null;
@@ -101,7 +101,7 @@ public unsafe class AutoTryOnPlayerOutfit : ModuleBase
 
     private bool StartTryOn()
     {
-        if (DService.Instance().Condition.IsOccupiedInEvent ||
+        if (ICondition.Instance().IsOccupiedInEvent ||
             !CharacterInspect->IsAddonAndNodesReady()       ||
             AgentTryon.Instance() == null)
             return false;

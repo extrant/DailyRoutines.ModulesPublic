@@ -54,12 +54,12 @@ public unsafe class FastInstanceZoneChange : ModuleBase
             OnConditionChanged(ConditionFlag.BetweenAreas, false);
         }
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
 
         HandleDtrEntry(false);
         CommandManager.Instance().RemoveSubCommand(COMMAND);
@@ -103,7 +103,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
             return;
         }
 
-        if (DService.Instance().KeyState[VirtualKey.ESCAPE])
+        if (IKeyState.Instance()[VirtualKey.ESCAPE])
         {
             Overlay.IsOpen = false;
             if (SystemMenu != null)
@@ -126,9 +126,9 @@ public unsafe class FastInstanceZoneChange : ModuleBase
             if (i == InstancesManager.CurrentInstance) continue;
 
             if (ImGui.Button($"{Lang.Get("FastInstanceZoneChange-SwitchInstance", i.ToSESquareCount())}") |
-                DService.Instance().KeyState[(VirtualKey)(48 + i)])
+                IKeyState.Instance()[(VirtualKey)(48 + i)])
             {
-                if (TaskHelper.IsBusy || DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition[ConditionFlag.Casting]) continue;
+                if (TaskHelper.IsBusy || ICondition.Instance().IsBetweenAreas || ICondition.Instance()[ConditionFlag.Casting]) continue;
                 ChatManager.Instance().SendMessage($"/pdr insc {i}");
                 if (config.CloseAfterUsage)
                     Overlay.IsOpen = false;
@@ -225,21 +225,21 @@ public unsafe class FastInstanceZoneChange : ModuleBase
         }
 
         var currentMountID = 0U;
-        if (DService.Instance().Condition[ConditionFlag.Mounted])
-            currentMountID = DService.Instance().ObjectTable.LocalPlayer.CurrentMount?.RowId ?? 0;
+        if (ICondition.Instance()[ConditionFlag.Mounted])
+            currentMountID = IObjectTable.Instance().LocalPlayer.CurrentMount?.RowId ?? 0;
 
         TaskHelper.Enqueue
         (
             () =>
             {
-                if (!DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                if (!ICondition.Instance()[ConditionFlag.Mounted]) return true;
                 if (!Throttler.Shared.Throttle("FastInstanceZoneChange-WaitDismount", 100)) return false;
 
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
 
                 if (RaycastHelper.TryGetGroundPosition
                     (
-                        DService.Instance().ObjectTable.LocalPlayer.Position.WithY(300),
+                        IObjectTable.Instance().LocalPlayer.Position.WithY(300),
                         out var groundPosition
                     ))
                 {
@@ -247,7 +247,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
                     UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9);
                 }
 
-                return !DService.Instance().Condition[ConditionFlag.Mounted];
+                return !ICondition.Instance()[ConditionFlag.Mounted];
             },
             "下坐骑",
             weight: 2
@@ -263,7 +263,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
             () =>
             {
                 if (InstancesManager.CurrentInstance != targetInstance ||
-                    DService.Instance().Condition.IsBetweenAreas)
+                    ICondition.Instance().IsBetweenAreas)
                     return false;
 
                 return true;
@@ -304,7 +304,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
         switch (isAdd)
         {
             case true when entry == null:
-                entry ??= DService.Instance().DTRBar.Get("DailyRoutines-FastInstanceZoneChange");
+                entry ??= IDtrBar.Instance().Get("DailyRoutines-FastInstanceZoneChange");
                 entry.OnClick = _ =>
                 {
                     Overlay ??= new(this)
@@ -332,7 +332,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
     )
     {
         // 等待上一次切换完成
-        TaskHelper.Enqueue(() => SelectString->IsAddonAndNodesReady() || !DService.Instance().Condition[ConditionFlag.BetweenAreas], "等待上一次切换完毕", weight: 2);
+        TaskHelper.Enqueue(() => SelectString->IsAddonAndNodesReady() || !ICondition.Instance()[ConditionFlag.BetweenAreas], "等待上一次切换完毕", weight: 2);
 
         // 检测切换情况
         TaskHelper.Enqueue
@@ -341,7 +341,7 @@ public unsafe class FastInstanceZoneChange : ModuleBase
             {
                 if (!Throttler.Shared.Throttle("FastInstanceZoneChange-DetectInstances")) return false;
 
-                if (DService.Instance().Condition[ConditionFlag.BetweenAreas])
+                if (ICondition.Instance()[ConditionFlag.BetweenAreas])
                 {
                     ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.StartTerritoryTransport);
                     return false;

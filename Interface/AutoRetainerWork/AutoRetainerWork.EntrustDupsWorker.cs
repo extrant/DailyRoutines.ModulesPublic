@@ -26,13 +26,13 @@ public unsafe partial class AutoRetainerWork
         {
             taskHelper ??= new() { TimeoutMS = 15_000 };
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "RetainerItemTransferList",     OnEntrustDupsAddons);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "RetainerItemTransferProgress", OnEntrustDupsAddons);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "RetainerItemTransferList",     OnEntrustDupsAddons);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "RetainerItemTransferProgress", OnEntrustDupsAddons);
         }
 
         public override void Uninit()
         {
-            DService.Instance().AddonLifecycle.UnregisterListener(OnEntrustDupsAddons);
+            IAddonLifecycle.Instance().UnregisterListener(OnEntrustDupsAddons);
 
             taskHelper?.Abort();
             taskHelper?.Dispose();

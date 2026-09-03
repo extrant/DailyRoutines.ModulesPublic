@@ -46,14 +46,14 @@ public unsafe class NoRenderWhenBackground : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "NamePlate", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreDraw, "NamePlate", OnAddon);
 
         DeviceDX11PostTickHook = DeviceDX11PostTickSig.GetHook<DeviceDX11PostTickDelegate>(DeviceDX11PostTickDetour);
         DeviceDX11PostTickHook.Enable();
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
     {

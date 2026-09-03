@@ -38,7 +38,7 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
 
         handle = ZoneIndicatorRenderer.Instance().RegPermanent
@@ -66,8 +66,8 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         handle?.Unreg();
         handle = null;
@@ -80,12 +80,12 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
         uint u
     )
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         bombObjects.Clear();
 
         if (GameState.TerritoryType != 443) return;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
     }
 
     private void OnAddon
@@ -130,7 +130,7 @@ public unsafe class CuffOfTheFatherHelper : ModuleBase
 
             bombs.Add((nint)chara);
 
-            if (DService.Instance().Condition[ConditionFlag.Mounted])
+            if (ICondition.Instance()[ConditionFlag.Mounted])
                 chara->TargetableStatus |= ObjectTargetableFlags.IsTargetable;
             else
                 chara->TargetableStatus &= ~ObjectTargetableFlags.IsTargetable;

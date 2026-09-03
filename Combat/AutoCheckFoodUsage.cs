@@ -63,14 +63,14 @@ public class AutoCheckFoodUsage : ModuleBase
         CountdownInitHook ??= countdownInitSig.GetHook<CountdownInitDelegate>(CountdownInitDetour);
         CountdownInitHook.Enable();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
     }
 
     protected override void ConfigUI()
@@ -535,7 +535,7 @@ public class AutoCheckFoodUsage : ModuleBase
         itemFoodRowID = 0;
         remainingTime = TimeSpan.Zero;
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
 
         var statusManager = localPlayer.ToStruct()->StatusManager;
         var statusIndex   = statusManager.GetStatusIndex(48);
@@ -592,10 +592,10 @@ public class AutoCheckFoodUsage : ModuleBase
     }
 
     private static unsafe bool IsValidState() =>
-        !DService.Instance().Condition.IsBetweenAreas       &&
-        !DService.Instance().Condition.IsOccupiedInEvent    &&
-        !DService.Instance().Condition.IsCasting            &&
-        DService.Instance().ObjectTable.LocalPlayer != null &&
+        !ICondition.Instance().IsBetweenAreas       &&
+        !ICondition.Instance().IsOccupiedInEvent    &&
+        !ICondition.Instance().IsCasting            &&
+        IObjectTable.Instance().LocalPlayer != null &&
         UIModule.IsScreenReady()                            &&
         ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) == 0;
 
@@ -619,7 +619,7 @@ public class AutoCheckFoodUsage : ModuleBase
                      (x => x.Enabled                                      &&
                            (x.Zones.Count == 0 || x.Zones.Contains(zone)) &&
                            (x.ClassJobs.Count == 0 ||
-                            x.ClassJobs.Contains(DService.Instance().ObjectTable.LocalPlayer.ClassJob.RowId)) &&
+                            x.ClassJobs.Contains(IObjectTable.Instance().LocalPlayer.ClassJob.RowId)) &&
                            instance->GetInventoryItemCount(x.ItemID, x.IsHQ) > 0
                      )
                      .OrderByDescending(x => x.Zones.Contains(zone))

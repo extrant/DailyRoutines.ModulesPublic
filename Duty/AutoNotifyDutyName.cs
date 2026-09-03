@@ -27,11 +27,11 @@ public class AutoNotifyDutyName : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
+        IClientState.Instance().TerritoryChanged += OnZoneChange;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
+        IClientState.Instance().TerritoryChanged -= OnZoneChange;
 
     protected override void ConfigUI()
     {

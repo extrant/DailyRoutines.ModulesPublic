@@ -54,30 +54,30 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        zoneInfoEntry ??= DService.Instance().DTRBar.Get("AutoDisplayIDInformation-ZoneInfo");
+        zoneInfoEntry ??= IDtrBar.Instance().Get("AutoDisplayIDInformation-ZoneInfo");
 
         TooltipManager.Instance().RegItem(OnItemTooltip);
         TooltipManager.Instance().RegAction(OnActionTooltip);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_TargetInfo",           OnAddonTarget);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_TargetInfoMainTarget", OnAddonTarget);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "_TargetInfo",           OnAddonTarget);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "_TargetInfoMainTarget", OnAddonTarget);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_NaviMap", OnAddonNaviMap);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_NaviMap", OnAddonNaviMap);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "_NaviMap", OnAddonNaviMap);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "_NaviMap", OnAddonNaviMap);
 
         GetStatusTooltipTextHook ??= GetStatusTooltipTextSig.GetHook<GetStatusTooltipTextDelegate>(GetStatusTooltipTextDetour);
         GetStatusTooltipTextHook.Enable();
 
-        DService.Instance().ClientState.MapIdChanged     += OnMapChanged;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().MapIdChanged     += OnMapChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
         UpdateDTRInfo();
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.MapIdChanged     -= OnMapChanged;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().MapIdChanged     -= OnMapChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         zoneInfoEntry?.Remove();
         zoneInfoEntry = null;
@@ -85,7 +85,7 @@ public unsafe class AutoDisplayIDInformation : ModuleBase
         TooltipManager.Instance().Unreg(OnItemTooltip);
         TooltipManager.Instance().Unreg(OnActionTooltip);
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonTarget, OnAddonNaviMap);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonTarget, OnAddonNaviMap);
         OnAddonNaviMap(AddonEvent.PreFinalize, null);
     }
 

@@ -42,14 +42,14 @@ public unsafe class InstantPlaceLocationAction : ModuleBase
         var adjustedAction = ActionManager.Instance()->GetAdjustedActionId(actionID);
         if (InvalidActions.Contains(adjustedAction)) return;
 
-        var localPlayer = DService.Instance().ObjectTable.LocalPlayer;
+        var localPlayer = IObjectTable.Instance().LocalPlayer;
         if (localPlayer == null) return;
 
         if (!LuminaGetter.TryGetRow<Action>(adjustedAction, out var data)) return;
         if (data is not { TargetArea: true }) return;
 
         if (ActionManager.Instance()->GetActionStatus(actionType, adjustedAction) != 0) return;
-        if (!DService.Instance().GameGUI.ScreenToWorld(ImGui.GetMousePos(), out var pos)) return;
+        if (!IGameGui.Instance().ScreenToWorld(ImGui.GetMousePos(), out var pos)) return;
 
         pos = AdjustTargetPosition(localPlayer.Position, pos, data.Range);
         ActionManager.Instance()->UseActionLocation(ActionType.Action, adjustedAction, 0xE000_0000, &pos, extraParam);

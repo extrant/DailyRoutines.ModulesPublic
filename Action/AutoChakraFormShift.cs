@@ -25,14 +25,14 @@ public class AutoChakraFormShift : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
     }
 
     private bool CheckCurrentJob()
     {
-        if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition.IsOccupiedInEvent) return false;
+        if (ICondition.Instance().IsBetweenAreas || ICondition.Instance().IsOccupiedInEvent) return false;
 
         if (LocalPlayerState.ClassJob != 20 || !GameState.IsInPVEActonZone)
         {
@@ -46,7 +46,7 @@ public class AutoChakraFormShift : ModuleBase
 
     private unsafe bool UseRelatedActions()
     {
-        var gauge = DService.Instance().JobGauges.Get<MNKGauge>();
+        var gauge = IJobGauges.Instance().Get<MNKGauge>();
 
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return false;
@@ -114,9 +114,9 @@ public class AutoChakraFormShift : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     #region 常量

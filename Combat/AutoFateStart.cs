@@ -37,7 +37,7 @@ public unsafe class AutoFateStart : ModuleBase
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.Overworld ||
             GameState.IsInPVPArea                                            ||
             LocalPlayerState.ClassJobData.DohDolJobIndex != -1               ||
-            DService.Instance().Condition[ConditionFlag.InCombat]            ||
+            ICondition.Instance()[ConditionFlag.InCombat]            ||
             FateManager.Instance()->CurrentFate != null)
             return;
 

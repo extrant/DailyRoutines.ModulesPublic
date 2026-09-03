@@ -26,13 +26,13 @@ public class AutoQTE : ModuleBase
     protected override void Init()
     {
         InputIDManager.Instance().RegPrePressed(OnPreIsInputIDPressed);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, QTETypes, OnQTEAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, QTETypes, OnQTEAddon);
     }
 
     protected override void Uninit()
     {
         InputIDManager.Instance().UnregPrePressed(OnPreIsInputIDPressed);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnQTEAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnQTEAddon);
     }
 
     private static void OnPreIsInputIDPressed

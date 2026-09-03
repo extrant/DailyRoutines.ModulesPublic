@@ -40,11 +40,11 @@ public unsafe class AutoMovePetCenter : ModuleBase
         ProcessPacketSpawnNPCHook ??= ProcessPacketSpawnNPCSig.GetHook<ProcessPacketSpawnNPCDelegate>(ProcessPacketSpawnNPCDetour);
         ProcessPacketSpawnNPCHook.Enable();
 
-        DService.Instance().DutyState.DutyStarted += OnDutyStarted;
+        IDutyState.Instance().DutyStarted += OnDutyStarted;
     }
 
     protected override void Uninit() =>
-        DService.Instance().DutyState.DutyStarted -= OnDutyStarted;
+        IDutyState.Instance().DutyStarted -= OnDutyStarted;
 
     private static void OnDutyStarted
     (
@@ -75,7 +75,7 @@ public unsafe class AutoMovePetCenter : ModuleBase
             GameState.Map                    == 0                                  ||
             npcEntityID                      != LocalPlayerState.EntityID          ||
             GameState.ContentFinderConditionData.ContentType.RowId is not (4 or 5) ||
-            DService.Instance().ObjectTable.LocalPlayer is null)
+            IObjectTable.Instance().LocalPlayer is null)
             return;
 
         var pos = PositionHelper.TextureToWorld(new(1024), GameState.MapData).ToPlayerHeight();

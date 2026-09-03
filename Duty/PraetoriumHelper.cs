@@ -29,13 +29,13 @@ public unsafe class PraetoriumHelper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 
@@ -56,7 +56,7 @@ public unsafe class PraetoriumHelper : ModuleBase
         IFramework framework
     )
     {
-        if (!DService.Instance().Condition[ConditionFlag.Mounted] ||
+        if (!ICondition.Instance()[ConditionFlag.Mounted] ||
             ActionManager.Instance()->GetActionStatus(ActionType.Action, 1128) != 0)
             return;
 
@@ -68,7 +68,7 @@ public unsafe class PraetoriumHelper : ModuleBase
 
     private static IGameObject? GetMostCanTargetObjects()
     {
-        var allTargets = DService.Instance().ObjectTable.SearchObjects
+        var allTargets = IObjectTable.Instance().SearchObjects
                                  (
                                      o => o.IsTargetable && ActionManager.CanUseActionOnTarget(7, o.ToStruct()),
                                      IObjectTable.CharactersRange
@@ -81,7 +81,7 @@ public unsafe class PraetoriumHelper : ModuleBase
 
         foreach (var b in allTargets)
         {
-            if (Vector3.DistanceSquared(DService.Instance().ObjectTable.LocalPlayer.Position, b.Position) - b.HitboxRadius > 900) continue;
+            if (Vector3.DistanceSquared(IObjectTable.Instance().LocalPlayer.Position, b.Position) - b.HitboxRadius > 900) continue;
 
             var aoeCount = GetTargetAoECount(b, allTargets);
 

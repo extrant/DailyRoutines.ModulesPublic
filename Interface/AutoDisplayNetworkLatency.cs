@@ -47,7 +47,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
         config = Config.Load(this) ?? new();
 
         monitor ??= new();
-        entry   ??= DService.Instance().DTRBar.Get("DailyRoutines-AutoDisplayNetworkLatency");
+        entry   ??= IDtrBar.Instance().Get("DailyRoutines-AutoDisplayNetworkLatency");
         entry.OnClick = _ =>
         {
             if (Overlay == null)
@@ -288,7 +288,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
                 var address     = currentMonitor.ServerAddress;
                 var port        = currentMonitor.ServerPort;
 
-                await DService.Instance().Framework.RunOnTick
+                await IFramework.Instance().RunOnTick
                 (
                     () =>
                     {
@@ -443,7 +443,7 @@ public class AutoDisplayNetworkLatency : ModuleBase
         {
             ZoneEndpoint? endpoint = null;
 
-            await DService.Instance().Framework.RunOnTick
+            await IFramework.Instance().RunOnTick
             (
                 () => endpoint = GetZoneEndpoint(),
                 cancellationToken: cancellationToken

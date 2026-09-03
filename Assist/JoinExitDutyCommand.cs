@@ -45,13 +45,13 @@ public unsafe class JoinExitDutyCommand : ModuleBase
         string arguments
     )
     {
-        if (DService.Instance().PartyList.Length > 0)
+        if (IPartyList.Instance().Length > 0)
         {
             NotifyHelper.Instance().NotificationError(Lang.Get("JoinExitDutyCommand-AlreadyInParty"));
             return;
         }
 
-        if (DService.Instance().Condition.IsBoundByDuty)
+        if (ICondition.Instance().IsBoundByDuty)
         {
             NotifyHelper.Instance().NotificationError(Lang.Get("JoinExitDutyCommand-AlreadyInDutyNotice"));
             return;
@@ -93,7 +93,7 @@ public unsafe class JoinExitDutyCommand : ModuleBase
 
     private bool CheckAndSwitchJob()
     {
-        var localPlayer = DService.Instance().ObjectTable.LocalPlayer;
+        var localPlayer = IObjectTable.Instance().LocalPlayer;
 
         if (localPlayer == null)
         {

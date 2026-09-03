@@ -158,7 +158,7 @@ public unsafe class AutoNoviceNetwork : ModuleBase
         if (isJoined) return;
 
         if (!config.IsTryJoinWhenInactive               || TaskHelper.IsBusy) return;
-        if (DService.Instance().Condition.IsBoundByDuty || DService.Instance().Condition.IsOccupiedInEvent) return;
+        if (ICondition.Instance().IsBoundByDuty || ICondition.Instance().IsOccupiedInEvent) return;
 
         if (LastInputInfo.GetIdleTimeTick() > 10_000 || !GameState.IsForeground)
             TryJoin();

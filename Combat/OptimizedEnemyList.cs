@@ -76,14 +76,14 @@ public unsafe class OptimizedEnemyList : ModuleBase
         enemyListClearSpellIDPatch.Enable();
         enemyListDisplayCastPatch.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,           "_EnemyList", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,        "_EnemyList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "_EnemyList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,           "_EnemyList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,        "_EnemyList", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         foreach (var (_, textNode, heathTextNode, healthMarkerNode, backgroundNode, healthBackgroundNode, castBarNode, _, enemityNode) in nodes)
         {

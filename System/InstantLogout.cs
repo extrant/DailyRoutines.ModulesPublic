@@ -49,7 +49,7 @@ public unsafe class InstantLogout : ModuleBase
         );
         OnLogoutHook.Enable();
 
-        HandleMainCommandOperationHook = DService.Instance().Hook.HookFromMemberFunction
+        HandleMainCommandOperationHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(AgentHUD.MemberFunctionPointers),
             "HandleMainCommandOperation",
@@ -64,9 +64,9 @@ public unsafe class InstantLogout : ModuleBase
         );
         AgentCloseMessageShowHook.Enable();
 
-        DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PreReceiveEvent, Dalamud.Game.Agent.AgentId.Lobby, OnAgentLobby);
+        IAgentLifecycle.Instance().RegisterListener(AgentEvent.PreReceiveEvent, Dalamud.Game.Agent.AgentId.Lobby, OnAgentLobby);
 
-        ExitFromWindowHook = DService.Instance().Hook.HookFromMemberFunction
+        ExitFromWindowHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(Framework.MemberFunctionPointers),
             "ExitFromWindow",
@@ -80,7 +80,7 @@ public unsafe class InstantLogout : ModuleBase
     protected override void Uninit()
     {
         ChatManager.Instance().Unreg(OnPreExecuteCommandInner);
-        DService.Instance().AgentLifecycle.UnregisterListener(AgentEvent.PreReceiveEvent, Dalamud.Game.Agent.AgentId.Lobby, OnAgentLobby);
+        IAgentLifecycle.Instance().UnregisterListener(AgentEvent.PreReceiveEvent, Dalamud.Game.Agent.AgentId.Lobby, OnAgentLobby);
     }
 
     protected override void ConfigUI()

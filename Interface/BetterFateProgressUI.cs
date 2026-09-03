@@ -48,12 +48,12 @@ public class BetterFateProgressUI : ModuleBase
         Overlay.SizeConstraints =   new() { MinimumSize = ChildSize };
         Overlay.WindowName      =   $"{LuminaWrapper.GetAddonText(3933)}###BetterFateProgressUI";
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "FateProgress", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "FateProgress", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         cancelSource.Cancel();
         cancelSource.Dispose();
@@ -328,7 +328,7 @@ public class BetterFateProgressUI : ModuleBase
 
                 for (var i = 0; i < zoneInfos.Count; i++)
                 {
-                    var texture = DService.Instance().PI.UiBuilder.LoadUld(ULD_PATH).LoadTexturePart(texturePath, i);
+                    var texture = IDalamudPluginInterface.Instance().UiBuilder.LoadUld(ULD_PATH).LoadTexturePart(texturePath, i);
                     zoneInfos[i].SetBackgroundTexture(texture);
                 }
             }

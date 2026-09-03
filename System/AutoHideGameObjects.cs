@@ -47,14 +47,14 @@ public unsafe class AutoHideGameObjects : ModuleBase
 
         UpdateAllObjects(GameObjectManager.Instance());
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         FrameworkManager.Instance().Reg(OnUpdate, 1_000);
     }
 
     protected override void Uninit()
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         ResetAllObjects();
     }
@@ -282,7 +282,7 @@ public unsafe class AutoHideGameObjects : ModuleBase
 
     private void ResetAllObjects()
     {
-        if (!DService.Instance().ClientState.IsLoggedIn || processedObjects.Count == 0) return;
+        if (!IClientState.Instance().IsLoggedIn || processedObjects.Count == 0) return;
 
         var manager = GameObjectManager.Instance();
         if (manager == null) return;
@@ -316,7 +316,7 @@ public unsafe class AutoHideGameObjects : ModuleBase
     )
     {
         // 主要是小区域更新不及时
-        if (zoneUpdateCount > 3 || DService.Instance().Condition.IsBetweenAreas) return;
+        if (zoneUpdateCount > 3 || ICondition.Instance().IsBetweenAreas) return;
 
         zoneUpdateCount++;
         UpdateAllObjects(GameObjectManager.Instance());

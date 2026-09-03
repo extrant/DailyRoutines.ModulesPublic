@@ -23,14 +23,14 @@ public class AutoRefocus : ModuleBase
         focusTarget = 0xE000_0000;
 
         TargetManager.Instance().RegPostSetFocusTarget(OnSetFocusTarget);
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
+        IClientState.Instance().TerritoryChanged += OnZoneChange;
         PlayersManager.Instance().ReceivePlayersAround   += OnReceivePlayerAround;
     }
 
     protected override void Uninit()
     {
         PlayersManager.Instance().ReceivePlayersAround   -= OnReceivePlayerAround;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
+        IClientState.Instance().TerritoryChanged -= OnZoneChange;
         TargetManager.Instance().Unreg(OnSetFocusTarget);
     }
 

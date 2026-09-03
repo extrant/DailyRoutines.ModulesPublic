@@ -25,8 +25,8 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "PvPFrontlineGauge", OnAddon);
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, "PvPFrontlineGauge", OnAddon);
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
         if (PvPFrontlineGauge->IsAddonAndNodesReady())
         {
@@ -43,8 +43,8 @@ public unsafe class AutoShowFrontlineKillCount : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         lastKillCount = 0;
     }

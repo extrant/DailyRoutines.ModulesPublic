@@ -148,11 +148,11 @@ public class AutoTimedLogout : ModuleBase
                     break;
 
                 case OperationMode.Logout:
-                    await DService.Instance().Framework.RunOnFrameworkThread(() => ChatManager.Instance().SendMessage("/logout"));
+                    await IFramework.Instance().RunOnFrameworkThread(() => ChatManager.Instance().SendMessage("/logout"));
                     break;
 
                 case OperationMode.ShutdownGame:
-                    await DService.Instance().Framework.RunOnFrameworkThread(() => ChatManager.Instance().SendMessage("/shutdown"));
+                    await IFramework.Instance().RunOnFrameworkThread(() => ChatManager.Instance().SendMessage("/shutdown"));
                     break;
             }
         }

@@ -57,15 +57,15 @@ public unsafe class OptimizedFreeShop : ModuleBase
             RememberClosePosition = false
         };
 
-        DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PostReceiveEvent, Dalamud.Game.Agent.AgentId.FreeShop, OnAgent);
+        IAgentLifecycle.Instance().RegisterListener(AgentEvent.PostReceiveEvent, Dalamud.Game.Agent.AgentId.FreeShop, OnAgent);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeShop", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "FreeShop", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAgentLifecycle.Instance().UnregisterListener(OnAgent);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         clickYesnoHelper?.Abort();
 

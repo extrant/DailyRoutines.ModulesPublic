@@ -33,13 +33,13 @@ public class AutoNotifyBonusFate : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         ExecuteCommandManager.Instance().Unreg(OnPostExecuteCommand);
 
         notifiedFates.Clear();
@@ -96,7 +96,7 @@ public class AutoNotifyBonusFate : ModuleBase
     {
         if (!ValidTerritories.Contains(GameState.TerritoryType) || GameState.Map == 0) return;
 
-        var fateTable = DService.Instance().Fate;
+        var fateTable = IFateTable.Instance();
 
         if (fateTable.Length == 0)
         {

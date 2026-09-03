@@ -35,20 +35,20 @@ public unsafe class OptimizedCharacterClass : ModuleBase
     {
         TaskHelper ??= new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "CharacterClass", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CharacterClass", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "CharacterClass", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "CharacterClass", OnAddon);
         if (CharacterClass->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "PvPCharacter", OnAddonPVP);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PvPCharacter", OnAddonPVP);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "PvPCharacter", OnAddonPVP);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "PvPCharacter", OnAddonPVP);
         if (PvPCharacter->IsAddonAndNodesReady())
             OnAddonPVP(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon, OnAddonPVP);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon, OnAddonPVP);
 
         ClearEvents();
     }
@@ -85,7 +85,7 @@ public unsafe class OptimizedCharacterClass : ModuleBase
         var cursorOverEvent = new AtkEventWrapper
         ((_, ownerAddon, _, _) =>
             {
-                DService.Instance().AddonEvent.SetCursor(AddonCursorType.Clickable);
+                IAddonEventManager.Instance().SetCursor(AddonCursorType.Clickable);
                 UIGlobals.PlaySoundEffect(0);
                 AtkStage.Instance()->TooltipManager.ShowTooltip
                 (
@@ -107,7 +107,7 @@ public unsafe class OptimizedCharacterClass : ModuleBase
         var cursorOutEvent = new AtkEventWrapper
         ((_, ownerAddon, _, _) =>
             {
-                DService.Instance().AddonEvent.ResetCursor();
+                IAddonEventManager.Instance().ResetCursor();
                 AtkStage.Instance()->TooltipManager.HideTooltip(ownerAddon->Id);
             }
         );

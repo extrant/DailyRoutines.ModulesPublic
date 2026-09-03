@@ -60,8 +60,8 @@ public class AutoUseEarthsReply : ModuleBase
         (
             () =>
             {
-                if (DService.Instance().Condition[ConditionFlag.Mounted]) return;
-                if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+                if (ICondition.Instance()[ConditionFlag.Mounted]) return;
+                if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
                 if (!config.UseWhenSprint && localPlayer.StatusList.HasStatus(SPRINT_STATUS)) return;
                 if (!config.UseWhenGuard  && localPlayer.StatusList.HasStatus(GUARD_STATUS)) return;

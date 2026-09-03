@@ -155,7 +155,7 @@ public class AutoAethericMimicry : ModuleBase
             AtkUnitBase* addon
         )
         {
-            if (LocalPlayerState.ClassJob != 36 || DService.Instance().KeyState[VirtualKey.ESCAPE])
+            if (LocalPlayerState.ClassJob != 36 || IKeyState.Instance()[VirtualKey.ESCAPE])
             {
                 Close();
 

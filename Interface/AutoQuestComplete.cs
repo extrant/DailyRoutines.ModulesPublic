@@ -17,17 +17,17 @@ public class AutoQuestComplete : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "JournalResult", OnAddonJournalResultSetup);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,  "JournalResult", OnAddonJournalResultSetup);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "JournalResult", OnAddonJournalResultSetup);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,  "JournalResult", OnAddonJournalResultSetup);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,  "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,  "SatisfactionSupplyResult", OnAddonSatisfactionSupplyResultSetup);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSatisfactionSupplyResultSetup);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonJournalResultSetup);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSatisfactionSupplyResultSetup);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonJournalResultSetup);
     }
 
     private static unsafe void OnAddonJournalResultSetup

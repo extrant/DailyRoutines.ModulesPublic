@@ -126,24 +126,24 @@ public partial class OptimizedRecipeNote : ModuleBase
         {
             simpleCraftAmountJudgePatch.Enable();
             SimpleCraftGetAmountUpperLimitHook.Enable();
-            DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PreReceiveEvent, AgentId.RecipeNote, OnAgentRecipeNote);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "SynthesisSimple", OnSynthesisSimple);
+            IAgentLifecycle.Instance().RegisterListener(AgentEvent.PreReceiveEvent, AgentId.RecipeNote, OnAgentRecipeNote);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "SynthesisSimple", OnSynthesisSimple);
         }
 
         if (config.IsMorePraticeQuality)
             RecipeNotePraticeSettingSetupHook.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,           "RecipeNote", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "RecipeNote", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "RecipeNote", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "RecipeNote", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,           "RecipeNote", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "RecipeNote", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "RecipeNote", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "RecipeNote", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnSynthesisSimple);
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgentRecipeNote);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnSynthesisSimple);
+        IAgentLifecycle.Instance().UnregisterListener(OnAgentRecipeNote);
 
         RemoveAllNodes();
 
@@ -284,7 +284,7 @@ public partial class OptimizedRecipeNote : ModuleBase
         values[0].SetUInt(values[1].UInt);
 
         // 初始品质文字
-        values[2].SetManagedString(DService.Instance().SeStringEvaluator.EvaluateFromAddon(14222, [values[1].UInt]));
+        values[2].SetManagedString(ISeStringEvaluator.Instance().EvaluateFromAddon(14222, [values[1].UInt]));
 
         return RecipeNotePraticeSettingSetupHook.Original(listener, returnValue, values);
     }
@@ -481,10 +481,10 @@ public partial class OptimizedRecipeNote : ModuleBase
 
                     if (button != null)
                     {
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
                     }
                 }
             };
@@ -507,10 +507,10 @@ public partial class OptimizedRecipeNote : ModuleBase
 
                     if (button != null)
                     {
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
                     }
                 }
             };
@@ -533,10 +533,10 @@ public partial class OptimizedRecipeNote : ModuleBase
 
                     if (button != null)
                     {
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
-                        DService.Instance().Framework.Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
+                        IFramework.Instance().Run(() => button->Click());
                     }
                 }
             };
@@ -843,14 +843,14 @@ public partial class OptimizedRecipeNote : ModuleBase
                 if (recipe.CraftType.RowId == LocalPlayerState.ClassJob - 8) return;
 
                 // 能直接切换
-                if (!DService.Instance().Condition[ConditionFlag.PreparingToCraft])
+                if (!ICondition.Instance()[ConditionFlag.PreparingToCraft])
                 {
                     LocalPlayerState.SwitchGearset(recipe.CraftType.RowId + 8);
                     return;
                 }
 
                 TaskHelper.Enqueue(() => AgentRecipeNote.Instance()->Hide());
-                TaskHelper.Enqueue(() => !DService.Instance().Condition[ConditionFlag.PreparingToCraft]);
+                TaskHelper.Enqueue(() => !ICondition.Instance()[ConditionFlag.PreparingToCraft]);
                 TaskHelper.Enqueue(() => LocalPlayerState.SwitchGearset(recipe.CraftType.RowId + 8));
                 TaskHelper.Enqueue(() => AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipeID));
             }
@@ -919,7 +919,7 @@ public partial class OptimizedRecipeNote : ModuleBase
 
         caculateRecipeButton.OnClick = () =>
         {
-            if (!DService.Instance().PI.IsPluginEnabled(RaphaelIPC.INTERNAL_NAME))
+            if (!IDalamudPluginInterface.Instance().IsPluginEnabled(RaphaelIPC.INTERNAL_NAME))
             {
                 PrintInstallRaphaelPluginMessage();
                 return;
@@ -1017,7 +1017,7 @@ public partial class OptimizedRecipeNote : ModuleBase
         SeString _
     )
     {
-        if (DService.Instance().PI.InstalledPlugins.Any(x => x.InternalName == "Raphael.Dalamud"))
+        if (IDalamudPluginInterface.Instance().InstalledPlugins.Any(x => x.InternalName == "Raphael.Dalamud"))
         {
             ChatManager.Instance().SendMessage("/xlenableplugin Raphael.Dalamud");
             return;
@@ -1025,7 +1025,7 @@ public partial class OptimizedRecipeNote : ModuleBase
 
         if (installRaphaelTask != null) return;
 
-        installRaphaelTask = DService.Instance().Framework
+        installRaphaelTask = IFramework.Instance()
                                      .RunOnTick
                                      (async () => await DalamudReflector.AddPlugin
                                                   (

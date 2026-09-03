@@ -87,20 +87,20 @@ public unsafe class OptimizedFriendList : ModuleBase
             Size         = new(230f, 350f)
         };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,          "FriendList", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "FriendList", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,        "FriendList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,          "FriendList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "FriendList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,        "FriendList", OnAddon);
         if (FriendList->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenu;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenu;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenu;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenu;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         searchInputNode?.Dispose();
         searchInputNode = null;
@@ -446,7 +446,7 @@ public unsafe class OptimizedFriendList : ModuleBase
                         var chara = info->CharDataSpan[i];
                         if (chara.ContentId == 0) continue;
 
-                        DService.Instance().Framework.RunOnTick
+                        IFramework.Instance().RunOnTick
                         (
                             () =>
                             {
@@ -462,7 +462,7 @@ public unsafe class OptimizedFriendList : ModuleBase
 
                     if (validCounter > 0)
                     {
-                        DService.Instance().Framework.RunOnTick
+                        IFramework.Instance().RunOnTick
                         (
                             () =>
                             {
@@ -718,7 +718,7 @@ public unsafe class OptimizedFriendList : ModuleBase
                         return Task.CompletedTask;
 
                     var data = task.Result;
-                    return DService.Instance().Framework.RunOnTick
+                    return IFramework.Instance().RunOnTick
                     (() =>
                         {
                             if (data.Count == 0)
@@ -844,7 +844,7 @@ public unsafe class OptimizedFriendList : ModuleBase
             {
                 var index = i;
 
-                var groupFormatText = DService.Instance().SeStringEvaluator.EvaluateFromAddon(12925, [index + 1]);
+                var groupFormatText = ISeStringEvaluator.Instance().EvaluateFromAddon(12925, [index + 1]);
                 var groupCheckboxNode = new CheckboxNode
                 {
                     Size      = new(80f, 20f),
@@ -955,7 +955,7 @@ public unsafe class OptimizedFriendList : ModuleBase
             };
             if (zoneID == GameState.TerritoryType) return false;
 
-            aetheryteID = DService.Instance().AetheryteList
+            aetheryteID = IAetheryteList.Instance()
                                   .Where(aetheryte => aetheryte.TerritoryID == zoneID)
                                   .Select(aetheryte => aetheryte.AetheryteID)
                                   .FirstOrDefault();

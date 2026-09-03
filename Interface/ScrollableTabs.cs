@@ -172,7 +172,7 @@ public unsafe class ScrollableTabs : ModuleBase
         IFramework _
     )
     {
-        if (!DService.Instance().ClientState.IsLoggedIn)
+        if (!IClientState.Instance().IsLoggedIn)
             return;
 
         wheelState = Math.Clamp(UIInputData.Instance()->CursorInputs.MouseWheel, -1, 1);
@@ -206,7 +206,7 @@ public unsafe class ScrollableTabs : ModuleBase
 
         // InventoryCrystalGrid
         if (originalName == "InventoryCrystalGrid"                                                                            &&
-            DService.Instance().GameConfig.UiConfig.TryGet("ItemInventryWindowSizeType", out uint itemInventryWindowSizeType) &&
+            IGameConfig.Instance().UiConfig.TryGet("ItemInventryWindowSizeType", out uint itemInventryWindowSizeType) &&
             itemInventryWindowSizeType == 2)
             mappedName = "InventoryExpansion";
 

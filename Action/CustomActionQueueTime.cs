@@ -198,7 +198,7 @@ public class CustomActionQueueTime : ModuleBase
 
         actionSelectCombo.DrawRadio();
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         var       contentRegion = ImGui.GetContentRegionAvail();
         var       tableWidth    = contentRegion.X * 0.75f;
@@ -218,7 +218,7 @@ public class CustomActionQueueTime : ModuleBase
         {
             if (!LuminaGetter.TryGetRow<Action>(queueTimePair.Key, out var data)) continue;
 
-            var icon = DService.Instance().Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
+            var icon = ITextureProvider.Instance().GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
             if (icon == null) continue;
 
             using var id = ImRaii.PushId(data.RowId.ToString());
@@ -275,8 +275,8 @@ public class CustomActionQueueTime : ModuleBase
 
     protected override unsafe void OverlayUI()
     {
-        if (!DService.Instance().Condition[ConditionFlag.InCombat] &&
-            !DService.Instance().Condition[ConditionFlag.Casting]) return;
+        if (!ICondition.Instance()[ConditionFlag.InCombat] &&
+            !ICondition.Instance()[ConditionFlag.Casting]) return;
 
         var manager = ActionManager.Instance();
         if (manager == null) return;
@@ -297,7 +297,7 @@ public class CustomActionQueueTime : ModuleBase
             {
                 if (!LuminaGetter.TryGetRow<Action>(actionID, out var data)) return;
 
-                var icon = DService.Instance().Texture.GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
+                var icon = ITextureProvider.Instance().GetFromGameIcon(new(data.Icon)).GetWrapOrDefault();
                 if (icon == null) return;
 
                 ImGuiOm.TextImage($"{data.Name.ToString()}", icon.Handle, new(ImGui.GetTextLineHeightWithSpacing()));

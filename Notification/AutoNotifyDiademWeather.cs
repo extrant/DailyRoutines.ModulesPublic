@@ -27,13 +27,13 @@ public class AutoNotifyDiademWeather : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         FrameworkManager.Instance().Unreg(OnUpdate);
 
         lastWeather = 0;
@@ -57,7 +57,7 @@ public class AutoNotifyDiademWeather : ModuleBase
             foreach (var weather in SpecialWeathers)
             {
                 if (!LuminaGetter.TryGetRow<Weather>(weather, out var data)) continue;
-                if (!DService.Instance().Texture.TryGetFromGameIcon(new((uint)data.Icon), out var icon)) continue;
+                if (!ITextureProvider.Instance().TryGetFromGameIcon(new((uint)data.Icon), out var icon)) continue;
 
                 if (ImGuiOm.SelectableImageWithText
                     (

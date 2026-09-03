@@ -32,13 +32,13 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         Cleanup();
     }
 
@@ -91,7 +91,7 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
         if (!IsZoneValid()) return;
 
         LocalPlayerState.Instance().PlayerMoveStateChanged += OnPlayerMoving;
-        DService.Instance().Condition.ConditionChange      += OnConditionChanged;
+        ICondition.Instance().ConditionChange      += OnConditionChanged;
         LogMessageManager.Instance().RegPost(OnLogMessage);
     }
 
@@ -191,7 +191,7 @@ public unsafe class AutoSummonBuddyChocobo : ModuleBase
     private void Cleanup()
     {
         LocalPlayerState.Instance().PlayerMoveStateChanged -= OnPlayerMoving;
-        DService.Instance().Condition.ConditionChange      -= OnConditionChanged;
+        ICondition.Instance().ConditionChange      -= OnConditionChanged;
         LogMessageManager.Instance().Unreg(OnLogMessage);
 
         TaskHelper?.Abort();

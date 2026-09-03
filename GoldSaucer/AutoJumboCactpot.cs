@@ -26,13 +26,13 @@ public class AutoJumboCactpot : ModuleBase
 
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "LotteryWeeklyInput", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "LotteryWeeklyInput", OnAddon);
         if (LotteryWeeklyInput->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
     {
@@ -79,7 +79,7 @@ public class AutoJumboCactpot : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                if (!DService.Instance().Condition.IsOccupiedInEvent)
+                if (!ICondition.Instance().IsOccupiedInEvent)
                 {
                     TaskHelper.Abort();
                     return true;

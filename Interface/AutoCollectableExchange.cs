@@ -43,14 +43,14 @@ public unsafe class AutoCollectableExchange : ModuleBase
 
         handInCollectables ??= HandInCollectablesSig.GetDelegate<HandInCollectablesDelegate>();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "CollectablesShop", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CollectablesShop", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "CollectablesShop", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "CollectablesShop", OnAddon);
         if (CollectablesShopAddon != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void OverlayUI()
     {
@@ -118,13 +118,13 @@ public unsafe class AutoCollectableExchange : ModuleBase
                             CollectablesShopAddon->Close(true);
                     }
                 );
-                TaskHelper.Enqueue(() => !DService.Instance().Condition.IsOccupiedInEvent);
+                TaskHelper.Enqueue(() => !ICondition.Instance().IsOccupiedInEvent);
                 TaskHelper.Enqueue
                 (() => GamePacketManager.Instance().SendPackt
                  (
                      new EventStartPackt
                      (
-                         DService.Instance().ObjectTable.LocalPlayer.GameObjectID,
+                         IObjectTable.Instance().LocalPlayer.GameObjectID,
                          GetScriptEventID(GameState.TerritoryType)
                      )
                  )

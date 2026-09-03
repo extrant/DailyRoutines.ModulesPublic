@@ -37,7 +37,7 @@ public unsafe class AutoGlamourDresser : ModuleBase
 
         LogMessageManager.Instance().RegPost(OnReceiveLogMessage);
 
-        var addonLifecycle = DService.Instance().AddonLifecycle;
+        var addonLifecycle = IAddonLifecycle.Instance();
         addonLifecycle.RegisterListener(AddonEvent.PreSetup,    "MiragePrismPrismBox",         OnMiragePrismPrismBox);
         addonLifecycle.RegisterListener(AddonEvent.PostRefresh, "MiragePrismPrismSetConvert",  OnAddonMiragePrismPrismSetConvert);
         addonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MiragePrismPrismSetConvert",  OnAddonMiragePrismPrismSetConvert);
@@ -54,7 +54,7 @@ public unsafe class AutoGlamourDresser : ModuleBase
     {
         LogMessageManager.Instance().Unreg(OnReceiveLogMessage);
 
-        var addonLifecycle = DService.Instance().AddonLifecycle;
+        var addonLifecycle = IAddonLifecycle.Instance();
         addonLifecycle.UnregisterListener(OnMiragePrismPrismBox, OnAddonMiragePrismPrismSetConvert, OnAddonMiragePrismPrismSetConvertC);
     }
 

@@ -266,7 +266,7 @@ public partial class CrossDCPartyFinder
             var dutyName = string.IsNullOrEmpty(listing.Duty) ?
                                LuminaWrapper.GetAddonText(7) :
                                listing.Duty;
-            var hasCategoryIcon = DService.Instance().Texture.TryGetFromGameIcon(new(listing.CategoryIcon), out var categoryTexture);
+            var hasCategoryIcon = ITextureProvider.Instance().TryGetFromGameIcon(new(listing.CategoryIcon), out var categoryTexture);
 
             var titleLineHeight = categoryIconSize.Y;
             var titleStartY     = ImGui.GetCursorPosY();
@@ -352,7 +352,7 @@ public partial class CrossDCPartyFinder
                                                       62146 :
                                                       slot.JobIcons[0];
 
-                                if (DService.Instance().Texture.TryGetFromGameIcon(new(displayIcon), out var jobTexture))
+                                if (ITextureProvider.Instance().TryGetFromGameIcon(new(displayIcon), out var jobTexture))
                                 {
                                     if (drawnCount > 0)
                                         ImGui.SameLine(0, 3f * GlobalUIScale);

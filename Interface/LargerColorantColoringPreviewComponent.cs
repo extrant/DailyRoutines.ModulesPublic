@@ -20,13 +20,13 @@ public unsafe class LargerColorantColoringPreviewComponent : ModuleBase
     // 懒得恢复了, 就这样
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ColorantColoring", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "ColorantColoring", OnAddon);
         if (ColorantColoring->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "ColorantColoring", OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(AddonEvent.PostSetup, "ColorantColoring", OnAddon);
 
     private static void OnAddon
     (

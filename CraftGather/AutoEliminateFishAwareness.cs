@@ -105,26 +105,26 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
                 // 云冠群岛
                 if (GameState.TerritoryType == 939)
                 {
-                    var currentPos      = DService.Instance().ObjectTable.LocalPlayer.Position;
-                    var currentRotation = DService.Instance().ObjectTable.LocalPlayer.Rotation;
+                    var currentPos      = IObjectTable.Instance().LocalPlayer.Position;
+                    var currentRotation = IObjectTable.Instance().LocalPlayer.Rotation;
 
                     TaskHelper.Enqueue(ExitFishing, "离开钓鱼状态");
                     TaskHelper.DelayNext(5_000, "等待 5 秒");
-                    TaskHelper.Enqueue(() => !DService.Instance().Condition.IsOccupiedInEvent, "等待不在钓鱼状态");
+                    TaskHelper.Enqueue(() => !ICondition.Instance().IsOccupiedInEvent, "等待不在钓鱼状态");
                     TaskHelper.Enqueue(() => ExitDuty(753), "离开副本");
-                    TaskHelper.Enqueue(() => !DService.Instance().Condition.IsBoundByDuty && UIModule.IsScreenReady() && GameState.TerritoryType != 939, "等待离开副本");
+                    TaskHelper.Enqueue(() => !ICondition.Instance().IsBoundByDuty && UIModule.IsScreenReady() && GameState.TerritoryType != 939, "等待离开副本");
                     TaskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/pdrfe diadem"), "发送进入指令");
-                    TaskHelper.Enqueue(() => GameState.TerritoryType == 939 && DService.Instance().ObjectTable.LocalPlayer != null, "等待进入");
+                    TaskHelper.Enqueue(() => GameState.TerritoryType == 939 && IObjectTable.Instance().LocalPlayer != null, "等待进入");
                     TaskHelper.Enqueue(() => MovementManager.Instance().TPSmart_InZone(currentPos), $"传送到原始位置 {currentPos}");
                     TaskHelper.DelayNext(500, "等待 500 毫秒");
                     TaskHelper.Enqueue(() => !MovementManager.Instance().IsManagerBusy,                                            "等待传送完毕");
-                    TaskHelper.Enqueue(() => DService.Instance().ObjectTable.LocalPlayer.ToStruct()->SetRotation(currentRotation), "设置面向");
+                    TaskHelper.Enqueue(() => IObjectTable.Instance().LocalPlayer.ToStruct()->SetRotation(currentRotation), "设置面向");
                 }
-                else if (!DService.Instance().Condition.IsBoundByDuty)
+                else if (!ICondition.Instance().IsBoundByDuty)
                 {
                     TaskHelper.Enqueue(ExitFishing, "离开钓鱼状态");
                     TaskHelper.DelayNext(5_000);
-                    TaskHelper.Enqueue(() => !DService.Instance().Condition.IsOccupiedInEvent,                                           "等待离开忙碌状态");
+                    TaskHelper.Enqueue(() => !ICondition.Instance().IsOccupiedInEvent,                                           "等待离开忙碌状态");
                     TaskHelper.Enqueue(() => ContentsFinderHelper.RequestDutyNormal(TARGET_CONTENT, ContentsFinderHelper.DefaultOption), "申请目标副本");
                     TaskHelper.Enqueue(() => ExitDuty(TARGET_CONTENT),                                                                   "离开目标副本");
                 }
@@ -153,7 +153,7 @@ public unsafe class AutoEliminateFishAwareness : ModuleBase
         if (!Throttler.Shared.Throttle("AutoEliminateFishAwareness-ExitFishing")) return false;
 
         ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Fishing, 1);
-        return !DService.Instance().Condition[ConditionFlag.Fishing];
+        return !ICondition.Instance()[ConditionFlag.Fishing];
     }
 
     private static bool ExitDuty

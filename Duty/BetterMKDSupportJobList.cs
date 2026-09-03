@@ -71,8 +71,8 @@ public unsafe class BetterMKDSupportJobList : ModuleBase
         if (isAnyNewJobOrder)
             config.Save(this);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "MKDInfo", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MKDInfo", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "MKDInfo", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "MKDInfo", OnAddon);
 
         mkdJobListAddon ??= new(this)
         {
@@ -82,7 +82,7 @@ public unsafe class BetterMKDSupportJobList : ModuleBase
             RememberClosePosition = true
         };
 
-        agentMKDSupportJobShowHook ??= DService.Instance().Hook.HookFromAddress<AgentShowDelegate>
+        agentMKDSupportJobShowHook ??= IGameInteropProvider.Instance().HookFromAddress<AgentShowDelegate>
         (
             AgentMKDSupportJob.Instance()->VirtualTable->GetVFuncByName("Show"),
             AgentMKDSupportJobShowDetour
@@ -99,7 +99,7 @@ public unsafe class BetterMKDSupportJobList : ModuleBase
         agentMKDSupportJobShowHook?.Dispose();
         agentMKDSupportJobShowHook = null;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         jobChangeButton?.Dispose();
         jobChangeButton = null;
@@ -324,7 +324,7 @@ public unsafe class BetterMKDSupportJobList : ModuleBase
             AtkUnitBase* addon
         )
         {
-            if (MKDInfo == null || DService.Instance().KeyState[VirtualKey.ESCAPE])
+            if (MKDInfo == null || IKeyState.Instance()[VirtualKey.ESCAPE])
             {
                 Close();
                 return;

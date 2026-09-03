@@ -30,9 +30,9 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "Request", OnAddonRequest);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "Request", OnAddonRequest);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "Request", OnAddonRequest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "Request", OnAddonRequest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "Request", OnAddonRequest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "Request", OnAddonRequest);
     }
 
     protected override void ConfigUI()
@@ -52,13 +52,13 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
         switch (type)
         {
             case AddonEvent.PostSetup:
-                DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
+                IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesno);
                 break;
             case AddonEvent.PostDraw:
                 OperateOnRequest();
                 break;
             case AddonEvent.PreFinalize:
-                DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
+                IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectYesno);
                 break;
         }
     }
@@ -125,8 +125,8 @@ public unsafe class AutoRequestItemSubmit : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonRequest);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonRequest);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectYesno);
     }
 
     private class Config : ModuleConfig

@@ -45,7 +45,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new() { TimeoutMS = 15_000 };
 
-        SetFlagMarkerHook ??= DService.Instance().Hook.HookFromAddress<SetFlagMarkerDelegate>
+        SetFlagMarkerHook ??= IGameInteropProvider.Instance().HookFromAddress<SetFlagMarkerDelegate>
         (
             DalamudReflector.GetMemberFuncByName(typeof(AgentMap.MemberFunctionPointers), "SetFlagMapMarker"),
             SetFlagMarkerDetour
@@ -59,14 +59,14 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         );
         AgentMapReceiveEventHook.Enable();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         FrameworkManager.Instance().Reg(OnUpdate, 3000);
     }
 
     protected override void Uninit()
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
     }
 
     protected override void ConfigUI()
@@ -86,7 +86,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
     )
     {
         SetFlagMarkerHook.Original(agent, zoneID, mapID, worldX, worldZ, iconID);
-        if (mapID != DService.Instance().ClientState.MapId || iconID != 60561) return;
+        if (mapID != IClientState.Instance().MapId || iconID != 60561) return;
 
         OnZoneChanged(0);
     }
@@ -116,7 +116,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         if (!IsFlagMarkerValid()) return;
 
         TaskHelper.Abort();
-        TaskHelper.Enqueue(() => DService.Instance().ObjectTable.LocalPlayer != null && !DService.Instance().Condition[ConditionFlag.BetweenAreas]);
+        TaskHelper.Enqueue(() => IObjectTable.Instance().LocalPlayer != null && !ICondition.Instance()[ConditionFlag.BetweenAreas]);
         TaskHelper.Enqueue
         (() =>
             {
@@ -129,7 +129,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
             {
                 var agent    = AgentMap.Instance();
                 var flagPos  = new Vector2(agent->FlagMapMarkers[0].XFloat, agent->FlagMapMarkers[0].YFloat);
-                var currentY = DService.Instance().ObjectTable.LocalPlayer?.Position.Y ?? 0;
+                var currentY = IObjectTable.Instance().LocalPlayer?.Position.Y ?? 0;
 
                 var counter = 0;
 
@@ -178,7 +178,7 @@ public unsafe class AutoHighlightFlagMarker : ModuleBase
         {
             var agent    = AgentMap.Instance();
             var flagPos  = new Vector2(agent->FlagMapMarkers[0].XFloat, agent->FlagMapMarkers[0].YFloat);
-            var currentY = DService.Instance().ObjectTable.LocalPlayer?.Position.Y ?? 0;
+            var currentY = IObjectTable.Instance().LocalPlayer?.Position.Y ?? 0;
 
             var targetPos  = flagPos.ToVector3(currentY - 2 + (counter * 5));
             var currentPos = fieldMarkerPoint.GetPosition();

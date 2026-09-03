@@ -74,10 +74,10 @@ public unsafe class AutoPeloton : ModuleBase
     {
         if (config.OnlyInDuty && GameState.ContentFinderCondition == 0) return;
         if (GameState.IsInPVPArea) return;
-        if (DService.Instance().Condition[ConditionFlag.InCombat]) return;
+        if (ICondition.Instance()[ConditionFlag.InCombat]) return;
         if (!UIModule.IsScreenReady()                       ||
-            DService.Instance().Condition.IsOccupiedInEvent ||
-            DService.Instance().ObjectTable.LocalPlayer is null)
+            ICondition.Instance().IsOccupiedInEvent ||
+            IObjectTable.Instance().LocalPlayer is null)
             return;
         if (LocalPlayerState.ClassJobData.ToJobType() != ClassJobType.PhysicalRanged)
             return;
@@ -92,7 +92,7 @@ public unsafe class AutoPeloton : ModuleBase
 
     private bool UsePeloton()
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
         var actionManager = ActionManager.Instance();
         var statusManager = localPlayer.ToStruct()->StatusManager;
 

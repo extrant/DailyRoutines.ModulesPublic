@@ -19,14 +19,14 @@ public unsafe class AutoCancelStarContributor : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().ClientState.ClassJobChanged  -= OnClassJobChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().ClassJobChanged  -= OnClassJobChanged;
 
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
@@ -37,19 +37,19 @@ public unsafe class AutoCancelStarContributor : ModuleBase
     )
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
-        DService.Instance().ClientState.ClassJobChanged -= OnClassJobChanged;
+        IClientState.Instance().ClassJobChanged -= OnClassJobChanged;
 
         if (GameState.TerritoryIntendedUse != TerritoryIntendedUse.CosmicExploration) return;
 
         FrameworkManager.Instance().Reg(OnUpdate, 10_000);
-        DService.Instance().ClientState.ClassJobChanged += OnClassJobChanged;
+        IClientState.Instance().ClassJobChanged += OnClassJobChanged;
     }
 
     private static void OnClassJobChanged
     (
         uint classJobID
     ) =>
-        OnUpdate(DService.Instance().Framework);
+        OnUpdate(IFramework.Instance());
 
     private static void OnUpdate
     (
@@ -62,7 +62,7 @@ public unsafe class AutoCancelStarContributor : ModuleBase
             return;
         }
 
-        if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (ICondition.Instance().IsBetweenAreas || IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         var statusManager = localPlayer.ToStruct()->StatusManager;
         if (!statusManager.HasStatus(STAR_CONTRIBUTOR_BUFF_ID)) return;

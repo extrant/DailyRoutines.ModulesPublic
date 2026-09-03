@@ -120,7 +120,7 @@ public unsafe class FastSetWeatherTime : ModuleBase
         UpdateBgmSituationHook ??= UpdateBgmSituationSig.GetHook<UpdateBgmSituationDelegate>(UpdateBgmSituationDetour);
         UpdateBgmSituationHook.Enable();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
         AddonDRFastSetWeather.Addon = new(this)
         {
@@ -129,17 +129,17 @@ public unsafe class FastSetWeatherTime : ModuleBase
             Size         = new(254f, 50f)
         };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_NaviMap", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_NaviMap", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_NaviMap", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_NaviMap", OnAddon);
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("FastSetWeatherTime-CommandHelp") });
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         openButton?.Dispose();
         openButton = null;
@@ -354,7 +354,7 @@ public unsafe class FastSetWeatherTime : ModuleBase
 
         try
         {
-            var file = DService.Instance().Data.GetFile<LVBFile>($"bg/{LuminaGetter.GetRowOrDefault<TerritoryType>(zoneID).Bg}.lvb");
+            var file = IDataManager.Instance().GetFile<LVBFile>($"bg/{LuminaGetter.GetRowOrDefault<TerritoryType>(zoneID).Bg}.lvb");
             if (file?.WeatherIDs == null || file.WeatherIDs.Length == 0)
                 return ([], string.Empty);
 

@@ -22,10 +22,10 @@ public class AutoNotifyDutyConfirm : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init() =>
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ContentsFinderConfirm", OnAddonSetup);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "ContentsFinderConfirm", OnAddonSetup);
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSetup);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSetup);
 
     private static unsafe void OnAddonSetup
     (

@@ -37,18 +37,18 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         stopwatch  ??= new();
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyCompleted      += OnDutyComplete;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      += OnDutyComplete;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
 
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyCompleted      -= OnDutyComplete;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      -= OnDutyComplete;
 
         ClearResources();
         stopwatch = null;
@@ -80,7 +80,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         (
             () =>
             {
-                if (DService.Instance().Condition.IsBetweenAreas || LocalPlayerState.Object == null) return false;
+                if (ICondition.Instance().IsBetweenAreas || LocalPlayerState.Object == null) return false;
 
                 if (GroupManager.Instance()->MainGroup.MemberCount < 2)
                 {
@@ -88,7 +88,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
                     return true;
                 }
 
-                DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAddon);
+                IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAddon);
                 return true;
             },
             "检查是否需要开始监控"
@@ -111,7 +111,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         {
             if (isDutyEnd) return;
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAddon);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_PartyList", OnAddon);
         }
     }
 
@@ -138,13 +138,13 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
         // 本地玩家为空, 暂时不检查
         if (LocalPlayerState.Object == null) return;
 
-        if (DService.Instance().Condition[ConditionFlag.InCombat])
+        if (ICondition.Instance()[ConditionFlag.InCombat])
         {
             // 进战时还在检查
             if (stopwatch.IsRunning)
                 CheckStopwatchAndRelay();
 
-            DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+            IAddonLifecycle.Instance().UnregisterListener(OnAddon);
             return;
         }
 
@@ -210,7 +210,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
                 member.Object    == null)
                 continue;
 
-            if (!DService.Instance().DutyState.IsDutyStarted &&
+            if (!IDutyState.Instance().IsDutyStarted &&
                 !member.Object->GetIsTargetable())
                 return true;
 
@@ -224,7 +224,7 @@ public unsafe class AutoNotifyCutsceneEnd : ModuleBase
     private void ClearResources()
     {
         TaskHelper?.Abort();
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         stopwatch?.Reset();
         isDutyEnd = false;
     }

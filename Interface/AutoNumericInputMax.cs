@@ -59,7 +59,7 @@ public unsafe class AutoNumericInputMax : ModuleBase
 
         NumericSetValue ??= Marshal.GetDelegateForFunctionPointer<NumericSetValueDelegate>(NumericSetValueSig.ScanText());
 
-        UldUpdateHook ??= DService.Instance().Hook.HookFromSignature<UldUpdateDelegate>(UldUpdateSig.Get(), UldUpdateDetour);
+        UldUpdateHook ??= IGameInteropProvider.Instance().HookFromSignature<UldUpdateDelegate>(UldUpdateSig.Get(), UldUpdateDetour);
         UldUpdateHook.Enable();
     }
 

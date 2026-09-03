@@ -1,5 +1,6 @@
 using System.Numerics;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
@@ -30,8 +31,8 @@ public partial class OccultCrescentHelper
         {
             moveTaskHelper ??= new() { TimeoutMS = 30_000 };
 
-            DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-            DService.Instance().ClientState.Logout           += OnLogout;
+            IClientState.Instance().TerritoryChanged += OnZoneChanged;
+            IClientState.Instance().Logout           += OnLogout;
 
             CommandManager.Instance().AddSubCommand
             (
@@ -47,8 +48,8 @@ public partial class OccultCrescentHelper
         {
             CommandManager.Instance().RemoveSubCommand(COMMAND_TP);
 
-            DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-            DService.Instance().ClientState.Logout           -= OnLogout;
+            IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+            IClientState.Instance().Logout           -= OnLogout;
 
             StopPathfinding();
             moveTaskHelper?.Dispose();
@@ -161,12 +162,12 @@ public partial class OccultCrescentHelper
         {
             if (aetheryte == null                                            ||
                 moveTaskHelper is not { } taskHelper                         ||
-                DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+                IObjectTable.Instance().LocalPlayer is not { } localPlayer)
                 return false;
 
             StopPathfinding();
             ChatManager.Instance().SendMessage("/automove off");
-            if (DService.Instance().Condition[ConditionFlag.Mounted])
+            if (ICondition.Instance()[ConditionFlag.Mounted])
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
 
             // 以太之光传送走了
@@ -182,7 +183,7 @@ public partial class OccultCrescentHelper
                     out var eventID,
                     out var eventObjectID
                 ) &&
-                DService.Instance().ObjectTable.SearchByID(eventObjectID) is { } targetObj)
+                IObjectTable.Instance().SearchByID(eventObjectID) is { } targetObj)
             {
                 var distanceSQ = LocalPlayerState.DistanceTo3DSquared(targetObj.Position);
 
@@ -192,7 +193,7 @@ public partial class OccultCrescentHelper
                     taskHelper.Enqueue
                     (() =>
                         {
-                            if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
+                            if (ICondition.Instance()[ConditionFlag.Mounted]) return false;
 
                             new EventStartPackt(eventObjectID, eventID).Send();
                             new EventCompletePackt(721820, 16777216, aetheryte.DataID).Send();
@@ -204,14 +205,14 @@ public partial class OccultCrescentHelper
                 }
 
                 // 启用了绿玩移动
-                if (DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
+                if (IDalamudPluginInterface.Instance().IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) &&
                     distanceSQ <= USE_AETHERYTE_DISTANCE_SQ)
                 {
                     taskHelper.Enqueue
                     (() =>
                         {
                             // 已经在坐骑上
-                            if (DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                            if (ICondition.Instance()[ConditionFlag.Mounted]) return true;
 
                             if (distanceSQ <= 30f * 30f)
                             {
@@ -262,7 +263,7 @@ public partial class OccultCrescentHelper
 
                             vnavmeshIPC.StopPathfind();
 
-                            if (!DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                            if (!ICondition.Instance()[ConditionFlag.Mounted]) return true;
                             if (!Throttler.Shared.Throttle("OccultCrescentHelper-AetheryteManager-Dismount"))
                                 return false;
 
@@ -274,7 +275,7 @@ public partial class OccultCrescentHelper
                     taskHelper.Enqueue
                     (() =>
                         {
-                            if (DService.Instance().Condition[ConditionFlag.Mounted]) return false;
+                            if (ICondition.Instance()[ConditionFlag.Mounted]) return false;
 
                             new EventStartPackt(eventObjectID, eventID).Send();
                             new EventCompletePackt(721820, 16777216, aetheryte.DataID).Send();

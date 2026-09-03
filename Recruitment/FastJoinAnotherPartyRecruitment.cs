@@ -30,21 +30,21 @@ public unsafe class FastJoinAnotherPartyRecruitment : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 10_000 };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw,     "LookingForGroupDetail", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "LookingForGroupDetail", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreDraw,     "LookingForGroupDetail", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "LookingForGroupDetail", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroupDetail", OnAddon);
         if (LookingForGroupDetail->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PreRefresh, null);
 
         if (LookingForGroup->IsAddonAndNodesReady())
             AgentId.LookingForGroup.SendEvent(1, 17);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonYesno);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon, OnAddonYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon, OnAddonYesno);
 
         button?.Dispose();
         button = null;

@@ -44,12 +44,12 @@ public unsafe partial class AutoRecordPartyFinderSetting : ModuleBase
             RememberClosePosition = false
         };
 
-        DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PreReceiveEvent, AgentId.LookingForGroup, OnAgent);
+        IAgentLifecycle.Instance().RegisterListener(AgentEvent.PreReceiveEvent, AgentId.LookingForGroup, OnAgent);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
+        IAgentLifecycle.Instance().UnregisterListener(OnAgent);
 
         addon?.Dispose();
         addon = null;

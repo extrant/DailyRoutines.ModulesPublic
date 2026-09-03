@@ -126,15 +126,15 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
 
             Timeline?.PlayAnimation(1);
 
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer)
             {
                 IsVisible = false;
                 return;
             }
 
-            IsVisible = !DService.Instance().Condition[ConditionFlag.Occupied38]                                   &&
-                        (!moduleConfig.OnlyInCombat   || DService.Instance().Condition[ConditionFlag.InCombat])    &&
-                        (!moduleConfig.OnlyInDuty     || DService.Instance().Condition[ConditionFlag.BoundByDuty]) &&
+            IsVisible = !ICondition.Instance()[ConditionFlag.Occupied38]                                   &&
+                        (!moduleConfig.OnlyInCombat   || ICondition.Instance()[ConditionFlag.InCombat])    &&
+                        (!moduleConfig.OnlyInDuty     || ICondition.Instance()[ConditionFlag.BoundByDuty]) &&
                         (!moduleConfig.OnlyUnsheathed || IsWeaponUnsheathed());
 
             if (!IsVisible)
@@ -145,7 +145,7 @@ public unsafe class AutoDisplayPlayerHitbox : ModuleBase
             float cos    = MathF.Cos(angle), sin = MathF.Sin(angle);
 
             var rotatedOffset = new Vector3((cos * offset.X) - (sin * offset.Z), offset.Y, (sin * offset.X) + (cos * offset.Z));
-            DService.Instance().GameGUI.WorldToScreen(localPlayer.Position + rotatedOffset, out var screenPos);
+            IGameGui.Instance().WorldToScreen(localPlayer.Position + rotatedOffset, out var screenPos);
 
             Position = screenPos - (imageNode.Size / 2f);
         }

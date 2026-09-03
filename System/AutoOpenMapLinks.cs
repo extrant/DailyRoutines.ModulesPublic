@@ -37,14 +37,14 @@ public partial class AutoOpenMapLinks : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().Chat.ChatMessage         += HandleChatMessage;
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpen;
+        IChatGui.Instance().ChatMessage         += HandleChatMessage;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpen;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Chat.ChatMessage         -= HandleChatMessage;
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpen;
+        IChatGui.Instance().ChatMessage         -= HandleChatMessage;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpen;
     }
 
     protected override void ConfigUI()
@@ -220,7 +220,7 @@ public partial class AutoOpenMapLinks : ModuleBase
     )
     {
         if (!config.IsFlagCentered)
-            DService.Instance().GameGUI.OpenMapWithMapLink(new(territoryID, mapID, x, y));
+            IGameGui.Instance().OpenMapWithMapLink(new(territoryID, mapID, x, y));
         else
         {
             var agentMap = AgentMap.Instance();

@@ -29,16 +29,16 @@ public class AutoUmbralSoul : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     private bool CheckCurrentJob()
@@ -71,7 +71,7 @@ public class AutoUmbralSoul : ModuleBase
             return true;
         }
 
-        var gauge = DService.Instance().JobGauges.Get<BLMGauge>();
+        var gauge = IJobGauges.Instance().Get<BLMGauge>();
 
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null) return false;

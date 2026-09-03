@@ -6,7 +6,6 @@ using Dalamud.Game.Agent;
 using Dalamud.Game.Agent.AgentArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
-using Dalamud.Interface.Components;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Common.Lua;
@@ -35,33 +34,27 @@ public unsafe class AutoCutsceneSkip : ModuleBase
     public override ModulePermission Permission { get; } = new() { NeedAuth = true };
 
     private static readonly CompSig CutsceneHandleInputSig = new("E8 ?? ?? ?? ?? 44 0F B6 E0 48 8B 4E 08");
-
     private delegate byte CutsceneHandleInputDelegate
     (
         nint  a1,
         float a2
     );
-
     private Hook<CutsceneHandleInputDelegate>? CutsceneHandleInputHook;
 
     private static readonly CompSig PlayCutsceneSig = new("40 53 55 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B 59");
-
     private delegate nint PlayCutsceneDelegate
     (
         EventFramework* a1,
         lua_State*      state
     );
-
     private Hook<PlayCutsceneDelegate>? PlayCutsceneHook;
 
     private static readonly CompSig IsCutsceneSeenSig = new("E8 ?? ?? ?? ?? 33 D2 0F B6 CB 3A C3");
-
     private delegate bool IsCutsceneSeenDelegate
     (
         UIState* state,
         uint     cutsceneID
     );
-
     private Hook<IsCutsceneSeenDelegate>? IsCutsceneSeenHook;
 
     private static readonly CompSig LuaBaseSig01 = new
@@ -77,12 +70,13 @@ public unsafe class AutoCutsceneSkip : ModuleBase
     private Hook<LuaFunctionDelegate>? PlayStaffRollHook;
     private Hook<LuaFunctionDelegate>? PlayToBeContinuedHook;
     private Hook<LuaFunctionDelegate>? IsEnterTerritoryEventLoginHook;
+    
 
+    private static readonly CompSig PushAgentResultToLuaSig = new("40 53 48 83 EC ?? 0F B6 41 ?? 48 8B D9 A8 ?? 74 ?? 24 ?? 88 41 ?? 48 83 3D");
     private delegate void PushAgentResultToLuaDelegate
     (
         void* agent
     );
-
     private PushAgentResultToLuaDelegate PushAgentResultToLua = null!;
 
     private MemoryPatch cutsceneUnskippablePatch = null!;
@@ -94,10 +88,10 @@ public unsafe class AutoCutsceneSkip : ModuleBase
 
     protected override void Init()
     {
-        PushAgentResultToLua = new CompSig("40 53 48 83 EC ?? 0F B6 41 ?? 48 8B D9 A8 ?? 74 ?? 24 ?? 88 41 ?? 48 83 3D").GetDelegate<PushAgentResultToLuaDelegate>();
+        PushAgentResultToLua     = PushAgentResultToLuaSig.GetDelegate<PushAgentResultToLuaDelegate>();
         cutsceneUnskippablePatch = new("75 ?? 48 8B 4B ?? 48 8B 01 FF 50 ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 80 7B", [0xEB]);
-        whitelistZoneCombo = new("Whitelist");
-        blacklistZoneCombo = new("Blacklist");
+        whitelistZoneCombo       = new("Whitelist");
+        blacklistZoneCombo       = new("Blacklist");
 
         config = Config.Load(this) ?? new();
 
@@ -111,37 +105,37 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         IsCutsceneSeenHook      ??= IsCutsceneSeenSig.GetHook<IsCutsceneSeenDelegate>(IsCutsceneSeenDetour);
 
         var baseAddress01 = LuaBaseSig01.ScanText();
-        PlayCutsceneLuaHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>
+        PlayCutsceneLuaHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>
         (
             baseAddress01.GetLuaFunctionByName("PlayCutScene"),
             LuaFunctionDetour
         );
 
         var baseAddress02 = LuaBaseSig02.ScanText();
-        PlayStaffRollHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>
+        PlayStaffRollHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>
         (
             baseAddress02.GetLuaFunctionByName("PlayStaffRoll"),
             LuaFunction2Detour
         );
-        PlayToBeContinuedHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>
+        PlayToBeContinuedHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>
         (
             baseAddress02.GetLuaFunctionByName("PlayToBeContinued"),
             LuaFunction2Detour
         );
-        IsEnterTerritoryEventLoginHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>
+        IsEnterTerritoryEventLoginHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>
         (
             baseAddress02.GetLuaFunctionByName("IsEnterTerritoryEventLogin"),
             LuaFunction2Detour
         );
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IAgentLifecycle.Instance().UnregisterListener(OnAgent);
     }
 
     protected override void ConfigUI()
@@ -212,13 +206,11 @@ public unsafe class AutoCutsceneSkip : ModuleBase
 
         if (isValidCurrentZone)
         {
-            // BeginPlayCutscenePatch.Enable();
-            DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PostReceiveEvent, AgentId.PointMenu, OnAgent);
+            IAgentLifecycle.Instance().RegisterListener(AgentEvent.PostReceiveEvent, AgentId.PointMenu, OnAgent);
         }
         else
         {
-            DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
-            // BeginPlayCutscenePatch.Disable();
+            IAgentLifecycle.Instance().UnregisterListener(OnAgent);
         }
     }
 
@@ -258,7 +250,7 @@ public unsafe class AutoCutsceneSkip : ModuleBase
         float a2
     )
     {
-        if (!DService.Instance().Condition[ConditionFlag.OccupiedInCutSceneEvent])
+        if (!ICondition.Instance()[ConditionFlag.OccupiedInCutSceneEvent])
             return CutsceneHandleInputHook.Original(a1, a2);
 
         if (*(ulong*)(a1 + 56) != 0 && JournalResult == null && SatisfactionSupplyResult == null)

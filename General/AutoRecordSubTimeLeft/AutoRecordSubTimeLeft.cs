@@ -60,7 +60,7 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         tracker = new PlaytimeTracker(storePath, legacyPath);
         tracker.Start();
 
-        entry         ??= DService.Instance().DTRBar.Get("DailyRoutines-GameTimeLeft");
+        entry         ??= IDtrBar.Instance().Get("DailyRoutines-GameTimeLeft");
         entry.OnClick =   OnDTREntryClick;
 
         UpdateEntryAndTimeInfo();
@@ -68,24 +68,24 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
         AgentLobbyOnLoginHook ??= AgentLobbyOnLoginSig.GetHook<AgentLobbyOnLoginDelegate>(AgentLobbyOnLoginDetour);
         AgentLobbyOnLoginHook.Enable();
 
-        DService.Instance().ClientState.Login  += OnLogin;
-        DService.Instance().ClientState.Logout += OnLogout;
+        IClientState.Instance().Login  += OnLogin;
+        IClientState.Instance().Logout += OnLogout;
 
         FrameworkManager.Instance().Reg(OnUpdate, 5_000);
-
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "CharaSelect",        OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "CharaSelect",        OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_CharaSelectRemain", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,            "_CharaSelectRemain", OnAddon);
+        
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "CharaSelect",        OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "CharaSelect",        OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_CharaSelectRemain", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,            "_CharaSelectRemain", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         FrameworkManager.Instance().Unreg(OnUpdate);
 
-        DService.Instance().ClientState.Login  -= OnLogin;
-        DService.Instance().ClientState.Logout -= OnLogout;
+        IClientState.Instance().Login  -= OnLogin;
+        IClientState.Instance().Logout -= OnLogout;
 
         AgentLobbyOnLoginHook?.Disable();
 
@@ -246,7 +246,7 @@ public partial class AutoRecordSubTimeLeft : ModuleBase
             contentID = LocalPlayerState.ContentID;
 
         if (contentID == 0                                        ||
-            DService.Instance().Condition[ConditionFlag.InCombat] ||
+            ICondition.Instance()[ConditionFlag.InCombat] ||
             !config.Infos.TryGetValue(contentID, out var info)    ||
             info.Record == DateTime.MinValue                      ||
             (info.LeftMonth == TimeSpan.MinValue && info.LeftTime == TimeSpan.MinValue))

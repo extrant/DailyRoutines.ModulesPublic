@@ -35,12 +35,12 @@ public unsafe class AutoRepeatChatMessage : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().Chat.ChatMessage += OnChat;
+        IChatGui.Instance().ChatMessage += OnChat;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Chat.ChatMessage -= OnChat;
+        IChatGui.Instance().ChatMessage -= OnChat;
         savedPayload.Clear();
     }
 

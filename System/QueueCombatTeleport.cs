@@ -54,12 +54,12 @@ public unsafe class QueueCombatTeleport : ModuleBase
 
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
         ExecuteCommandManager.Instance().RegPre(OnPreUseCommand);
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
         ExecuteCommandManager.Instance().Unreg(OnPreUseCommand);
         UseActionManager.Instance().Unreg(OnPreUseAction);
 
@@ -96,7 +96,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
     {
         if (actionType != ActionType.GeneralAction || actionID != 7) return;
         if (GameMain.Instance()->CurrentContentFinderConditionId != 0) return;
-        if (!DService.Instance().Condition[ConditionFlag.InCombat]) return;
+        if (!ICondition.Instance()[ConditionFlag.InCombat]) return;
         if (ModuleManager.Instance().IsModuleEnabled("BetterTeleport") ?? false) return;
 
         var agent = AgentTeleport.Instance();
@@ -117,7 +117,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
         ref uint               param4
     )
     {
-        if (command != ExecuteCommandFlag.Teleport || isPrevented || !DService.Instance().Condition[ConditionFlag.InCombat]) return;
+        if (command != ExecuteCommandFlag.Teleport || isPrevented || !ICondition.Instance()[ConditionFlag.InCombat]) return;
         isPrevented    = true;
         queuedTeleport = new(param1, param3);
         Notify(QueueTeleportNotifyType.Save);
@@ -136,7 +136,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
 
         if (currentFate != null)
             TaskHelper.Enqueue(() => FateManager.Instance()->CurrentFate == null);
-        TaskHelper.Enqueue(() => !DService.Instance().Condition[ConditionFlag.InCombat]);
+        TaskHelper.Enqueue(() => !ICondition.Instance()[ConditionFlag.InCombat]);
 
         if (config.Delay > 0)
         {
@@ -169,7 +169,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
         {
             case QueueTeleportNotifyType.Save when queuedTeleport != null:
                 var qualifiedAetheryteSaved =
-                    DService.Instance().AetheryteList.FirstOrDefault
+                    IAetheryteList.Instance().FirstOrDefault
                     (x => x.AetheryteID == queuedTeleport.Value.ID &&
                           x.SubIndex    == queuedTeleport.Value.SubID
                     );
@@ -182,7 +182,7 @@ public unsafe class QueueCombatTeleport : ModuleBase
                 break;
             case QueueTeleportNotifyType.Execute when queuedTeleport != null:
                 var qualifiedAetheryteExecuted =
-                    DService.Instance().AetheryteList.FirstOrDefault
+                    IAetheryteList.Instance().FirstOrDefault
                     (x => x.AetheryteID == queuedTeleport.Value.ID &&
                           x.SubIndex    == queuedTeleport.Value.SubID
                     );

@@ -35,16 +35,16 @@ public unsafe class AutoUseMountAction : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
         UseActionManager.Instance().RegPostUseActionLocation(OnPostUseAction);
 
-        if (DService.Instance().Condition[ConditionFlag.Mounted])
+        if (ICondition.Instance()[ConditionFlag.Mounted])
             OnConditionChanged(ConditionFlag.Mounted, true);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
         UseActionManager.Instance().Unreg(OnPostUseAction);
 
         TaskHelper?.Abort();
@@ -192,7 +192,7 @@ public unsafe class AutoUseMountAction : ModuleBase
                 TaskHelper.Abort();
             else
             {
-                if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer ||
+                if (IObjectTable.Instance().LocalPlayer is not { } localPlayer ||
                     !config.MountActions.ContainsKey(localPlayer.CurrentMount?.RowId ?? 0)) return;
                 TaskHelper.Enqueue(UseAction);
             }
@@ -202,7 +202,7 @@ public unsafe class AutoUseMountAction : ModuleBase
         {
             if (value)
             {
-                if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer ||
+                if (IObjectTable.Instance().LocalPlayer is not { } localPlayer ||
                     !config.MountActions.ContainsKey(localPlayer.CurrentMount?.RowId ?? 0)) return;
                 TaskHelper.Enqueue(UseAction);
             }
@@ -223,7 +223,7 @@ public unsafe class AutoUseMountAction : ModuleBase
     )
     {
         if (actionType != ActionType.Action) return;
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         var mountID = localPlayer.CurrentMount?.RowId ?? 0;
         if (!config.MountActions.TryGetValue(mountID, out var action) || action.ActionID != actionID) return;
@@ -233,7 +233,7 @@ public unsafe class AutoUseMountAction : ModuleBase
 
     private bool UseAction()
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return true;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return true;
 
         var mountID = localPlayer.CurrentMount?.RowId ?? 0;
         if (!config.MountActions.TryGetValue(mountID, out var action)) return true;

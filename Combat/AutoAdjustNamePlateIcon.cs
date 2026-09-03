@@ -27,11 +27,11 @@ public unsafe class AutoAdjustNamePlateIcon : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRequestedUpdate, "NamePlate", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRequestedUpdate, "NamePlate", OnAddon);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
     {

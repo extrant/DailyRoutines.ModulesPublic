@@ -56,16 +56,16 @@ public unsafe class AutoDisplayMarkerInPartyList : ModuleBase
         UpdateMarkerLocalHook = UpdateMarkerLocalSig.GetHook<UpdateMarkerLocalDelegate>(UpdateMarkerLocalDetour);
         UpdateMarkerLocalHook.Enable();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_PartyList", OnPartyList);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_PartyList", OnPartyList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "_PartyList", OnPartyList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "_PartyList", OnPartyList);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnPartyList);
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IAddonLifecycle.Instance().UnregisterListener(OnPartyList);
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         ModifyPartyMemberNumber(true);
 

@@ -141,7 +141,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         using (ImRaii.PushIndent())
             ImGui.TextWrapped($"{Lang.Get($"AutoFaceCameraDirection-WorkMode{config.WorkMode}")}");
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
         ImGui.NewLine();
 
@@ -201,7 +201,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
 
         var arguments = args.Split(' ');
 
-        if (arguments.Length is not (1 or 2) || DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+        if (arguments.Length is not (1 or 2) || IObjectTable.Instance().LocalPlayer is not { } localPlayer)
         {
             NotifyCommandError();
             return;
@@ -276,7 +276,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         uint       extraParam,
         byte       a7
     ) =>
-        OnUpdate(DService.Instance().Framework);
+        OnUpdate(IFramework.Instance());
 
     private void SetRotationDetour
     (
@@ -307,7 +307,7 @@ public unsafe class AutoFaceCameraDirection : ModuleBase
         var localPlayer = Control.GetLocalPlayer();
         if (localPlayer == null || localPlayer->Health <= 0) return;
 
-        if (ShouldSkipUpdate() || DService.Instance().Condition[ConditionFlag.Casting]) return;
+        if (ShouldSkipUpdate() || ICondition.Instance()[ConditionFlag.Casting]) return;
 
         var currentTick = Environment.TickCount64;
         var isDuty      = GameState.ContentFinderCondition != 0;

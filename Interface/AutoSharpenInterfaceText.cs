@@ -30,7 +30,7 @@ public unsafe class AutoSharpenInterfaceText : ModuleBase
     private Hook<AtkTextNodeSetTextDelegate> AtkTextNodeSetTextHook;
 
     private static uint UIHighScaleMode =>
-        DService.Instance().GameConfig.System.GetUInt("UiHighScale");
+        IGameConfig.Instance().System.GetUInt("UiHighScale");
 
     protected override void Init()
     {

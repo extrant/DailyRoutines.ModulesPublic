@@ -56,11 +56,11 @@ public unsafe class AutoHideBanners : ModuleBase
         SetImageHook = SetImageSig.GetHook<SetImageDelegate>(SetImageDetour);
         SetImageHook.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "_WKSMissionChain", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreDraw, "_WKSMissionChain", OnAddon);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
     {

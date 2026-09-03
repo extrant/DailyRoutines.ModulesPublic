@@ -32,22 +32,22 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", UpdateTargetInfo);
-        DService.Instance().AddonLifecycle.RegisterListener
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_TargetInfo", UpdateTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener
         (
             AddonEvent.PostRequestedUpdate,
             "_TargetInfoMainTarget",
             UpdateTargetInfoMainTarget
         );
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", UpdateFocusTargetInfo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_FocusTargetInfo", UpdateFocusTargetInfo);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(UpdateTargetInfo);
-        DService.Instance().AddonLifecycle.UnregisterListener(UpdateTargetInfoMainTarget);
-        DService.Instance().AddonLifecycle.UnregisterListener(UpdateFocusTargetInfo);
+        IAddonLifecycle.Instance().UnregisterListener(UpdateTargetInfo);
+        IAddonLifecycle.Instance().UnregisterListener(UpdateTargetInfoMainTarget);
+        IAddonLifecycle.Instance().UnregisterListener(UpdateFocusTargetInfo);
     }
 
     protected override void ConfigUI()
@@ -119,7 +119,7 @@ public unsafe class PlayerTargetInfoExpand : ModuleBase
                     if (ImGui.InputText($"###{categoryTitle}", ref configField, 64))
                         config.Save(this);
 
-                    if (DService.Instance().ObjectTable.LocalPlayer is ICharacter chara)
+                    if (IObjectTable.Instance().LocalPlayer is ICharacter chara)
                     {
                         ImGui.TableNextRow();
 

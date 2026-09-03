@@ -37,14 +37,14 @@ public class AutoLeaveDuty : ModuleBase
 
         LogMessageManager.Instance().RegPre(OnPreReceiveLogmessage);
 
-        DService.Instance().DutyState.DutyCompleted      += OnDutyComplete;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      += OnDutyComplete;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().DutyState.DutyCompleted      -= OnDutyComplete;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyCompleted      -= OnDutyComplete;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         LogMessageManager.Instance().Unreg(OnPreReceiveLogmessage);
     }
@@ -122,7 +122,7 @@ public class AutoLeaveDuty : ModuleBase
 
         if (!config.ForceToLeave)
         {
-            TaskHelper.Enqueue(() => !DService.Instance().Condition[ConditionFlag.InCombat]);
+            TaskHelper.Enqueue(() => !ICondition.Instance()[ConditionFlag.InCombat]);
             TaskHelper.Enqueue(() => DutyCommand.Leave());
         }
         else

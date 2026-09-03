@@ -62,12 +62,12 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         SetContentRouletteRoleBonusHook ??= SetContentRouletteRoleBonusSig.GetHook<SetContentRouletteRoleBonusDelegate>(SetContentRouletteRoleBonusDetour);
         SetContentRouletteRoleBonusHook.Enable();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         foreach (var payload in rouletteLinkPayloads.Values)
             LinkPayloadManager.Instance().Unreg(payload.CommandId);
         rouletteLinkPayloads.Clear();
@@ -111,19 +111,19 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         ImGui.TextUnformatted(LuminaWrapper.GetAddonText(8605));
 
         ImGui.TableNextColumn();
-        if (DService.Instance().Texture.TryGetFromGameIcon(new(62581), out var tankIcon))
+        if (ITextureProvider.Instance().TryGetFromGameIcon(new(62581), out var tankIcon))
             ImGui.Image(tankIcon.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeightWithSpacing()));
         else
             ImGui.TextUnformatted("-");
 
         ImGui.TableNextColumn();
-        if (DService.Instance().Texture.TryGetFromGameIcon(new(62582), out var healerIcon))
+        if (ITextureProvider.Instance().TryGetFromGameIcon(new(62582), out var healerIcon))
             ImGui.Image(healerIcon.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeightWithSpacing()));
         else
             ImGui.TextUnformatted("-");
 
         ImGui.TableNextColumn();
-        if (DService.Instance().Texture.TryGetFromGameIcon(new(62583), out var dpsIcon))
+        if (ITextureProvider.Instance().TryGetFromGameIcon(new(62583), out var dpsIcon))
             ImGui.Image(dpsIcon.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeightWithSpacing()));
         else
             ImGui.TextUnformatted("-");
@@ -213,7 +213,7 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
     )
     {
         TaskHelper.Abort();
-        TaskHelper.Enqueue(() => UIModule.IsScreenReady() && !DService.Instance().Condition.IsBetweenAreas);
+        TaskHelper.Enqueue(() => UIModule.IsScreenReady() && !ICondition.Instance().IsBetweenAreas);
         TaskHelper.Enqueue
         (() =>
             {
@@ -440,7 +440,7 @@ public unsafe class AutoNotifyRouletteBonus : ModuleBase
         out Vector2              invTexSize
     )
     {
-        texture = DService.Instance().Texture.GetFromGame(path).GetWrapOrDefault();
+        texture = ITextureProvider.Instance().GetFromGame(path).GetWrapOrDefault();
 
         if (texture == null)
         {

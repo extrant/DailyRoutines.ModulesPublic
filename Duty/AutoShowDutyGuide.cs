@@ -35,13 +35,13 @@ public class AutoShowDutyGuide : ModuleBase
         Overlay.Flags           |=  ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavInputs;
         Overlay.ShowCloseButton =   false;
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChange;
+        IClientState.Instance().TerritoryChanged += OnZoneChange;
         OnZoneChange(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChange;
+        IClientState.Instance().TerritoryChanged -= OnZoneChange;
         guideData.Clear();
     }
 
@@ -52,7 +52,7 @@ public class AutoShowDutyGuide : ModuleBase
         if (ImGui.IsItemDeactivatedAfterEdit())
             config.Save(this);
 
-        using (ImRaii.Disabled(DService.Instance().Condition.IsBoundByDuty))
+        using (ImRaii.Disabled(ICondition.Instance().IsBoundByDuty))
         {
             if (ImGui.Checkbox("调试模式", ref isOnDebug))
             {
@@ -73,7 +73,7 @@ public class AutoShowDutyGuide : ModuleBase
 
     protected override void OverlayPreDraw()
     {
-        if (!isOnDebug && (!DService.Instance().Condition.IsBoundByDuty || guideData.Count <= 0))
+        if (!isOnDebug && (!ICondition.Instance().IsBoundByDuty || guideData.Count <= 0))
         {
             Overlay.IsOpen = false;
             guideData.Clear();

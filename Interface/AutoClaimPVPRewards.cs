@@ -28,15 +28,15 @@ public unsafe class AutoClaimPVPRewards : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "PvpReward", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "PvpReward", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "PvpReward", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "PvpReward", OnAddon);
         if (PvpReward != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         claimAllEvent?.Dispose();
         claimAllEvent = null;

@@ -25,14 +25,14 @@ public class AutoSummonPet : ModuleBase
     {
         TaskHelper ??= new TaskHelper { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
     }
 
     // 重新挑战
@@ -61,10 +61,10 @@ public class AutoSummonPet : ModuleBase
 
     private unsafe bool CheckCurrentJob()
     {
-        if (DService.Instance().Condition.IsBetweenAreas         ||
+        if (ICondition.Instance().IsBetweenAreas         ||
             !UIModule.IsScreenReady()                            ||
-            DService.Instance().Condition[ConditionFlag.Casting] ||
-            DService.Instance().ObjectTable.LocalPlayer is not { IsTargetable: true } localPlayer) return false;
+            ICondition.Instance()[ConditionFlag.Casting] ||
+            IObjectTable.Instance().LocalPlayer is not { IsTargetable: true } localPlayer) return false;
 
         if (!SummonActions.TryGetValue(LocalPlayerState.ClassJob, out var actionID))
         {

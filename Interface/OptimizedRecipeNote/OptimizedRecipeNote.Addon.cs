@@ -54,7 +54,7 @@ public partial class OptimizedRecipeNote
                 Addon = null;
             }
 
-            OpenAddonTask = DService.Instance().Framework.RunOnTick
+            OpenAddonTask = IFramework.Instance().RunOnTick
             (
                 () =>
                 {
@@ -275,7 +275,7 @@ public partial class OptimizedRecipeNote
 
                         th.Enqueue(() => Synthesis == null);
 
-                        th.Enqueue(() => DService.Instance().Condition[ConditionFlag.PreparingToCraft]);
+                        th.Enqueue(() => ICondition.Instance()[ConditionFlag.PreparingToCraft]);
 
                         th.DelayNext(300);
                     }
@@ -365,7 +365,7 @@ public partial class OptimizedRecipeNote
                 };
                 dragDropNode.OnClicked = _ =>
                 {
-                    if (DService.Instance().Condition[ConditionFlag.ExecutingCraftingAction] ||
+                    if (ICondition.Instance()[ConditionFlag.ExecutingCraftingAction] ||
                         (TaskHelper.TryGetTarget(out var th) && th.IsBusy))
                         return;
 
@@ -405,7 +405,7 @@ public partial class OptimizedRecipeNote
             AtkUnitBase* addon
         )
         {
-            if (DService.Instance().KeyState[VirtualKey.ESCAPE])
+            if (IKeyState.Instance()[VirtualKey.ESCAPE])
             {
                 Close();
 
@@ -443,14 +443,14 @@ public partial class OptimizedRecipeNote
                 th.Enqueue
                 (() =>
                     {
-                        if (DService.Instance().Condition[ConditionFlag.ExecutingCraftingAction]) return true;
+                        if (ICondition.Instance()[ConditionFlag.ExecutingCraftingAction]) return true;
 
                         ChatManager.Instance().SendMessage($"/ac {LuminaWrapper.GetActionName(x)}");
                         return false;
                     }
                 );
                 th.Enqueue(() => Nodes[i].Alpha = 0.2f);
-                th.Enqueue(() => !DService.Instance().Condition[ConditionFlag.ExecutingCraftingAction]);
+                th.Enqueue(() => !ICondition.Instance()[ConditionFlag.ExecutingCraftingAction]);
             }
         }
 

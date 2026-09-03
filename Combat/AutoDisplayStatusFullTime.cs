@@ -35,7 +35,7 @@ public unsafe class AutoDisplayStatusFullTime : ModuleBase
 
         updateIntervalPatch.Enable();
 
-        FormatTimeSpanHook = DService.Instance().Hook.HookFromMemberFunction<RaptureTextModule.Delegates.FormatTimeSpan>
+        FormatTimeSpanHook = IGameInteropProvider.Instance().HookFromMemberFunction<RaptureTextModule.Delegates.FormatTimeSpan>
         (
             typeof(RaptureTextModule.MemberFunctionPointers),
             "FormatTimeSpan",

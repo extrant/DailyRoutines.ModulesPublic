@@ -178,8 +178,8 @@ public class AutoHighlightCursor : ModuleBase
             if (moduleConfig is { OnlyShowInCombat: true } or { OnlyShowInDuty: true })
             {
                 var shouldShow = true;
-                shouldShow &= !moduleConfig.OnlyShowInCombat || DService.Instance().Condition[ConditionFlag.InCombat];
-                shouldShow &= !moduleConfig.OnlyShowInDuty   || DService.Instance().Condition.IsBoundByDuty;
+                shouldShow &= !moduleConfig.OnlyShowInCombat || ICondition.Instance()[ConditionFlag.InCombat];
+                shouldShow &= !moduleConfig.OnlyShowInDuty   || ICondition.Instance().IsBoundByDuty;
                 shouldShow &= !moduleConfig.HideOnCameraMove || (!isLeftHeld && !isRightHeld);
 
                 IsVisible = shouldShow;

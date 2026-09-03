@@ -29,8 +29,8 @@ public class WeeklyBingoClickToOpen : ModuleBase
 
     protected override unsafe void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyBingo", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "WeeklyBingo", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "WeeklyBingo", OnAddon);
 
         if (WeeklyBingo->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
@@ -38,7 +38,7 @@ public class WeeklyBingoClickToOpen : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         OnAddon(AddonEvent.PreFinalize, null);
     }
 
@@ -55,7 +55,7 @@ public class WeeklyBingoClickToOpen : ModuleBase
                 {
                     if (eventHandles[index] is { } handle)
                     {
-                        DService.Instance().AddonEvent.RemoveEvent(handle);
+                        IAddonEventManager.Instance().RemoveEvent(handle);
                         eventHandles[index] = null;
                     }
                 }
@@ -69,7 +69,7 @@ public class WeeklyBingoClickToOpen : ModuleBase
                 foreach (var index in Enumerable.Range(0, 16))
                 {
                     var dutySlot = addon->DutySlotList[index];
-                    var handle = DService.Instance().AddonEvent.AddEvent
+                    var handle = IAddonEventManager.Instance().AddEvent
                         ((nint)addon, (nint)dutySlot.DutyButton->OwnerNode, AddonEventType.ButtonClick, OnDutySlotClick);
                     eventHandles[index] = handle;
                 }
@@ -91,7 +91,7 @@ public class WeeklyBingoClickToOpen : ModuleBase
         if (agent == null) return;
 
         // 副本内无法打开
-        if (DService.Instance().Condition.IsBoundByDuty) return;
+        if (ICondition.Instance().IsBoundByDuty) return;
 
         var tileIndex    = (int)dutyButtonNode->NodeId - 12;
         var selectedTask = PlayerState.Instance()->GetWeeklyBingoTaskStatus(tileIndex);

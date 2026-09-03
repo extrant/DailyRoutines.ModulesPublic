@@ -25,15 +25,15 @@ public unsafe class AutoMiniCactpot : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "LotteryDaily", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LotteryDaily", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "LotteryDaily", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LotteryDaily", OnAddon);
         if (LotteryDaily != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 

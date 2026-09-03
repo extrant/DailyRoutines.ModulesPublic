@@ -284,11 +284,11 @@ public unsafe partial class BetterTeleport
                 TaskHelper.Enqueue
                 (() =>
                     {
-                        if (MovementManager.Instance().IsManagerBusy || DService.Instance().ObjectTable.LocalPlayer == null)
+                        if (MovementManager.Instance().IsManagerBusy || IObjectTable.Instance().LocalPlayer == null)
                             return false;
 
                         MovementManager.Instance().TPGround();
-                        if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition[ConditionFlag.Jumping])
+                        if (ICondition.Instance().IsBetweenAreas || ICondition.Instance()[ConditionFlag.Jumping])
                             return false;
 
                         return true;
@@ -298,11 +298,11 @@ public unsafe partial class BetterTeleport
             else
             {
                 TaskHelper.Enqueue(() => AetheryteRecordManager.Instance().GetNearestAetheryte(contextMenuTargetZone, contextMenuTargetPos)?.TeleportTo());
-                TaskHelper.Enqueue(() => DService.Instance().Condition.IsBetweenAreas && DService.Instance().ObjectTable.LocalPlayer != null);
+                TaskHelper.Enqueue(() => ICondition.Instance().IsBetweenAreas && IObjectTable.Instance().LocalPlayer != null);
                 TaskHelper.Enqueue
                 (() =>
                     {
-                        if (!DService.Instance().Condition.IsBetweenAreas) return true;
+                        if (!ICondition.Instance().IsBetweenAreas) return true;
                         MovementManager.Instance().TPSmart_InZone(contextMenuTargetPos, false);
                         return false;
                     }
@@ -345,7 +345,7 @@ public unsafe partial class BetterTeleport
         using (FontManager.Instance().UIFont60.Push())
             gilUnitWidth = ImGui.CalcTextSize(gilUnit).X;
 
-        var gilIcon      = DService.Instance().Texture.GetFromGameIcon(LuminaWrapper.GetItemIconID(GIL_ITEM_ID)).GetWrapOrEmpty();
+        var gilIcon      = ITextureProvider.Instance().GetFromGameIcon(LuminaWrapper.GetItemIconID(GIL_ITEM_ID)).GetWrapOrEmpty();
         var gilPillWidth = (paddingX * 2) + (20f * GlobalUIScale) + gilTextWidth + (4f * GlobalUIScale) + gilUnitWidth;
 
         var gilPillPos = new Vector2(curX, curY);
@@ -379,7 +379,7 @@ public unsafe partial class BetterTeleport
         float ticketUnitWidth;
         using (FontManager.Instance().UIFont60.Push()) ticketUnitWidth = ImGui.CalcTextSize(ticketUnit).X;
 
-        var ticketIcon      = DService.Instance().Texture.GetFromGameIcon(LuminaWrapper.GetItemIconID(TELEPORT_TICKET_ITEM_ID)).GetWrapOrEmpty();
+        var ticketIcon      = ITextureProvider.Instance().GetFromGameIcon(LuminaWrapper.GetItemIconID(TELEPORT_TICKET_ITEM_ID)).GetWrapOrEmpty();
         var ticketPillWidth = (paddingX * 2) + (20f * GlobalUIScale) + ticketTextWidth + (4f * GlobalUIScale) + ticketUnitWidth;
 
         var ticketPillPos = new Vector2(curX, curY);
@@ -421,7 +421,7 @@ public unsafe partial class BetterTeleport
         else
             iconID = 60430;
 
-        var texWrap       = DService.Instance().Texture.GetFromGameIcon(new(iconID)).GetWrapOrEmpty();
+        var texWrap       = ITextureProvider.Instance().GetFromGameIcon(new(iconID)).GetWrapOrEmpty();
         var contentStartX = startPos.X + padding + 6f + animOffset;
         var iconSize      = 24f * GlobalUIScale;
         var iconY         = startPos.Y + ((itemHeight - iconSize) / 2f);
@@ -581,7 +581,7 @@ public unsafe partial class BetterTeleport
         string?         searchText      = null
     )
     {
-        if (config.HideAethernetInParty && !aetheryte.IsAetheryte && DService.Instance().PartyList.Length > 1)
+        if (config.HideAethernetInParty && !aetheryte.IsAetheryte && IPartyList.Instance().Length > 1)
             return;
 
         var hasRemark = config.Remarks.TryGetValue(aetheryte.ToString(), out var remark);

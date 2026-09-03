@@ -72,7 +72,7 @@ public unsafe class NoAutoClosePartyFinder : ModuleBase
                 if (LookingForGroupDetail->IsAddonAndNodesReady())
                     LookingForGroupDetail->Close(true);
 
-                DService.Instance().Framework.RunOnTick(() => agent->OpenListing(agent->LastViewedListing.ListingId), TimeSpan.FromMilliseconds(100));
+                IFramework.Instance().RunOnTick(() => agent->OpenListing(agent->LastViewedListing.ListingId), TimeSpan.FromMilliseconds(100));
             }
 
             return;

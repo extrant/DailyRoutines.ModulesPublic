@@ -67,23 +67,23 @@ public class AutoChangeBattleEffectLevel : ModuleBase
 
                 if (ImGui.CollapsingHeader
                     (
-                        $"＜ {DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdLow])}",
+                        $"＜ {ISeStringEvaluator.Instance().EvaluateFromAddon(12871, [config.AroundCountThresholdLow])}",
                         ImGuiTreeNodeFlags.DefaultOpen
                     ))
                     DrawBattleEffectSetting("Low", config.OverworldLow);
 
                 if (ImGui.CollapsingHeader
                     (
-                        $"{DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdLow])}" +
+                        $"{ISeStringEvaluator.Instance().EvaluateFromAddon(12871, [config.AroundCountThresholdLow])}" +
                         $" ≤ X ≤ "                                                                                            +
-                        $"{DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdHigh])}",
+                        $"{ISeStringEvaluator.Instance().EvaluateFromAddon(12871, [config.AroundCountThresholdHigh])}",
                         ImGuiTreeNodeFlags.DefaultOpen
                     ))
                     DrawBattleEffectSetting("Medium", config.OverworldMedium);
 
                 if (ImGui.CollapsingHeader
                     (
-                        $"＞ {DService.Instance().SeStringEvaluator.EvaluateFromAddon(12871, [config.AroundCountThresholdHigh])}",
+                        $"＞ {ISeStringEvaluator.Instance().EvaluateFromAddon(12871, [config.AroundCountThresholdHigh])}",
                         ImGuiTreeNodeFlags.DefaultOpen
                     ))
                     DrawBattleEffectSetting("High", config.OverworldHigh);
@@ -264,10 +264,10 @@ public class AutoChangeBattleEffectLevel : ModuleBase
 
         try
         {
-            DService.Instance().GameConfig.UiConfig.Set(nameof(UiConfigOption.BattleEffectSelf),       (uint)settings.Self);
-            DService.Instance().GameConfig.UiConfig.Set(nameof(UiConfigOption.BattleEffectParty),      (uint)settings.Party);
-            DService.Instance().GameConfig.UiConfig.Set(nameof(UiConfigOption.BattleEffectOther),      (uint)settings.Other);
-            DService.Instance().GameConfig.UiConfig.Set(nameof(UiConfigOption.BattleEffectPvPEnemyPc), (uint)settings.Enemy);
+            IGameConfig.Instance().UiConfig.Set(nameof(UiConfigOption.BattleEffectSelf),       (uint)settings.Self);
+            IGameConfig.Instance().UiConfig.Set(nameof(UiConfigOption.BattleEffectParty),      (uint)settings.Party);
+            IGameConfig.Instance().UiConfig.Set(nameof(UiConfigOption.BattleEffectOther),      (uint)settings.Other);
+            IGameConfig.Instance().UiConfig.Set(nameof(UiConfigOption.BattleEffectPvPEnemyPc), (uint)settings.Enemy);
 
             lastAppliedSettings = settings.Clone();
         }

@@ -44,7 +44,7 @@ public unsafe class AutoDismount : ModuleBase
         uint                        comboRouteID
     )
     {
-        if (!DService.Instance().Condition.IsOnMount) return;
+        if (!ICondition.Instance().IsOnMount) return;
 
         var adjustedActionID = ActionManager.Instance()->GetAdjustedActionId(actionID);
         if (!IsNeedToDismount(actionType, adjustedActionID, targetID)) return;
@@ -55,7 +55,7 @@ public unsafe class AutoDismount : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                if (MovementManager.Instance().IsManagerBusy || DService.Instance().Condition[ConditionFlag.Mounted]) return false;
+                if (MovementManager.Instance().IsManagerBusy || ICondition.Instance()[ConditionFlag.Mounted]) return false;
                 return UseActionManager.Instance().UseAction
                 (
                     actionType,
@@ -76,7 +76,7 @@ public unsafe class AutoDismount : ModuleBase
         ulong      actionTargetID
     )
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
         if (!LuminaGetter.TryGetRow<Action>(actionID, out var actionRow)) return false;
 
         var actionManager = ActionManager.Instance();
@@ -95,7 +95,7 @@ public unsafe class AutoDismount : ModuleBase
         // 可以自身或地面为目标的技能
         if (actionRow is { CanTargetSelf: true } or { TargetArea: true }) return true;
 
-        var actionObject = DService.Instance().ObjectTable.SearchByID(actionTargetID);
+        var actionObject = IObjectTable.Instance().SearchByID(actionTargetID);
 
         // 技能必须要有目标
         if (actionRow.Range != 0)

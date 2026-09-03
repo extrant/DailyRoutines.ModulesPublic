@@ -39,8 +39,8 @@ public class AutoTrackPlayers : ModuleBase
     protected override void Init()
     {
         PlayersManager.Instance().ReceivePlayersAround   += OnReceivePlayers;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().ContextMenu.OnMenuOpened     += OnMenuOpen;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IContextMenu.Instance().OnMenuOpened     += OnMenuOpen;
 
         trackAddon = new(this)
         {
@@ -61,8 +61,8 @@ public class AutoTrackPlayers : ModuleBase
         PlayersManager.Instance().ReceivePlayersAround -= OnReceivePlayers;
         FrameworkManager.Instance().Unreg(OnUpdate);
 
-        DService.Instance().ContextMenu.OnMenuOpened     -= OnMenuOpen;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IContextMenu.Instance().OnMenuOpened     -= OnMenuOpen;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         CommandManager.Instance().RemoveCommand(COMMAND);
 

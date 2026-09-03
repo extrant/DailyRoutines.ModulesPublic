@@ -30,13 +30,13 @@ public class AutoCancelMountCast : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
         UseActionManager.Instance().RegPreUseAction(OnPreUseAction);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
         UseActionManager.Instance().Unreg(OnPreUseAction);
 
         OnConditionChanged(ConditionFlag.Casting, false);
@@ -66,14 +66,14 @@ public class AutoCancelMountCast : ModuleBase
                 switch (value)
                 {
                     case true:
-                        if (DService.Instance().ObjectTable.LocalPlayer is { } localPlayer &&
+                        if (IObjectTable.Instance().LocalPlayer is { } localPlayer &&
                             (localPlayer.CastActionType == ActionType.Mount ||
                              localPlayer is { CastActionType: ActionType.GeneralAction, CastActionID: 9 }))
                         {
                             isOnMountCasting = true;
 
                             cancelSource = new();
-                            DService.Instance().Framework.RunOnTick
+                            IFramework.Instance().RunOnTick
                             (
                                 async () =>
                                 {

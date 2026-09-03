@@ -172,14 +172,14 @@ public unsafe partial class BetterMarketBoard : ModuleBase
         FrameworkManager.Instance().Reg(OnMonitorUpdate, 60_000);
         FrameworkManager.Instance().Reg(OnWorldWatch,    1_000);
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpened;
         TooltipManager.Instance().RegItem(OnItemTooltipUpdate);
     }
 
     protected override void Uninit()
     {
         TooltipManager.Instance().Unreg(OnItemTooltipUpdate);
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpened;
         FrameworkManager.Instance().Unreg(OnMonitorUpdate, OnWorldWatch);
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 

@@ -36,10 +36,10 @@ public unsafe class AutoSellCards : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 30_000, ShowDebug = true };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ShopCardDialog", OnAddonDialog);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "ShopCardDialog", OnAddonDialog);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "TripleTriadCoinExchange", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "TripleTriadCoinExchange", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "TripleTriadCoinExchange", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "TripleTriadCoinExchange", OnAddon);
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoSellCards-CommandHelp") });
     }
@@ -48,7 +48,7 @@ public unsafe class AutoSellCards : ModuleBase
     {
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         layoutNode?.Dispose();
         layoutNode = null;
@@ -62,7 +62,7 @@ public unsafe class AutoSellCards : ModuleBase
         titleNode?.Dispose();
         titleNode = null;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonDialog);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonDialog);
     }
 
     protected override void ConfigUI()

@@ -49,7 +49,7 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
         UseActionManager.Instance().RegPreUseActionLocation(OnPreUseActionLocation);
         ExecuteCommandManager.Instance().RegPreComplexLocation(OnPreExecuteCommandComplexLocation);
 
-        ParseActionCommandArgHook = DService.Instance().Hook.HookFromMemberFunction
+        ParseActionCommandArgHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(PronounModule.MemberFunctionPointers),
             "ResolvePlaceholder",
@@ -231,7 +231,7 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
                 }
             }
 
-            var localPlayer = DService.Instance().ObjectTable.LocalPlayer;
+            var localPlayer = IObjectTable.Instance().LocalPlayer;
 
             using (ImRaii.Disabled(localPlayer == null))
             {
@@ -418,7 +418,7 @@ public unsafe class AutoReplaceLocationAction : ModuleBase
                                .MinBy
                                (x => Vector2.DistanceSquared
                                 (
-                                    DService.Instance().ObjectTable.LocalPlayer.Position.ToVector2(),
+                                    IObjectTable.Instance().LocalPlayer.Position.ToVector2(),
                                     x
                                 )
                                )

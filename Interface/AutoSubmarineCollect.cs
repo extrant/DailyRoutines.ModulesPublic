@@ -82,11 +82,11 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
         collectSubmarinePayload ??= LinkPayloadManager.Instance().Reg(OnClickCollectSubmarinePayload, out _);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno",              OnAddonSelectYesno);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "AirShipExplorationResult", OnExplorationResult);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno",              OnAddonSelectYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "AirShipExplorationResult", OnExplorationResult);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "SelectString", OnAddonSelectString);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", OnAddonSelectString);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "SelectString", OnAddonSelectString);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "SelectString", OnAddonSelectString);
 
         CommandManager.Instance().AddSubCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoSubmarineCollect-CommandHelp") });
 
@@ -104,10 +104,10 @@ public unsafe class AutoSubmarineCollect : ModuleBase
         LogMessageManager.Instance().Unreg(OnPreSendLogMessage);
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnExplorationResult);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnExplorationResult);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectYesno);
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectString);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectString);
 
         itemListLayout?.Dispose();
         itemListLayout = null;
@@ -223,12 +223,12 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             !(HousingManager.Instance()->OutdoorTerritory->HouseId is var houseID)       ||
             houseID.WardIndex != workshopInfo.WardIndex                                  ||
             GameState.Map     != workshopInfo.Map                                        ||
-            DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+            IObjectTable.Instance().LocalPlayer is not { } localPlayer)
             return false;
 
         // 没找到入口
         if (HousingManager.Instance()->OutdoorTerritory->HouseUnit.PlotIndex != workshopInfo.PlotIndex ||
-            DService.Instance().ObjectTable
+            IObjectTable.Instance()
                     .Where(x => x is { ObjectKind: ObjectKind.EventObj, DataID: 2002737 })
                     .OrderBy(x => Vector2.DistanceSquared(x.Position.ToVector2(), workshopInfo.Position.ToVector2())).FirstOrDefault() is not { } entryObject)
         {
@@ -241,9 +241,9 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             entryPos = groundPosition;
 
         // 在坐骑上
-        if (DService.Instance().Condition.IsOnMount)
+        if (ICondition.Instance().IsOnMount)
         {
-            if (DService.Instance().Condition[ConditionFlag.InFlight])
+            if (ICondition.Instance()[ConditionFlag.InFlight])
             {
                 ExecuteCommandManager.Instance().ExecuteCommandComplexLocation
                 (
@@ -278,7 +278,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             !(HousingManager.Instance()->IndoorTerritory->HouseId is var houseID)        ||
             houseID.WardIndex != workshopInfo.WardIndex                                  ||
             houseID.PlotIndex != workshopInfo.PlotIndex                                  ||
-            DService.Instance().ObjectTable.LocalPlayer is null)
+            IObjectTable.Instance().LocalPlayer is null)
             return false;
 
         // 没找到入口
@@ -290,7 +290,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
         if (!UIModule.IsScreenReady()) return false;
 
-        if (!DService.Instance().Condition.IsOccupiedInEvent)
+        if (!ICondition.Instance().IsOccupiedInEvent)
             new EventStartPackt(LocalPlayerState.EntityID, 721074).Send();
 
         return AddonSelectStringEvent.Select(LuminaGetter.GetRowOrDefault<HousingPersonalRoomEntrance>(11).Text.ToString());
@@ -304,7 +304,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
             !(HousingManager.Instance()->WorkshopTerritory->HouseId is var houseID) ||
             houseID.WardIndex != workshopInfo.WardIndex                             ||
             houseID.PlotIndex != workshopInfo.PlotIndex                             ||
-            DService.Instance().ObjectTable.LocalPlayer is null)
+            IObjectTable.Instance().LocalPlayer is null)
             return false;
 
         // 没找到入口
@@ -318,7 +318,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
                 out _,
                 out _
             ) ||
-            DService.Instance().ObjectTable.SearchByID(gameObjectID) is not { } panelObject)
+            IObjectTable.Instance().SearchByID(gameObjectID) is not { } panelObject)
         {
             MovementManager.Instance().TPSmart_InZone(Vector3.Zero);
             return false;
@@ -340,7 +340,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
 
         if (!UIModule.IsScreenReady()) return false;
 
-        if (!DService.Instance().Condition.IsOccupiedInEvent)
+        if (!ICondition.Instance().IsOccupiedInEvent)
         {
             panelObject.TargetInteract();
             return false;
@@ -519,7 +519,7 @@ public unsafe class AutoSubmarineCollect : ModuleBase
     // 潜艇收取
     private bool EnqueueSubmarineCollect()
     {
-        TaskHelper.Enqueue(() => !DService.Instance().Condition.Any(ConditionFlag.OccupiedInCutSceneEvent, ConditionFlag.WatchingCutscene78), "等待过场动画结束");
+        TaskHelper.Enqueue(() => !ICondition.Instance().Any(ConditionFlag.OccupiedInCutSceneEvent, ConditionFlag.WatchingCutscene78), "等待过场动画结束");
         TaskHelper.Enqueue(IsOnValidSubmarineList,                                                                                            "等待潜水艇列表界面出现");
         TaskHelper.Enqueue
         (

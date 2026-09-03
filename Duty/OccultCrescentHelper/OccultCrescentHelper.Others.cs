@@ -39,25 +39,25 @@ public partial class OccultCrescentHelper
         {
             othersTaskHelper ??= new() { TimeoutMS = 30_000 };
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "MKDInfo", OnAddon);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MKDInfo", OnAddon);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "MKDInfo", OnAddon);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "MKDInfo", OnAddon);
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_CharaSelectListMenu", OnLogin);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, "_CharaSelectListMenu", OnLogin);
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "_ActionContents", OnActionContents);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, "_ActionContents", OnActionContents);
 
-            DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+            IClientState.Instance().TerritoryChanged += OnZoneChanged;
             OnZoneChanged(0);
         }
 
         public override void Uninit()
         {
-            DService.Instance().AddonLifecycle.UnregisterListener(OnActionContents);
+            IAddonLifecycle.Instance().UnregisterListener(OnActionContents);
 
-            DService.Instance().AddonLifecycle.UnregisterListener(OnLogin);
+            IAddonLifecycle.Instance().UnregisterListener(OnLogin);
 
-            DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-            DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+            IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+            IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
             settingButton?.Dispose();
             settingButton = null;
@@ -103,7 +103,7 @@ public partial class OccultCrescentHelper
 
                         if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneSouthHorn"))
                         {
-                            MainModule.config.DefaultPositionEnterZoneSouthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                            MainModule.config.DefaultPositionEnterZoneSouthHorn = IObjectTable.Instance().LocalPlayer?.Position ?? default;
                             MainModule.config.Save(MainModule);
                         }
 
@@ -134,7 +134,7 @@ public partial class OccultCrescentHelper
 
                         if (ImGui.Button($"{Lang.Get("Current")}##SetDefaultPositionEnterZoneNorthHorn"))
                         {
-                            MainModule.config.DefaultPositionEnterZoneNorthHorn = DService.Instance().ObjectTable.LocalPlayer?.Position ?? default;
+                            MainModule.config.DefaultPositionEnterZoneNorthHorn = IObjectTable.Instance().LocalPlayer?.Position ?? default;
                             MainModule.config.Save(MainModule);
                         }
 
@@ -302,7 +302,7 @@ public partial class OccultCrescentHelper
                 othersTaskHelper.Enqueue
                 (() =>
                     {
-                        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+                        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
                         if (localPlayer.IsDead) return true;
 
                         MovementManager.Instance().TPPlayerAddress(destination);
@@ -447,7 +447,7 @@ public partial class OccultCrescentHelper
             {
                 if (manager.MainModule.config.IsEnabledKnowledgeCrystalFastUse            &&
                     GameState.TerritoryIntendedUse == TerritoryIntendedUse.OccultCrescent &&
-                    !DService.Instance().Condition.IsOccupiedInEvent)
+                    !ICondition.Instance().IsOccupiedInEvent)
                 {
                     if (Throttler.Shared.Throttle("OccultCrescentHelper-OthersManager-LongTimeBuffButton"))
                     {

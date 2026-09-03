@@ -81,7 +81,7 @@ public class AutoFateSync : ModuleBase
 
     private unsafe void HandleFateEnter()
     {
-        if (config.IgnoreMounting && (DService.Instance().Condition[ConditionFlag.InFlight] || DService.Instance().Condition.IsOnMount))
+        if (config.IgnoreMounting && (ICondition.Instance()[ConditionFlag.InFlight] || ICondition.Instance().IsOnMount))
         {
             FrameworkManager.Instance().Reg(OnFlying, 500);
             return;
@@ -91,11 +91,11 @@ public class AutoFateSync : ModuleBase
 
         if (config.Delay > 0)
         {
-            DService.Instance().Framework.RunOnTick
+            IFramework.Instance().RunOnTick
             (
                 () =>
                 {
-                    if (manager->CurrentFate == null || DService.Instance().ObjectTable.LocalPlayer == null) return;
+                    if (manager->CurrentFate == null || IObjectTable.Instance().LocalPlayer == null) return;
 
                     ExecuteFateLevelSync(manager->CurrentFate->FateId);
                 },
@@ -117,13 +117,13 @@ public class AutoFateSync : ModuleBase
     {
         var currentFate = FateManager.Instance()->CurrentFate;
 
-        if (currentFate == null || DService.Instance().ObjectTable.LocalPlayer == null)
+        if (currentFate == null || IObjectTable.Instance().LocalPlayer == null)
         {
             FrameworkManager.Instance().Unreg(OnFlying);
             return;
         }
 
-        if (DService.Instance().Condition[ConditionFlag.InFlight] || DService.Instance().Condition.IsOnMount) return;
+        if (ICondition.Instance()[ConditionFlag.InFlight] || ICondition.Instance().IsOnMount) return;
 
         ExecuteFateLevelSync(currentFate->FateId);
         FrameworkManager.Instance().Unreg(OnFlying);
@@ -141,8 +141,8 @@ public class AutoFateSync : ModuleBase
         if (config.AutoTankStance)
         {
             TaskHelper.Enqueue
-            (() => !DService.Instance().Condition.IsOnMount              &&
-                   !DService.Instance().Condition[ConditionFlag.Jumping] &&
+            (() => !ICondition.Instance().IsOnMount              &&
+                   !ICondition.Instance()[ConditionFlag.Jumping] &&
                    ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) == 0
             );
             TaskHelper.Enqueue
@@ -151,7 +151,7 @@ public class AutoFateSync : ModuleBase
                     if (FateManager.Instance()->CurrentFate == null ||
                         !LuminaGetter.TryGetRow<Fate>(fateID, out var data))
                         return true;
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+                    if (IObjectTable.Instance().LocalPlayer is not { } localPlayer)
                         return false;
                     if (!TankStanceActions.TryGetValue(localPlayer.ClassJob.RowId, out var jobInfo))
                         return false;

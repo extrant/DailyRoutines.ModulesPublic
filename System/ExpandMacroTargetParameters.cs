@@ -32,7 +32,7 @@ public unsafe class ExpandMacroTargetParameters : ModuleBase
 
     protected override void Init()
     {
-        ResolvePlaceholderHook = DService.Instance().Hook.HookFromMemberFunction
+        ResolvePlaceholderHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(PronounModule.MemberFunctionPointers),
             "ResolvePlaceholder",

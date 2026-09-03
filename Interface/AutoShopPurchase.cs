@@ -635,7 +635,7 @@ public class AutoShopPurchase : ModuleBase
                 using var group    = ImRaii.Group();
 
                 if (ImGuiOm.ButtonIcon($"RunPreset_{preset}", FontAwesomeIcon.Play, Lang.Get("Run")))
-                    DService.Instance().Framework.RunOnTick(async () => await ShopPresetExecutor.TryExecuteAsync(preset, timesInput).ConfigureAwait(false));
+                    IFramework.Instance().RunOnTick(async () => await ShopPresetExecutor.TryExecuteAsync(preset, timesInput).ConfigureAwait(false));
 
                 ImGui.SameLine(0, 2f * GlobalUIScale);
 
@@ -664,7 +664,7 @@ public class AutoShopPurchase : ModuleBase
         {
             Preset    = preset;
             LoopCount = loopCount;
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, ["SelectYesno", "ShopExchangeItemDialog"], OnAddonYesno);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, ["SelectYesno", "ShopExchangeItemDialog"], OnAddonYesno);
             ExecuteCommandManager.Instance().RegPost(OnReceiveCommand);
         }
 
@@ -678,7 +678,7 @@ public class AutoShopPurchase : ModuleBase
         public void Dispose()
         {
             ExecuteCommandManager.Instance().Unreg(OnReceiveCommand);
-            DService.Instance().AddonLifecycle.UnregisterListener(OnAddonYesno);
+            IAddonLifecycle.Instance().UnregisterListener(OnAddonYesno);
 
             TaskHelper.Dispose();
             IsWaitingRefresh = false;

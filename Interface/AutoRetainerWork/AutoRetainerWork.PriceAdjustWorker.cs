@@ -69,7 +69,7 @@ public unsafe partial class AutoRetainerWork
         public override void Init()
         {
             itemSelectCombo = new("AddNewItem");
-            MoveToRetainerMarketHook ??= DService.Instance().Hook.HookFromMemberFunction
+            MoveToRetainerMarketHook ??= IGameInteropProvider.Instance().HookFromMemberFunction
             (
                 typeof(InventoryManager.MemberFunctionPointers),
                 "MoveToRetainerMarket",
@@ -80,12 +80,12 @@ public unsafe partial class AutoRetainerWork
             taskHelper ??= new() { TimeoutMS = 30_000, ShowDebug = true };
             taskHelper.EnterBusyAction = () => ToggleOverlayIPC.TryInvokeFunc(true);
 
-            DService.Instance().MarketBoard.HistoryReceived   += OnHistoryReceived;
-            DService.Instance().MarketBoard.OfferingsReceived += OnOfferingReceived;
+            IMarketBoard.Instance().HistoryReceived   += OnHistoryReceived;
+            IMarketBoard.Instance().OfferingsReceived += OnOfferingReceived;
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "RetainerSell",     OnRetainerSell);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "RetainerSellList", OnRetainerSellList);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "RetainerSellList", OnRetainerSellList);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "RetainerSell",     OnRetainerSell);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "RetainerSellList", OnRetainerSellList);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "RetainerSellList", OnRetainerSellList);
 
             WindowManager.Instance().PostDraw += DrawMarketListWindow;
             WindowManager.Instance().PostDraw += DrawUpshelfWindow;
@@ -206,8 +206,8 @@ public unsafe partial class AutoRetainerWork
             MoveToRetainerMarketHook?.Dispose();
             MoveToRetainerMarketHook = null;
 
-            DService.Instance().AddonLifecycle.UnregisterListener(OnRetainerSell);
-            DService.Instance().AddonLifecycle.UnregisterListener(OnRetainerSellList);
+            IAddonLifecycle.Instance().UnregisterListener(OnRetainerSell);
+            IAddonLifecycle.Instance().UnregisterListener(OnRetainerSellList);
 
             WindowManager.Instance().PostDraw -= DrawMarketListWindow;
             isNeedToDrawMarketListWindow      =  false;
@@ -215,8 +215,8 @@ public unsafe partial class AutoRetainerWork
             WindowManager.Instance().PostDraw -= DrawUpshelfWindow;
             isNeedToDrawMarketUpshelfWindow   =  false;
 
-            DService.Instance().MarketBoard.HistoryReceived   -= OnHistoryReceived;
-            DService.Instance().MarketBoard.OfferingsReceived -= OnOfferingReceived;
+            IMarketBoard.Instance().HistoryReceived   -= OnHistoryReceived;
+            IMarketBoard.Instance().OfferingsReceived -= OnOfferingReceived;
             
             taskHelper?.Abort();
             taskHelper?.Dispose();
@@ -614,7 +614,7 @@ public unsafe partial class AutoRetainerWork
                                Lang.Get("AutoRetainerWork-PriceAdjust-CommonItemPreset") :
                                item.Name.ToString() ?? string.Empty;
 
-            var itemLogo = DService.Instance().Texture
+            var itemLogo = ITextureProvider.Instance()
                                    .GetFromGameIcon
                                    (
                                        new
@@ -1121,7 +1121,7 @@ public unsafe partial class AutoRetainerWork
                 if (itemPrice == 0) continue;
 
                 var isItemHQ = item.Inventory.Flags.HasFlag(InventoryItem.ItemFlags.HighQuality);
-                var itemIcon = DService.Instance().Texture.GetFromGameIcon(new(item.Data.Icon, isItemHQ)).GetWrapOrDefault();
+                var itemIcon = ITextureProvider.Instance().GetFromGameIcon(new(item.Data.Icon, isItemHQ)).GetWrapOrDefault();
                 if (itemIcon == null) continue;
 
                 var itemName = $"{item.Data.Name.ToString()}" +
@@ -1376,7 +1376,7 @@ public unsafe partial class AutoRetainerWork
 
             var isItemHQ = slotData->Flags.HasFlag(InventoryItem.ItemFlags.HighQuality);
 
-            var itemIcon = DService.Instance().Texture
+            var itemIcon = ITextureProvider.Instance()
                                    .GetFromGameIcon(new(itemData.Icon, isItemHQ))
                                    .GetWrapOrDefault();
             if (itemIcon == null) return;
@@ -1461,7 +1461,7 @@ public unsafe partial class AutoRetainerWork
         )
         {
             // 因为有模特存在
-            if (!DService.Instance().Condition[ConditionFlag.OccupiedSummoningBell]) return;
+            if (!ICondition.Instance()[ConditionFlag.OccupiedSummoningBell]) return;
 
             switch (type)
             {
@@ -1501,7 +1501,7 @@ public unsafe partial class AutoRetainerWork
             AddonArgs  args
         )
         {
-            if (!DService.Instance().Condition[ConditionFlag.OccupiedSummoningBell]) return;
+            if (!ICondition.Instance()[ConditionFlag.OccupiedSummoningBell]) return;
             if (!args.Addon.ToStruct()->IsAddonAndNodesReady()) return;
             args.Addon.ToStruct()->Callback(0);
         }

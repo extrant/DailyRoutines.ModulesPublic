@@ -41,14 +41,14 @@ public unsafe class AutoMount : ModuleBase
 
         TaskHelper = new() { TimeoutMS = 10_000 };
 
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     protected override void ConfigUI()
@@ -143,7 +143,7 @@ public unsafe class AutoMount : ModuleBase
             case ConditionFlag.Gathering when !value && config.MountWhenGatherEnd:
             case ConditionFlag.InCombat when !value                                 &&
                                              config.MountWhenCombatEnd              &&
-                                             !DService.Instance().ClientState.IsPvP &&
+                                             !IClientState.Instance().IsPvP &&
                                              (FateManager.Instance()->CurrentFate           == null ||
                                               FateManager.Instance()->CurrentFate->Progress == 100):
                 if (!CanUseMountCurrentZone()) return;

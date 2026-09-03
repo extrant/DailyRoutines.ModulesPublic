@@ -245,10 +245,10 @@ public unsafe class OptimizedInteraction : ModuleBase
         bool          checkLOS
     )
     {
-        if (obj == null || DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return 0;
+        if (obj == null || IObjectTable.Instance().LocalPlayer is not { } localPlayer) return 0;
 
         // 咏唱状态
-        MemoryHelper.Write(DService.Instance().Condition.Address + 27, false);
+        MemoryHelper.Write(ICondition.Instance().Address + 27, false);
 
         // 动画锁
         ActionManager.Instance()->AnimationLock = 0;
@@ -303,8 +303,8 @@ public unsafe class OptimizedInteraction : ModuleBase
             (() =>
                 {
                     if (MovementManager.Instance().IsManagerBusy             ||
-                        DService.Instance().Condition[ConditionFlag.Mounted] ||
-                        DService.Instance().Condition[ConditionFlag.Jumping]) return false;
+                        ICondition.Instance()[ConditionFlag.Mounted] ||
+                        ICondition.Instance()[ConditionFlag.Jumping]) return false;
                     new EventStartPackt(localPlayer.GameObjectID, eventID).Send();
                     return true;
                 }

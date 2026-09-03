@@ -46,7 +46,7 @@ public unsafe class AutoDance : ModuleBase
     {
         if (!result || actionType != ActionType.Action || !DanceActions.Contains(actionID)) return;
 
-        var gauge = DService.Instance().JobGauges.Get<DNCGauge>();
+        var gauge = IJobGauges.Instance().Get<DNCGauge>();
         if (gauge.IsDancing) return;
 
         TaskHelper.Enqueue(() => gauge.IsDancing);
@@ -58,7 +58,7 @@ public unsafe class AutoDance : ModuleBase
         bool isTechnicalStep
     )
     {
-        var gauge = DService.Instance().JobGauges.Get<DNCGauge>();
+        var gauge = IJobGauges.Instance().Get<DNCGauge>();
 
         if (!gauge.IsDancing)
         {

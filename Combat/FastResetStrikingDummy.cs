@@ -33,7 +33,7 @@ public class FastResetStrikingDummy : ModuleBase
         cancelSource = new();
         config       = Config.Load(this) ?? new();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
 
         ExecuteCommandManager.Instance().RegPre(OnResetStrikingDummies);
         CommandManager.Instance().AddSubCommand
@@ -50,7 +50,7 @@ public class FastResetStrikingDummy : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
 
         ExecuteCommandManager.Instance().Unreg(OnResetStrikingDummies);
         CommandManager.Instance().RemoveSubCommand(COMMAND);
@@ -108,9 +108,9 @@ public class FastResetStrikingDummy : ModuleBase
 
     private void ResetAllStrikingDummies()
     {
-        DService.Instance().Framework.RunOnTick(FindAndResetInternal, TimeSpan.Zero,                   cancellationToken: cancelSource.Token);
-        DService.Instance().Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(500),  cancellationToken: cancelSource.Token);
-        DService.Instance().Framework.RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(1000), cancellationToken: cancelSource.Token);
+        IFramework.Instance().RunOnTick(FindAndResetInternal, TimeSpan.Zero,                   cancellationToken: cancelSource.Token);
+        IFramework.Instance().RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(500),  cancellationToken: cancelSource.Token);
+        IFramework.Instance().RunOnTick(FindAndResetInternal, TimeSpan.FromMilliseconds(1000), cancellationToken: cancelSource.Token);
     }
 
     private static unsafe void FindAndResetInternal()
@@ -147,7 +147,7 @@ public class FastResetStrikingDummy : ModuleBase
                 if (isAlreadyRequest)
                     continue;
                 if (!config.IsAutoClearEnmityWhenInactive ||
-                    !DService.Instance().Condition[ConditionFlag.InCombat])
+                    !ICondition.Instance()[ConditionFlag.InCombat])
                     continue;
                 if (LastInputInfo.GetIdleTimeTick() <= config.AutoClearEnmityInterval * 1_000 &&
                     GameState.IsForeground)

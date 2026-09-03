@@ -63,24 +63,24 @@ public unsafe class FCMemberManagePanel : ModuleBase
         Overlay.Flags      &=  ~ImGuiWindowFlags.NoResize;
         Overlay.WindowName =   Lang.Get("FCMemberManagePanelTitle");
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeCompanyMember", OnAddonMember);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeCompanyMember", OnAddonMember);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "FreeCompanyMember", OnAddonMember);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "FreeCompanyMember", OnAddonMember);
         if (FreeCompanyMember != null && FreeCompanyMember->IsAddonAndNodesReady())
             OnAddonMember(AddonEvent.PostSetup, null);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonYesno);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonMember);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonMember);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonYesno);
 
         ResetAllExistedData();
     }
 
     protected override void OverlayPreDraw()
     {
-        if (!DService.Instance().ClientState.IsLoggedIn) return;
+        if (!IClientState.Instance().IsLoggedIn) return;
 
         if (fcTotalMembersCount == 0 && Throttler.Shared.Throttle("FCMemberManagePanel-GetFCTotalMembersCount", 1_000))
         {
@@ -187,7 +187,7 @@ public unsafe class FCMemberManagePanel : ModuleBase
 
             if (data.OnlineStatus != 0)
             {
-                var onlineStatusIcon = DService.Instance().Texture.GetFromGameIcon(new(onlineStatusRow.Icon)).GetWrapOrDefault();
+                var onlineStatusIcon = ITextureProvider.Instance().GetFromGameIcon(new(onlineStatusRow.Icon)).GetWrapOrDefault();
 
                 if (onlineStatusIcon != null)
                 {
@@ -621,7 +621,7 @@ public unsafe class FCMemberManagePanel : ModuleBase
                            data.NameString,
                 JobIcon = data.Job == 0 ?
                               null :
-                              DService.Instance().Texture.GetFromGameIcon(new(62100U + data.Job)),
+                              ITextureProvider.Instance().GetFromGameIcon(new(62100U + data.Job)),
                 Job = data.Job == 0 ?
                           string.Empty :
                           LuminaGetter.GetRow<ClassJob>(data.Job)?.Abbreviation.ToString(),

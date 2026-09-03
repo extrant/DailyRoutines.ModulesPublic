@@ -186,7 +186,7 @@ public unsafe partial class BetterMarketBoard
             {
                 var categoryID   = category.RowId;
                 var categoryName = category.Name.ToString();
-                if (!DService.Instance().Texture.TryGetFromGameIcon(new((uint)category.Icon), out var texture)) continue;
+                if (!ITextureProvider.Instance().TryGetFromGameIcon(new((uint)category.Icon), out var texture)) continue;
 
                 if (ImGuiOm.TreeNodeImageWithText
                     (
@@ -216,7 +216,7 @@ public unsafe partial class BetterMarketBoard
                 var name = searchCategory.Name.ToString();
                 if (string.IsNullOrEmpty(name)) continue;
                 if (!searchCategoryToItems.TryGetValue(searchCategory.RowId, out var data) || data.Count == 0) continue;
-                if (!DService.Instance().Texture.TryGetFromGameIcon(new((uint)searchCategory.Icon), out var texture)) continue;
+                if (!ITextureProvider.Instance().TryGetFromGameIcon(new((uint)searchCategory.Icon), out var texture)) continue;
 
                 if (ImGuiOm.TreeNodeImageWithText
                     (
@@ -398,7 +398,7 @@ public unsafe partial class BetterMarketBoard
     )
     {
         var isCurrentHQ = provider.SelectedItemID == item.RowId && provider.HQOnly;
-        if (!DService.Instance().Texture.TryGetFromGameIcon(new(item.Icon, isCurrentHQ), out var texture)) return;
+        if (!ITextureProvider.Instance().TryGetFromGameIcon(new(item.Icon, isCurrentHQ), out var texture)) return;
 
         using var id = ImRaii.PushId($"{item.RowId}_{currentTab}");
 
@@ -908,7 +908,7 @@ public unsafe partial class BetterMarketBoard
             drawList.AddText(timesPos, timesColor, timesIcon);
         }
 
-        if (DService.Instance().Texture.TryGetFromGameIcon(new(itemData.Icon, monitorItem.HQOnly), out var texture))
+        if (ITextureProvider.Instance().TryGetFromGameIcon(new(itemData.Icon, monitorItem.HQOnly), out var texture))
         {
             var iconPos = new Vector2(startPos.X + padX, contentTopY);
             drawList.AddImage(texture.GetWrapOrEmpty().Handle, iconPos, iconPos + new Vector2(iconSize));

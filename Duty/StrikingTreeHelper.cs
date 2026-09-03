@@ -31,7 +31,7 @@ public unsafe class StrikingTreeHelper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
 
         handle = ZoneIndicatorRenderer.Instance().RegPermanent

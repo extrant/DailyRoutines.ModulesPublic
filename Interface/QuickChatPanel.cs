@@ -68,14 +68,14 @@ public unsafe class QuickChatPanel : ModuleBase
             DisableClose          = true
         };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "ChatLog", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "ChatLog", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "ChatLog", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "ChatLog", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "ChatLog", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "ChatLog", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         sendButton?.Dispose();
         sendButton = null;
@@ -439,7 +439,7 @@ public unsafe class QuickChatPanel : ModuleBase
             AtkUnitBase* hostAddon
         )
         {
-            if (DService.Instance().KeyState[VirtualKey.ESCAPE]) Close();
+            if (IKeyState.Instance()[VirtualKey.ESCAPE]) Close();
 
         }
 

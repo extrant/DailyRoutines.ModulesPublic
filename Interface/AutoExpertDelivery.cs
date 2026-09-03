@@ -113,7 +113,7 @@ public unsafe class AutoExpertDelivery : ModuleBase
             return true;
         }
 
-        if (!DService.Instance().Condition[ConditionFlag.OccupiedInQuestEvent])
+        if (!ICondition.Instance()[ConditionFlag.OccupiedInQuestEvent])
         {
             TaskHelper.Abort();
             return true;
@@ -132,7 +132,7 @@ public unsafe class AutoExpertDelivery : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                if (!DService.Instance().Condition.IsOccupiedInEvent) return true;
+                if (!ICondition.Instance().IsOccupiedInEvent) return true;
 
                 if (GrandCompanySupplyList->IsAddonAndNodesReady())
                     GrandCompanySupplyList->Close(true);
@@ -144,7 +144,7 @@ public unsafe class AutoExpertDelivery : ModuleBase
             }
         );
 
-        TaskHelper.Enqueue(() => new EventStartPackt(DService.Instance().ObjectTable.LocalPlayer.GameObjectID, info.EventID).Send());
+        TaskHelper.Enqueue(() => new EventStartPackt(IObjectTable.Instance().LocalPlayer.GameObjectID, info.EventID).Send());
         TaskHelper.Enqueue(() => GrandCompanyExchange->IsAddonAndNodesReady());
 
         if (isAutoExchange && ModuleManager.Instance().IsModuleEnabled(typeof(FastGrandCompanyExchange)))
@@ -169,9 +169,9 @@ public unsafe class AutoExpertDelivery : ModuleBase
         // 还有没交的
         if (GrandCompanySupplyList->AtkValues[8].UInt != 0)
         {
-            TaskHelper.Enqueue(() => !GrandCompanyExchange->IsAddonAndNodesReady() && !DService.Instance().Condition.IsOccupiedInEvent);
+            TaskHelper.Enqueue(() => !GrandCompanyExchange->IsAddonAndNodesReady() && !ICondition.Instance().IsOccupiedInEvent);
             TaskHelper.Enqueue
-            (() => DService.Instance().ObjectTable
+            (() => IObjectTable.Instance()
                            .FirstOrDefault(x => x.ObjectKind == ObjectKind.EventNpc && x.DataID == info.DataID)
                            .TargetInteract()
             );
@@ -205,7 +205,7 @@ public unsafe class AutoExpertDelivery : ModuleBase
 
         var buffMultiplier = 1f;
         if (LocalPlayerState.HasStatus(1078, out var index) || LocalPlayerState.HasStatus(414, out index))
-            buffMultiplier += DService.Instance().ObjectTable.LocalPlayer.StatusList[index].Param / 100f;
+            buffMultiplier += IObjectTable.Instance().LocalPlayer.StatusList[index].Param / 100f;
 
         var companySeals = InventoryManager.Instance()->GetCompanySeals(grandCompany);
         var capAmount    = rank.MaxSeals;

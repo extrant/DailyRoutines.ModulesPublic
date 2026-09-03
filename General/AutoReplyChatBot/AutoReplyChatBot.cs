@@ -45,12 +45,12 @@ public partial class AutoReplyChatBot : ModuleBase
 
         _ = conversationStore.PruneAsync();
 
-        DService.Instance().Chat.ChatMessage += OnChat;
+        IChatGui.Instance().ChatMessage += OnChat;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Chat.ChatMessage -= OnChat;
+        IChatGui.Instance().ChatMessage -= OnChat;
 
         foreach (var (_, cts) in activePipelines)
         {

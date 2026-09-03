@@ -166,7 +166,7 @@ public partial class OccultCrescentHelper
             SupportJobTaskHelper.Enqueue
             (() =>
                 {
-                    if (!DService.Instance().Condition[ConditionFlag.Mounted]) return true;
+                    if (!ICondition.Instance()[ConditionFlag.Mounted]) return true;
 
                     ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
                     return true;
@@ -259,7 +259,7 @@ public partial class OccultCrescentHelper
             (
                 () =>
                 {
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer ||
+                    if (IObjectTable.Instance().LocalPlayer is not { } localPlayer ||
                         !IsActionInsertionReady(insertionRule, localPlayer, manager))
                     {
                         ActionInsertionTaskHelper.Abort();

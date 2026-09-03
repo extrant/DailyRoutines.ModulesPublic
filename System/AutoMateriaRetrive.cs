@@ -40,7 +40,7 @@ public unsafe class AutoMateriaRetrive : ModuleBase
 
         TaskHelper ??= new() { TimeoutMS = 5_000 };
 
-        RetriveMateriaHook = DService.Instance().Hook.HookFromMemberFunction
+        RetriveMateriaHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(EventFramework.MemberFunctionPointers),
             "MaterializeItem",
@@ -144,7 +144,7 @@ public unsafe class AutoMateriaRetrive : ModuleBase
                     return true;
                 }
 
-                return !DService.Instance().Condition.IsOccupiedInEvent;
+                return !ICondition.Instance().IsOccupiedInEvent;
             },
             "WaitEventEndBefore",
             weight: 1
@@ -176,7 +176,7 @@ public unsafe class AutoMateriaRetrive : ModuleBase
                     return true;
                 }
 
-                return !DService.Instance().Condition.IsOccupiedInEvent;
+                return !ICondition.Instance().IsOccupiedInEvent;
             },
             "WaitEventEndAfter",
             weight: 1

@@ -46,19 +46,19 @@ public class OptimizedLetter : ModuleBase
             Size         = new(290f, 190f)
         };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesNo);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnAddonSelectYesNo);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "LetterAddress", OnAddonLetterAddress);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LetterAddress", OnAddonLetterAddress);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "LetterAddress", OnAddonLetterAddress);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LetterAddress", OnAddonLetterAddress);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "LetterList", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, "LetterList", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonSelectYesNo);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonLetterAddress);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonSelectYesNo);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonLetterAddress);
 
         textInputButton?.Dispose();
         textInputButton = null;

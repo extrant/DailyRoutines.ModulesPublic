@@ -23,13 +23,13 @@ public class AutoConfirmPortraitUpdate : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "BannerPreview", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "BannerPreview", OnAddon);
         if (BannerPreview != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void ConfigUI()
     {

@@ -36,13 +36,13 @@ public unsafe partial class AutoShowItemNPCShopInfo : ModuleBase
         sourceContextMenu      = new();
         destinationContextMenu = new();
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpen;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpen;
         TooltipManager.Instance().RegItem(OnItemTooltipUpdate);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpen;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpen;
         TooltipManager.Instance().Unreg(OnItemTooltipUpdate);
 
         AddonNPCShopsSource.Addon?.Dispose();

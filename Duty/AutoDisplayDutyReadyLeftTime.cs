@@ -26,10 +26,10 @@ public unsafe class AutoDisplayDutyReadyLeftTime : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init() =>
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "ContentsFinderReady", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw, "ContentsFinderReady", OnAddon);
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     private static void OnAddon
     (
@@ -58,7 +58,7 @@ public unsafe class AutoDisplayDutyReadyLeftTime : ModuleBase
 
         builder.Append($"{LuminaWrapper.GetAddonText(2780)} ")
                .PushColorType(32)
-               .Append($"[{DService.Instance().SeStringEvaluator.EvaluateFromAddon(9169, [(int)leftTime.TotalSeconds])}]")
+               .Append($"[{ISeStringEvaluator.Instance().EvaluateFromAddon(9169, [(int)leftTime.TotalSeconds])}]")
                .PopColorType();
 
         textNode->SetText(builder.GetViewAsSpan());

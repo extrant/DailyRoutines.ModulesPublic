@@ -36,6 +36,6 @@ public class AutoManagePeloton : ModuleBase
     )
     {
         if (actionType != ActionType.Action || actionID != 7557) return;
-        isPrevented = DService.Instance().Condition[ConditionFlag.InCombat];
+        isPrevented = ICondition.Instance()[ConditionFlag.InCombat];
     }
 }

@@ -50,22 +50,22 @@ public class HealerHelper : ModuleBase
         Task.Run(async () => await FetchAll());
 
         UseActionManager.Instance().RegPreUseActionLocation(OnPreUseAction);
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().DutyState.DutyStarted        += OnDutyStarted;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        IDutyState.Instance().DutyStarted        += OnDutyStarted;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
 
-        if (GameState.ContentFinderCondition != 0 && DService.Instance().DutyState.IsDutyStarted)
+        if (GameState.ContentFinderCondition != 0 && IDutyState.Instance().IsDutyStarted)
             OnDutyStarted(null);
     }
 
     protected override void Uninit()
     {
         UseActionManager.Instance().Unreg(OnPreUseAction);
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().DutyState.DutyStarted        -= OnDutyStarted;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        IDutyState.Instance().DutyStarted        -= OnDutyStarted;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     #region Utils
@@ -484,7 +484,7 @@ public class HealerHelper : ModuleBase
             ref bool  isPrevented
         )
         {
-            if (targetID != UNSPECIFIC_TARGET_ID && IsHealable(DService.Instance().ObjectTable.SearchByID(targetID))) return;
+            if (targetID != UNSPECIFIC_TARGET_ID && IsHealable(IObjectTable.Instance().SearchByID(targetID))) return;
 
             var needHealObject = TargetNeedHealObject(actionID);
 
@@ -1079,7 +1079,7 @@ public class HealerHelper : ModuleBase
         if (!isHealer && !isRangedWithRaised) return;
 
         var healConfig = config.EasyHealStorage;
-        var gameObject = DService.Instance().ObjectTable.SearchByID(targetID, IObjectTable.CharactersRange);
+        var gameObject = IObjectTable.Instance().SearchByID(targetID, IObjectTable.CharactersRange);
 
         if (isHealer)
         {

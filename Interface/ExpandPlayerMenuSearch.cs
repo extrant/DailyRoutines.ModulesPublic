@@ -72,12 +72,12 @@ public class ExpandPlayerMenuSearch : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpened;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpened;
 
         cancelSource.Cancel();
         cancelSource.Dispose();
@@ -131,7 +131,7 @@ public class ExpandPlayerMenuSearch : ModuleBase
         if (args.Target is MenuTargetInventory) return false;
         if (args.Target is not MenuTargetDefault menuTarget) return false;
 
-        var agent = DService.Instance().GameGUI.FindAgentInterface("ChatLog");
+        var agent = IGameGui.Instance().FindAgentInterface("ChatLog");
         if (agent != nint.Zero && *(uint*)(agent + 0x948 + 8) == 3) return false;
 
         var hasTargetCharacter = menuTarget.TargetCharacter != null;
@@ -285,7 +285,7 @@ public class ExpandPlayerMenuSearch : ModuleBase
             var targetChara = TargetChara;
             if (targetChara == null) return;
 
-            DService.Instance().Framework.RunOnTick
+            IFramework.Instance().RunOnTick
             (
                 () => action(targetChara),
                 cancellationToken: module.cancelSource.Token
@@ -300,7 +300,7 @@ public class ExpandPlayerMenuSearch : ModuleBase
             var targetChara = TargetChara;
             if (targetChara == null) return;
 
-            DService.Instance().Framework.RunOnTick
+            IFramework.Instance().RunOnTick
             (
                 () => action(targetChara),
                 TimeSpan.Zero,

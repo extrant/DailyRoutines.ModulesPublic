@@ -33,11 +33,11 @@ public class CopyItemNameContextMenu : ModuleBase
         menuItem           = new(CopyItemNameString);
         glamourMenuItem    = new($"{CopyItemNameString} ({GlamoursString})");
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
     private unsafe void OnContextMenuOpened
     (

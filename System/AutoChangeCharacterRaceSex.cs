@@ -360,7 +360,7 @@ public unsafe class AutoChangeCharacterRaceSex : ModuleBase
 
     private static void RerenderAllPlayers()
     {
-        foreach (var obj in DService.Instance().ObjectTable.OfType<ICharacter>())
+        foreach (var obj in IObjectTable.Instance().OfType<ICharacter>())
         {
             var player = obj.ToStruct();
             if (player == null || !player->IsReadyToDraw()) continue;

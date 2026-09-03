@@ -31,20 +31,20 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new() { TimeoutMS = 15_000 };
 
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().ClientState.ClassJobChanged  += OnClassJobChanged;
-        DService.Instance().ClientState.LevelChanged     += OnLevelChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().ClassJobChanged  += OnClassJobChanged;
+        IClientState.Instance().LevelChanged     += OnLevelChanged;
 
         EnqueueCheck();
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().ClientState.ClassJobChanged  -= OnClassJobChanged;
-        DService.Instance().ClientState.LevelChanged     -= OnLevelChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().ClassJobChanged  -= OnClassJobChanged;
+        IClientState.Instance().LevelChanged     -= OnLevelChanged;
     }
 
     protected override void ConfigUI()
@@ -88,11 +88,11 @@ public unsafe class AutoUseCrafterGathererManual : ModuleBase
         TaskHelper.Enqueue
         (() =>
             {
-                if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+                if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
                 if (localPlayer.Level >= PlayerState.Instance()->MaxLevel) return true;
-                if (DService.Instance().Condition.IsBetweenAreas    ||
-                    DService.Instance().Condition.IsOccupiedInEvent ||
-                    DService.Instance().Condition.IsCasting         ||
+                if (ICondition.Instance().IsBetweenAreas    ||
+                    ICondition.Instance().IsOccupiedInEvent ||
+                    ICondition.Instance().IsCasting         ||
                     !UIModule.IsScreenReady()                       ||
                     ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) != 0)
                     return false;

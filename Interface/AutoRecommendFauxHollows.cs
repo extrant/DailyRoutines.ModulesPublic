@@ -37,15 +37,15 @@ public unsafe class AutoRecommendFauxHollows : ModuleBase
 
         Overlay ??= new(this);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "WeeklyPuzzle", OnWeeklyPuzzleEvent);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "WeeklyPuzzle", OnWeeklyPuzzleEvent);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "WeeklyPuzzle", OnWeeklyPuzzleEvent);
         if (WeeklyPuzzle != null)
             OnWeeklyPuzzleEvent(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnWeeklyPuzzleEvent);
+        IAddonLifecycle.Instance().UnregisterListener(OnWeeklyPuzzleEvent);
         FrameworkManager.Instance().Unreg(OnUpdate);
     }
 

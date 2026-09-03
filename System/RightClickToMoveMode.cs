@@ -35,7 +35,7 @@ public class RightClickToMoveMode : ModuleBase
         movementController = new() { Precision = 0.15f, IsAutoMove = true };
         moduleConfig       = Config.Load(this) ?? new();
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
 
         InputIDManager.Instance().RegPostPressed(OnPostPressed);
         WindowManager.Instance().PostDraw += OnDraw;
@@ -48,7 +48,7 @@ public class RightClickToMoveMode : ModuleBase
         SessionManager.Stop(this);
         TargetIndicatorRenderer.Reset();
 
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         WindowManager.Instance().PostDraw                -= OnDraw;
 
         movementController.Dispose();
@@ -71,7 +71,7 @@ public class RightClickToMoveMode : ModuleBase
 
     private void OnDraw()
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer)
         {
             SessionManager.Stop(this);
             TargetIndicatorRenderer.Draw(this, null);
@@ -111,7 +111,7 @@ public class RightClickToMoveMode : ModuleBase
         Vector2 clientPosition
     )
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is null) return;
+        if (IObjectTable.Instance().LocalPlayer is null) return;
         if (!ClickTriggerEvaluator.ShouldHandle(moduleConfig)) return;
         if (!ClickPointResolver.TryResolve(clientPosition, out var targetPosition)) return;
 
@@ -204,7 +204,7 @@ public class RightClickToMoveMode : ModuleBase
 
             if (!combo) return;
 
-            var validKeys = DService.Instance().KeyState.GetValidVirtualKeys();
+            var validKeys = IKeyState.Instance().GetValidVirtualKeys();
 
             foreach (var keyToSelect in validKeys)
             {
@@ -286,14 +286,14 @@ public class RightClickToMoveMode : ModuleBase
         if (PluginConfig.Instance().ConflictKeyBinding.IsPressed()) return true;
 
         return moduleConfig.WASDToInterrupt &&
-               (DService.Instance().KeyState[VirtualKey.W] ||
-                DService.Instance().KeyState[VirtualKey.A] ||
-                DService.Instance().KeyState[VirtualKey.S] ||
-                DService.Instance().KeyState[VirtualKey.D]);
+               (IKeyState.Instance()[VirtualKey.W] ||
+                IKeyState.Instance()[VirtualKey.A] ||
+                IKeyState.Instance()[VirtualKey.S] ||
+                IKeyState.Instance()[VirtualKey.D]);
     }
 
     private static bool IsNavmeshAvailable() =>
-        DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) && vnavmeshIPC.GetIsNavReady();
+        IDalamudPluginInterface.Instance().IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME) && vnavmeshIPC.GetIsNavReady();
 
     #endregion
 
@@ -322,7 +322,7 @@ public class RightClickToMoveMode : ModuleBase
             Vector3              targetPosition
         )
         {
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return;
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return;
 
             Stop(module);
 
@@ -414,7 +414,7 @@ public class RightClickToMoveMode : ModuleBase
             module.movementController.Enabled         = false;
             module.movementController.DesiredPosition = default;
 
-            var fly = DService.Instance().Condition[ConditionFlag.InFlight] || DService.Instance().Condition[ConditionFlag.Diving];
+            var fly = ICondition.Instance()[ConditionFlag.InFlight] || ICondition.Instance()[ConditionFlag.Diving];
             if (!vnavmeshIPC.PathfindAndMoveTo(targetPosition, fly)) return;
 
             Current = new(targetPosition, MoveDriver.Navmesh, MovementManager.Instance().CurrentControlMode);
@@ -447,7 +447,7 @@ public class RightClickToMoveMode : ModuleBase
             {
                 ControlMode.RightClick     => true,
                 ControlMode.LeftRightClick => (GetAsyncKeyState(0x01) & 0x8000) != 0,
-                ControlMode.KeyRightClick  => DService.Instance().KeyState[config.ComboKey],
+                ControlMode.KeyRightClick  => IKeyState.Instance()[config.ComboKey],
                 _                          => false
             };
     }
@@ -462,7 +462,7 @@ public class RightClickToMoveMode : ModuleBase
         {
             targetPosition = default;
 
-            if (!DService.Instance().GameGUI.ScreenToWorld(clientPosition, out var worldPosition))
+            if (!IGameGui.Instance().ScreenToWorld(clientPosition, out var worldPosition))
                 return false;
 
             if (IsNavmeshAvailable() && vnavmeshIPC.QueryNearestPointOnMesh(worldPosition, 3f, 10f) is { } meshPosition)
@@ -530,7 +530,7 @@ public class RightClickToMoveMode : ModuleBase
         {
             if (!IsPulseActive) return;
 
-            if (!DService.Instance().GameGUI.WorldToScreen(PulseTarget, out var screenPosition))
+            if (!IGameGui.Instance().WorldToScreen(PulseTarget, out var screenPosition))
             {
                 ResetPulse();
                 return;
@@ -565,7 +565,7 @@ public class RightClickToMoveMode : ModuleBase
             Vector3 targetPosition
         )
         {
-            if (!DService.Instance().GameGUI.WorldToScreen(targetPosition, out var screenPosition))
+            if (!IGameGui.Instance().WorldToScreen(targetPosition, out var screenPosition))
                 return;
 
             var radius    = MARKER_RADIUS * GlobalUIScale;

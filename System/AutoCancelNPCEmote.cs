@@ -39,30 +39,30 @@ public unsafe class AutoCancelNPCEmote : ModuleBase
         var baseAddress = waitForBaseSig.ScanText();
 
         WaitForActionTimelineHook ??=
-            DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("WaitForActionTimeline"), EventSceneScriptDetour);
+            IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("WaitForActionTimeline"), EventSceneScriptDetour);
         WaitForActionTimelineHook.Enable();
 
         PlayActionTimelineHook ??=
-            DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("PlayActionTimeline"), EventSceneScriptDetour);
+            IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("PlayActionTimeline"), EventSceneScriptDetour);
         PlayActionTimelineHook.Enable();
 
         WaitForActionTimelineLoadHook ??=
-            DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+            IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
                 (baseAddress.GetLuaFunctionByName("WaitForActionTimelineLoad"), EventSceneScriptDetour);
         WaitForActionTimelineLoadHook.Enable();
 
-        PlayEmoteHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("PlayEmote"), EventSceneScriptDetour);
+        PlayEmoteHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>(baseAddress.GetLuaFunctionByName("PlayEmote"), EventSceneScriptDetour);
         PlayEmoteHook.Enable();
 
-        CancelEmoteHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+        CancelEmoteHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
             (baseAddress.GetLuaFunctionByName("CancelEmote"), EventSceneScriptDetour);
         CancelEmoteHook.Enable();
 
-        WaitForEmoteHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+        WaitForEmoteHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
             (baseAddress.GetLuaFunctionByName("WaitForEmote"), EventSceneScriptDetour);
         WaitForEmoteHook.Enable();
 
-        IsEmotingHook ??= DService.Instance().Hook.HookFromAddress<EventSceneScriptDelegate>
+        IsEmotingHook ??= IGameInteropProvider.Instance().HookFromAddress<EventSceneScriptDelegate>
             (baseAddress.GetLuaFunctionByName("IsEmoting"), EventSceneScriptNoDetour);
         IsEmotingHook.Enable();
     }

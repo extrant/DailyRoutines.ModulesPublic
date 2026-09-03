@@ -35,7 +35,7 @@ public unsafe class SastashaHelper : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
 
         handle = ZoneIndicatorRenderer.Instance().RegPermanent<nint>
@@ -85,7 +85,7 @@ public unsafe class SastashaHelper : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         handle?.Unreg();
         handle = null;
@@ -118,7 +118,7 @@ public unsafe class SastashaHelper : ModuleBase
         if (todos[0].CurrentCount != 0)
             return true;
 
-        var book = DService.Instance().ObjectTable
+        var book = IObjectTable.Instance()
                            .SearchObject
                            (
                                x => x is { IsTargetable: true, ObjectKind: DObjectKind.EventObj } &&

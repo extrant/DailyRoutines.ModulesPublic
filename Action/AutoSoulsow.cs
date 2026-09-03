@@ -22,16 +22,16 @@ public class AutoSoulsow : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
     }
 
     // 重新挑战
@@ -73,9 +73,9 @@ public class AutoSoulsow : ModuleBase
 
     private bool CheckCurrentJob()
     {
-        if (DService.Instance().Condition.IsBetweenAreas || !UIModule.IsScreenReady() || DService.Instance().Condition.IsOccupiedInEvent) return false;
+        if (ICondition.Instance().IsBetweenAreas || !UIModule.IsScreenReady() || ICondition.Instance().IsOccupiedInEvent) return false;
 
-        if (DService.Instance().Condition[ConditionFlag.InCombat] || LocalPlayerState.ClassJob != 39 || !GameState.IsInPVEActonZone)
+        if (ICondition.Instance()[ConditionFlag.InCombat] || LocalPlayerState.ClassJob != 39 || !GameState.IsInPVEActonZone)
         {
             TaskHelper.Abort();
             return true;
@@ -87,7 +87,7 @@ public class AutoSoulsow : ModuleBase
 
     private bool UseRelatedActions()
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
 
         // 播魂种
         if (localPlayer.StatusList.HasStatus(2594) || !ActionManager.IsActionUnlocked(24387))

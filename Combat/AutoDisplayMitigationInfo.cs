@@ -50,19 +50,19 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
         _ = RemoteRepoManager.FetchMitigationStatusesAsync(remoteFetchCancelSource.Token);
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
 
         if (GameState.ContentFinderCondition != 0)
             OnZoneChanged(0);
-        if (DService.Instance().Condition[ConditionFlag.InCombat])
+        if (ICondition.Instance()[ConditionFlag.InCombat])
             OnConditionChanged(ConditionFlag.InCombat, true);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         UnregCombatEvents();
 
@@ -135,7 +135,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
         ImGui.TableSetupColumn("Name",  ImGuiTableColumnFlags.WidthStretch, 20);
         ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch, 20);
 
-        if (!DService.Instance().Texture.TryGetFromGameIcon(new(210405), out var barrierIcon))
+        if (!ITextureProvider.Instance().TryGetFromGameIcon(new(210405), out var barrierIcon))
             return;
 
         foreach (var status in state.LocalActiveStatus)
@@ -204,7 +204,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
     {
         if (!LuminaGetter.TryGetRow<LuminaStatus>(status.StatusID, out var row))
             return;
-        if (!DService.Instance().Texture.TryGetFromGameIcon(new(row.Icon), out var icon))
+        if (!ITextureProvider.Instance().TryGetFromGameIcon(new(row.Icon), out var icon))
             return;
 
         ImGui.TableNextRow();
@@ -238,7 +238,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
         WindowManager.Instance().PostDraw += Draw;
         FrameworkManager.Instance().Reg(OnUpdate, 500);
 
-        barEntry ??= DService.Instance().DTRBar.Get("DailyRoutines-AutoDisplayMitigationInfo");
+        barEntry ??= IDtrBar.Instance().Get("DailyRoutines-AutoDisplayMitigationInfo");
         barEntry.OnClick = _ =>
         {
             if (Overlay == null)
@@ -398,7 +398,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
             return;
         }
 
-        if (!DService.Instance().Condition[ConditionFlag.InCombat] && GameState.ContentFinderCondition == 0)
+        if (!ICondition.Instance()[ConditionFlag.InCombat] && GameState.ContentFinderCondition == 0)
         {
             UnregCombatEvents();
             return;
@@ -821,7 +821,7 @@ public class AutoDisplayMitigationInfo : ModuleBase
 
             if (statusID == 1174)
             {
-                if (DService.Instance().ObjectTable.SearchByID(targetID) is not IBattleChara sourceChara)
+                if (IObjectTable.Instance().SearchByID(targetID) is not IBattleChara sourceChara)
                     return false;
 
                 var value = 10f;

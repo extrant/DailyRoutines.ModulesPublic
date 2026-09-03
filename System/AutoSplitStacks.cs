@@ -55,7 +55,7 @@ public unsafe class AutoSplitStacks : ModuleBase
         config     = Config.Load(this) ?? new();
 
         CommandManager.Instance().AddCommand(COMMAND, new(OnCommand) { HelpMessage = Lang.Get("AutoSplitStacks-CommandHelp") });
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpened;
 
         WindowManager.Instance().PostDraw += OnDraw;
     }
@@ -65,7 +65,7 @@ public unsafe class AutoSplitStacks : ModuleBase
         WindowManager.Instance().PostDraw -= OnDraw;
 
         CommandManager.Instance().RemoveCommand(COMMAND);
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpened;
 
         fastSplitItemID = 0;
         isNeedToOpen    = false;

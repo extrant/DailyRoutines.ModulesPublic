@@ -55,7 +55,7 @@ public class BetterFPSLimitation : ModuleBase
                  };
         ResetHistory();
 
-        entry ??= DService.Instance().DTRBar.Get("DailyRoutines-BetterFPSLimitation");
+        entry ??= IDtrBar.Instance().Get("DailyRoutines-BetterFPSLimitation");
         entry.OnClick = param =>
         {
             switch (param.ClickType)
@@ -230,7 +230,7 @@ public class BetterFPSLimitation : ModuleBase
         currentFPS = Math.Max(Framework.Instance()->FrameRate, 0f);
         RecordFPS(currentFPS);
 
-        var text = DService.Instance().SeStringEvaluator.EvaluateFromAddon(4002, [(int)currentFPS]).ToDalamudString();
+        var text = ISeStringEvaluator.Instance().EvaluateFromAddon(4002, [(int)currentFPS]).ToDalamudString();
 
         if (config.IsEnabled)
         {

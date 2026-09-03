@@ -39,7 +39,7 @@ public partial class FastWorldTravel
         private static Dictionary<uint, TextButtonNode> WorldToButtons = [];
 
         private static bool IsPluginEnabled =>
-            DService.Instance().PI.IsPluginEnabled("DCTravelerX", MinDCTravelerXVersion);
+            IDalamudPluginInterface.Instance().IsPluginEnabled("DCTravelerX", MinDCTravelerXVersion);
 
         private static bool IsPluginValid =>
             IsPluginEnabled && IsDCTravelerValid;
@@ -142,7 +142,7 @@ public partial class FastWorldTravel
             AtkUnitBase* addon
         )
         {
-            if (DService.Instance().Condition.IsBoundByDuty)
+            if (ICondition.Instance().IsBoundByDuty)
             {
                 Close();
                 return;
@@ -195,7 +195,7 @@ public partial class FastWorldTravel
         }
 
         private void RequestWaitTimeInfoUpdate() =>
-            DService.Instance().Framework.RunOnTick
+            IFramework.Instance().RunOnTick
             (async () =>
                 {
                     if (!IsOpen || !IsPluginValid || WorldToButtons is not { Count: > 0 }) return;

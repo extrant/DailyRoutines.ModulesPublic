@@ -79,8 +79,8 @@ public unsafe class AutoReplaceActionLowLevel : ModuleBase
             var action1Data = LuminaGetter.GetRow<Action>(action1);
             if (action0Data == null || action1Data == null) continue;
 
-            var action0Icon = DService.Instance().Texture.GetFromGameIcon(new(action0Data.Value.Icon)).GetWrapOrDefault();
-            var action1Icon = DService.Instance().Texture.GetFromGameIcon(new(action1Data.Value.Icon)).GetWrapOrDefault();
+            var action0Icon = ITextureProvider.Instance().GetFromGameIcon(new(action0Data.Value.Icon)).GetWrapOrDefault();
+            var action1Icon = ITextureProvider.Instance().GetFromGameIcon(new(action1Data.Value.Icon)).GetWrapOrDefault();
             if (action0Icon == null || action1Icon == null) continue;
 
             ImGui.TableNextRow();

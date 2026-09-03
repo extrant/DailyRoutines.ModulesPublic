@@ -360,7 +360,7 @@ public unsafe class AutoSendMoney : ModuleBase
         var target = TargetSystem.Instance()->GetTargetObject();
 
         if (target is not null &&
-            DService.Instance().ObjectTable.SearchByEntityID(target->EntityId) is ICharacter { ObjectKind: ObjectKind.Pc } player)
+            IObjectTable.Instance().SearchByEntityID(target->EntityId) is ICharacter { ObjectKind: ObjectKind.Pc } player)
         {
             if (members.Any(p => p.EntityID == player.EntityID))
                 return;
@@ -399,7 +399,7 @@ public unsafe class AutoSendMoney : ModuleBase
         Vector3 pos2
     )
     {
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer)
             return false;
 
         var delta      = localPlayer.Position - pos2;
@@ -532,7 +532,7 @@ public unsafe class AutoSendMoney : ModuleBase
             TradeStatusUpdateHook = TradeStatusUpdateSig.GetHook<TradeStatusUpdateDelegate>(OnTradeStatusUpdate);
             TradeStatusUpdateHook.Enable();
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Trade", OnTradeAddonSetup);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "Trade", OnTradeAddonSetup);
             FrameworkManager.Instance().Reg(OnFrameworkTick, 1_000);
 
             LogMessageManager.Instance().RegPost(OnLogMessage);
@@ -546,7 +546,7 @@ public unsafe class AutoSendMoney : ModuleBase
             isDisposed = true;
 
             FrameworkManager.Instance().Unreg(OnFrameworkTick);
-            DService.Instance().AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "Trade", OnTradeAddonSetup);
+            IAddonLifecycle.Instance().UnregisterListener(AddonEvent.PostSetup, "Trade", OnTradeAddonSetup);
 
             LogMessageManager.Instance().Unreg(OnLogMessage);
 
@@ -817,7 +817,7 @@ public unsafe class AutoSendMoney : ModuleBase
 
             if (lastTradeEntityID != 0 && tradePlan.ContainsKey(lastTradeEntityID) && !pendingTradeRequests.Contains(lastTradeEntityID))
             {
-                var target = DService.Instance().ObjectTable.SearchByEntityID(lastTradeEntityID);
+                var target = IObjectTable.Instance().SearchByEntityID(lastTradeEntityID);
 
                 if (target != null && IsWithinTradeDistance(target.Position))
                 {
@@ -831,7 +831,7 @@ public unsafe class AutoSendMoney : ModuleBase
             {
                 if (pendingTradeRequests.Contains(id)) continue;
 
-                var target = DService.Instance().ObjectTable.SearchByEntityID(id);
+                var target = IObjectTable.Instance().SearchByEntityID(id);
                 if (target == null) continue;
 
                 if (!IsWithinTradeDistance(target.Position)) continue;

@@ -38,7 +38,7 @@ public partial class UnifiedGlamourManager : ModuleBase
         Overlay.Flags      |= ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
         Overlay.WindowName =  $"{Info.Title}###UnifiedGlamourManagerOverlay";
 
-        var addonLifecycle = DService.Instance().AddonLifecycle;
+        var addonLifecycle = IAddonLifecycle.Instance();
         addonLifecycle.RegisterListener(AddonEvent.PostSetup,   PLATE_EDITOR_ADDON_NAME, OnPlateEditorAddon);
         addonLifecycle.RegisterListener(AddonEvent.PostDraw,    PLATE_EDITOR_ADDON_NAME, OnPlateEditorAddon);
         addonLifecycle.RegisterListener(AddonEvent.PreFinalize, PLATE_EDITOR_ADDON_NAME, OnPlateEditorAddon);
@@ -53,8 +53,8 @@ public partial class UnifiedGlamourManager : ModuleBase
     {
         CommandManager.Instance().RemoveSubCommand(COMMAND);
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnInspectAddon);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnPlateEditorAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnInspectAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnPlateEditorAddon);
 
         inspectSaveButtonNode?.Dispose();
         inspectSaveButtonNode = null;

@@ -133,11 +133,11 @@ public unsafe class AutoConstantlyClick : ModuleBase
     {
         var input = (PadDevice*)gamepadInput;
 
-        if (DService.Instance().Gamepad.Raw(config.GamepadModeTriggerButtons) == 1)
+        if (IGamepadState.Instance().Raw(config.GamepadModeTriggerButtons) == 1)
         {
             foreach (var btn in Enum.GetValues<GamepadButtons>())
             {
-                if (DService.Instance().Gamepad.Raw(btn) == 1)
+                if (IGamepadState.Instance().Raw(btn) == 1)
                 {
                     if (Environment.TickCount64 >= throttleTime)
                     {

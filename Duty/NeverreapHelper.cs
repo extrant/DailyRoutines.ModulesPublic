@@ -29,7 +29,7 @@ public unsafe class NeverreapHelper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
 
         handle = ZoneIndicatorRenderer.Instance().RegPermanent<nint>
@@ -40,7 +40,7 @@ public unsafe class NeverreapHelper : ModuleBase
                 var director = EventFramework.Instance()->GetContentDirector();
                 if (director == null) return [];
 
-                if (!DService.Instance().Condition[ConditionFlag.InCombat])
+                if (!ICondition.Instance()[ConditionFlag.InCombat])
                     return [];
 
                 var todos = director->DirectorTodos;
@@ -80,7 +80,7 @@ public unsafe class NeverreapHelper : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
         FrameworkManager.Instance().Unreg(OnUpdate);
 
         handle?.Unreg();

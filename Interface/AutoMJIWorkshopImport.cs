@@ -45,14 +45,14 @@ public unsafe partial class AutoMJIWorkshopImport : ModuleBase
         Overlay.WindowName      =   "自动无人岛工房生产计划";
         Overlay.SizeConstraints =   new() { MinimumSize = new(400f * GlobalUIScale, 300f * GlobalUIScale) };
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "MJICraftSchedule", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MJICraftSchedule", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "MJICraftSchedule", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "MJICraftSchedule", OnAddon);
         if (MJICraftSchedule != null)
             OnAddon(AddonEvent.PostSetup, null);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     protected override void OverlayUI()
     {
@@ -233,7 +233,7 @@ public unsafe partial class AutoMJIWorkshopImport : ModuleBase
 
         ImGui.Image
         (
-            DService.Instance().Texture.GetFromGameIcon(new(row.Item.Value.Icon)).GetWrapOrEmpty().Handle,
+            ITextureProvider.Instance().GetFromGameIcon(new(row.Item.Value.Icon)).GetWrapOrEmpty().Handle,
             new(ImGui.GetTextLineHeight() * 1.5f),
             Vector2.Zero,
             Vector2.One

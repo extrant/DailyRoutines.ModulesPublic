@@ -82,13 +82,13 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
         );
         IsActionHighlightedHook.Enable();
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
-        OnConditionChanged(ConditionFlag.InCombat, DService.Instance().Condition[ConditionFlag.InCombat]);
+        ICondition.Instance().ConditionChange += OnConditionChanged;
+        OnConditionChanged(ConditionFlag.InCombat, ICondition.Instance()[ConditionFlag.InCombat]);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
         ExitCombat();
     }
 
@@ -183,7 +183,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
             using var id = ImRaii.PushId($"{status}");
 
             if (!LuminaGetter.TryGetRow<Status>(status, out var statusRow) ||
-                !DService.Instance().Texture.TryGetFromGameIcon(new(statusRow.Icon), out var texture))
+                !ITextureProvider.Instance().TryGetFromGameIcon(new(statusRow.Icon), out var texture))
                 continue;
 
             ImGui.TableNextRow();
@@ -222,7 +222,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
                 foreach (var action in statusConfig.BindActions)
                 {
                     if (!LuminaGetter.TryGetRow<LuminaAction>(action, out var actionRow) ||
-                        !DService.Instance().Texture.TryGetFromGameIcon(new GameIconLookup(actionRow.Icon), out var actionTexture))
+                        !ITextureProvider.Instance().TryGetFromGameIcon(new GameIconLookup(actionRow.Icon), out var actionTexture))
                         continue;
 
                     using (ImRaii.Group())
@@ -324,7 +324,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
         IFramework _
     )
     {
-        if (GameState.IsInPVPArea || !DService.Instance().Condition[ConditionFlag.InCombat])
+        if (GameState.IsInPVPArea || !ICondition.Instance()[ConditionFlag.InCombat])
         {
             ExitCombat();
             return;
@@ -493,7 +493,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
         byte       a7
     )
     {
-        if (GameState.IsInPVPArea || !DService.Instance().Condition[ConditionFlag.InCombat])
+        if (GameState.IsInPVPArea || !ICondition.Instance()[ConditionFlag.InCombat])
         {
             ExitCombat();
             return;
@@ -568,7 +568,7 @@ public unsafe class AutoHighlightStatusAction : ModuleBase
     {
         var counter = -1;
 
-        foreach (var obj in DService.Instance().ObjectTable)
+        foreach (var obj in IObjectTable.Instance())
         {
             counter++;
             if (counter >= 200)

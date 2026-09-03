@@ -31,13 +31,13 @@ public unsafe class AutoUseEventItem : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreShow, InventoryEventAddons, OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreShow, InventoryEventAddons, OnAddon);
         LogMessageManager.Instance().RegPre(OnPreReceiveMessage);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         LogMessageManager.Instance().Unreg(OnPreReceiveMessage);
     }
 
@@ -67,8 +67,8 @@ public unsafe class AutoUseEventItem : ModuleBase
     private static void OnAddonInventoryEvent()
     {
         if (!UIModule.Instance()->IsInventoryOpen()               ||
-            DService.Instance().Condition.IsCasting               ||
-            DService.Instance().Condition[ConditionFlag.InCombat] ||
+            ICondition.Instance().IsCasting               ||
+            ICondition.Instance()[ConditionFlag.InCombat] ||
             Request != null                                       ||
             !IsAnyQuestNearby(out var questRowID))
             return;
@@ -81,9 +81,9 @@ public unsafe class AutoUseEventItem : ModuleBase
 
         if (!QuestRowIDToEventItems.TryGetValue(questRowID, out var eventItemList)) return;
 
-        if (DService.Instance().Condition[ConditionFlag.OccupiedInQuestEvent])
+        if (ICondition.Instance()[ConditionFlag.OccupiedInQuestEvent])
         {
-            DService.Instance().Framework.RunOnTick(OnAddonInventoryEvent);
+            IFramework.Instance().RunOnTick(OnAddonInventoryEvent);
             return;
         }
 
@@ -91,7 +91,7 @@ public unsafe class AutoUseEventItem : ModuleBase
 
         foreach (var eItem in filterItems)
         {
-            if (DService.Instance().Condition.IsCasting) return;
+            if (ICondition.Instance().IsCasting) return;
             UseActionManager.Instance().UseActionLocation(ActionType.EventItem, eItem, gameObj.GameObjectID, gameObj.Position);
         }
     }
@@ -102,7 +102,7 @@ public unsafe class AutoUseEventItem : ModuleBase
     )
     {
         questRowID = 0;
-        if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+        if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
 
         var validMarkers = AgentHUD.Instance()->MapMarkers
                            .AsSpan()
@@ -151,7 +151,7 @@ public unsafe class AutoUseEventItem : ModuleBase
         out IGameObject gameObj
     )
     {
-        var gameObjInternal = DService.Instance().ObjectTable.SearchObject(obj => obj.IsMTQ());
+        var gameObjInternal = IObjectTable.Instance().SearchObject(obj => obj.IsMTQ());
 
         gameObj = gameObjInternal;
         return gameObj != null;

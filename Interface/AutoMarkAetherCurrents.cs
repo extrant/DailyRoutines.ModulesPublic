@@ -64,14 +64,14 @@ public unsafe class AutoMarkAetherCurrents : ModuleBase
         Overlay.SizeConstraints = new() { MinimumSize = ChildSize };
         Overlay.WindowName      = $"{LuminaWrapper.GetAddonText(2448)}###AutoMarkAetherCurrents";
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "AetherCurrent", OnAddon);
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "AetherCurrent", OnAddon);
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
     }
 
     #region 事件
@@ -298,7 +298,7 @@ public unsafe class AutoMarkAetherCurrents : ModuleBase
 
                 // 3.0 特例
                 var texturePath = $"ui/uld/FlyingPermission{(Version == 0 ? string.Empty : Version + 1)}_hr1.tex";
-                field = DService.Instance().PI.UiBuilder.LoadUld(BACKGROUND_ULD_PATH).LoadTexturePart(texturePath, Counter);
+                field = IDalamudPluginInterface.Instance().UiBuilder.LoadUld(BACKGROUND_ULD_PATH).LoadTexturePart(texturePath, Counter);
                 return field;
             }
         }
@@ -592,7 +592,7 @@ public unsafe class AutoMarkAetherCurrents : ModuleBase
 
             ImGui.Separator();
 
-            using (ImRaii.Disabled(!DService.Instance().PI.IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME)))
+            using (ImRaii.Disabled(!IDalamudPluginInterface.Instance().IsPluginEnabled(vnavmeshIPC.INTERNAL_NAME)))
             {
                 if (ImGui.MenuItem($"    {Lang.Get("AutoMarkAetherCurrents-MoveTo")} (vnavmesh)"))
                     MoveTo(module.TaskHelper);
@@ -628,7 +628,7 @@ public unsafe class AutoMarkAetherCurrents : ModuleBase
                 if (Type == PointType.Quest && LuminaGetter.TryGetRow<Quest>(ObjectID, out var questRow))
                 {
                     var questName = questRow.Name.ToString();
-                    var questIcon = DService.Instance().Texture.GetFromGameIcon(71141);
+                    var questIcon = ITextureProvider.Instance().GetFromGameIcon(71141);
 
                     ImGui.AlignTextToFramePadding();
                     ImGui.TextColored(KnownColor.LightSkyBlue.ToVector4(), $"{Lang.Get("Quest")}:");
@@ -679,10 +679,10 @@ public unsafe class AutoMarkAetherCurrents : ModuleBase
             taskHelper.Enqueue
             (() =>
                 {
-                    if (!DService.Instance().Condition.IsOnMount)
+                    if (!ICondition.Instance().IsOnMount)
                     {
                         taskHelper.Enqueue(() => UseActionManager.Instance().UseAction(ActionType.GeneralAction, 9), weight: 1);
-                        taskHelper.Enqueue(() => DService.Instance().Condition.IsOnMount,                            weight: 1);
+                        taskHelper.Enqueue(() => ICondition.Instance().IsOnMount,                            weight: 1);
                     }
                 }
             );

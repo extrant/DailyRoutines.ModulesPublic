@@ -22,11 +22,11 @@ public class AutoLockGameWindow : ModuleBase
     private readonly Lock objectLock = new();
 
     protected override void Init() =>
-        DService.Instance().Condition.ConditionChange += OnConditionChange;
+        ICondition.Instance().ConditionChange += OnConditionChange;
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChange;
+        ICondition.Instance().ConditionChange -= OnConditionChange;
         WindowLock.Cleanup();
     }
 

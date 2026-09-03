@@ -79,7 +79,7 @@ public partial class CrossDCPartyFinder
                     listings    = listingsDisplay = [];
                     lastUpdate  = DateTime.MinValue;
                     lastRequest = new();
-                    await DService.Instance().Framework.RunOnFrameworkThread
+                    await IFramework.Instance().RunOnFrameworkThread
                     (() =>
                         {
                             unsafe
@@ -94,7 +94,7 @@ public partial class CrossDCPartyFinder
 
                 NotifyHelper.Instance().NotificationInfo($"获取了 {listingsDisplay.Count} 条招募信息");
 
-                await DService.Instance().Framework.RunOnFrameworkThread
+                await IFramework.Instance().RunOnFrameworkThread
                 (() =>
                     {
                         unsafe

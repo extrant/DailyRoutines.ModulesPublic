@@ -34,14 +34,14 @@ public unsafe partial class BetterTeleport : ModuleBase
 
     private static uint TicketUsageType
     {
-        get => DService.Instance().GameConfig.UiConfig.GetUInt("TelepoTicketUseType");
-        set => DService.Instance().GameConfig.UiConfig.Set("TelepoTicketUseType", value);
+        get => IGameConfig.Instance().UiConfig.GetUInt("TelepoTicketUseType");
+        set => IGameConfig.Instance().UiConfig.Set("TelepoTicketUseType", value);
     }
 
     private static uint TicketUsageGilSetting
     {
-        get => DService.Instance().GameConfig.UiConfig.GetUInt("TelepoTicketGilSetting");
-        set => DService.Instance().GameConfig.UiConfig.Set("TelepoTicketGilSetting", value);
+        get => IGameConfig.Instance().UiConfig.GetUInt("TelepoTicketGilSetting");
+        set => IGameConfig.Instance().UiConfig.Set("TelepoTicketGilSetting", value);
     }
 
     private Config config = null!;

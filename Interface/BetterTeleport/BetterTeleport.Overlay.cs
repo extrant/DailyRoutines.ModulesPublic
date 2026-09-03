@@ -66,7 +66,7 @@ public unsafe partial class BetterTeleport
             return;
         }
 
-        var keyState = DService.Instance().KeyState;
+        var keyState = IKeyState.Instance();
 
         if (keyState[VirtualKey.ESCAPE])
         {

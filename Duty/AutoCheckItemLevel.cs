@@ -27,11 +27,11 @@ public unsafe class AutoCheckItemLevel : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 20_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
     private void OnZoneChanged
     (
@@ -45,10 +45,10 @@ public unsafe class AutoCheckItemLevel : ModuleBase
             GameState.ContentFinderConditionData.PvP                                                               ||
             !ValidContentJobCategories.Contains(GameState.ContentFinderConditionData.AcceptClassJobCategory.RowId) ||
             GameState.ContentFinderConditionData.ContentMemberType.Value.MeleesPerParty == 0                       ||
-            DService.Instance().Condition[ConditionFlag.DutyRecorderPlayback])
+            ICondition.Instance()[ConditionFlag.DutyRecorderPlayback])
             return;
 
-        TaskHelper.Enqueue(() => !DService.Instance().Condition.IsBetweenAreas && DService.Instance().ObjectTable.LocalPlayer != null, "WaitForEnteringDuty");
+        TaskHelper.Enqueue(() => !ICondition.Instance().IsBetweenAreas && IObjectTable.Instance().LocalPlayer != null, "WaitForEnteringDuty");
         TaskHelper.Enqueue(() => CheckMembersItemLevel([LocalPlayerState.EntityID]));
     }
 
@@ -66,7 +66,7 @@ public unsafe class AutoCheckItemLevel : ModuleBase
             return true;
         }
 
-        if (DService.Instance().Condition.IsBetweenAreas) return false;
+        if (ICondition.Instance().IsBetweenAreas) return false;
 
         if (CharacterInspect != null)
         {

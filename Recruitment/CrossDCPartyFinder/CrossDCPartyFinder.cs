@@ -51,18 +51,18 @@ public partial class CrossDCPartyFinder : ModuleBase
         Overlay       ??= new(this);
         Overlay.Flags |=  ImGuiWindowFlags.NoBackground;
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "LookingForGroup", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "LookingForGroup", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "LookingForGroup", OnAddon);
         if (LookingForGroup->IsAddonAndNodesReady())
             OnAddon(AddonEvent.PostSetup, null);
 
-        DService.Instance().AgentLifecycle.RegisterListener(AgentEvent.PostReceiveEvent, AgentId.LookingForGroup, OnAgent);
+        IAgentLifecycle.Instance().RegisterListener(AgentEvent.PostReceiveEvent, AgentId.LookingForGroup, OnAgent);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
-        DService.Instance().AgentLifecycle.UnregisterListener(OnAgent);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
+        IAgentLifecycle.Instance().UnregisterListener(OnAgent);
 
         ClearResources();
 

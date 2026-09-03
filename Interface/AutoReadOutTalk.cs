@@ -56,9 +56,9 @@ public unsafe class AutoReadOutTalk : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Talk", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "Talk", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreHide,     "Talk", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "Talk", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "Talk", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreHide,     "Talk", OnAddon);
 
         ShowBattleTalkHook = UIModule.Instance()->VirtualTable->HookVFuncFromName("ShowBattleTalk", (ShowBattleTalkDelegate)ShowBattleTalkDetour);
         ShowBattleTalkHook.Enable();
@@ -70,7 +70,7 @@ public unsafe class AutoReadOutTalk : ModuleBase
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
         CancelBefore();
     }
 

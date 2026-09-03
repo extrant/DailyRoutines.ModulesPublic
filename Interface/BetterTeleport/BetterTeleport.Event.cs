@@ -27,7 +27,7 @@ public unsafe partial class BetterTeleport
         isPrevented = true;
 
         if (GameMain.Instance()->CurrentContentFinderConditionId != 0 ||
-            DService.Instance().Condition.IsBetweenAreas              ||
+            ICondition.Instance().IsBetweenAreas              ||
             Control.GetLocalPlayer() == null                          ||
             !UIModule.IsScreenReady())
             return;
@@ -101,7 +101,7 @@ public unsafe partial class BetterTeleport
             return;
 
         // Enter 键
-        if (id == InputId.CMD_CHAT && DService.Instance().KeyState[VirtualKey.RETURN])
+        if (id == InputId.CMD_CHAT && IKeyState.Instance()[VirtualKey.RETURN])
         {
             shouldFocusSearchBar = true;
             overrideResult       = false;

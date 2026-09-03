@@ -59,46 +59,46 @@ public unsafe class AutoTalkSkip : ModuleBase
     {
         var baseAddress0 = TalkBaseSig0.ScanText();
 
-        TalkHook ??= DService.Instance().Hook.HookFromAddress<TalkDelegate>(baseAddress0.GetLuaFunctionByName("Talk"), TalkDetour);
+        TalkHook ??= IGameInteropProvider.Instance().HookFromAddress<TalkDelegate>(baseAddress0.GetLuaFunctionByName("Talk"), TalkDetour);
         TalkHook.Enable();
 
-        TalkAsyncHook ??= DService.Instance().Hook.HookFromAddress<TalkDelegate>(baseAddress0.GetLuaFunctionByName("TalkAsync"), TalkDetour);
+        TalkAsyncHook ??= IGameInteropProvider.Instance().HookFromAddress<TalkDelegate>(baseAddress0.GetLuaFunctionByName("TalkAsync"), TalkDetour);
         TalkAsyncHook.Enable();
 
         var baseAddress1 = TalkBaseSig1.ScanText();
 
-        SystemTalkHook ??= DService.Instance().Hook.HookFromAddress<TalkDelegate>(baseAddress1.GetLuaFunctionByName("SystemTalk"), TalkDetour);
+        SystemTalkHook ??= IGameInteropProvider.Instance().HookFromAddress<TalkDelegate>(baseAddress1.GetLuaFunctionByName("SystemTalk"), TalkDetour);
         SystemTalkHook.Enable();
 
-        LogMessageNoSkipHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>
+        LogMessageNoSkipHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>
             (baseAddress1.GetLuaFunctionByName("LogMessageNoSkip"), LuaStateTalkDetour);
         LogMessageNoSkipHook.Enable();
 
         var baseAddress2 = TalkBaseSig2.ScanText();
 
-        ShortTalkHook ??= DService.Instance().Hook.HookFromAddress<TalkDelegate>(baseAddress2.GetLuaFunctionByName("ShortTalk"), TalkDetour);
+        ShortTalkHook ??= IGameInteropProvider.Instance().HookFromAddress<TalkDelegate>(baseAddress2.GetLuaFunctionByName("ShortTalk"), TalkDetour);
         ShortTalkHook.Enable();
 
-        ShortTalkWithLineVoiceHook ??= DService.Instance().Hook.HookFromAddress<TalkDelegate>
+        ShortTalkWithLineVoiceHook ??= IGameInteropProvider.Instance().HookFromAddress<TalkDelegate>
             (baseAddress2.GetLuaFunctionByName("ShortTalkWithLineVoice"), TalkDetour);
         ShortTalkWithLineVoiceHook.Enable();
 
         var baseAddress3 = TalkBaseSig3.ScanText();
 
-        CraftLeveTalkHook ??= DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>(baseAddress3.GetLuaFunctionByName("CraftLeveTalk"), LuaStateTalkDetour);
+        CraftLeveTalkHook ??= IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>(baseAddress3.GetLuaFunctionByName("CraftLeveTalk"), LuaStateTalkDetour);
         CraftLeveTalkHook.Enable();
 
         var baseAddress4 = TalkBaseSig4.ScanText();
 
         GuildleveAssignmentTalkHook ??=
-            DService.Instance().Hook.HookFromAddress<LuaFunctionDelegate>(baseAddress4.GetLuaFunctionByName("GuildleveAssignmentTalk"), LuaStateTalkDetour);
+            IGameInteropProvider.Instance().HookFromAddress<LuaFunctionDelegate>(baseAddress4.GetLuaFunctionByName("GuildleveAssignmentTalk"), LuaStateTalkDetour);
         GuildleveAssignmentTalkHook.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "Talk", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreDraw, "Talk", OnAddon);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
     private static void OnAddon
     (

@@ -76,8 +76,8 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
         UpdateWindowFlags();
 
-        DService.Instance().ClientState.Login            += OnLogin;
-        DService.Instance().ClientState.TerritoryChanged += OnTerritoryChanged;
+        IClientState.Instance().Login            += OnLogin;
+        IClientState.Instance().TerritoryChanged += OnTerritoryChanged;
 
         FrameworkManager.Instance().Reg(OnUpdate, 250);
 
@@ -87,8 +87,8 @@ public unsafe partial class FastObjectInteract : ModuleBase
     protected override void Uninit()
     {
         FrameworkManager.Instance().Unreg(OnUpdate);
-        DService.Instance().ClientState.Login            -= OnLogin;
-        DService.Instance().ClientState.TerritoryChanged -= OnTerritoryChanged;
+        IClientState.Instance().Login            -= OnLogin;
+        IClientState.Instance().TerritoryChanged -= OnTerritoryChanged;
 
         currentObjects.Clear();
     }
@@ -431,7 +431,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
     )
     {
         var localPlayer    = Control.GetLocalPlayer();
-        var canShowOverlay = !DService.Instance().Condition.IsBetweenAreas && localPlayer != null;
+        var canShowOverlay = !ICondition.Instance().IsBetweenAreas && localPlayer != null;
 
         if (!canShowOverlay)
         {
@@ -488,7 +488,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
         var mgr = GameObjectManager.Instance();
         if (mgr == null) return;
 
-        isOnWorldTraveling = DService.Instance().Condition.Any
+        isOnWorldTraveling = ICondition.Instance().Any
         (
             ConditionFlag.ReadyingVisitOtherWorld,
             ConditionFlag.WaitingToVisitOtherWorld
@@ -518,7 +518,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
 
             if (distSq > limit) continue;
 
-            if (!DService.Instance().Condition[ConditionFlag.InFlight] && MathF.Abs(obj->Position.Y - playerPos.Y) >= 4) continue;
+            if (!ICondition.Instance()[ConditionFlag.InFlight] && MathF.Abs(obj->Position.Y - playerPos.Y) >= 4) continue;
 
             if (kind == ObjectKind.Treasure)
             {
@@ -572,10 +572,10 @@ public unsafe partial class FastObjectInteract : ModuleBase
     {
         if (currentObjects.Count == 0 && currentAethernetShards.Count == 0) return false;
 
-        if (config.WindowInvisibleWhenInteract && DService.Instance().Condition.IsOccupiedInEvent)
+        if (config.WindowInvisibleWhenInteract && ICondition.Instance().IsOccupiedInEvent)
             return false;
 
-        if (config.WindowInvisibleWhenCombat && DService.Instance().Condition[ConditionFlag.InCombat])
+        if (config.WindowInvisibleWhenCombat && ICondition.Instance()[ConditionFlag.InCombat])
             return false;
 
         return true;
@@ -589,7 +589,7 @@ public unsafe partial class FastObjectInteract : ModuleBase
     {
         TaskHelper.RemoveQueueTasks(2);
 
-        if (DService.Instance().Condition.IsOnMount)
+        if (ICondition.Instance().IsOnMount)
         {
             TaskHelper.Enqueue(() => MovementManager.Instance().Dismount(), "DismountInteract", weight: 2);
             TaskHelper.DelayNext(500, weight: 2);
@@ -616,8 +616,8 @@ public unsafe partial class FastObjectInteract : ModuleBase
         return;
 
         static bool IsAbleToInteract() =>
-            !DService.Instance().Condition.IsOnMount                                          &&
-            !DService.Instance().Condition.Any(ConditionFlag.Jumping, ConditionFlag.InFlight) &&
+            !ICondition.Instance().IsOnMount                                          &&
+            !ICondition.Instance().Any(ConditionFlag.Jumping, ConditionFlag.InFlight) &&
             !MovementManager.Instance().IsManagerBusy;
     }
 

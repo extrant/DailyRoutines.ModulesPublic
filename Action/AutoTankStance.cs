@@ -26,14 +26,14 @@ public class AutoTankStance : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
     }
 
     protected override void ConfigUI()
@@ -72,9 +72,9 @@ public class AutoTankStance : ModuleBase
 
     private static bool CheckCurrentJob()
     {
-        if (DService.Instance().Condition.IsBetweenAreas || DService.Instance().Condition.IsOccupiedInEvent || !UIModule.IsScreenReady()) return false;
+        if (ICondition.Instance().IsBetweenAreas || ICondition.Instance().IsOccupiedInEvent || !UIModule.IsScreenReady()) return false;
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { ClassJob.RowId: var job, IsTargetable: true } || job == 0)
+        if (IObjectTable.Instance().LocalPlayer is not { ClassJob.RowId: var job, IsTargetable: true } || job == 0)
             return false;
 
         if (!TankStanceActions.TryGetValue(job, out var info)) return true;

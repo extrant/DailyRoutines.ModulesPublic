@@ -25,13 +25,13 @@ public unsafe partial class AutoRetainerWork
         {
             taskHelper ??= new() { TimeoutMS = 15_000, ShowDebug = true };
 
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "RetainerList", OnRetainerList);
-            DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,  "RetainerList", OnRetainerList);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "RetainerList", OnRetainerList);
+            IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,  "RetainerList", OnRetainerList);
         }
 
         public override void Uninit()
         {
-            DService.Instance().AddonLifecycle.UnregisterListener(OnRetainerList);
+            IAddonLifecycle.Instance().UnregisterListener(OnRetainerList);
 
             taskHelper?.Abort();
             taskHelper?.Dispose();
@@ -94,7 +94,7 @@ public unsafe partial class AutoRetainerWork
                     if (!Module.config.AutoRetainerCollect) break;
                     if (!Module.retainerThrottler.Throttle("AutoRetainerCollect-AFK", 5_000)) return;
 
-                    DService.Instance().Framework.RunOnTick
+                    IFramework.Instance().RunOnTick
                     (
                         () =>
                         {
@@ -131,7 +131,7 @@ public unsafe partial class AutoRetainerWork
                             () =>
                             {
                                 if (taskHelper.AbortByConflictKey(Module)) return true;
-                                DService.Instance().Framework.RunOnTick
+                                IFramework.Instance().RunOnTick
                                 (() =>
                                     {
                                         if (!Module.config.AutoPriceAdjustAfterCollect) return;

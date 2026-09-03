@@ -65,7 +65,7 @@ public unsafe class AutoCountPlayers : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        entry       ??= DService.Instance().DTRBar.Get("DailyRoutines-AutoCountPlayers");
+        entry       ??= IDtrBar.Instance().Get("DailyRoutines-AutoCountPlayers");
         entry.Shown =   true;
         entry.Text  =   $"{Lang.Get("AutoCountPlayers-PlayersAroundCount")}: 0";
         entry.OnClick = _ =>
@@ -95,7 +95,7 @@ public unsafe class AutoCountPlayers : ModuleBase
 
         LogMessageManager.Instance().RegPre(OnLogMessage);
         FrameworkManager.Instance().Reg(OnUpdate, throttleMS: 1_000);
-        OnUpdate(DService.Instance().Framework);
+        OnUpdate(IFramework.Instance());
 
         IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
@@ -192,7 +192,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                 ImGui.SetNextItemWidth(-1f);
                 ImGui.InputText("###Search", ref searchInput, 128);
 
-                if (DService.Instance().Condition.IsBetweenAreas) return;
+                if (ICondition.Instance().IsBetweenAreas) return;
 
                 using var child = ImRaii.Child("列表", ImGui.GetContentRegionAvail() - ImGui.GetStyle().ItemSpacing, true);
                 if (!child) return;
@@ -227,7 +227,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                         NotifyHelper.Instance().Chat(message.Encode());
                     }
 
-                    var gameGUI  = DService.Instance().GameGUI;
+                    var gameGUI  = IGameGui.Instance();
                     var viewport = ImGui.GetMainViewport();
 
                     gameGUI.WorldToScreen(playerAround.Position, out var screenPos, out var isInView);
@@ -250,7 +250,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                         DrawLine(localScreenPos, linePositions.LineEnd, linePositions.Marker, playerAround, isInView);
                     }
 
-                    if (DService.Instance().Texture.TryGetFromGameIcon(playerAround.ClassJob.Value.GetIcon(), out var texture))
+                    if (ITextureProvider.Instance().TryGetFromGameIcon(playerAround.ClassJob.Value.GetIcon(), out var texture))
                     {
                         ImGui.SameLine();
                         ImGui.Image(texture.GetWrapOrEmpty().Handle, new(ImGui.GetFrameHeight()));
@@ -308,7 +308,7 @@ public unsafe class AutoCountPlayers : ModuleBase
                 {
                     ImGui.TextDisabled($"{record.StartTime:MM/dd HH:mm:ss}");
 
-                    if (DService.Instance().Texture.TryGetFromGameIcon(LuminaGetter.GetRowOrDefault<ClassJob>(record.JobID).GetIcon(), out var texture))
+                    if (ITextureProvider.Instance().TryGetFromGameIcon(LuminaGetter.GetRowOrDefault<ClassJob>(record.JobID).GetIcon(), out var texture))
                     {
                         ImGui.SameLine();
                         ImGui.Image(texture.GetWrapOrEmpty().Handle, new(ImGui.GetTextLineHeight()));
@@ -387,7 +387,7 @@ public unsafe class AutoCountPlayers : ModuleBase
             }
         }
 
-        var gameGUI  = DService.Instance().GameGUI;
+        var gameGUI  = IGameGui.Instance();
         var viewport = ImGui.GetMainViewport();
 
         if (!gameGUI.WorldToScreen(localPlayer->Position, out var localScreenPos, out _))
@@ -609,7 +609,7 @@ public unsafe class AutoCountPlayers : ModuleBase
         }
 
         if (targetingPlayersInfo.Count > 0 &&
-            (GameState.ContentFinderCondition == 0 || DService.Instance().PartyList.Length < 2))
+            (GameState.ContentFinderCondition == 0 || IPartyList.Instance().Length < 2))
         {
             var newTargetingPlayers = targetingPlayersInfo.Where(info => info.IsNew).ToList();
 

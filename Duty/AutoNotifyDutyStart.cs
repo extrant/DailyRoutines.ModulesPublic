@@ -19,10 +19,10 @@ public class AutoNotifyDutyStart : ModuleBase
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
 
     protected override void Init() =>
-        DService.Instance().DutyState.DutyStarted += OnDutyStart;
+        IDutyState.Instance().DutyStarted += OnDutyStart;
 
     protected override void Uninit() =>
-        DService.Instance().DutyState.DutyStarted -= OnDutyStart;
+        IDutyState.Instance().DutyStarted -= OnDutyStart;
 
     private static void OnDutyStart
     (

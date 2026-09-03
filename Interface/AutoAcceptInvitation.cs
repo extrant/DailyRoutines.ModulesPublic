@@ -34,11 +34,11 @@ public unsafe class AutoAcceptInvitation : ModuleBase
     protected override void Init()
     {
         config = Config.Load(this) ?? new();
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnSelectYesno);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnSelectYesno);
     }
 
     protected override void Uninit() =>
-        DService.Instance().AddonLifecycle.UnregisterListener(OnSelectYesno);
+        IAddonLifecycle.Instance().UnregisterListener(OnSelectYesno);
 
     protected override void ConfigUI()
     {
@@ -135,7 +135,7 @@ public unsafe class AutoAcceptInvitation : ModuleBase
     )
     {
         var addon = (AddonSelectYesno*)SelectYesno;
-        if (addon == null || DService.Instance().PartyList.Length > 1) return;
+        if (addon == null || IPartyList.Instance().Length > 1) return;
 
         var text = addon->PromptText->NodeText.ToString();
         if (string.IsNullOrWhiteSpace(text)) return;

@@ -22,7 +22,7 @@ public unsafe partial class BetterMarketBoard
 
         var itemData = frame.ItemData;
 
-        var itemIcon = DService.Instance().Texture.GetFromGameIcon(new(itemData.Icon, frame.HQOnly)).GetWrapOrDefault();
+        var itemIcon = ITextureProvider.Instance().GetFromGameIcon(new(itemData.Icon, frame.HQOnly)).GetWrapOrDefault();
         if (itemIcon == null) return;
 
         using var font = FontManager.Instance().UIFont.Push();

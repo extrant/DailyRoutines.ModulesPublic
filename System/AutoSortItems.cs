@@ -28,12 +28,12 @@ public class AutoSortItems : ModuleBase
         config     =   Config.Load(this) ?? new();
         TaskHelper ??= new() { TimeoutMS = 15_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit() =>
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
     protected override void ConfigUI()
     {
@@ -124,10 +124,10 @@ public class AutoSortItems : ModuleBase
     {
         if (!GameState.IsLoggedIn     ||
             !UIModule.IsScreenReady() ||
-            DService.Instance().Condition.IsOccupiedInEvent)
+            ICondition.Instance().IsOccupiedInEvent)
             return false;
 
-        if (!DService.Instance().Condition.IsIdle || !IsInValidZone())
+        if (!ICondition.Instance().IsIdle || !IsInValidZone())
         {
             TaskHelper.Abort();
             return true;

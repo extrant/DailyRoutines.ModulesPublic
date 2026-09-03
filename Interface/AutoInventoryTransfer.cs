@@ -23,11 +23,11 @@ public unsafe class AutoInventoryTransfer : ModuleBase
     {
         TaskHelper ??= new() { TimeoutMS = 2_000 };
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
     protected override void ConfigUI() => ImGuiOm.ConflictKeyText();
 

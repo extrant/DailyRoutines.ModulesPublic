@@ -26,11 +26,11 @@ public unsafe class PetSizeContextMenu : ModuleBase
     protected override void Init()
     {
         containerItem                                =  new();
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpened;
 
     private void OnMenuOpened
     (
@@ -79,7 +79,7 @@ public unsafe class PetSizeContextMenu : ModuleBase
         )
         {
             if (args.Target is not MenuTargetDefault defautTarget) return false;
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer) return false;
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer) return false;
 
             var pet = CharacterManager.Instance()->LookupPetByOwnerObject(localPlayer.ToStruct());
             if (pet == null || defautTarget.TargetObjectId != pet->GetGameObjectId()) return false;

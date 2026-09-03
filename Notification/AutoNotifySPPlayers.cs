@@ -109,7 +109,7 @@ public class AutoNotifySPPlayers : ModuleBase
                     [
                         x => () =>
                         {
-                            if (!DService.Instance().Texture.TryGetFromGameIcon(x.Icon, out var statusIcon)) return;
+                            if (!ITextureProvider.Instance().TryGetFromGameIcon(x.Icon, out var statusIcon)) return;
                             using var id = ImRaii.PushId($"{x.Name.ToString()}_{x.RowId}");
 
                             if (ImGuiOm.SelectableImageWithText
@@ -299,7 +299,7 @@ public class AutoNotifySPPlayers : ModuleBase
             foreach (var status in onlineStatus)
             {
                 if (!LuminaGetter.TryGetRow<OnlineStatus>(status, out var row)) continue;
-                if (!DService.Instance().Texture.TryGetFromGameIcon(new(row.Icon), out var texture)) continue;
+                if (!ITextureProvider.Instance().TryGetFromGameIcon(new(row.Icon), out var texture)) continue;
 
                 using (ImRaii.Group())
                 {
@@ -335,7 +335,7 @@ public class AutoNotifySPPlayers : ModuleBase
     {
         if (config.NotifiedPlayer.Count == 0)
             return;
-        if (!DService.Instance().ClientState.IsLoggedIn || DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+        if (!IClientState.Instance().IsLoggedIn || IObjectTable.Instance().LocalPlayer is not { } localPlayer)
             return;
         if (obj == null || obj.Address == localPlayer.Address || obj.ObjectKind != ObjectKind.Pc)
             return;

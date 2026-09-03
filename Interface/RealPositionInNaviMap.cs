@@ -32,13 +32,13 @@ public unsafe class RealPositionInNaviMap : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "_NaviMap", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize,         "_NaviMap", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRequestedUpdate, "_NaviMap", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize,         "_NaviMap", OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         positionButton?.Dispose();
         positionButton = null;
@@ -82,7 +82,7 @@ public unsafe class RealPositionInNaviMap : ModuleBase
                 if (numberArray == null) return;
 
                 // 跳跃的时候始终要更新位置
-                if (!DService.Instance().Condition[ConditionFlag.Jumping])
+                if (!ICondition.Instance()[ConditionFlag.Jumping])
                 {
                     if (numberArray->IntArray[0] != lastX)
                         lastX = numberArray->IntArray[0];
@@ -105,7 +105,7 @@ public unsafe class RealPositionInNaviMap : ModuleBase
                         String    = string.Empty,
                         OnClick = () =>
                         {
-                            if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return;
+                            if (IObjectTable.Instance().LocalPlayer is not { } player) return;
 
                             var agent = AgentMap.Instance();
                             agent->SetFlagMapMarker(GameState.TerritoryType, GameState.Map, player.Position);
@@ -126,7 +126,7 @@ public unsafe class RealPositionInNaviMap : ModuleBase
                         }
                     };
 
-                    if (DService.Instance().ObjectTable.LocalPlayer is { } localPlayer)
+                    if (IObjectTable.Instance().LocalPlayer is { } localPlayer)
                         positionButton.String = $"X:{localPlayer.Position.X:F1} Y:{localPlayer.Position.Y:F1} Z:{localPlayer.Position.Z:F1}";
 
                     positionButton.BackgroundNode.IsVisible = false;
@@ -141,7 +141,7 @@ public unsafe class RealPositionInNaviMap : ModuleBase
                 }
 
             {
-                if (DService.Instance().ObjectTable.LocalPlayer is { } localPlayer)
+                if (IObjectTable.Instance().LocalPlayer is { } localPlayer)
                     positionButton.String = $"X:{localPlayer.Position.X:F1} Y:{localPlayer.Position.Y:F1} Z:{localPlayer.Position.Z:F1}";
             }
 

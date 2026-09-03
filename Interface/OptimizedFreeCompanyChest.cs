@@ -79,22 +79,22 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
         SendInventoryRefreshHook ??= SendInventoryRefreshSig.GetHook<SendInventoryRefreshDelegate>(SendInventoryRefreshDetour);
         SendInventoryRefreshHook.Enable();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeCompanyChest", OnAddonChest);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "FreeCompanyChest", OnAddonChest);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "FreeCompanyChest", OnAddonChest);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "InputNumeric",     OnAddonInput);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreDraw,     "ContextMenu",      OnAddonContextMenu);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "FreeCompanyChest", OnAddonChest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "FreeCompanyChest", OnAddonChest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "FreeCompanyChest", OnAddonChest);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "InputNumeric",     OnAddonInput);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreDraw,     "ContextMenu",      OnAddonContextMenu);
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnContextMenuOpened;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnContextMenuOpened;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonContextMenu);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonChest);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonInput);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonContextMenu);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonChest);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonInput);
 
         ClearNodes();
 
@@ -116,7 +116,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
                 if (config.DefaultPage != InventoryType.Invalid)
                 {
                     if (config.DefaultPage == InventoryType.FreeCompanyCrystals)
-                        DService.Instance().Framework.Run(() => ((AtkComponentRadioButton*)FreeCompanyChest->GetComponentByNodeId(15))->Click());
+                        IFramework.Instance().Run(() => ((AtkComponentRadioButton*)FreeCompanyChest->GetComponentByNodeId(15))->Click());
                     else
                     {
                         if ((int)config.DefaultPage < 20000) return;
@@ -124,7 +124,7 @@ public unsafe class OptimizedFreeCompanyChest : ModuleBase
                         var index = (int)config.DefaultPage % 20000;
                         if (index > 5) return;
 
-                        DService.Instance().Framework.Run(() => ((AtkComponentRadioButton*)FreeCompanyChest->GetComponentByNodeId((uint)(10 + index)))->Click());
+                        IFramework.Instance().Run(() => ((AtkComponentRadioButton*)FreeCompanyChest->GetComponentByNodeId((uint)(10 + index)))->Click());
                     }
                 }
 

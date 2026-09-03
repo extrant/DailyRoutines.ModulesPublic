@@ -138,7 +138,7 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
     {
         var tcs = new TaskCompletionSource<StateSnapshot?>();
 
-        DService.Instance().Framework.RunOnTick
+        IFramework.Instance().RunOnTick
         (() =>
             {
                 try
@@ -232,7 +232,7 @@ public class AutoNotifyChaoticRaidBonus : ModuleBase
     (
         string dcName
     ) =>
-        DService.Instance().Framework.RunOnTick
+        IFramework.Instance().RunOnTick
         (() =>
             {
                 var text = Lang.Get("AutoNotifyChaoticRaidBonus-Notification", dcName);

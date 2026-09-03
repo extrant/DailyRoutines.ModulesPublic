@@ -28,54 +28,54 @@ public unsafe class ShopDisplayRealItemIcon : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "Shop", OnShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "Shop", OnShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Shop", OnShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "Shop", OnShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "Shop", OnShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "Shop", OnShop);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "InclusionShop", OnInclusionShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "InclusionShop", OnInclusionShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "InclusionShop", OnInclusionShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "InclusionShop", OnInclusionShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "InclusionShop", OnInclusionShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "InclusionShop", OnInclusionShop);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnGrandCompanyExchange);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "GrandCompanyExchange", OnGrandCompanyExchange);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "GrandCompanyExchange", OnGrandCompanyExchange);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "GrandCompanyExchange", OnGrandCompanyExchange);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "GrandCompanyExchange", OnGrandCompanyExchange);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "GrandCompanyExchange", OnGrandCompanyExchange);
 
-        DService.Instance().AddonLifecycle.RegisterListener
+        IAddonLifecycle.Instance().RegisterListener
         (
             AddonEvent.PostSetup,
             ["ShopExchangeCurrency", "ShopExchangeItem", "ShopExchangeCoin"],
             OnShopExchange
         );
-        DService.Instance().AddonLifecycle.RegisterListener
+        IAddonLifecycle.Instance().RegisterListener
         (
             AddonEvent.PostRefresh,
             ["ShopExchangeCurrency", "ShopExchangeItem", "ShopExchangeCoin"],
             OnShopExchange
         );
-        DService.Instance().AddonLifecycle.RegisterListener
+        IAddonLifecycle.Instance().RegisterListener
         (
             AddonEvent.PreRefresh,
             ["ShopExchangeCurrency", "ShopExchangeItem", "ShopExchangeCoin"],
             OnShopExchange
         );
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "CollectablesShop", OnCollectablesShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "CollectablesShop", OnCollectablesShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "CollectablesShop", OnCollectablesShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "CollectablesShop", OnCollectablesShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "CollectablesShop", OnCollectablesShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "CollectablesShop", OnCollectablesShop);
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "FreeShop", OnFreeShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreRefresh,  "FreeShop", OnFreeShop);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "FreeShop", OnFreeShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "FreeShop", OnFreeShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreRefresh,  "FreeShop", OnFreeShop);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostRefresh, "FreeShop", OnFreeShop);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnShop);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnInclusionShop);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnGrandCompanyExchange);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnShopExchange);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnCollectablesShop);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnFreeShop);
+        IAddonLifecycle.Instance().UnregisterListener(OnShop);
+        IAddonLifecycle.Instance().UnregisterListener(OnInclusionShop);
+        IAddonLifecycle.Instance().UnregisterListener(OnGrandCompanyExchange);
+        IAddonLifecycle.Instance().UnregisterListener(OnShopExchange);
+        IAddonLifecycle.Instance().UnregisterListener(OnCollectablesShop);
+        IAddonLifecycle.Instance().UnregisterListener(OnFreeShop);
     }
 
     private static void OnFreeShop

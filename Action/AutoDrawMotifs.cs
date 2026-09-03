@@ -28,18 +28,18 @@ public class AutoDrawMotifs : ModuleBase
 
         TaskHelper ??= new() { TimeoutMS = 30_000 };
 
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    += OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    += OnConditionChanged;
-        DService.Instance().DutyState.DutyCompleted      += OnDutyCompleted;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    += OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    += OnConditionChanged;
+        IDutyState.Instance().DutyCompleted      += OnDutyCompleted;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
-        DService.Instance().DutyState.DutyRecommenced    -= OnDutyRecommenced;
-        DService.Instance().Condition.ConditionChange    -= OnConditionChanged;
-        DService.Instance().DutyState.DutyCompleted      -= OnDutyCompleted;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        IDutyState.Instance().DutyRecommenced    -= OnDutyRecommenced;
+        ICondition.Instance().ConditionChange    -= OnConditionChanged;
+        IDutyState.Instance().DutyCompleted      -= OnDutyCompleted;
     }
 
     protected override void ConfigUI()
@@ -94,11 +94,11 @@ public class AutoDrawMotifs : ModuleBase
 
     private bool CheckCurrentJob()
     {
-        if (DService.Instance().Condition.IsBetweenAreas ||
-            DService.Instance().Condition.IsOccupiedInEvent)
+        if (ICondition.Instance().IsBetweenAreas ||
+            ICondition.Instance().IsOccupiedInEvent)
             return false;
 
-        if (DService.Instance().ObjectTable.LocalPlayer is not { ClassJob.RowId: 42, Level: >= 30 } ||
+        if (IObjectTable.Instance().LocalPlayer is not { ClassJob.RowId: 42, Level: >= 30 } ||
             !GameState.IsInPVEActonZone)
         {
             TaskHelper.Abort();
@@ -111,15 +111,15 @@ public class AutoDrawMotifs : ModuleBase
 
     private bool DrawNeededMotif()
     {
-        var gauge = DService.Instance().JobGauges.Get<PCTGauge>();
+        var gauge = IJobGauges.Instance().Get<PCTGauge>();
 
-        if (DService.Instance().ObjectTable.LocalPlayer == null  ||
-            DService.Instance().Condition.IsBetweenAreas         ||
-            DService.Instance().Condition[ConditionFlag.Casting] ||
-            DService.Instance().Condition.IsOccupiedInEvent)
+        if (IObjectTable.Instance().LocalPlayer == null  ||
+            ICondition.Instance().IsBetweenAreas         ||
+            ICondition.Instance()[ConditionFlag.Casting] ||
+            ICondition.Instance().IsOccupiedInEvent)
             return false;
 
-        if (DService.Instance().Condition.Any(ConditionFlag.InCombat, ConditionFlag.Mounted, ConditionFlag.Mounting, ConditionFlag.InFlight))
+        if (ICondition.Instance().Any(ConditionFlag.InCombat, ConditionFlag.Mounted, ConditionFlag.Mounting, ConditionFlag.InFlight))
         {
             TaskHelper.Abort();
             return true;

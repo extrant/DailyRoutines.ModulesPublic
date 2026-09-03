@@ -27,13 +27,13 @@ public unsafe class Alphascape3Helper : ModuleBase
 
     protected override void Init()
     {
-        DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
         OnZoneChanged(0);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
 
         FrameworkManager.Instance().Unreg(OnUpdate);
         UseActionManager.Instance().Unreg(OnStartCast);

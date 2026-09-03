@@ -61,11 +61,11 @@ public class ExpandItemMenuSearch : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().ContextMenu.OnMenuOpened += OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened += OnMenuOpened;
     }
 
     protected override void Uninit() =>
-        DService.Instance().ContextMenu.OnMenuOpened -= OnMenuOpened;
+        IContextMenu.Instance().OnMenuOpened -= OnMenuOpened;
 
     protected override void ConfigUI()
     {

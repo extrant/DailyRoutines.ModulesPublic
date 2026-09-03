@@ -34,15 +34,15 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
 
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "SalvageItemSelector", OnAddonList);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SalvageItemSelector", OnAddonList);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "SalvageItemSelector", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "SalvageItemSelector", OnAddonList);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostSetup,   "SalvageDialog",       OnAddon);
     }
 
     protected override void Uninit()
     {
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddonList);
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddonList);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         checkboxNode?.Dispose();
         checkboxNode = null;
@@ -145,7 +145,7 @@ public unsafe class AutoDesynthesizeItems : ModuleBase
 
     private bool StartDesynthesize()
     {
-        if (DService.Instance().Condition.IsOccupiedInEvent) return false;
+        if (ICondition.Instance().IsOccupiedInEvent) return false;
         if (!SalvageItemSelector->IsAddonAndNodesReady()) return false;
 
         // 背包满了

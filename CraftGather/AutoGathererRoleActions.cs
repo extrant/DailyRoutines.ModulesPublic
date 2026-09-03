@@ -24,12 +24,12 @@ public class AutoGathererRoleActions : ModuleBase
             RetryIntervalMS = 500
         };
 
-        DService.Instance().ClientState.ClassJobChanged += OnJobChanged;
+        IClientState.Instance().ClassJobChanged += OnJobChanged;
         OnJobChanged(LocalPlayerState.ClassJob);
     }
 
     protected override void Uninit() =>
-        DService.Instance().ClientState.ClassJobChanged -= OnJobChanged;
+        IClientState.Instance().ClassJobChanged -= OnJobChanged;
 
     private unsafe void OnJobChanged
     (

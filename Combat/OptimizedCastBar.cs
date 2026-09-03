@@ -36,17 +36,17 @@ public unsafe class OptimizedCastBar : ModuleBase
     {
         config = Config.Load(this) ?? new();
 
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PostDraw,    "_CastBar", OnAddon);
-        DService.Instance().AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "_CastBar", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PostDraw,    "_CastBar", OnAddon);
+        IAddonLifecycle.Instance().RegisterListener(AddonEvent.PreFinalize, "_CastBar", OnAddon);
 
-        DService.Instance().Condition.ConditionChange += OnConditionChanged;
+        ICondition.Instance().ConditionChange += OnConditionChanged;
     }
 
     protected override void Uninit()
     {
-        DService.Instance().Condition.ConditionChange -= OnConditionChanged;
+        ICondition.Instance().ConditionChange -= OnConditionChanged;
 
-        DService.Instance().AddonLifecycle.UnregisterListener(OnAddon);
+        IAddonLifecycle.Instance().UnregisterListener(OnAddon);
 
         slideMarkerZoneNode?.Dispose();
         slideMarkerZoneNode = null;
@@ -297,7 +297,7 @@ public unsafe class OptimizedCastBar : ModuleBase
 
                 var slidePerercentage = ((float)(addon->CastTime * 10) - config.SlideCastZoneAdjust) / (addon->CastTime * 10);
                 var slidePosition     = 160                                                          * slidePerercentage;
-                var slideColor = DService.Instance().Condition[ConditionFlag.Casting] || DService.Instance().Condition[ConditionFlag.OccupiedInEvent] ?
+                var slideColor = ICondition.Instance()[ConditionFlag.Casting] || ICondition.Instance()[ConditionFlag.OccupiedInEvent] ?
                                      config.SlideCastNotReadyColor :
                                      config.SlideCastReadyColor;
 

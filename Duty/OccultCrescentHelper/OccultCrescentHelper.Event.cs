@@ -46,7 +46,7 @@ public partial class OccultCrescentHelper
         {
             ceTaskHelper ??= new() { TimeoutMS = 180_000 };
 
-            DService.Instance().ClientState.TerritoryChanged += OnZoneChanged;
+            IClientState.Instance().TerritoryChanged += OnZoneChanged;
             OnZoneChanged(0);
 
             ExecuteCommandManager.Instance().RegPost(OnPostReceivedCommand);
@@ -87,7 +87,7 @@ public partial class OccultCrescentHelper
             GameState.Instance().Logout -= OnLogout;
             ExecuteCommandManager.Instance().Unreg(OnPostReceivedCommand);
             LogMessageManager.Instance().Unreg(OnPostReceivedMessage);
-            DService.Instance().ClientState.TerritoryChanged -= OnZoneChanged;
+            IClientState.Instance().TerritoryChanged -= OnZoneChanged;
             FrameworkManager.Instance().Unreg(OnPathfindingUpdate);
             WindowManager.Instance().PostDraw                -= OnPathfindingDraw;
 
@@ -120,7 +120,7 @@ public partial class OccultCrescentHelper
                     {
                         foreach (var ce in allIslandEvents)
                         {
-                            if (!DService.Instance().Texture.TryGetFromGameIcon(new(ce.Event.IconID), out var texture)) continue;
+                            if (!ITextureProvider.Instance().TryGetFromGameIcon(new(ce.Event.IconID), out var texture)) continue;
 
                             using (ImRaii.Disabled(!CanStartPathfinding(ce)))
                             {
@@ -286,7 +286,7 @@ public partial class OccultCrescentHelper
             (
                 () =>
                 {
-                    if (!MainModule.config.IsEnabledHighlightFATE || DService.Instance().Condition[ConditionFlag.InCombat])
+                    if (!MainModule.config.IsEnabledHighlightFATE || ICondition.Instance()[ConditionFlag.InCombat])
                         return [];
 
                     return allIslandEvents
@@ -301,7 +301,7 @@ public partial class OccultCrescentHelper
                         ZoneIndicatorText.TextImage? image = null;
 
                         if (data.Event.IconID != 0 &&
-                            DService.Instance().Texture.TryGetFromGameIcon(new(data.Event.IconID), out var iconTex))
+                            ITextureProvider.Instance().TryGetFromGameIcon(new(data.Event.IconID), out var iconTex))
                         {
                             image = new()
                             {
@@ -326,7 +326,7 @@ public partial class OccultCrescentHelper
             (
                 () =>
                 {
-                    if (!MainModule.config.IsEnabledHighlightCE || DService.Instance().Condition[ConditionFlag.InCombat])
+                    if (!MainModule.config.IsEnabledHighlightCE || ICondition.Instance()[ConditionFlag.InCombat])
                         return [];
 
                     return allIslandEvents
@@ -347,7 +347,7 @@ public partial class OccultCrescentHelper
                         ZoneIndicatorText.TextImage? image = null;
 
                         if (data.Event.IconID != 0 &&
-                            DService.Instance().Texture.TryGetFromGameIcon(new(data.Event.IconID), out var iconTex))
+                            ITextureProvider.Instance().TryGetFromGameIcon(new(data.Event.IconID), out var iconTex))
                         {
                             image = new()
                             {
@@ -378,7 +378,7 @@ public partial class OccultCrescentHelper
             var newCEData      = new List<IslandEventData>();
 
             // FATE
-            foreach (var fate in DService.Instance().Fate)
+            foreach (var fate in IFateTable.Instance())
             {
                 if (IslandEventData.Parse(fate) is not { } safeFate) continue;
 
@@ -535,7 +535,7 @@ public partial class OccultCrescentHelper
         )
         {
             if (!CanStartPathfinding(data)                                    ||
-                DService.Instance().ObjectTable.LocalPlayer is null            ||
+                IObjectTable.Instance().LocalPlayer is null            ||
                 ceTaskHelper is not { } taskHelper)
                 return;
 
@@ -584,7 +584,7 @@ public partial class OccultCrescentHelper
                         session.TravelStage != PathfindingTravelStage.DemiReturn)
                         return true;
 
-                    if (DService.Instance().Condition[ConditionFlag.Mounted])
+                    if (ICondition.Instance()[ConditionFlag.Mounted])
                     {
                         ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
                         return false;
@@ -593,7 +593,7 @@ public partial class OccultCrescentHelper
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, DEMI_RETURN_ACTION_ID) != 0)
                         return false;
 
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player) return false;
+                    if (IObjectTable.Instance().LocalPlayer is not { } player) return false;
 
                     demiReturnStartPosition = player.Position;
                     return UseActionManager.Instance().UseAction(ActionType.Action, DEMI_RETURN_ACTION_ID);
@@ -611,7 +611,7 @@ public partial class OccultCrescentHelper
                         session.TravelStage != PathfindingTravelStage.DemiReturn)
                         return true;
 
-                    return DService.Instance().ObjectTable.LocalPlayer is { } player &&
+                    return IObjectTable.Instance().LocalPlayer is { } player &&
                            player.Position != demiReturnStartPosition;
                 },
                 timeoutMS: 30_000,
@@ -671,7 +671,7 @@ public partial class OccultCrescentHelper
                 {
                     if (pathfindingSession != session) return true;
 
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player)
+                    if (IObjectTable.Instance().LocalPlayer is not { } player)
                     {
                         StopPathfinding(session);
                         return true;
@@ -697,7 +697,7 @@ public partial class OccultCrescentHelper
                         session.TravelStage != expectedStage)
                         return true;
 
-                    if (DService.Instance().ObjectTable.LocalPlayer is not { } player)
+                    if (IObjectTable.Instance().LocalPlayer is not { } player)
                     {
                         session.TravelStage = PathfindingTravelStage.Pathfinding;
                         return true;
@@ -879,7 +879,7 @@ public partial class OccultCrescentHelper
         {
             if (pathfindingSession is not { } session) return;
 
-            if (DService.Instance().ObjectTable.LocalPlayer is not { } localPlayer)
+            if (IObjectTable.Instance().LocalPlayer is not { } localPlayer)
             {
                 StopPathfinding(session);
                 return;
@@ -1012,8 +1012,8 @@ public partial class OccultCrescentHelper
         {
             if (session.TravelStage != PathfindingTravelStage.Pathfinding) return;
 
-            if (DService.Instance().Condition[ConditionFlag.Mounted] ||
-                DService.Instance().Condition.IsOccupiedInEvent)
+            if (ICondition.Instance()[ConditionFlag.Mounted] ||
+                ICondition.Instance().IsOccupiedInEvent)
                 return;
 
             if (!vnavmeshIPC.GetIsPathfindRunning() ||
@@ -1041,7 +1041,7 @@ public partial class OccultCrescentHelper
         (
             PathfindingSession session
         ) =>
-            DService.Instance().ObjectTable
+            IObjectTable.Instance()
                     .SearchObjects
                     (
                         x => x is IBattleNPC { IsTargetable: true, IsDead: false } &&
@@ -1058,7 +1058,7 @@ public partial class OccultCrescentHelper
         {
             if (TargetManager.Target?.EntityID == entityID) return;
 
-            if (DService.Instance().ObjectTable.SearchByEntityID(entityID, IObjectTable.CharactersRange) is { } monster &&
+            if (IObjectTable.Instance().SearchByEntityID(entityID, IObjectTable.CharactersRange) is { } monster &&
                 Vector2.DistanceSquared(playerPosition, monster.Position.ToVector2()) <=
                 FATE_MONSTER_TARGET_DISTANCE_SQUARED)
                 TargetManager.Target = monster;
@@ -1095,7 +1095,7 @@ public partial class OccultCrescentHelper
             vnavmeshIPC.StopPathfind();
 
             if (session.PathfindingTask == null && !session.IsMovementInterrupted &&
-                DService.Instance().ObjectTable.LocalPlayer is { } player)
+                IObjectTable.Instance().LocalPlayer is { } player)
                 StartNavigationPath(session, player.Position);
         }
 
@@ -1135,10 +1135,10 @@ public partial class OccultCrescentHelper
         }
 
         private static bool IsMovementInputPressed() =>
-            DService.Instance().KeyState[VirtualKey.W] ||
-            DService.Instance().KeyState[VirtualKey.A] ||
-            DService.Instance().KeyState[VirtualKey.S] ||
-            DService.Instance().KeyState[VirtualKey.D];
+            IKeyState.Instance()[VirtualKey.W] ||
+            IKeyState.Instance()[VirtualKey.A] ||
+            IKeyState.Instance()[VirtualKey.S] ||
+            IKeyState.Instance()[VirtualKey.D];
 
         private static void DrawPath
         (
@@ -1148,7 +1148,7 @@ public partial class OccultCrescentHelper
             if (path.Count == 0) return;
 
             var drawList           = ImGui.GetForegroundDrawList();
-            var gameGUI            = DService.Instance().GameGUI;
+            var gameGUI            = IGameGui.Instance();
             var previousWorldPoint = path[0];
             var previousInFront    = gameGUI.WorldToScreen
             (
@@ -1259,14 +1259,14 @@ public partial class OccultCrescentHelper
                 ExecuteCommandManager.Instance().ExecuteCommand(ExecuteCommandFlag.Dismount);
 
             if (eventType is not (CrescentEventType.FATE or CrescentEventType.MagicPot) ||
-                (DService.Instance().Condition[ConditionFlag.Mounted] && !shouldDismount))
+                (ICondition.Instance()[ConditionFlag.Mounted] && !shouldDismount))
                 return;
 
             if (ceTaskHelper is not { } taskHelper) return;
 
             taskHelper.Enqueue
             (
-                () => !DService.Instance().Condition[ConditionFlag.Mounted]
+                () => !ICondition.Instance()[ConditionFlag.Mounted]
             );
             taskHelper.Enqueue(() => ChatManager.Instance().SendMessage("/facetarget"));
             taskHelper.DelayNext(100);

@@ -38,7 +38,7 @@ public unsafe class SimplifiedSystemMenu : ModuleBase
 
     protected override void Init()
     {
-        OpenSystemMenuHook = DService.Instance().Hook.HookFromMemberFunction
+        OpenSystemMenuHook = IGameInteropProvider.Instance().HookFromMemberFunction
         (
             typeof(AgentHUD.MemberFunctionPointers),
             "OpenSystemMenu",
