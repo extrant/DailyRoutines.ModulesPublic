@@ -150,6 +150,10 @@ public class AutoBackupGameConfig : ModuleBase
     
     private void EnqueueUpload()
     {
+        var message = Lang.Get("AutoBackupGameConfig-Notification-StartOperation");
+        NotifyHelper.Toast(message);
+        NotifyHelper.Instance().Chat(message);
+        
         TaskHelper.Abort();
         TaskHelper.EnqueueAsync(UploadAsync, "上传覆盖云端");
     }
@@ -263,7 +267,7 @@ public class AutoBackupGameConfig : ModuleBase
             (
                 new
                 {
-                    description = GIST_DESCRIPTION,
+                    description = GetDescription(),
                     @public     = false,
                     files
                 }
@@ -284,6 +288,69 @@ public class AutoBackupGameConfig : ModuleBase
         catch (Exception ex)
         {
             HandleError("备份至 GitHub Gist 失败", ex);
+        }
+    }
+    
+    private async Task RestoreAsync
+    (
+        CancellationToken ct
+    )
+    {
+        try
+        {
+            if (!IsDataFolderValid())
+            {
+                var message = Lang.Get("AutoBackupGameConfig-Notification-InvalidFolder");
+                NotifyHelper.Instance().ChatError(message);
+                NotifyHelper.ToastError(message);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(config.Token)) return;
+
+            if (await EnsureGistIDAsync(ct) == null)
+            {
+                var message = Lang.Get("AutoBackupGameConfig-Notification-NoGist");
+                NotifyHelper.Instance().ChatError(message);
+                NotifyHelper.ToastError(message);
+                return;
+            }
+
+            var zipBytes = await DownloadBackupBytesAsync(ct);
+
+            using var       memoryStream = new MemoryStream(zipBytes);
+            await using var archive      = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+
+            var folderFull = Path.GetFullPath(config.DataFolderPath);
+
+            foreach (var entry in archive.Entries)
+            {
+                if (entry.FullName.EndsWith('/'))
+                    continue;
+
+                var entryPath = Path.GetFullPath(Path.Join(folderFull, entry.FullName.Replace('/', Path.DirectorySeparatorChar)));
+
+                if (Path.GetRelativePath(folderFull, entryPath).StartsWith(".."))
+                    continue;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(entryPath)!);
+
+                await using var entryStream = await entry.OpenAsync(ct);
+                await using var fileStream  = new FileStream(entryPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                await entryStream.CopyToAsync(fileStream, ct);
+            }
+
+            var successMessage = Lang.Get("AutoBackupGameConfig-Notification-RestoreSuccess");
+            NotifyHelper.Instance().Chat(successMessage);
+            NotifyHelper.Toast(successMessage);
+        }
+        catch (OperationCanceledException)
+        {
+            // ignored
+        }
+        catch (Exception ex)
+        {
+            HandleError("从云端恢复失败", ex);
         }
     }
 
@@ -371,7 +438,7 @@ public class AutoBackupGameConfig : ModuleBase
 
             var gists = JsonConvert.DeserializeObject<List<Gist>>(await response.Content.ReadAsStringAsync(ct)) ?? [];
 
-            var gistID = gists.FirstOrDefault(gist => gist.Description == GIST_DESCRIPTION)?.ID;
+            var gistID = gists.FirstOrDefault(gist => gist.Description == GetDescription())?.ID;
             if (gistID != null)
                 return gistID;
 
@@ -416,71 +483,6 @@ public class AutoBackupGameConfig : ModuleBase
 
         return Convert.FromBase64String(await response.Content.ReadAsStringAsync(ct));
     }
-
-    private async Task RestoreAsync
-    (
-        CancellationToken ct
-    )
-    {
-        try
-        {
-            if (!IsDataFolderValid())
-            {
-                var message = Lang.Get("AutoBackupGameConfig-Notification-InvalidFolder");
-                NotifyHelper.Instance().ChatError(message);
-                NotifyHelper.ToastError(message);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(config.Token)) return;
-
-            if (await EnsureGistIDAsync(ct) == null)
-            {
-                var message = Lang.Get("AutoBackupGameConfig-Notification-NoGist");
-                NotifyHelper.Instance().ChatError(message);
-                NotifyHelper.ToastError(message);
-                return;
-            }
-
-            var zipBytes = await DownloadBackupBytesAsync(ct);
-
-            using var       memoryStream = new MemoryStream(zipBytes);
-            await using var archive      = new ZipArchive(memoryStream, ZipArchiveMode.Read);
-
-            var folderFull = Path.GetFullPath(config.DataFolderPath);
-
-            foreach (var entry in archive.Entries)
-            {
-                if (entry.FullName.EndsWith('/'))
-                    continue;
-
-                var entryPath = Path.GetFullPath(Path.Join(folderFull, entry.FullName.Replace('/', Path.DirectorySeparatorChar)));
-
-                if (Path.GetRelativePath(folderFull, entryPath).StartsWith(".."))
-                    continue;
-
-                Directory.CreateDirectory(Path.GetDirectoryName(entryPath)!);
-
-                await using var entryStream = await entry.OpenAsync(ct);
-                await using var fileStream  = new FileStream(entryPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                await entryStream.CopyToAsync(fileStream, ct);
-            }
-
-            var successMessage = Lang.Get("AutoBackupGameConfig-Notification-RestoreSuccess");
-            NotifyHelper.Instance().Chat(successMessage);
-            NotifyHelper.Toast(successMessage);
-        }
-        catch (OperationCanceledException)
-        {
-            // ignored
-        }
-        catch (Exception ex)
-        {
-            HandleError("从云端恢复失败", ex);
-        }
-    }
-
-    #region 文件收集
 
     private static HttpRequestMessage CreateGistRequest
     (
@@ -652,7 +654,18 @@ public class AutoBackupGameConfig : ModuleBase
         Directory.Exists(config.DataFolderPath)           &&
         File.Exists(Path.Join(config.DataFolderPath, "FFXIV.cfg"));
 
-    #endregion
+    private static string GetDescription()
+    {
+        var clientAbbr = "GL";
+        if (GameState.IsCN)
+            clientAbbr = "CN";
+        if (GameState.IsKR)
+            clientAbbr = "KR";
+        if (GameState.IsTC)
+            clientAbbr = "TC";
+        
+        return $"{GIST_DESCRIPTION} - {clientAbbr}";
+    }
 
     #region 常量
 
