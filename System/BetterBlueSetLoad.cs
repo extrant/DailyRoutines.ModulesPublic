@@ -3,14 +3,14 @@ using DailyRoutines.Common.Module.Enums;
 using DailyRoutines.Common.Module.Models;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
 using AgentReceiveEventDelegate = OmenTools.Interop.Game.Models.Native.AgentReceiveEventDelegate;
 
-namespace DailyRoutines.ModulesPublic.Interface;
+namespace DailyRoutines.ModulesPublic;
 
 public unsafe class BetterBlueSetLoad : ModuleBase
 {
@@ -18,7 +18,7 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     {
         Title       = Lang.Get("BetterBlueSetLoadTitle"),
         Description = Lang.Get("BetterBlueSetLoadDescription"),
-        Category    = ModuleCategory.Interface
+        Category    = ModuleCategory.System
     };
 
     public override ModulePermission Permission { get; } = new() { AllDefaultEnabled = true };
@@ -27,11 +27,11 @@ public unsafe class BetterBlueSetLoad : ModuleBase
 
     protected override void Init()
     {
-        AgentAozNotebookReceiveEventHook ??=
-            DService.Instance().Hook.HookFromAddress<AgentReceiveEventDelegate>
+        AgentAozNotebookReceiveEventHook =
+            AgentModule.Instance()->GetAgentByInternalId(AgentId.AozNotebook)->VirtualTable->HookVFuncFromName
             (
-                AgentModule.Instance()->GetAgentByInternalId(AgentId.AozNotebook)->VirtualTable->GetVFuncByName("ReceiveEvent"),
-                AgentAozNotebookReceiveEventDetour
+                "ReceiveEvent",
+                (AgentReceiveEventDelegate)AgentAozNotebookReceiveEventDetour
             );
         AgentAozNotebookReceiveEventHook.Enable();
 
@@ -49,25 +49,30 @@ public unsafe class BetterBlueSetLoad : ModuleBase
     private AtkValue* AgentAozNotebookReceiveEventDetour
     (
         AgentInterface* agent,
-        AtkValue*       returnvalues,
+        AtkValue*       returnValues,
         AtkValue*       values,
         uint            valueCount,
         ulong           eventKind
     )
     {
-        if (!AOZNotebookPresetList->IsAddonAndNodesReady() || AOZNotebookPresetList->AtkValues->UInt != 0 || eventKind != 1 || valueCount != 2)
+        if (!AOZNotebookPresetList->IsAddonAndNodesReady() ||
+            AOZNotebookPresetList->AtkValues       == null ||
+            AOZNotebookPresetList->AtkValues->UInt != 0    ||
+            eventKind                              != 1    ||
+            valueCount                             != 2)
             return InvokeOriginal();
-
+        
         var index = values[1].UInt;
-        if (values[1].Type != AtkValueType.UInt || index > 4) return InvokeOriginal();
-
+        if (values[1].Type != AtkValueType.UInt || index > 4) 
+            return InvokeOriginal();
+        
         ApplyByIndex(index);
 
-        using var returnValue = new AtkValueArray(false);
-        return returnValue;
+        returnValues->SetBool(false);
+        return returnValues;
 
         AtkValue* InvokeOriginal() =>
-            AgentAozNotebookReceiveEventHook.Original(agent, returnvalues, values, valueCount, eventKind);
+            AgentAozNotebookReceiveEventHook.Original(agent, returnValues, values, valueCount, eventKind);
     }
 
     private static void OnCommand
@@ -83,11 +88,12 @@ public unsafe class BetterBlueSetLoad : ModuleBase
             ApplyByIndex(setIndex);
         else
         {
-            var names = AozNoteModule.Instance()->ActiveSets.ToArray()
-                                                            .Where(x => !string.IsNullOrWhiteSpace(x.CustomNameString))
-                                                            .Select((value, index) => (Index: (uint)index, Name: value.CustomNameString))
-                                                            .DistinctBy(x => x.Name)
-                                                            .ToDictionary(x => x.Name, x => x.Index);
+            var names = AozNoteModule.Instance()->ActiveSets
+                        .ToArray()
+                        .Where(x => !string.IsNullOrWhiteSpace(x.CustomNameString))
+                        .Select((value, index) => (Index: (uint)index, Name: value.CustomNameString))
+                        .DistinctBy(x => x.Name)
+                        .ToDictionary(x => x.Name, x => x.Index);
             if (!names.TryGetValue(args, out setIndex)) return;
 
             ApplyByIndex(setIndex);
@@ -104,14 +110,9 @@ public unsafe class BetterBlueSetLoad : ModuleBase
         CompareAndApply((int)index);
         CompareAndApply((int)index);
 
-        var setName = AozNoteModule.Instance()->ActiveSets[(int)index].CustomNameString;
-        NotifyHelper.Instance().NotificationSuccess
-        (
-            Lang.Get("BetterBlueSetLoad-Notification", index + 1) +
-            (string.IsNullOrWhiteSpace(setName) ?
-                 string.Empty :
-                 $": {setName}")
-        );
+        var       setName    = AozNoteModule.Instance()->ActiveSets[(int)index].CustomNameString;
+        using var utf8String = new Utf8String(setName);
+        RaptureLogModule.Instance()->ShowLogMessageString(9472, &utf8String);
     }
 
     private static void CompareAndApply
