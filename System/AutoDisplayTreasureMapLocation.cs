@@ -7,6 +7,7 @@ using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
+using OmenTools.Dalamud;
 using OmenTools.Interop.Game.Lumina;
 using OmenTools.Interop.Game.Models;
 using OmenTools.OmenService;
@@ -26,7 +27,6 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
 
     private static readonly CompSig ShowTreasureMapSig = new
         ("4C 8B DC 55 53 56 49 8D AB ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 49 89 7B ?? 48 8D 45");
-
     private delegate void ShowTreasureMapDelegate
     (
         nint   agent,
@@ -34,7 +34,6 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         ushort subRowID,
         byte   isJustOpened
     );
-
     private Hook<ShowTreasureMapDelegate>? ShowTreasureMapHook;
 
     private Config config = null!;
@@ -152,9 +151,13 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
             location.Map.ValueNullable is not { } map)
             return false;
 
+        var name = rank.KeyItemName.Value.Singular.ToString();
+        if (rank.InstanceMap.IsValid)
+            name += $"（{rank.InstanceMap.Value.Singular}）";
+        
         treasureMap = new
         (
-            rank.KeyItemName.RowId,
+            name,
             map.RowId,
             location.GetPosition()
         );
@@ -170,7 +173,7 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
         var agent = AgentMap.Instance();
         if (agent == null) return;
 
-        agent->SetMapFlagAndOpen(treasureMap.MapID, treasureMap.Position);
+        agent->SetMapFlagAndOpen(treasureMap.MapID, treasureMap.Position, treasureMap.Name);
     }
 
     private sealed class Config : ModuleConfig
@@ -181,7 +184,7 @@ public unsafe class AutoDisplayTreasureMapLocation : ModuleBase
 
     private readonly record struct TreasureMap
     (
-        uint    EventItemID,
+        string  Name,
         uint    MapID,
         Vector3 Position
     );
