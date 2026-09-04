@@ -45,10 +45,14 @@ public unsafe class ClickableAethernet : ModuleBase
             OnUpdate  = OnAddonUpdate
         };
         areaMapController.Enable();
+
+        IClientState.Instance().TerritoryChanged += OnZoneChanged;
     }
 
     protected override void Uninit()
     {
+        IClientState.Instance().TerritoryChanged -= OnZoneChanged;
+        
         areaMapController?.Dispose();
         areaMapController = null;
 
@@ -59,6 +63,12 @@ public unsafe class ClickableAethernet : ModuleBase
         drSelectYesno?.Dispose();
         drSelectYesno = null;
     }
+    
+    private void OnZoneChanged
+    (
+        uint zone
+    ) =>
+        lastMapID = 0;
 
     private void OnAddonUpdate
     (
